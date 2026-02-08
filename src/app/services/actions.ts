@@ -147,3 +147,30 @@ export async function acceptQuotation(requestId: string) {
 
     return { success: true }
 }
+
+export async function submitDesignBooking(data: { serviceType: string, details: any }) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'You must be logged in to submit a request.' }
+    }
+
+    const { data: booking, error } = await supabase
+        .from('design_bookings')
+        .insert({
+            user_id: user.id,
+            service_type: data.serviceType,
+            status: 'pending',
+            details: data.details
+        })
+        .select()
+        .single()
+
+    if (error) {
+        console.error('Booking Error:', error)
+        return { error: error.message }
+    }
+
+    return { success: true, bookingId: booking.id }
+}
