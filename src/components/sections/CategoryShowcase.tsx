@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getProducts } from "@/services/productService";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 interface CategoryShowcaseProps {
     title: string;
     category: string;
@@ -16,6 +18,7 @@ interface CategoryShowcaseProps {
 
 // Dummy data for fallback if DB is empty
 const DUMMY_PRODUCTS: Record<string, any[]> = {
+    // ... (keep existing dummy data if needed, or it can be kept as is since it's outside the component)
     "Building Materials": [
         { id: "b1b1b1b1-b1b1-b1b1-b1b1-b1b1b1b1b1b1", cat_id: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", title: "Portland Cement", base_price: 520, images: ["https://images.unsplash.com/photo-1574949955572-37e58c18bafb?w=600&h=400&fit=crop"], category: { name: "Building Materials" }, seller_id: "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1", seller_name: "Seven Rings Ltd" },
         { id: "b3b3b3b3-b3b3-b3b3-b3b3-b3b3b3b3b3b3", cat_id: "c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3", title: "Auto Bricks", base_price: 12, images: ["https://images.unsplash.com/photo-1582564286939-400a311013a2?w=600&h=400&fit=crop"], category: { name: "Building Materials" }, seller_id: "a3a3a3a3-a3a3-a3a3-a3a3-a3a3a3a3a3a3", seller_name: "Standard Bricks" },
@@ -43,6 +46,7 @@ const DUMMY_PRODUCTS: Record<string, any[]> = {
 };
 
 export function CategoryShowcase({ title, category, bgClass = "bg-white", link = "/products" }: CategoryShowcaseProps) {
+    const { t } = useLanguage();
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -81,7 +85,7 @@ export function CategoryShowcase({ title, category, bgClass = "bg-white", link =
                     </div>
                     <Link href={link}>
                         <Button variant="ghost" className="text-neutral-500 hover:text-primary-600 font-bold uppercase tracking-widest text-xs">
-                            View All <ArrowRight className="ml-2 w-4 h-4" />
+                            {t.market_view_all} <ArrowRight className="ml-2 w-4 h-4" />
                         </Button>
                     </Link>
                 </div>
@@ -114,4 +118,3 @@ export function CategoryShowcase({ title, category, bgClass = "bg-white", link =
         </section>
     );
 }
-

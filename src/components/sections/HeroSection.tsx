@@ -1,40 +1,45 @@
+"use client"
+
 import { ArrowRight, ShoppingBag, PencilRuler, Wrench } from "lucide-react";
 import Link from "next/link";
-
-const mainBanner = {
-    title: "Construction Product\nMaterials",
-    subtitle: "Premium Quality",
-    tag: "WHOLSALE",
-    desc: "Premium quality cement, bricks, stone & sand at wholesale prices",
-    icon: ShoppingBag,
-    overlay: "bg-[#8b3012]/75",
-    tagColor: "bg-white/20 backdrop-blur-sm",
-    href: "/products",
-    image: "https://images.unsplash.com/photo-1582564286939-400a311013a2?w=800&h=600&fit=crop"
-};
-
-const sideBanners = [
-    {
-        title: "Get Design",
-        subtitle: "Design & Planning",
-        desc: "Professional architectural & interior design solutions",
-        icon: PencilRuler,
-        overlay: "bg-[#166534]/75", // Green-800 overlay
-        href: "/services/design",
-        image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&h=300&fit=crop"
-    },
-    {
-        title: "Get Service",
-        subtitle: "Expert Help",
-        desc: "Hire verified professionals for your repair works",
-        icon: Wrench,
-        overlay: "bg-[#1d2d5c]/75",
-        href: "/services",
-        image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop"
-    }
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 export function HeroSection() {
+    const { t } = useLanguage();
+
+    const mainBanner = {
+        title: t.hero_banner_main_title,
+        subtitle: t.hero_banner_main_subtitle,
+        tag: "WHOLSALE",
+        desc: t.hero_banner_main_desc,
+        icon: ShoppingBag,
+        overlay: "bg-[#8b3012]/75",
+        tagColor: "bg-white/20 backdrop-blur-sm",
+        href: "/products",
+        image: "https://images.unsplash.com/photo-1582564286939-400a311013a2?w=800&h=600&fit=crop"
+    };
+
+    const sideBanners = [
+        {
+            title: t.hero_banner_design_title,
+            subtitle: t.hero_banner_design_subtitle,
+            desc: t.hero_banner_design_desc,
+            icon: PencilRuler,
+            overlay: "bg-[#166534]/75", // Green-800 overlay
+            href: "/services/design",
+            image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&h=300&fit=crop"
+        },
+        {
+            title: t.hero_banner_service_title,
+            subtitle: t.hero_banner_service_subtitle,
+            desc: t.hero_banner_service_desc,
+            icon: Wrench,
+            overlay: "bg-[#1d2d5c]/75",
+            href: "/services",
+            image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop"
+        }
+    ];
+
     return (
         <section className="bg-white pt-8 pb-2">
             <div className="container mx-auto px-8">
@@ -72,7 +77,7 @@ export function HeroSection() {
                             <div className="space-y-2">
                                 <p className="text-sm font-bold text-white/90">{mainBanner.desc}</p>
                                 <div className="flex items-center gap-2 text-white">
-                                    <span className="text-xs font-bold uppercase tracking-widest">Shop Now</span>
+                                    <span className="text-xs font-bold uppercase tracking-widest">{t.offer_shop_now}</span>
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </div>
                             </div>
