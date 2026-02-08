@@ -16,7 +16,7 @@ export function HeroSection() {
         overlay: "bg-[#8b3012]/75",
         tagColor: "bg-white/20 backdrop-blur-sm",
         href: "/products",
-        image: "https://images.unsplash.com/photo-1582564286939-400a311013a2?w=800&h=600&fit=crop"
+        image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1000&auto=format&fit=crop"
     };
 
     const sideBanners = [
@@ -27,7 +27,7 @@ export function HeroSection() {
             icon: PencilRuler,
             overlay: "bg-[#166534]/75", // Green-800 overlay
             href: "/services/design",
-            image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&h=300&fit=crop"
+            image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=800&auto=format&fit=crop"
         },
         {
             title: t.hero_banner_service_title,
@@ -36,7 +36,7 @@ export function HeroSection() {
             icon: Wrench,
             overlay: "bg-[#1d2d5c]/75",
             href: "/services",
-            image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop"
+            image: "https://images.unsplash.com/photo-1505798577917-a65157d3320a?q=80&w=800&auto=format&fit=crop"
         }
     ];
 

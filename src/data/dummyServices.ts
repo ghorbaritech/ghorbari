@@ -1,0 +1,117 @@
+export const dummyServiceCategories = [
+    { id: 'cat_construction', name: 'Construction' },
+    { id: 'cat_interior', name: 'Interior Design' },
+    { id: 'cat_electrical', name: 'Electrical' },
+    { id: 'cat_plumbing', name: 'Plumbing' },
+    { id: 'cat_painting', name: 'Painting' },
+    { id: 'cat_carpentry', name: 'Carpentry' },
+    { id: 'cat_tiles', name: 'Tiles & Marble' },
+    { id: 'cat_hvac', name: 'AC & HVAC' },
+];
+
+export const dummyServices = [
+    {
+        id: 'srv_001',
+        title: 'Modern Apartment Interior Design',
+        base_price: 50000,
+        images: ['https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&h=600&fit=crop'],
+        rating: 4.8,
+        category: { name: 'Interior Design' },
+        category_id: 'cat_interior',
+        seller_id: 'sel_001',
+        seller: { business_name: 'Studio X Architecture' },
+        brand: 'Verified Pro',
+        description: 'Full interior design service for 3BHK apartments including 3D rendering and material selection.'
+    },
+    {
+        id: 'srv_002',
+        title: 'Professional House Painting',
+        base_price: 25,
+        images: ['https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&h=600&fit=crop'],
+        rating: 4.5,
+        category: { name: 'Painting' },
+        category_id: 'cat_painting',
+        seller_id: 'sel_002',
+        seller: { business_name: 'Color Masters' },
+        brand: 'Top Rated',
+        description: 'Expert wall painting services using premium Berger or Asian Paints. Price per sqft.'
+    },
+    {
+        id: 'srv_003',
+        title: 'Emergency Plumbing Repair',
+        base_price: 500,
+        images: ['https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=800&h=600&fit=crop'],
+        rating: 4.9,
+        category: { name: 'Plumbing' },
+        category_id: 'cat_plumbing',
+        seller_id: 'sel_003',
+        seller: { business_name: 'The Pipe Fixers' },
+        brand: 'Quick Service',
+        description: '24/7 emergency plumbing services for leaks, blocks, and installation.'
+    },
+    {
+        id: 'srv_004',
+        title: 'Electrical Wiring Inspection',
+        base_price: 1500,
+        images: ['https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&h=600&fit=crop'],
+        rating: 4.6,
+        category: { name: 'Electrical' },
+        category_id: 'cat_electrical',
+        seller_id: 'sel_004',
+        seller: { business_name: 'PowerSafe Solutions' },
+        brand: 'Certified',
+        description: 'Complete home electrical inspection and safety certification by licensed electricians.'
+    },
+    {
+        id: 'srv_005',
+        title: 'Custom Furniture Fabrication',
+        base_price: 12000,
+        images: ['https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=800&h=600&fit=crop'],
+        rating: 4.7,
+        category: { name: 'Carpentry' },
+        category_id: 'cat_carpentry',
+        seller_id: 'sel_005',
+        seller: { business_name: 'WoodCraft Artisans' },
+        brand: 'Handmade',
+        description: 'Bespoke wooden furniture design and manufacturing for living and bedrooms.'
+    },
+    {
+        id: 'srv_006',
+        title: 'Bathroom Tiling Service',
+        base_price: 45,
+        images: ['https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&h=600&fit=crop'],
+        rating: 4.4,
+        category: { name: 'Tiles & Marble' },
+        category_id: 'cat_tiles',
+        seller_id: 'sel_006',
+        seller: { business_name: 'Elegant Floors' },
+        brand: 'Verified Pro',
+        description: 'Professional installation of ceramic, porcelain, and mosaic tiles. Price per sqft.'
+    },
+    {
+        id: 'srv_007',
+        title: 'AC Installation & Servicing',
+        base_price: 2000,
+        images: ['https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800&h=600&fit=crop'],
+        rating: 4.3,
+        category: { name: 'AC & HVAC' },
+        category_id: 'cat_hvac',
+        seller_id: 'sel_007',
+        seller: { business_name: 'Cool Breeze HVAC' },
+        brand: 'Seasonal Deal',
+        description: 'Installation, gas refill, and cleaning services for split and window AC units.'
+    },
+    {
+        id: 'srv_008',
+        title: 'Building Construction Consultation',
+        base_price: 10000,
+        images: ['https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&h=600&fit=crop'],
+        rating: 5.0,
+        category: { name: 'Construction' },
+        category_id: 'cat_construction',
+        seller_id: 'sel_008',
+        seller: { business_name: 'BuildRight Engineering' },
+        brand: 'Expert Choice',
+        description: 'Consult with civil engineers for structural integrity checks and construction planning.'
+    }
+];

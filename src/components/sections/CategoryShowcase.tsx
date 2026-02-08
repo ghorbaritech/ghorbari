@@ -118,3 +118,4 @@ export function CategoryShowcase({ title, category, bgClass = "bg-white", link =
         </section>
     );
 }
+

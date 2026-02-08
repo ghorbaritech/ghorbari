@@ -48,56 +48,7 @@ export const translations = {
         footer_privacy: "Privacy",
         footer_cookies: "Cookies",
         footer_security: "Security",
-    },
-    BN: {
-        // Navbar
-        nav_search_placeholder: "পণ্য, সেবা, বা ডিজাইন খুঁজুন...",
-        nav_partner: "পার্টনার হোন",
-        nav_login: "লগইন",
-        nav_signup: "সাইন আপ",
-        nav_help: "হেল্প সেন্টার",
-        nav_logout: "লগআউট",
-        nav_all_categories: "সকল ক্যাটাগরি",
-        nav_design_planning: "ডিজাইন ও পরিকল্পনা",
-        nav_marketplace: "পণ্যের মার্কেটপ্লেস",
-        nav_structural_health: "স্ট্রাকচারাল হেলথ",
-        nav_renovation: "রেনোভেশন সেবা",
-        nav_create_account: "অ্যাকাউন্ট তৈরি করুন",
 
-        // Hero / General
-        hero_title: "আপনার স্বপ্নের বাড়ি তৈরি করুন",
-        hero_subtitle: "আপনার সব নির্মাণ প্রয়োজনের জন্য এক-স্টপ সমাধান",
-
-        // Marketplace Section
-        market_label: "কনস্ট্রাকশন মার্কেটপ্লেস",
-        market_title: "উন্নত মানের সরঞ্জাম ও উপকরণ",
-        market_desc: "যাচাইকৃত হার্ডওয়্যার স্টোর থেকে প্রিমিয়াম সরবরাহ। আপনার নির্মাণ প্রকল্পের জন্য প্রয়োজনীয় সবকিছু, আপনার সাইটে পৌঁছে দেওয়া হবে।",
-        market_view_all: "সব পণ্য দেখুন",
-        market_loading: "মার্কেটপ্লেস লোড হচ্ছে...",
-        market_no_products: "মার্কেটপ্লেসে কোন পণ্য পাওয়া যায়নি",
-
-        // Categories
-        cat_power_tools: "পাওয়ার টুলস",
-        cat_wall_paints: "দেয়ালের রং",
-        cat_hand_tools: "হ্যান্ড টুলস",
-        cat_plumbing: "প্লাম্বিং",
-
-        // Footer
-        footer_about: "আর্কিটেকচারাল ডিজাইন, নির্মাণ সামগ্রী এবং স্মার্ট বিল্ডিং সলিউশনের জন্য বাংলাদেশের শীর্ষস্থানীয় ইকোসিস্টেম।",
-        footer_ecosystem: "ইকোসিস্টেম",
-        footer_design_studio: "ডিজাইন স্টুডিও",
-        footer_material_store: "ম্যাটেরিয়াল স্টোর",
-        footer_health_check: "হেলথ চেক",
-        footer_renovations: "রেনোভেশন",
-        footer_company: "কোম্পানি",
-        footer_help: "হেল্প সেন্টার",
-        footer_contact: "যোগাযোগ করুন",
-        footer_faqs: "জিজ্ঞাসিত প্রশ্ন",
-        footer_guidelines: "নির্দেশিকা",
-        footer_rights: "ঘরবাড়ি প্ল্যাটফর্ম। শ্রেষ্ঠত্বের জন্য প্রকৌশল।",
-        footer_privacy: "গোপনীয়তা",
-        footer_cookies: "কুকিজ",
-        footer_security: "নিরাপত্তা",
         // Offer Section
         offer_title: "Limited Time Offers",
         offer_flash_sale: "Flash Sale",
@@ -119,13 +70,13 @@ export const translations = {
         cat_electric_plumbing: "Electric & Plumbing",
 
         // Hero Banners
-        hero_banner_main_title: "Construction Product\nMaterials",
+        hero_banner_main_title: "Construction Product Marketplace",
         hero_banner_main_subtitle: "Premium Quality",
         hero_banner_main_desc: "Premium quality cement, bricks, stone & sand at wholesale prices",
         hero_banner_design_title: "Get Design",
         hero_banner_design_subtitle: "Design & Planning",
         hero_banner_design_desc: "Professional architectural & interior design solutions",
-        hero_banner_service_title: "Get Service",
+        hero_banner_service_title: "Get Services",
         hero_banner_service_subtitle: "Expert Help",
         hero_banner_service_desc: "Hire verified professionals for your repair works",
     },
@@ -169,13 +120,13 @@ export const translations = {
         cat_electric_plumbing: "ইলেকট্রিক ও প্লাম্বিং",
 
         // Hero Banners
-        hero_banner_main_title: "নির্মাণ সামগ্রী\nও উপকরণ",
+        hero_banner_main_title: "কনস্ট্রাকশন প্রোডাক্ট মার্কেটপ্লেস",
         hero_banner_main_subtitle: "প্রিমিয়াম কোয়ালিটি",
         hero_banner_main_desc: "পাইকারি দামে উন্নত মানের সিমেন্ট, ইট, পাথর এবং বালু",
         hero_banner_design_title: "ডিজাইন নিন",
         hero_banner_design_subtitle: "ডিজাইন ও পরিকল্পনা",
         hero_banner_design_desc: "পেশাদার আর্কিটেকচারাল এবং ইন্টেরিয়র ডিজাইন সলিউশন",
-        hero_banner_service_title: "সেবা নিন",
+        hero_banner_service_title: "সেবা সমূহ",
         hero_banner_service_subtitle: "এক্সপার্ট হেল্প",
         hero_banner_service_desc: "আপনার মেরামতের কাজের জন্য যাচাইকৃত পেশাদারদের ভাড়া করুন",
 

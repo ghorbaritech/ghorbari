@@ -7,81 +7,38 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { ProductCard } from "@/components/ui/ProductCard";
-import { useEffect, useState } from "react";
-import { getProducts, getCategories } from "@/services/productService";
+import { useState } from "react";
 import { PromoBannerSection } from "@/components/sections/PromoBannerSection";
-import { BrandBar } from "@/components/sections/BrandBar";
+import { dummyServices, dummyServiceCategories } from "@/data/dummyServices";
 
 export default function ServicesPage() {
-    const [services, setServices] = useState<any[]>([]);
-    const [categories, setCategories] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [minPrice, setMinPrice] = useState<string>("");
     const [maxPrice, setMaxPrice] = useState<string>("");
 
-    useEffect(() => {
-        async function fetchInitialData() {
-            setLoading(true);
-            try {
-                const [servData, catData1, catData2] = await Promise.all([
-                    getProducts({ categoryId: undefined }),
-                    getCategories('service'),
-                    getCategories('design')
-                ]);
-                setServices(servData);
-                setCategories([...catData1, ...catData2]);
-            } catch (error) {
-                console.error('Error fetching initial data:', error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchInitialData();
-    }, []);
+    // Filter services based on state
+    const filteredServices = dummyServices.filter(service => {
+        // Category Filter
+        if (selectedCategory && service.category_id !== selectedCategory) return false;
 
-    const handleFilterPrice = async () => {
-        setLoading(true);
-        try {
-            const data = await getProducts({
-                categoryId: selectedCategory || undefined,
-                minPrice: minPrice ? parseInt(minPrice) : undefined,
-                maxPrice: maxPrice ? parseInt(maxPrice) : undefined
-            });
-            setServices(data);
-        } catch (error) {
-            console.error('Error filtering price:', error);
-        } finally {
-            setLoading(false);
-        }
+        // Price Filter
+        const price = service.base_price;
+        if (minPrice && price < parseInt(minPrice)) return false;
+        if (maxPrice && price > parseInt(maxPrice)) return false;
+
+        return true;
+    });
+
+    const handleCategoryToggle = (id: string) => {
+        setSelectedCategory(prev => prev === id ? null : id);
     };
 
-    const handleCategoryToggle = async (id: string) => {
-        const newCat = selectedCategory === id ? null : id;
-        setSelectedCategory(newCat);
-        setLoading(true);
-        try {
-            const data = await getProducts({
-                categoryId: newCat || undefined,
-                minPrice: minPrice ? parseInt(minPrice) : undefined,
-                maxPrice: maxPrice ? parseInt(maxPrice) : undefined
-            });
-            setServices(data);
-        } catch (error) {
-            console.error('Error toggling category:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
     return (
         <main className="min-h-screen flex flex-col font-sans bg-neutral-50/50">
             <Navbar />
 
             {/* 1. Offers Section */}
             <PromoBannerSection />
-
-            {/* 2. Brand Section */}
-            <BrandBar />
 
             <div className="container mx-auto px-8 pt-12">
                 {/* Header Label */}
@@ -100,7 +57,7 @@ export default function ServicesPage() {
                             <div>
                                 <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">Service Categories</h3>
                                 <div className="space-y-4">
-                                    {(categories || []).map(c => (
+                                    {dummyServiceCategories.map(c => (
                                         <div key={c.id} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleCategoryToggle(c.id)}>
                                             <Checkbox
                                                 id={c.id}
@@ -133,14 +90,6 @@ export default function ServicesPage() {
                                         value={maxPrice}
                                         onChange={(e) => setMaxPrice(e.target.value)}
                                     />
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-10 w-10 p-0 bg-neutral-900 text-white hover:bg-primary-600 rounded-xl transition-all"
-                                        onClick={handleFilterPrice}
-                                    >
-                                        <ArrowRight className="w-4 h-4" />
-                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -150,7 +99,7 @@ export default function ServicesPage() {
                     <div className="flex-1">
                         <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-6 rounded-[32px] border border-neutral-100 shadow-sm">
                             <div className="text-xs text-neutral-400 font-black uppercase tracking-widest">
-                                Found <span className="text-neutral-900">{(services || []).length}</span> professional services
+                                Found <span className="text-neutral-900">{filteredServices.length}</span> professional services
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="text-xs text-neutral-400 font-bold uppercase tracking-widest">Sort By:</span>
@@ -162,16 +111,9 @@ export default function ServicesPage() {
                             </div>
                         </div>
 
-                        {loading ? (
-                            <div className="h-96 flex items-center justify-center bg-white rounded-[40px] border-2 border-dashed border-neutral-100">
-                                <div className="flex flex-col items-center gap-6 text-neutral-300">
-                                    <Loader2 className="w-10 h-10 animate-spin" />
-                                    <p className="text-[10px] font-black uppercase tracking-[0.4em]">Querying Service Index...</p>
-                                </div>
-                            </div>
-                        ) : (services || []).length > 0 ? (
+                        {filteredServices.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {(services || []).map((service) => (
+                                {filteredServices.map((service) => (
                                     <ProductCard
                                         key={service.id}
                                         id={service.id}

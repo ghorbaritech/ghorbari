@@ -8,7 +8,7 @@ import { PromoBannerSection } from "@/components/sections/PromoBannerSection";
 import { CategoryShowcase } from "@/components/sections/CategoryShowcase";
 import { DesignServicesSection } from "@/components/sections/DesignServicesSection";
 import { ServiceShowcase } from "@/components/sections/ServiceShowcase";
-import { OfferSection } from "@/components/sections/OfferSection";
+
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function Home() {
@@ -22,8 +22,7 @@ export default function Home() {
         {/* 1. Hero Section */}
         <HeroSection />
 
-        {/* 1.5 Offer Section */}
-        <OfferSection />
+
 
         {/* 2. Menu/Categories */}
         <IconCategories />
@@ -67,3 +66,4 @@ export default function Home() {
     </main>
   );
 }
+
