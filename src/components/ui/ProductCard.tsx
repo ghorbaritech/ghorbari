@@ -43,8 +43,8 @@ export function ProductCard({
             name,
             price: parseFloat(price.replace(/,/g, '')),
             image,
-            sellerId,
-            sellerName,
+            sellerId: sellerId || "",
+            sellerName: sellerName || "",
             category,
             categoryId
         });
@@ -105,11 +105,19 @@ export function ProductCard({
                         className="bg-neutral-900 hover:bg-primary-600 text-white rounded-lg px-4 text-xs font-bold"
                     >
                         <ShoppingCart className="w-3 h-3 mr-1" />
-                        Add
+                        Buy Now
                     </Button>
                 </div>
                 <div className="mt-1 text-[10px] text-neutral-400 font-medium">
-                    Seller: <span className="text-neutral-600">{sellerName}</span>
+                    Seller: <span className="text-neutral-600">
+                        {sellerId ? (
+                            <a href={`/partner/${sellerId}`} className="hover:text-primary-600 hover:underline transition-colors">
+                                {sellerName}
+                            </a>
+                        ) : (
+                            sellerName
+                        )}
+                    </span>
                 </div>
             </div>
         </div>

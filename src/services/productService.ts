@@ -83,6 +83,26 @@ export async function getProductBySku(sku: string) {
     return data
 }
 
+export async function getProductById(id: string) {
+    const supabase = createClient()
+    const { data, error } = await supabase
+        .from('products')
+        .select(`
+            *,
+            seller:sellers(*),
+            category:product_categories(*)
+        `)
+        .eq('id', id)
+        .single()
+
+    if (error) {
+        console.error('Error fetching product:', error)
+        return null
+    }
+
+    return data
+}
+
 export async function getBrands() {
     // Mock brands since column missing in DB
     return [

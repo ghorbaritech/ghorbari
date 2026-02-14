@@ -14,7 +14,7 @@ const designServices = [
         rating: 4.9,
         projects: 234,
         priceFrom: "৳5000",
-        link: "/services/architectural-design"
+        link: "/services/design/book?service=architectural"
     },
     {
         id: "interior",
@@ -24,7 +24,7 @@ const designServices = [
         rating: 4.8,
         projects: 567,
         priceFrom: "৳2500",
-        link: "/services/interior-design"
+        link: "/services/design/book?service=interior"
     },
     {
         id: "3d",
@@ -34,7 +34,7 @@ const designServices = [
         rating: 4.7,
         projects: 189,
         priceFrom: "৳1500",
-        link: "/services/3d-visualization"
+        link: "/services/design/book?service=architectural"
     },
     {
         id: "landscape",
@@ -44,7 +44,7 @@ const designServices = [
         rating: 4.8,
         projects: 98,
         priceFrom: "৳3000",
-        link: "/services/landscape-design"
+        link: "/services/design/book?service=architectural"
     }
 ];
 
@@ -114,7 +114,7 @@ export function DesignServicesSection() {
                                             size="sm"
                                             className="bg-neutral-900 hover:bg-primary-600 text-white rounded-lg px-4 text-xs font-bold"
                                         >
-                                            Get Quote <ArrowRight className="ml-1 w-3 h-3" />
+                                            Book Service <ArrowRight className="ml-1 w-3 h-3" />
                                         </Button>
                                     </Link>
                                 </div>

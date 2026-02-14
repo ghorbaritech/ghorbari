@@ -1,13 +1,8 @@
-'use client'
-
-import { useState } from 'react'
-import DesignerOnboardingForm from '@/components/forms/DesignerOnboardingForm'
-import SellerOnboardingForm from '@/components/forms/SellerOnboardingForm'
+import PartnerOnboardingForm from '@/components/forms/PartnerOnboardingForm'
 import { Button } from '@/components/ui/button'
+import { generateDemoPartners } from './actions'
 
 export default function AdminOnboardingPage() {
-    const [tab, setTab] = useState<'designer' | 'seller'>('designer')
-
     return (
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-6xl mx-auto">
@@ -16,41 +11,28 @@ export default function AdminOnboardingPage() {
                     <p className="text-gray-500">Manage the Ghorbari Ecosystem - Onboard New Partners</p>
                 </header>
 
-                <div className="flex space-x-4 mb-8">
-                    <Button
-                        variant={tab === 'designer' ? 'default' : 'outline'}
-                        onClick={() => setTab('designer')}
-                        className="rounded-full px-8"
-                    >
-                        Designers & Agencies
-                    </Button>
-                    <Button
-                        variant={tab === 'seller' ? 'default' : 'outline'}
-                        onClick={() => setTab('seller')}
-                        className="rounded-full px-8"
-                    >
-                        Material Sellers
-                    </Button>
-                </div>
+                <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+                    <div className="mb-8 border-b pb-6 flex justify-between items-start">
+                        <div>
+                            <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Universal Partner Onboarding</h2>
+                            <p className="text-gray-500 mt-2">
+                                Register a new partner with any combination of roles:
+                                <span className="font-bold text-primary-600 ml-1">Product Supplier</span>,
+                                <span className="font-bold text-primary-600 ml-1">Design Provider</span>, or
+                                <span className="font-bold text-primary-600 ml-1">Service Provider</span>.
+                            </p>
+                        </div>
+                        <form action={async () => {
+                            'use server'
+                            await generateDemoPartners()
+                        }}>
+                            <Button variant="outline" size="sm" className="border-dashed border-red-300 text-red-500 hover:bg-red-50 hover:text-red-700">
+                                🛠️ Generate Demo Data (Dev Only)
+                            </Button>
+                        </form>
+                    </div>
 
-                <div className="bg-white p-2 rounded-3xl shadow-sm border border-gray-100">
-                    {tab === 'designer' ? (
-                        <div className="p-4">
-                            <div className="mb-6">
-                                <h2 className="text-xl font-bold">Add Professional Designer</h2>
-                                <p className="text-sm text-gray-500">Register new architects, structural engineers, or interior design agencies.</p>
-                            </div>
-                            <DesignerOnboardingForm />
-                        </div>
-                    ) : (
-                        <div className="p-4">
-                            <div className="mb-6">
-                                <h2 className="text-xl font-bold">Add Material Supplier</h2>
-                                <p className="text-sm text-gray-500">Onboard manufacturers, distributors, or local retail hardware stores.</p>
-                            </div>
-                            <SellerOnboardingForm />
-                        </div>
-                    )}
+                    <PartnerOnboardingForm />
                 </div>
             </div>
         </div>

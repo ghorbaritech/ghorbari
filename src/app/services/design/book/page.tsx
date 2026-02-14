@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { WizardStep } from '@/components/design/WizardStep';
@@ -30,10 +30,22 @@ const VIBE_OPTIONS: Option[] = [
 ];
 
 export default function DesignBookingPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <DesignBookingWizard />
+        </Suspense>
+    );
+}
+
+function DesignBookingWizard() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const supabase = createClient();
-    const [step, setStep] = useState(0);
-    const [serviceType, setServiceType] = useState<ServiceType | null>(null);
+
+    // Initialize service type from URL if present
+    const initialService = searchParams.get('service') as ServiceType | null;
+    const [step, setStep] = useState(initialService ? 1 : 0);
+    const [serviceType, setServiceType] = useState<ServiceType | null>(initialService);
     const [loading, setLoading] = useState(false);
 
     // Form State

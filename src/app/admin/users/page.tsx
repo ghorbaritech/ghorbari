@@ -16,6 +16,7 @@ import {
     CheckCircle2
 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import PartnerOnboardingForm from '@/components/forms/PartnerOnboardingForm'
 
 export default function UserManagementPage() {
     const [loading, setLoading] = useState(false)
@@ -59,7 +60,7 @@ export default function UserManagementPage() {
             <Tabs defaultValue="customer" className="space-y-8">
                 <TabsList className="bg-neutral-100 p-1.5 rounded-2xl h-auto">
                     <TabsTrigger value="customer" className="px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm">Create Consumer</TabsTrigger>
-                    <TabsTrigger value="retailer" className="px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm">Create Retailer</TabsTrigger>
+                    <TabsTrigger value="retailer" className="px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm">Create Partner</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="customer" className="m-0">
@@ -67,7 +68,7 @@ export default function UserManagementPage() {
                 </TabsContent>
 
                 <TabsContent value="retailer" className="m-0">
-                    <UserCreationForm role="seller" onSubmit={(e) => handleCreateUser(e, 'seller')} loading={loading} />
+                    <PartnerOnboardingForm />
                 </TabsContent>
             </Tabs>
         </div>

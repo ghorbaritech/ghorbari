@@ -13,21 +13,23 @@ const topBanners = [
     {
         title: "Structural Design",
         icon: Building2,
-        href: "/services/design/structural",
+        title: "Structural Design",
+        icon: Building2,
+        href: "/services/design/book?service=structural",
         overlay: "bg-[#7c2d12]/90",
         image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200&fit=crop"
     },
     {
         title: "Architectural Design",
         icon: Ruler,
-        href: "/services/design/architectural",
+        href: "/services/design/book?service=architectural",
         overlay: "bg-[#064e3b]/90",
         image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&fit=crop"
     },
     {
         title: "Interior Design",
         icon: Sofa,
-        href: "/services/design/interior",
+        href: "/services/design/book?service=interior",
         overlay: "bg-[#172554]/90",
         image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&fit=crop"
     }

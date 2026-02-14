@@ -159,7 +159,7 @@ export function Navbar() {
                             <Menu className="w-4 h-4" />
                             <span>{t.nav_all_categories}</span>
                         </div>
-                        <Link href="/services/book" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_design_planning}</Link>
+                        <Link href="/services/design/book" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_design_planning}</Link>
                         <Link href="/products" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_marketplace}</Link>
                         <Link href="/services" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_structural_health}</Link>
                         <Link href="/services" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_renovation}</Link>
@@ -181,7 +181,7 @@ export function Navbar() {
                     </div>
 
                     <nav className="flex flex-col gap-6 font-bold text-neutral-800 uppercase text-sm tracking-tight">
-                        <Link href="/services/book" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
+                        <Link href="/services/design/book" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
                             {t.nav_design_planning} <ArrowRight className="w-4 h-4 text-neutral-300" />
                         </Link>
                         <Link href="/products" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">

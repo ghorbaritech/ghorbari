@@ -17,10 +17,12 @@ import {
     CheckCircle2,
     XCircle
 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 export default function SellerDashboard() {
     const [products, setProducts] = useState<any[]>([])
     const [orders, setOrders] = useState<any[]>([])
+    const [assignedTasks, setAssignedTasks] = useState<any[]>([])
     const [showAddForm, setShowAddForm] = useState(false)
     const [loading, setLoading] = useState(false)
     const [seller, setSeller] = useState<any>(null)
@@ -46,6 +48,13 @@ export default function SellerDashboard() {
                 // Fetch orders (mocking some for the shop)
                 const { data: ords } = await supabase.from('orders').select('*').eq('seller_id', sel.id)
                 setOrders(ords || [])
+
+                // Fetch Assigned Design Tasks
+                const { data: tasks } = await supabase
+                    .from('design_bookings')
+                    .select('*')
+                    .eq('assigned_seller_id', sel.id)
+                setAssignedTasks(tasks || [])
             }
         }
         fetchData()
@@ -218,7 +227,38 @@ export default function SellerDashboard() {
 
                     {/* Inventory & Stock Monitoring */}
                     <div className="lg:col-span-4 space-y-8">
-                        <h2 className="text-xl font-black text-neutral-900 italic tracking-tight uppercase px-2">Warehouse Inventory</h2>
+                        <div>
+                            <h2 className="text-xl font-black text-neutral-900 italic tracking-tight uppercase px-2 mb-6">Assigned Projects</h2>
+                            {assignedTasks.length === 0 ? (
+                                <Card className="p-8 border-none bg-white rounded-[32px] shadow-sm text-center">
+                                    <p className="text-neutral-400 font-bold uppercase text-xs tracking-widest italic py-4">No active design projects assigned.</p>
+                                </Card>
+                            ) : (
+                                <div className="space-y-4">
+                                    {assignedTasks.map(task => (
+                                        <Card key={task.id} className="p-6 border-none bg-white rounded-3xl shadow-sm group hover:shadow-md transition-all cursor-pointer" onClick={() => window.location.href = `/dashboard/seller/design/${task.id}`}>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <Badge className="bg-neutral-900 text-white text-[10px] font-bold uppercase tracking-widest">{task.service_type}</Badge>
+                                                <span className={`text-[10px] font-black uppercase tracking-widest ${task.status === 'completed' ? 'text-green-600' : 'text-amber-500'}`}>
+                                                    {task.status.replace('_', ' ')}
+                                                </span>
+                                            </div>
+                                            <h3 className="font-black text-neutral-900 uppercase italic text-lg mb-1">Project #{task.id.slice(0, 6)}</h3>
+                                            <p className="text-xs text-neutral-500 font-bold mb-4">Due: {task.milestones?.find((m: any) => m.status !== 'completed')?.due_date ? new Date(task.milestones.find((m: any) => m.status !== 'completed').due_date).toLocaleDateString() : 'TBD'}</p>
+
+                                            <div className="w-full bg-neutral-100 h-1.5 rounded-full overflow-hidden">
+                                                <div
+                                                    className="bg-primary-600 h-full rounded-full transition-all duration-500"
+                                                    style={{ width: `${(task.milestones?.filter((m: any) => m.status === 'completed').length / (task.milestones?.length || 1)) * 100}%` }}
+                                                />
+                                            </div>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <h2 className="text-xl font-black text-neutral-900 italic tracking-tight uppercase px-2 mt-8">Warehouse Inventory</h2>
                         <div className="space-y-4">
                             {products.map((product) => (
                                 <Card key={product.id} className="p-6 border-none bg-white rounded-3xl shadow-sm group">

@@ -18,6 +18,7 @@ import Link from 'next/link'
 
 export default function CustomerDashboard() {
     const [requests, setRequests] = useState<any[]>([])
+    const [designBookings, setDesignBookings] = useState<any[]>([])
     const [orders, setOrders] = useState<any[]>([])
     const [profile, setProfile] = useState<any>(null)
     const supabase = createClient()
@@ -33,6 +34,10 @@ export default function CustomerDashboard() {
             // Get service requests
             const { data: reqs } = await supabase.from('service_requests').select('*').eq('customer_id', user.id)
             setRequests(reqs || [])
+
+            // Get design bookings
+            const { data: designs } = await supabase.from('design_bookings').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+            setDesignBookings(designs || [])
 
             // Get orders
             const { data: ords } = await supabase.from('orders').select('*').eq('customer_id', user.id)
@@ -55,7 +60,49 @@ export default function CustomerDashboard() {
                         <section className="space-y-6">
                             <div className="flex justify-between items-center px-2">
                                 <h2 className="text-xl font-black text-neutral-900 tracking-tight uppercase italic flex items-center gap-2">
-                                    <Clock className="w-5 h-5 text-neutral-400" /> Active Service Sessions
+                                    <Clock className="w-5 h-5 text-neutral-400" /> Active Design Journeys
+                                </h2>
+                            </div>
+
+                            <div className="space-y-4">
+                                {designBookings.map((booking) => (
+                                    <Card key={booking.id} className="p-8 border-none bg-white rounded-[40px] shadow-sm hover:shadow-md transition-shadow group">
+                                        <div className="flex flex-col md:flex-row justify-between gap-6">
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${booking.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
+                                                        booking.status === 'verified' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+                                                        }`}>
+                                                        {booking.status}
+                                                    </span>
+                                                    <span className="text-[10px] font-black text-neutral-300 uppercase tracking-widest">ID #{booking.id.slice(0, 8)}</span>
+                                                </div>
+                                                <h3 className="text-2xl font-black text-neutral-900 italic tracking-tight capitalize group-hover:text-primary-600 transition-colors">
+                                                    {booking.service_type} Design
+                                                </h3>
+                                                <div className="flex flex-wrap gap-6">
+                                                    <div className="flex items-center gap-2 text-neutral-500 font-bold text-xs uppercase">
+                                                        <Calendar className="w-4 h-4" /> Booked {new Date(booking.created_at).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col justify-end gap-3 min-w-[200px]">
+                                                <Link href={`/dashboard/customer/design/${booking.id}`}>
+                                                    <Button variant="outline" className="w-full border-2 border-neutral-100 font-black uppercase text-[10px] tracking-widest h-14 rounded-3xl group-hover:border-neutral-200">
+                                                        View Status
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+
+                            <div className="h-px bg-neutral-200/50 my-8" />
+
+                            <div className="flex justify-between items-center px-2">
+                                <h2 className="text-xl font-black text-neutral-900 tracking-tight uppercase italic flex items-center gap-2">
+                                    <Clock className="w-5 h-5 text-neutral-400" /> Other Service Requests
                                 </h2>
                                 <Button variant="ghost" className="text-xs font-black uppercase text-neutral-400 hover:text-neutral-900 transition-colors">
                                     View Archive <ChevronRight className="w-4 h-4" />
@@ -63,7 +110,7 @@ export default function CustomerDashboard() {
                             </div>
 
                             <div className="space-y-4">
-                                {requests.length === 0 ? (
+                                {requests.length === 0 && designBookings.length === 0 ? (
                                     <Card className="p-12 border-none bg-white rounded-[40px] text-center shadow-sm">
                                         <p className="text-neutral-400 font-bold uppercase text-xs tracking-widest">No active requests. Start your journey with a design session.</p>
                                         <Button className="mt-6 bg-neutral-900 font-black uppercase text-[10px] tracking-widest h-12 px-8 rounded-2xl">Book Expert now</Button>
