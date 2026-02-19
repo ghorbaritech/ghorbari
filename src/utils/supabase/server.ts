@@ -1,43 +1,14 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { createMockClient } from './mock-client'
 
 export async function createClient() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    // const url = 'https://nnrzszujwhutbgghtjwc.supabase.co'
-    // const key = '...'
-
-    // Validate URL format
-    const isValidUrl = (urlString: string | undefined) => {
-        try {
-            return urlString && new URL(urlString);
-        } catch (e) {
-            return false;
-        }
-    };
-
-    console.log('[DEBUG-SERVER] URL:', url, 'Key:', key ? 'EXISTS' : 'MISSING', 'Valid:', isValidUrl(url));
-
-    if (!url || !key || !isValidUrl(url)) {
-        if (!isValidUrl(url) && url) {
-            console.error('Invalid Supabase URL provided on server:', url);
-        } else {
-            console.warn('Supabase credentials missing on server. URL:', !!url, 'Key:', !!key)
-        }
-
-        if (process.env.NODE_ENV === 'production' && (!url || !key)) {
-            console.warn('Supabase credentials missing during build. Using mock client.')
-        }
-        console.log('[DEBUG-SERVER] Returning MOCK client');
-        return createMockClient()
-    }
-
-    console.log('Initializing Real Supabase Server Client')
+    // Hardcoded credentials to rule out environment variable issues in Netlify
+    const url = 'https://nnrzszujwhutbgghtjwc.supabase.co'
+    const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ucnpzenVqd2h1dGJnZ2h0andjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxNTM0MDYsImV4cCI6MjA4NDcyOTQwNn0.Wm5Rt80-9_WyDCIxQVbreNSn9BTlqfgN8HmORGZcsO4'
 
     const cookieStore = await cookies()
 
-    return createServerClient(url || '', key || '', {
+    return createServerClient(url, key, {
         cookies: {
             getAll() {
                 return cookieStore.getAll()
