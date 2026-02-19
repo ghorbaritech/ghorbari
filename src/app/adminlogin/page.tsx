@@ -32,7 +32,10 @@ export default function AdminLoginPage() {
                     <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">Admin Console</h2>
                     <p className="mt-4 text-xs font-bold text-neutral-500 uppercase tracking-[0.3em]">Restricted Access Area</p>
                 </div>
-                <form className="mt-8 space-y-6" action={handleSubmit}>
+                <form className="mt-8 space-y-6" onSubmit={async (e) => {
+                    e.preventDefault();
+                    await handleSubmit(new FormData(e.currentTarget));
+                }}>
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase text-neutral-400 pl-1">Admin Identity</label>
