@@ -123,13 +123,14 @@ export default function InventoryPage() {
                     seller_id: seller.id,
                     title: row.title || 'Untitled Product',
                     sku: row.sku || `SKU-${Math.random().toString(36).substring(7).toUpperCase()}`,
-                    category: row.category || 'General',
+                    // category: row.category, // Mapped to category_id below
                     base_price: parseFloat(row.base_price) || 0,
                     stock_quantity: parseInt(row.stock_quantity) || 0,
                     description: row.description || '',
                     is_quote_only: row.is_quote_only === 'true',
                     status: 'active',
-                    images: row.image_url ? [row.image_url] : ['https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800']
+                    images: row.image_url ? [row.image_url] : ['https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800'],
+                    category_id: categories.find(c => c.name === row.category)?.id || null
                 }));
 
                 const { error } = await supabase.from('products').insert(productsToInsert);
@@ -166,7 +167,7 @@ export default function InventoryPage() {
             sku: formData.get('sku') || 'SKU-' + Math.random().toString(36).substring(7).toUpperCase(),
             title: formData.get('title'),
             description: formData.get('description'),
-            category: formData.get('category'),
+            category_id: formData.get('category'), // Select value is now ID
             base_price: parseFloat(formData.get('price') as string) || 0,
             stock_quantity: parseInt(formData.get('stock') as string) || 0,
             is_quote_only: formData.get('is_quote') === 'on',
@@ -316,7 +317,7 @@ export default function InventoryPage() {
                                     </td>
                                     <td className="px-8 py-4">
                                         <Badge variant="secondary" className="bg-neutral-100 text-neutral-600 font-bold border-none">
-                                            {product.category || 'General'}
+                                            {categories.find(c => c.id === product.category_id)?.name || 'General'}
                                         </Badge>
                                     </td>
                                     <td className="px-8 py-4 text-right">
@@ -384,13 +385,13 @@ export default function InventoryPage() {
 
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Category</label>
-                                            <Select name="category" defaultValue={editingProduct?.category}>
+                                            <Select name="category" defaultValue={editingProduct?.category_id}>
                                                 <SelectTrigger className="h-14 rounded-2xl bg-neutral-50 border-none font-bold">
                                                     <SelectValue placeholder="Select Category" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {categories.map(c => (
-                                                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>

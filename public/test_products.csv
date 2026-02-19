@@ -1,6 +1,6 @@
 title,sku,category,base_price,stock_quantity,description,is_quote_only,image_url
-Seven Brand Cement,SKU-CMT-001,Construction Materials,520,500,High strength Portland Composite Cement for all types of construction.,false,https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&q=80&w=800
-BSRM Xtreme 500W,SKU-STL-002,Construction Materials,92000,50,High quality TMT bars for reinforced concrete structures. Price per ton.,false,https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800
-Red Bricks (1st Class),SKU-BRK-003,Construction Materials,12,10000,Premium quality burnt clay bricks. Uniform size and high durability.,false,https://images.unsplash.com/photo-1584466977773-e625c37cdd50?auto=format&fit=crop&q=80&w=800
-Berger Luxury Silk Emulsion,SKU-PNT-004,Finishing Materials,4500,100,Premium interior wall paint with silk finish. 5L bucket.,false,https://images.unsplash.com/photo-1562663474-6cbb3eaa4d14?auto=format&fit=crop&q=80&w=800
-Teak Wood Door Frame,SKU-WOD-005,Doors & Windows,15000,20,Solid Burma Teak wood door frame. Size 7ft x 3ft.,true,https://images.unsplash.com/photo-1505330622279-bf7d7fc918f4?auto=format&fit=crop&q=80&w=800
+Seven Brand Cement,SKU-CMT-001,Cement & Concrete,520,500,High strength Portland Composite Cement for all types of construction.,false,https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&q=80&w=800
+BSRM Xtreme 500W,SKU-STL-002,Steel & Metal,92000,50,High quality TMT bars for reinforced concrete structures. Price per ton.,false,https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800
+Red Bricks (1st Class),SKU-BRK-003,Cement & Concrete,12,10000,Premium quality burnt clay bricks. Uniform size and high durability.,false,https://images.unsplash.com/photo-1584466977773-e625c37cdd50?auto=format&fit=crop&q=80&w=800
+Berger Luxury Silk Emulsion,SKU-PNT-004,Paint & Carpentry,4500,100,Premium interior wall paint with silk finish. 5L bucket.,false,https://images.unsplash.com/photo-1562663474-6cbb3eaa4d14?auto=format&fit=crop&q=80&w=800
+Teak Wood Door Frame,SKU-WOD-005,Paint & Carpentry,15000,20,Solid Burma Teak wood door frame. Size 7ft x 3ft.,true,https://images.unsplash.com/photo-1505330622279-bf7d7fc918f4?auto=format&fit=crop&q=80&w=800
