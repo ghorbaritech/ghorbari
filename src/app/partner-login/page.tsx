@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from '@/app/auth/actions'
+import { useRouter } from 'next/navigation'
+import { partnerSignIn } from './actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Briefcase, Building2, TrendingUp } from 'lucide-react'
@@ -10,13 +11,22 @@ import Link from 'next/link'
 export default function PartnerLoginPage() {
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    const router = useRouter()
 
     async function handleSubmit(formData: FormData) {
         setLoading(true)
         setError(null)
-        const result = await signIn(formData, 'partner') // Role check handles both designer and seller
-        if (result?.error) {
-            setError(result.error)
+        try {
+            const result = await partnerSignIn(formData)
+
+            if (result?.error) {
+                setError(result.error)
+                setLoading(false)
+            } else if (result?.success) {
+                router.push('/dashboard')
+            }
+        } catch (err) {
+            setError("An unexpected error occurred. Please try again.")
             setLoading(false)
         }
     }
@@ -63,7 +73,10 @@ export default function PartnerLoginPage() {
                         <p className="mt-4 text-xs font-bold text-neutral-400 uppercase tracking-widest pl-1">Sign in to manage your professional studio or shop</p>
                     </div>
 
-                    <form className="space-y-6" action={handleSubmit}>
+                    <form className="space-y-6" onSubmit={async (e) => {
+                        e.preventDefault();
+                        await handleSubmit(new FormData(e.currentTarget));
+                    }}>
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase text-neutral-400 pl-1">Professional Email</label>
