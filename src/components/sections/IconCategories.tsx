@@ -5,31 +5,20 @@ import useEmblaCarousel from "embla-carousel-react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
-import {
-    LayoutGrid,
-    BrickWall,
-    Hammer,
-    PaintBucket,
-    Wrench,
-    Lightbulb,
-    Droplets,
-    HardHat
-} from "lucide-react";
-
 interface IconCategoriesProps {
     items?: any[];
     title?: string;
 }
 
 const DEFAULT_CATEGORIES = [
-    { name: "Building Materials", icon: BrickWall },
-    { name: "Steel & Rods", icon: Hammer },
-    { name: "Paints & Finishes", icon: PaintBucket },
-    { name: "Tools & Hardware", icon: Wrench },
-    { name: "Electrical", icon: Lightbulb },
-    { name: "Plumbing", icon: Droplets },
-    { name: "Safety Gear", icon: HardHat },
-    { name: "View All", icon: LayoutGrid },
+    { name: "Building Materials", icon: "BrickWall" },
+    { name: "Steel & Rods", icon: "Hammer" },
+    { name: "Paints & Finishes", icon: "PaintBucket" },
+    { name: "Tools & Hardware", icon: "Wrench" },
+    { name: "Electrical", icon: "Lightbulb" },
+    { name: "Plumbing", icon: "Droplets" },
+    { name: "Safety Gear", icon: "HardHat" },
+    { name: "View All", icon: "LayoutGrid" },
 ];
 
 import { useLanguage } from '@/context/LanguageContext';
@@ -60,7 +49,7 @@ export function IconCategories({ items = [], title = "Explore Categories" }: Ico
 
                     <div className="overflow-hidden cursor-grab active:cursor-grabbing mx-4" ref={emblaRef}>
                         <div className="flex -ml-4 touch-pan-y py-4">
-                            {displayItems.map((cat: any, idx) => (
+                            {displayItems.map((cat: any, idx: number) => (
                                 <div key={idx} className="flex-[0_0_22%] min-w-0 pl-4 sm:flex-[0_0_16%] md:flex-[0_0_12.5%] lg:flex-[0_0_10%]">
                                     <Link href={`/products?category=${cat.name}`} className="flex flex-col items-center gap-3 group">
                                         <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-neutral-50 flex items-center justify-center text-neutral-400
