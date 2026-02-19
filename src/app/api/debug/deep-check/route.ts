@@ -15,7 +15,7 @@ export async function GET() {
     const checks = {
         user_id: user?.id,
         role: role,
-        tables: {}
+        tables: {} as any
     };
 
     const tables = ['profiles', 'service_requests', 'designers'];

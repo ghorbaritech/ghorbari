@@ -33,10 +33,10 @@ export default function AdminCMSPage() {
         const fetchContent = async () => {
             setLoading(true);
             try {
-                const hero = await getHomeContent('hero_banner');
+                const hero: any = await getHomeContent('hero_banner');
                 if (hero) setHeroBanner(hero.content);
 
-                const promo = await getHomeContent('promotional_banner');
+                const promo: any = await getHomeContent('promotional_banner');
                 if (promo) setPromoBanner(promo.content);
             } catch (error) {
                 console.error(error);

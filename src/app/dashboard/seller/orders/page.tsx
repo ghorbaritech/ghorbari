@@ -89,7 +89,7 @@ export default function SellerOrdersPage() {
                 const templateStages = await getApplicableMilestones('product'); // Default product milestones
 
                 if (templateStages) {
-                    const merged: MilestoneStatus[] = templateStages.map(stageName => {
+                    const merged: MilestoneStatus[] = templateStages.map((stageName: string) => {
                         const existing = current.find((m: any) => m.name === stageName);
                         const isCompleted = existing?.status === 'completed';
                         return {

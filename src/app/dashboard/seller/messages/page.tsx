@@ -45,7 +45,7 @@ export default function SellerMessagesPage() {
         // Subscribe to new messages (global for notification badge, or specific logic)
         const channel = supabase
             .channel('public:messages')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
                 // Refresh if current conversation
                 if (selectedConversation && payload.new.conversation_id === selectedConversation.id) {
                     setMessages(prev => [...prev, payload.new as Message])
@@ -90,7 +90,7 @@ export default function SellerMessagesPage() {
 
         if (convs) {
             // Enrich with partner details
-            const enriched = await Promise.all(convs.map(async (c) => {
+            const enriched = await Promise.all(convs.map(async (c: any) => {
                 const partnerId = c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id
                 const { data: partner } = await supabase.from('profiles').select('full_name, email, avatar_url').eq('id', partnerId).single()
                 return { ...c, participant: partner }

@@ -28,6 +28,7 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import { CompareProvider } from "@/context/CompareContext";
 import { CompareStickyBar } from "@/components/ui/CompareStickyBar";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -45,6 +46,7 @@ export default function RootLayout({
               {children}
               <Toaster />
               <CompareStickyBar />
+              <SonnerToaster />
             </CompareProvider>
           </CartProvider>
         </LanguageProvider>

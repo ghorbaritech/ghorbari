@@ -64,7 +64,7 @@ export default function ConciergeOrderPage() {
     }, [productsSearch])
 
     async function loadData() {
-        const { servicePackages, providers } = await getConciergeData()
+        const { servicePackages, providers } = await getConciergeData() as any
         setServicePackages(servicePackages)
         setProviders(providers)
     }

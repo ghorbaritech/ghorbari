@@ -11,7 +11,7 @@ export async function checkUserStatus(email: string) {
 
     // 1. Check Auth User (Admin Level)
     const { data: { users }, error: listError } = await admin.auth.admin.listUsers()
-    const user = users?.find(u => u.email === email)
+    const user = users?.find((u: any) => u.email === email)
 
     if (!user) {
         return { error: 'User not found in Auth system', listError }
@@ -44,7 +44,7 @@ export async function checkUserStatus(email: string) {
 export async function manualFixProfile(email: string) {
     const admin = createAdminClient()
     const { data: { users } } = await admin.auth.admin.listUsers()
-    const user = users?.find(u => u.email === email)
+    const user = users?.find((u: any) => u.email === email)
 
     if (!user) return { error: 'User not found' }
 
@@ -95,7 +95,7 @@ export async function manualFixProfile(email: string) {
 export async function fixSellerRecord(email: string) {
     const admin = createAdminClient()
     const { data: { users } } = await admin.auth.admin.listUsers()
-    const user = users?.find(u => u.email === email)
+    const user = users?.find((u: any) => u.email === email)
 
     if (!user) return { error: 'User not found' }
 

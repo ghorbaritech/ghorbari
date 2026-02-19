@@ -45,7 +45,7 @@ export default function AdminMessagesPage() {
 
         const channel = supabase
             .channel('public:messages')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
                 if (selectedConversation && payload.new.conversation_id === selectedConversation.id) {
                     setMessages(prev => [...prev, payload.new as Message])
                     scrollToBottom()
@@ -81,7 +81,7 @@ export default function AdminMessagesPage() {
             .order('updated_at', { ascending: false })
 
         if (convs) {
-            const enriched = await Promise.all(convs.map(async (c) => {
+            const enriched = await Promise.all(convs.map(async (c: any) => {
                 const partnerId = c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id
                 const { data: partner } = await supabase.from('profiles').select('full_name, email, avatar_url, role').eq('id', partnerId).single()
                 return { ...c, participant: partner }

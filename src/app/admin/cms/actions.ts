@@ -45,7 +45,7 @@ export async function getHomeContent() {
 
             if (categories) {
                 const enrichedItems = itemsToEnrich.map((item: any) => {
-                    const freshCat = categories.find(c => c.id === item.id)
+                    const freshCat = categories.find((c: any) => c.id === item.id)
                     return freshCat ? {
                         ...item,
                         name: freshCat.name,

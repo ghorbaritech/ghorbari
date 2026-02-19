@@ -55,7 +55,7 @@ function ChatInterface() {
 
         const channel = supabase
             .channel('public:messages')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
                 if (selectedConversation && payload.new.conversation_id === selectedConversation.id) {
                     setMessages(prev => [...prev, payload.new as Message])
                     scrollToBottom()
@@ -93,7 +93,7 @@ function ChatInterface() {
             .order('updated_at', { ascending: false })
 
         if (convs) {
-            const enriched = await Promise.all(convs.map(async (c) => {
+            const enriched = await Promise.all(convs.map(async (c: any) => {
                 const pId = c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id
                 const { data: partner } = await supabase.from('profiles').select('full_name, email, avatar_url, role').eq('id', pId).single()
                 return { ...c, participant: partner }
@@ -226,7 +226,7 @@ function ChatInterface() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${c.participant?.role === 'admin' ? 'bg-neutral-900 text-white' :
-                                                    c.participant?.role === 'seller' ? 'bg-orange-100 text-orange-700' : 'bg-neutral-100 text-neutral-500'
+                                                c.participant?.role === 'seller' ? 'bg-orange-100 text-orange-700' : 'bg-neutral-100 text-neutral-500'
                                                 }`}>
                                                 {c.participant?.role || 'User'}
                                             </span>

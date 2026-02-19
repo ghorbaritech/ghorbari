@@ -60,11 +60,11 @@ export async function getApplicableMilestones(type: string, categoryId?: string)
     if (error) return []; // Fallback
 
     // Find specific match
-    const specific = data.find(t => t.category_id === categoryId);
+    const specific = (data as any[])?.find((t: any) => t.category_id === categoryId);
     if (specific) return specific.stages;
 
     // Find default for type
-    const global = data.find(t => !t.category_id);
+    const global = (data as any[])?.find((t: any) => !t.category_id);
     return global ? global.stages : null; // returns string[] or null
 }
 

@@ -13,8 +13,6 @@ const topBanners = [
     {
         title: "Structural Design",
         icon: Building2,
-        title: "Structural Design",
-        icon: Building2,
         href: "/services/design/book?service=structural",
         overlay: "bg-[#7c2d12]/90",
         image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200&fit=crop"

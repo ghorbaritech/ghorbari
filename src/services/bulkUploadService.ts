@@ -17,7 +17,7 @@ export function parseCSV(file: File): Promise<ProductUploadRow[]> {
             if (!text) return resolve([]);
 
             const lines = text.split(/\r?\n/);
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]+/g, ''));
+            const headers = lines[0].split(',').map((h: string) => h.trim().toLowerCase().replace(/['"]+/g, ''));
 
             const results: ProductUploadRow[] = [];
 
@@ -50,7 +50,7 @@ export async function uploadProducts(products: ProductUploadRow[], sellerId: str
 
     // 1. Fetch categories to map slugs to IDs
     const { data: categories } = await supabase.from('product_categories').select('id, slug');
-    const categoryMap = new Map(categories?.map(c => [c.slug, c.id]));
+    const categoryMap = new Map(categories?.map((c: any) => [c.slug, c.id]));
 
     const validProducts = [];
     const errors = [];

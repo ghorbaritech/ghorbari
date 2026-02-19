@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function SellerFinancePage() {
     const [balance, setBalance] = useState(0);
-    const [ledger, setLedger] = useState<LedgerEntry[]>([]);
+    const [ledger, setLedger] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
     const [filterType, setFilterType] = useState('all');
