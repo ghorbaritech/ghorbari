@@ -3,15 +3,20 @@ import { createClient } from '@/utils/supabase/client'
 export async function getProducts(options: {
     query?: string,
     categoryId?: string,
+    categoryName?: string,
     minPrice?: number,
     maxPrice?: number,
     limit?: number
 } = {}) {
     const supabase = createClient()
+
+    // Use !inner if filtering by category name to ensure we only get products with that category
+    const categoryJoin = options.categoryName ? 'category:product_categories!inner(name)' : 'category:product_categories(name)'
+
     let q = supabase.from('products').select(`
     *,
     seller:sellers(business_name),
-    category:product_categories(name)
+    ${categoryJoin}
   `).eq('status', 'active')
 
     if (options.query) {
@@ -23,6 +28,10 @@ export async function getProducts(options: {
 
     if (options.categoryId) {
         q = q.eq('category_id', options.categoryId)
+    }
+
+    if (options.categoryName) {
+        q = q.eq('category.name', options.categoryName)
     }
 
     if (options.minPrice) {

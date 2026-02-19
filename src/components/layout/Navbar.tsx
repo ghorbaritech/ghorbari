@@ -101,10 +101,15 @@ export function Navbar() {
                             ) : (
                                 <>
                                     <span className="text-white/80">HI, {profile?.full_name?.split(' ')[0]}</span>
+                                    <span className="w-px h-3 bg-white/30"></span>
+                                    <Link href="/dashboard" className="hover:text-white/80 transition-colors flex items-center gap-2">
+                                        <LayoutDashboard className="w-3 h-3" />
+                                        DASHBOARD
+                                    </Link>
                                     <Button
                                         variant="ghost"
                                         onClick={handleSignOut}
-                                        className="font-bold text-white hover:text-white/80 uppercase text-xs p-0 h-auto"
+                                        className="font-bold text-white hover:text-white/80 uppercase text-xs p-0 h-auto ml-2"
                                     >
                                         <LogOut className="w-4 h-4" />
                                     </Button>
@@ -126,7 +131,7 @@ export function Navbar() {
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <Link href={user ? "/profile" : "/login"} className="text-white hover:text-white/80 transition-colors p-1">
+                            <Link href={user ? "/dashboard" : "/login"} className="text-white hover:text-white/80 transition-colors p-1">
                                 <User className="w-5 h-5" />
                             </Link>
 
@@ -163,63 +168,66 @@ export function Navbar() {
                         <Link href="/products" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_marketplace}</Link>
                         <Link href="/services" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_structural_health}</Link>
                         <Link href="/services" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_renovation}</Link>
+                        {/* <Link href="/compare" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">Compare</Link> */}
                     </nav>
                 </div>
             </div>
 
-            {isMenuOpen && (
-                <div className="md:hidden p-6 bg-white border-b absolute w-full shadow-2xl z-50 flex flex-col gap-8">
-                    <div className="relative">
-                        <Input
-                            placeholder={t.nav_search_placeholder}
-                            className="w-full pl-12 h-12 bg-neutral-50 rounded-xl"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                        />
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+            {
+                isMenuOpen && (
+                    <div className="md:hidden p-6 bg-white border-b absolute w-full shadow-2xl z-50 flex flex-col gap-8">
+                        <div className="relative">
+                            <Input
+                                placeholder={t.nav_search_placeholder}
+                                className="w-full pl-12 h-12 bg-neutral-50 rounded-xl"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                            />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                        </div>
+
+                        <nav className="flex flex-col gap-6 font-bold text-neutral-800 uppercase text-sm tracking-tight">
+                            <Link href="/services/design/book" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
+                                {t.nav_design_planning} <ArrowRight className="w-4 h-4 text-neutral-300" />
+                            </Link>
+                            <Link href="/products" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
+                                {t.nav_marketplace} <ArrowRight className="w-4 h-4 text-neutral-300" />
+                            </Link>
+                            <Link href="/services" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
+                                {t.nav_structural_health} <ArrowRight className="w-4 h-4 text-neutral-300" />
+                            </Link>
+                            <Link href="/services" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
+                                {t.nav_renovation} <ArrowRight className="w-4 h-4 text-neutral-300" />
+                            </Link>
+                        </nav>
+
+                        <div className="h-px bg-neutral-100"></div>
+
+                        <div className="flex flex-col gap-4">
+                            {!user ? (
+                                <>
+                                    <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                                        <Button variant="outline" className="w-full h-12 font-bold uppercase tracking-tight rounded-xl">{t.nav_login}</Button>
+                                    </Link>
+                                    <Link href="/register" onClick={() => setIsMenuOpen(false)}>
+                                        <Button className="w-full h-12 font-bold uppercase tracking-tight rounded-xl shadow-lg shadow-primary-200">{t.nav_create_account}</Button>
+                                    </Link>
+                                </>
+                            ) : (
+                                <Button
+                                    onClick={handleSignOut}
+                                    variant="outline"
+                                    className="w-full h-12 font-bold uppercase tracking-tight text-rose-600 border-rose-200 rounded-xl"
+                                >
+                                    {t.nav_logout}
+                                </Button>
+                            )}
+                        </div>
                     </div>
-
-                    <nav className="flex flex-col gap-6 font-bold text-neutral-800 uppercase text-sm tracking-tight">
-                        <Link href="/services/design/book" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
-                            {t.nav_design_planning} <ArrowRight className="w-4 h-4 text-neutral-300" />
-                        </Link>
-                        <Link href="/products" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
-                            {t.nav_marketplace} <ArrowRight className="w-4 h-4 text-neutral-300" />
-                        </Link>
-                        <Link href="/services" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
-                            {t.nav_structural_health} <ArrowRight className="w-4 h-4 text-neutral-300" />
-                        </Link>
-                        <Link href="/services" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
-                            {t.nav_renovation} <ArrowRight className="w-4 h-4 text-neutral-300" />
-                        </Link>
-                    </nav>
-
-                    <div className="h-px bg-neutral-100"></div>
-
-                    <div className="flex flex-col gap-4">
-                        {!user ? (
-                            <>
-                                <Link href="/login" onClick={() => setIsMenuOpen(false)}>
-                                    <Button variant="outline" className="w-full h-12 font-bold uppercase tracking-tight rounded-xl">{t.nav_login}</Button>
-                                </Link>
-                                <Link href="/register" onClick={() => setIsMenuOpen(false)}>
-                                    <Button className="w-full h-12 font-bold uppercase tracking-tight rounded-xl shadow-lg shadow-primary-200">{t.nav_create_account}</Button>
-                                </Link>
-                            </>
-                        ) : (
-                            <Button
-                                onClick={handleSignOut}
-                                variant="outline"
-                                className="w-full h-12 font-bold uppercase tracking-tight text-rose-600 border-rose-200 rounded-xl"
-                            >
-                                {t.nav_logout}
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            )}
-        </header>
+                )
+            }
+        </header >
     );
 }
 

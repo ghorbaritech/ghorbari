@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -299,7 +299,7 @@ function DesignBookingWizard() {
                         onNext={handleSubmit}
                         onBack={prevStep}
                         isLastStep
-                        canNext={!!formData.floors}
+                        canNext={!!formData.futureFloors}
                     >
                         <div className="space-y-8">
                             {/* Soil Test */}
@@ -491,7 +491,7 @@ function DesignBookingWizard() {
     return null;
 }
 
-function MainLayout({ children }: { children: React.ReactNode }) {
+function MainLayout({ children }: { children: ReactNode }) {
     return (
         <main className="min-h-screen flex flex-col font-sans bg-neutral-50">
             <Navbar />

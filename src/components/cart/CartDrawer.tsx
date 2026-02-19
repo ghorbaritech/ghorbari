@@ -118,12 +118,12 @@ export function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClose: () =
                                     <span>৳{totalAmount.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between text-sm text-neutral-600 font-medium tracking-tight">
-                                    <span>VAT (7.5%)</span>
-                                    <span>৳{vatAmount.toLocaleString()}</span>
-                                </div>
-                                <div className="flex justify-between text-sm text-neutral-600 font-medium tracking-tight">
                                     <span>Platform Charges (2%)</span>
                                     <span>৳{platformCharges.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between text-sm text-neutral-600 font-medium tracking-tight">
+                                    <span>VAT (7.5%)</span>
+                                    <span>৳{vatAmount.toLocaleString()}</span>
                                 </div>
                                 <div className="pt-2 border-t flex justify-between text-lg font-black text-neutral-900 tracking-tighter">
                                     <span>Total Amount</span>

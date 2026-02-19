@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getPlatformConfigs, PlatformConfig } from "@/services/orderService";
+import { getPlatformConfigs, PlatformConfig } from "@/services/settingsService";
 
 export interface CartItem {
     id: string;
@@ -115,8 +115,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const calculations = items.reduce((acc, item) => {
         const rates = getItemRates(item.categoryId);
         const itemTotal = item.price * item.quantity;
-        const itemVat = itemTotal * rates.vat;
         const itemFee = itemTotal * rates.fee;
+        const itemVat = itemFee * rates.vat;
 
         acc.totalAmount += itemTotal;
         acc.vatAmount += itemVat;

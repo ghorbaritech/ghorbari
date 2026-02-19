@@ -1,8 +1,19 @@
 import PartnerOnboardingForm from '@/components/forms/PartnerOnboardingForm'
 import { Button } from '@/components/ui/button'
 import { generateDemoPartners } from './actions'
+import { createClient } from '@/utils/supabase/server'
 
-export default function AdminOnboardingPage() {
+export default async function AdminOnboardingPage() {
+    const supabase = await createClient()
+
+    // Fetch top-level product categories for the form
+    const { data: categories } = await supabase
+        .from('product_categories')
+        .select('id, name')
+        .eq('type', 'product')
+        .is('parent_id', null)
+        .order('name')
+
     return (
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-6xl mx-auto">
@@ -32,7 +43,7 @@ export default function AdminOnboardingPage() {
                         </form>
                     </div>
 
-                    <PartnerOnboardingForm />
+                    <PartnerOnboardingForm availableCategories={categories || []} />
                 </div>
             </div>
         </div>

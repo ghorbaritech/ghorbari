@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from '@/app/auth/actions'
+import { adminSignIn } from './actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ShieldCheck } from 'lucide-react'
@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
     async function handleSubmit(formData: FormData) {
         setLoading(true)
         setError(null)
-        const result = await signIn(formData, 'admin')
+        const result = await adminSignIn(formData)
         if (result?.error) {
             setError(result.error)
             setLoading(false)

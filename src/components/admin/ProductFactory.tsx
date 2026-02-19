@@ -7,20 +7,17 @@ import { Input } from '@/components/ui/input'
 import {
     Package,
     Upload,
-    Plus,
-    FileText,
     AlertCircle,
     CheckCircle2,
     Loader2,
-    Building2,
-    Tag,
     Image as ImageIcon,
     ChevronRight
 } from 'lucide-react'
 import { getCategories, createProduct } from '@/services/productService'
 import { createClient } from '@/utils/supabase/client'
+import { cn } from '@/lib/utils'
 
-export default function ProductManagementPage() {
+export function ProductFactory() {
     const [loading, setLoading] = useState(false)
     const [categories, setCategories] = useState<any[]>([])
     const [sellers, setSellers] = useState<any[]>([])
@@ -29,12 +26,24 @@ export default function ProductManagementPage() {
 
     useEffect(() => {
         async function loadInitialData() {
-            const cats = await getCategories()
-            setCategories(cats)
+            try {
+                console.log('ProductFactory: Loading data...')
+                const cats = await getCategories()
+                setCategories(cats)
 
-            const supabase = createClient()
-            const { data: slrs } = await supabase.from('sellers').select('id, business_name')
-            setSellers(slrs || [])
+                const supabase = createClient()
+                const { data: slrs, error: sellerError } = await supabase.from('sellers').select('id, business_name')
+
+                if (sellerError) {
+                    console.error('ProductFactory: Seller fetch error:', sellerError)
+                    throw sellerError
+                }
+
+                setSellers(slrs || [])
+            } catch (err) {
+                console.error('ProductFactory: loadInitialData failed:', err)
+                setError('Failed to load initial data. Check console.')
+            }
         }
         loadInitialData()
     }, [])
@@ -102,7 +111,7 @@ export default function ProductManagementPage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in duration-700">
+        <div className="space-y-12 animate-in fade-in duration-700">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-2">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-widest">
@@ -224,8 +233,4 @@ export default function ProductManagementPage() {
             </div>
         </div>
     )
-}
-
-function cn(...classes: any[]) {
-    return classes.filter(Boolean).join(' ')
 }

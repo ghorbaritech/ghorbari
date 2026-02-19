@@ -126,6 +126,7 @@ export default function ServicesPage() {
                                         sellerId={service.seller_id}
                                         sellerName={service.seller?.business_name}
                                         tag={service.brand || "Verified"}
+                                        href={`/services/${service.id}`}
                                     />
                                 ))}
                             </div>

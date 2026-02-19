@@ -91,7 +91,7 @@ export default function SellerDashboard() {
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
                             <h1 className="text-4xl font-black text-neutral-900 tracking-tight italic">{seller?.business_name || 'Merchant Console'}</h1>
-                            <span className="bg-neutral-900 text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest">PRO SELLER</span>
+                            <span className="bg-neutral-900 text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest">{seller?.business_type || 'Retailer'}</span>
                         </div>
                         <p className="text-neutral-500 font-bold uppercase text-xs tracking-widest">Business ID: {seller?.id?.slice(0, 8).toUpperCase()} • Active in {seller?.primary_categories?.join(', ')}</p>
                     </div>
@@ -152,6 +152,38 @@ export default function SellerDashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Orders Management */}
                     <div className="lg:col-span-8 space-y-8">
+                        {/* Profile Summary / Store Health */}
+                        <Card className="p-8 border-none bg-white rounded-[40px] shadow-sm mb-8">
+                            <div className="flex items-center gap-6">
+                                <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center font-black text-3xl text-neutral-300">
+                                    {seller?.business_name?.charAt(0) || 'S'}
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h2 className="text-2xl font-black text-neutral-900 italic uppercase">My Store Health</h2>
+                                            <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mt-1">Status: <span className="text-green-600">{seller?.is_active ? 'ONLINE' : 'OFFLINE'}</span> • Verification: <span className="text-blue-600">{seller?.verification_status || 'Pending'}</span></p>
+                                        </div>
+                                        <Button variant="outline" className="rounded-xl border-neutral-200 uppercase text-[10px] font-black tracking-widest">Edit Profile</Button>
+                                    </div>
+                                    <div className="mt-6 grid grid-cols-3 gap-4">
+                                        <div className="p-4 bg-neutral-50 rounded-2xl">
+                                            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Rating</p>
+                                            <p className="text-xl font-black text-neutral-900">4.9/5.0</p>
+                                        </div>
+                                        <div className="p-4 bg-neutral-50 rounded-2xl">
+                                            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Response Time</p>
+                                            <p className="text-xl font-black text-neutral-900">~2 Hrs</p>
+                                        </div>
+                                        <div className="p-4 bg-neutral-50 rounded-2xl">
+                                            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Completion</p>
+                                            <p className="text-xl font-black text-neutral-900">98%</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+
                         <div className="flex justify-between items-center px-4">
                             <h2 className="text-xl font-black text-neutral-900 italic tracking-tight uppercase flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-neutral-400" /> Incoming Order Flow

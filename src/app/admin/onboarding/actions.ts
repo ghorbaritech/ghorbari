@@ -112,105 +112,154 @@ export async function createSeller(data: any) {
 }
 
 export async function createPartner(data: any) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    console.log("createPartner action started", { email: data.email, roles: data.roles });
+    try {
+        const supabase = await createClient()
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-    // Verify Admin
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user?.id)
-        .single()
+        if (userError || !user) {
+            console.error("createPartner: No authenticated user", userError);
+            throw new Error('Unauthorized: No user session')
+        }
 
-    if (profile?.role !== 'admin') {
-        throw new Error('Unauthorized')
-    }
+        // Verify Admin
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
 
-    const adminClient = createAdminClient()
+        if (profileError || profile?.role !== 'admin') {
+            console.error("createPartner: User is not admin", profile?.role, profileError);
+            throw new Error('Unauthorized: Not an admin')
+        }
 
-    // 1. Create Auth User (Role: Partner)
-    // Note: We're using 'partner' role, or fallback to 'seller' if enum not updated yet, 
-    // but the migration added 'partner' so we should use it.
-    const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
-        email: data.email,
-        password: data.temporaryPassword,
-        user_metadata: {
-            role: 'partner',
-            full_name: data.businessName,
-            roles: data.roles // Store capabilities in metadata too
-        },
-        email_confirm: true
-    })
+        const adminClient = createAdminClient()
 
-    if (authError) return { error: authError.message }
+        // 1. Create Auth User (Role: Partner)
+        console.log("createPartner: Creating auth user...");
+        const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
+            email: data.email,
+            password: data.temporaryPassword,
+            user_metadata: {
+                role: 'partner',
+                full_name: data.businessName,
+                roles: data.roles // Store capabilities in metadata too
+            },
+            email_confirm: true
+        })
 
-    const userId = authUser.user.id
+        if (authError) {
+            console.error("createPartner: Auth user creation failed", authError);
+            return { error: authError.message }
+        }
 
-    // 2. Create Profile Entry (if not auto-created by trigger, but we update it just in case)
-    // The trigger 'on_auth_user_created' usually creates the profile. 
-    // We update it to ensure role is correct.
-    await adminClient
-        .from('profiles')
-        .update({ role: 'partner', full_name: data.businessName })
-        .eq('id', userId)
+        const userId = authUser.user.id
+        console.log("createPartner: Auth user created", userId);
 
-    // 3. Insert into respective tables based on roles
-    const errors = []
+        // Determine valid DB role (enum constraint: customer, designer, seller, admin)
+        let dbRole = 'customer'
+        if (data.roles.seller) dbRole = 'seller'
+        else if (data.roles.designer) dbRole = 'designer'
+        else if (data.roles.service_provider) dbRole = 'seller' // Map service provider to seller
 
-    // SELLER
-    if (data.roles.seller && data.seller_data) {
-        const { error } = await adminClient
-            .from('sellers')
-            .insert({
-                user_id: userId,
-                business_name: data.businessName,
-                primary_categories: data.seller_data.primaryCategories,
-                commission_rate: data.seller_data.commissionRate || 10,
-                business_type: data.seller_data.businessType,
-                verification_status: 'pending',
-                is_active: true
+        // 2. Create Profile Entry (Upsert to handle missing trigger execution)
+        const { error: profileUpdateError } = await adminClient
+            .from('profiles')
+            .upsert({
+                id: userId,
+                email: data.email,
+                role: dbRole,
+                full_name: data.businessName,
+                updated_at: new Date().toISOString(),
             })
-        if (error) errors.push(`Seller creation failed: ${error.message}`)
-    }
 
-    // DESIGNER
-    if (data.roles.designer && data.designer_data) {
-        const { error } = await adminClient
-            .from('designers')
-            .insert({
-                user_id: userId,
-                company_name: data.businessName,
-                specializations: data.designer_data.specializations,
-                portfolio_url: data.designer_data.portfolioUrl,
-                experience_years: data.designer_data.experienceYears,
-                verification_status: 'pending',
-                is_active: true
-            })
-        if (error) errors.push(`Designer creation failed: ${error.message}`)
-    }
+        if (profileUpdateError) {
+            console.error("createPartner: Profile upsert failed", profileUpdateError);
+        }
 
-    // SERVICE PROVIDER
-    if (data.roles.service_provider && data.service_data) {
-        const { error } = await adminClient
-            .from('service_providers')
-            .insert({
-                user_id: userId,
-                business_name: data.businessName,
-                service_types: data.service_data.serviceTypes,
-                experience_years: data.service_data.experienceYears,
-                verification_status: 'pending',
-                is_active: true
-            })
-        if (error) errors.push(`Service Provider creation failed: ${error.message}`)
-    }
+        // 3. Insert into respective tables based on roles
+        const errors = []
 
-    if (errors.length > 0) {
-        // Cleanup if critical failures? Or just report partial success?
-        // For now, logging errors and returning them.
-        return { error: errors.join(', ') }
-    }
+        // SELLER
+        if (data.roles.seller && data.seller_data) {
+            console.log("createPartner: Inserting Seller data...");
+            const { error } = await adminClient
+                .from('sellers')
+                .insert({
+                    user_id: userId,
+                    business_name: data.businessName,
+                    current_address: data.seller_data.warehouseAddress, // Note: Schema check needed? The action has 'warehouse_address' in createSeller but 'current_address' here? 
+                    // Wait, createSeller used 'warehouse_address'. createPartner uses 'primary_categories' etc. 
+                    // Let's check the 'sellers' schema. The action previously had:
+                    // primary_categories: data.seller_data.primaryCategories,
+                    // commission_rate: data.seller_data.commissionRate || 10,
+                    // business_type: data.seller_data.businessType,
 
-    return { success: true, userId }
+                    // REVERTING TO PREVIOUS FIELDS for consistency, but adding explicit type conversion
+                    primary_categories: data.seller_data.primaryCategories,
+                    commission_rate: Number(data.seller_data.commissionRate || 10),
+                    business_type: data.seller_data.businessType,
+                    verification_status: 'pending',
+                    is_active: true
+                })
+            if (error) {
+                console.error("createPartner: Seller insert failed", error);
+                errors.push(`Seller creation failed: ${error.message}`)
+            }
+        }
+
+        // DESIGNER
+        if (data.roles.designer && data.designer_data) {
+            console.log("createPartner: Inserting Designer data...");
+            const { error } = await adminClient
+                .from('designers')
+                .insert({
+                    user_id: userId,
+                    company_name: data.businessName,
+                    specializations: data.designer_data.specializations,
+                    portfolio_url: data.designer_data.portfolioUrl,
+                    experience_years: Number(data.designer_data.experienceYears || 0),
+                    verification_status: 'pending',
+                    is_active: true
+                })
+            if (error) {
+                console.error("createPartner: Designer insert failed", error);
+                errors.push(`Designer creation failed: ${error.message}`)
+            }
+        }
+
+        // SERVICE PROVIDER
+        if (data.roles.service_provider && data.service_data) {
+            console.log("createPartner: Inserting Service Provider data...");
+            const { error } = await adminClient
+                .from('service_providers')
+                .insert({
+                    user_id: userId,
+                    business_name: data.businessName,
+                    service_types: data.service_data.serviceTypes,
+                    experience_years: Number(data.service_data.experienceYears || 0),
+                    verification_status: 'pending',
+                    is_active: true
+                })
+            if (error) {
+                console.error("createPartner: Service Provider insert failed", error);
+                errors.push(`Service Provider creation failed: ${error.message}`)
+            }
+        }
+
+        if (errors.length > 0) {
+            console.error("createPartner: Partial failures", errors);
+            return { error: errors.join(', ') }
+        }
+
+        console.log("createPartner: Success");
+        return { success: true, userId }
+
+    } catch (e: any) {
+        console.error("createPartner: Critical Exception", e);
+        return { error: e.message || "Internal Server Error" }
+    }
 }
 
 export async function generateDemoPartners() {

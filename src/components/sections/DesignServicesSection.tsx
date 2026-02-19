@@ -1,128 +1,140 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Star } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import { useRef } from 'react'
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react"
 
-const designServices = [
+interface DesignServicesSectionProps {
+    title?: string
+    items?: any[]
+    sliderCount?: number
+}
+
+import Link from "next/link"
+
+const DEFAULT_ITEMS = [
     {
-        id: "arch",
-        title: "Architectural Design",
-        description: "Complete building blueprints & permits",
-        image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&h=400&fit=crop",
+        id: 1,
+        title: 'Architectural Design',
+        description: 'Complete building blueprints & permits',
+        image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=400&fit=crop',
         rating: 4.9,
         projects: 234,
-        priceFrom: "৳5000",
-        link: "/services/design/book?service=architectural"
+        price: 5000
     },
     {
-        id: "interior",
-        title: "Interior Design",
-        description: "Transform your living spaces",
-        image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&h=400&fit=crop",
+        id: 2,
+        title: 'Interior Design',
+        description: 'Modern & functional space planning',
+        image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&h=400&fit=crop',
         rating: 4.8,
-        projects: 567,
-        priceFrom: "৳2500",
-        link: "/services/design/book?service=interior"
+        projects: 156,
+        price: 25000
     },
     {
-        id: "3d",
-        title: "3D Visualization",
-        description: "See your project before building",
-        image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=400&fit=crop",
+        id: 3,
+        title: 'Structural Engineering',
+        description: 'Safety analysis & load calculations',
+        image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&h=400&fit=crop',
+        rating: 5.0,
+        projects: 89,
+        price: 12000
+    },
+    {
+        id: 4,
+        title: 'Landscape Design',
+        description: 'Outdoor gardens & patio planning',
+        image: 'https://images.unsplash.com/photo-1557429287-b2e26467fc2b?w=600&h=400&fit=crop',
         rating: 4.7,
-        projects: 189,
-        priceFrom: "৳1500",
-        link: "/services/design/book?service=architectural"
+        projects: 112,
+        price: 8000
     },
-    {
-        id: "landscape",
-        title: "Landscape Design",
-        description: "Outdoor spaces & garden planning",
-        image: "https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600&h=400&fit=crop",
-        rating: 4.8,
-        projects: 98,
-        priceFrom: "৳3000",
-        link: "/services/design/book?service=architectural"
-    }
-];
+]
 
-export function DesignServicesSection() {
+export function DesignServicesSection({ title = 'Design & Planning', items = [], sliderCount = 5 }: DesignServicesSectionProps) {
+    const scrollContainerRef = useRef<HTMLDivElement>(null)
+    const rawItems = items.length > 0 ? items : DEFAULT_ITEMS
+    // Show more items by default if the screen allows
+    const displayItems = rawItems.slice(0, Math.max(sliderCount, 5))
+
+    const scroll = (direction: 'left' | 'right') => {
+        if (scrollContainerRef.current) {
+            const scrollAmount = 300
+            scrollContainerRef.current.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
+            })
+        }
+    }
+
     return (
-        <section className="py-6 bg-white">
+        <section className="pt-4 pb-12 bg-white text-neutral-900 relative">
             <div className="container mx-auto px-8">
-                <div className="flex justify-between items-end mb-6">
-                    <div>
-                        <h2 className="text-2xl font-bold text-neutral-900 capitalize tracking-tight">
-                            Design & Planning Services
+                <div className="flex justify-between items-end mb-8">
+                    <div className="space-y-1">
+                        <span className="text-primary-600 font-bold tracking-widest text-xs uppercase">Expert Consultation</span>
+                        <h2 className="text-3xl font-bold tracking-tight text-neutral-900">
+                            {title}
                         </h2>
-                        <div className="h-1 w-20 bg-primary-600 mt-2 rounded-full" />
                     </div>
-                    <Link href="/services/design">
-                        <Button variant="ghost" className="text-neutral-500 hover:text-primary-600 font-bold uppercase tracking-widest text-xs">
-                            View All <ArrowRight className="ml-2 w-4 h-4" />
+
+                    <div className="flex gap-2 lg:hidden">
+                        <Button onClick={() => scroll('left')} variant="outline" size="icon" className="rounded-full border-neutral-200 hover:bg-neutral-100 hover:text-black">
+                            <ChevronLeft className="h-5 w-5" />
                         </Button>
-                    </Link>
+                        <Button onClick={() => scroll('right')} variant="outline" size="icon" className="rounded-full border-neutral-200 hover:bg-neutral-100 hover:text-black">
+                            <ChevronRight className="h-5 w-5" />
+                        </Button>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {designServices.map((service) => (
-                        <div
-                            key={service.id}
-                            className="group bg-white rounded-2xl border border-neutral-100 overflow-hidden hover:shadow-xl hover:border-primary-100 transition-all duration-300"
-                        >
-                            {/* Image */}
-                            <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
-                                <Image
-                                    src={service.image}
-                                    alt={service.title}
-                                    fill
-                                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
-                            </div>
-
-                            {/* Content */}
-                            <div className="p-5">
-                                <h3 className="font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors">
-                                    {service.title}
-                                </h3>
-                                <p className="text-sm text-neutral-500 mb-4">
-                                    {service.description}
-                                </p>
-
-                                {/* Stats */}
-                                <div className="flex items-center gap-4 mb-4 text-xs text-neutral-600">
-                                    <div className="flex items-center gap-1">
-                                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                                        <span className="font-bold">{service.rating}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <span className="font-bold">{service.projects}</span>
-                                        <span>projects</span>
+                <div
+                    ref={scrollContainerRef}
+                    className="flex lg:grid lg:grid-cols-5 gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                    {displayItems.map((item) => (
+                        <div key={item.id} className="min-w-[260px] lg:min-w-0 snap-center h-full">
+                            <Card className="border border-neutral-100 bg-white rounded-xl overflow-hidden h-full hover:shadow-lg transition-all duration-300 group flex flex-col">
+                                <div className="aspect-[4/3] relative overflow-hidden bg-neutral-100">
+                                    <img
+                                        src={item.image}
+                                        alt={item.title}
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    />
+                                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur rounded px-2 py-1 flex items-center gap-1 text-[10px] font-bold shadow-sm">
+                                        <svg className="w-3 h-3 text-orange-500 fill-current" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                        </svg>
+                                        {item.rating || 4.9}
                                     </div>
                                 </div>
+                                <div className="p-3 flex flex-col flex-grow">
+                                    <h3 className="text-sm font-bold text-neutral-900 leading-tight mb-1 line-clamp-1">
+                                        {item.title}
+                                    </h3>
+                                    <p className="text-neutral-500 text-[10px] font-medium mb-2 line-clamp-2 min-h-[2.5em]">
+                                        {item.description || "Complete building blueprints & permits"}
+                                    </p>
 
-                                {/* Price and CTA */}
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-xs text-neutral-500">From</p>
-                                        <p className="text-lg font-bold text-neutral-900">{service.priceFrom}</p>
+                                    <div className="mt-auto pt-3 border-t border-neutral-50 flex items-end justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-neutral-400 text-[9px] font-bold uppercase tracking-wide">Starting from</span>
+                                            <span className="text-base font-black text-neutral-900">৳{item.price || 5000}</span>
+                                        </div>
+                                        <Link href={`/services/design/book?service=${item.title.toLowerCase().split(' ')[0]}`}>
+                                            <Button size="sm" className="rounded-lg font-bold text-[10px] uppercase bg-neutral-900 hover:bg-neutral-800 text-white h-8 px-4 shadow-sm">
+                                                Book Now
+                                            </Button>
+                                        </Link>
                                     </div>
-                                    <Link href={service.link}>
-                                        <Button
-                                            size="sm"
-                                            className="bg-neutral-900 hover:bg-primary-600 text-white rounded-lg px-4 text-xs font-bold"
-                                        >
-                                            Book Service <ArrowRight className="ml-1 w-3 h-3" />
-                                        </Button>
-                                    </Link>
                                 </div>
-                            </div>
+                            </Card>
                         </div>
                     ))}
                 </div>
             </div>
         </section>
-    );
+    )
 }

@@ -55,25 +55,27 @@ export async function signIn(formData: FormData, requiredRole?: string) {
         .eq('id', user?.id)
         .single()
 
+    console.log('Login Attempt:', { email, role: profile?.role, requiredRole });
+
     if (requiredRole && user) {
-        // If profile is missing but user is authenticated, and it's a customer login, 
-        // we allow it to proceed (it will likely fail later at dashboard, but prevents "Unauthorized" block)
         if (profile) {
             if (profile.role !== requiredRole && !(requiredRole === 'partner' && (profile?.role === 'designer' || profile?.role === 'seller'))) {
+                console.log('Login Unauthorized: Role Mismatch', { actual: profile.role, required: requiredRole });
                 await supabase.auth.signOut()
                 return { error: `Unauthorized: This portal is for ${requiredRole}s only.` }
             }
         } else if (requiredRole !== 'customer') {
-            // For admin/partner logins, profile MUST exist
             await supabase.auth.signOut()
             return { error: `Unauthorized: Profile not found. Please contact support.` }
         }
     }
 
     if (profile?.role === 'admin') {
+        console.log('Login Redirecting to /admin');
         redirect('/admin')
     }
 
+    console.log('Login Redirecting to /dashboard');
     redirect('/dashboard')
 }
 

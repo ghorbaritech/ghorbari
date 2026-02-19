@@ -298,12 +298,12 @@ export default function CheckoutPage() {
                                         <span className="font-bold">৳{totalAmount.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm font-medium">
-                                        <span className="text-neutral-400">VAT (Categorized)</span>
-                                        <span className="font-bold text-primary-400">৳{vatAmount.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm font-medium">
                                         <span className="text-neutral-400">Platform Charges</span>
                                         <span className="font-bold text-primary-400">৳{platformCharges.toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm font-medium">
+                                        <span className="text-neutral-400">VAT (Categorized)</span>
+                                        <span className="font-bold text-primary-400">৳{vatAmount.toLocaleString()}</span>
                                     </div>
                                     <div className="h-px bg-white/10 my-6" />
                                     <div className="flex justify-between items-end">

@@ -1,5 +1,3 @@
-"use client"
-
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/sections/HeroSection";
@@ -8,58 +6,68 @@ import { PromoBannerSection } from "@/components/sections/PromoBannerSection";
 import { CategoryShowcase } from "@/components/sections/CategoryShowcase";
 import { DesignServicesSection } from "@/components/sections/DesignServicesSection";
 import { ServiceShowcase } from "@/components/sections/ServiceShowcase";
+import { getHomeContent } from "@/app/admin/cms/actions";
 
-import { useLanguage } from "@/context/LanguageContext";
+export default async function Home() {
+  const contentMap = await getHomeContent();
 
-export default function Home() {
-  const { t } = useLanguage();
+  const rawFeatured = contentMap['featured_categories'];
+  const featuredCategories = Array.isArray(rawFeatured) ? rawFeatured : (rawFeatured?.items || []);
+  const designServices = contentMap['design_services'] || {};
+
+  const productSections = contentMap['product_sections'] || [];
+  const promoBanners = contentMap['promo_banners'] || [];
+  const serviceShowcase = contentMap['service_showcase'] || {};
+
+  console.log('HOME PAGE DEBUG:', {
+    hasFeatured: !!rawFeatured,
+    isArray: Array.isArray(rawFeatured),
+    itemsCount: featuredCategories.length,
+    keys: Object.keys(contentMap)
+  });
 
   return (
     <main className="min-h-screen flex flex-col font-sans bg-neutral-50">
       <Navbar />
 
       <div className="flex flex-col">
-        {/* 1. Hero Section */}
-        <HeroSection />
-
-
+        {/* 1. Hero Section (Dynamic) */}
+        <HeroSection heroData={contentMap['hero_section']} />
 
         {/* 2. Menu/Categories */}
-        <IconCategories />
+        <IconCategories
+          items={featuredCategories}
+          title={!Array.isArray(rawFeatured) ? rawFeatured?.title : undefined}
+        />
 
         {/* 3. Design & Planning Services */}
-        <DesignServicesSection />
-
-        {/* 4. Segregated Product Categories */}
-        <CategoryShowcase
-          title={t.cat_sands_bricks}
-          category="Building Materials"
-          bgClass="bg-white"
+        <DesignServicesSection
+          title={designServices.title}
+          items={designServices.items}
+          sliderCount={designServices.slider_count}
         />
 
-        <CategoryShowcase
-          title={t.cat_steel_rods}
-          category="Steel"
-          bgClass="bg-neutral-50"
-        />
+        {/* 4. Product Categories (Dynamic) */}
+        {productSections.map((section: any) => (
+          <CategoryShowcase
+            key={section.id}
+            title={section.title}
+            category={section.category_id} // Passing category name/ID to filter
+            bgClass={section.bg_style}
+          />
+        ))}
 
         {/* 5. Promotional Banner */}
-        <PromoBannerSection />
-
-        <CategoryShowcase
-          title={t.cat_electric_plumbing}
-          category="Plumbing"
-          bgClass="bg-white"
-        />
-
-        <CategoryShowcase
-          title={t.cat_tiles_sanitary}
-          category="Finishing"
-          bgClass="bg-neutral-50"
+        <PromoBannerSection
+          title={contentMap['promo_banners']?.title}
+          banners={Array.isArray(contentMap['promo_banners']) ? contentMap['promo_banners'] : contentMap['promo_banners']?.items}
         />
 
         {/* 6. Service Section */}
-        <ServiceShowcase />
+        <ServiceShowcase
+          title={serviceShowcase.title}
+          items={serviceShowcase.items}
+        />
       </div>
 
       <Footer />

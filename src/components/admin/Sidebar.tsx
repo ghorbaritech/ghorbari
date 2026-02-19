@@ -12,17 +12,28 @@ import {
     LogOut,
     Menu,
     X,
-    ShieldCheck
+    ShieldCheck,
+    FileText,
+    Flag,
+    Tag,
+    MessageSquare,
+    LifeBuoy
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 const NAV_ITEMS = [
-    { label: 'Order Factory', icon: LayoutDashboard, href: '/admin/orders' },
+    { label: 'Overview', icon: LayoutDashboard, href: '/admin' },
+    { label: 'Order Factory', icon: ShoppingBag, href: '/admin/orders' },
     { label: 'User Hub', icon: Users, href: '/admin/users' },
-    { label: 'Product Factory', icon: Package, href: '/admin/products' },
+    { label: 'CMS Manager', icon: FileText, href: '/admin/cms' },
+    { label: 'Milestones', icon: Flag, href: '/admin/milestones' },
+    { label: 'Categories', icon: Tag, href: '/admin/categories' },
+    { label: 'Factory', icon: Package, href: '/admin/factory' },
     { label: 'Place Order', icon: PlusCircle, href: '/admin/concierge' },
+    { label: 'Messages', icon: MessageSquare, href: '/admin/messages' },
+    { label: 'Support', icon: LifeBuoy, href: '/admin/support' },
     { label: 'Settings', icon: Settings, href: '/admin/settings' },
 ]
 

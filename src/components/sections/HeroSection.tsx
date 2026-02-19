@@ -1,42 +1,57 @@
 "use client"
 
+// ... imports
 import { ArrowRight, ShoppingBag, PencilRuler, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 
-export function HeroSection() {
+interface HeroSectionProps {
+    heroData?: any;
+}
+
+export function HeroSection({ heroData }: HeroSectionProps) {
     const { t } = useLanguage();
+    const items = heroData?.items || [];
+
+    // Helper to get item by ID or fallback
+    const getItem = (id: string) => items.find((i: any) => i.id === id) || {};
+
+    const mainItem = getItem('main');
+    const topRightItem = getItem('top_right');
+    const bottomRightItem = getItem('bottom_right');
 
     const mainBanner = {
-        title: t.hero_banner_main_title,
-        subtitle: t.hero_banner_main_subtitle,
-        tag: "WHOLSALE",
-        desc: t.hero_banner_main_desc,
+        title: mainItem.title || t.hero_banner_main_title,
+        subtitle: mainItem.subtitle || t.hero_banner_main_subtitle,
+        desc: mainItem.desc || t.hero_banner_main_desc,
         icon: ShoppingBag,
-        overlay: "bg-[#8b3012]/75",
-        tagColor: "bg-white/20 backdrop-blur-sm",
-        href: "/products",
-        image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1000&auto=format&fit=crop"
+        // Dynamic Overlay: Convert hex to rgb/rgba or use style directly
+        overlayColor: mainItem.overlay_color || '#8b3012',
+        overlayOpacity: mainItem.overlay_opacity ? mainItem.overlay_opacity / 100 : 0.75,
+        href: mainItem.href || "/products",
+        image: mainItem.image || "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1000&auto=format&fit=crop"
     };
 
     const sideBanners = [
         {
-            title: t.hero_banner_design_title,
-            subtitle: t.hero_banner_design_subtitle,
-            desc: t.hero_banner_design_desc,
+            title: topRightItem.title || t.hero_banner_design_title,
+            subtitle: topRightItem.subtitle || t.hero_banner_design_subtitle,
+            desc: topRightItem.desc || t.hero_banner_design_desc,
             icon: PencilRuler,
-            overlay: "bg-[#166534]/75", // Green-800 overlay
-            href: "/services/design",
-            image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=800&auto=format&fit=crop"
+            overlayColor: topRightItem.overlay_color || '#166534',
+            overlayOpacity: topRightItem.overlay_opacity ? topRightItem.overlay_opacity / 100 : 0.75,
+            href: topRightItem.href || "/services/design",
+            image: topRightItem.image || "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=800&auto=format&fit=crop"
         },
         {
-            title: t.hero_banner_service_title,
-            subtitle: t.hero_banner_service_subtitle,
-            desc: t.hero_banner_service_desc,
+            title: bottomRightItem.title || t.hero_banner_service_title,
+            subtitle: bottomRightItem.subtitle || t.hero_banner_service_subtitle,
+            desc: bottomRightItem.desc || t.hero_banner_service_desc,
             icon: Wrench,
-            overlay: "bg-[#1d2d5c]/75",
-            href: "/services",
-            image: "https://images.unsplash.com/photo-1505798577917-a65157d3320a?q=80&w=800&auto=format&fit=crop"
+            overlayColor: bottomRightItem.overlay_color || '#1d2d5c',
+            overlayOpacity: bottomRightItem.overlay_opacity ? bottomRightItem.overlay_opacity / 100 : 0.75,
+            href: bottomRightItem.href || "/services",
+            image: bottomRightItem.image || "https://images.unsplash.com/photo-1505798577917-a65157d3320a?q=80&w=800&auto=format&fit=crop"
         }
     ];
 
@@ -56,7 +71,10 @@ export function HeroSection() {
                         />
 
                         {/* Color Overlay */}
-                        <div className={`absolute inset-0 ${mainBanner.overlay} transition-opacity duration-300 group-hover:opacity-95`} />
+                        <div
+                            className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-95"
+                            style={{ backgroundColor: mainBanner.overlayColor, opacity: mainBanner.overlayOpacity }}
+                        />
 
                         {/* Content */}
                         <div className="relative z-10 p-8 flex flex-col h-full justify-between">
@@ -99,7 +117,10 @@ export function HeroSection() {
                                 />
 
                                 {/* Color Overlay */}
-                                <div className={`absolute inset-0 ${item.overlay} transition-opacity duration-300 group-hover:opacity-90`} />
+                                <div
+                                    className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-90"
+                                    style={{ backgroundColor: item.overlayColor, opacity: item.overlayOpacity }}
+                                />
 
                                 {/* Content */}
                                 <div className="relative z-10 p-5 flex flex-col h-full justify-between">

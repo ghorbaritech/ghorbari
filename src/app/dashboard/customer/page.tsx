@@ -184,9 +184,11 @@ export default function CustomerDashboard() {
                                                     {order.order_status}
                                                 </span>
                                             </div>
-                                            <Button variant="outline" className="w-full h-10 rounded-xl border-neutral-100 font-bold text-xs uppercase tracking-tight">
-                                                Track Shipment
-                                            </Button>
+                                            <Link href={`/dashboard/customer/orders/${order.id}`} className="w-full">
+                                                <Button variant="outline" className="w-full h-10 rounded-xl border-neutral-100 font-bold text-xs uppercase tracking-tight hover:bg-neutral-50 hover:border-neutral-200 transition-all">
+                                                    Track Shipment
+                                                </Button>
+                                            </Link>
                                         </Card>
                                     ))
                                 )}

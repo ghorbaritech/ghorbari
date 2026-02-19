@@ -25,7 +25,11 @@ const SERVICE_TYPES = [
     'Painting Service', 'Carpentry', 'Masonry', 'HVAC Installation'
 ]
 
-export default function PartnerOnboardingForm() {
+interface PartnerOnboardingFormProps {
+    availableCategories?: { id: string, name: string }[]
+}
+
+export default function PartnerOnboardingForm({ availableCategories = [] }: PartnerOnboardingFormProps) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
@@ -78,8 +82,9 @@ export default function PartnerOnboardingForm() {
             } else {
                 setSuccess(true)
             }
-        } catch (e) {
-            setError("Failed to create partner account")
+        } catch (e: any) {
+            console.error("Partner Creation Error (Client):", e);
+            setError(`Failed to create partner account: ${e.message || JSON.stringify(e)}`)
         } finally {
             setLoading(false)
         }
@@ -109,6 +114,15 @@ export default function PartnerOnboardingForm() {
             </div>
         )
     }
+
+    // Categories to display: either passed props (DB) or fallback hardcoded (if fetch failed or empty)
+    const categoriesToDisplay = availableCategories.length > 0
+        ? availableCategories.map(c => c.name)
+        : [
+            'Cement & Concrete', 'Steel & Metal', 'Tiles & Flooring',
+            'Paint & Finishes', 'Electrical & Plumbing', 'Doors & Windows',
+            'Sanitary & Fixtures', 'Tools & Equipment'
+        ];
 
     return (
         <form action={handleSubmit} className="space-y-8 max-w-5xl mx-auto">
@@ -150,7 +164,11 @@ export default function PartnerOnboardingForm() {
                         <div className={`p-4 border rounded-xl cursor-pointer transition-all ${isSeller ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-neutral-200 hover:border-primary-200 bg-white'}`}
                             onClick={() => setIsSeller(!isSeller)}>
                             <div className="flex items-center space-x-3">
-                                <Checkbox checked={isSeller} onCheckedChange={(c) => setIsSeller(!!c)} />
+                                <Checkbox
+                                    checked={isSeller}
+                                    onCheckedChange={(c) => setIsSeller(!!c)}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
                                 <div>
                                     <div className="font-bold text-neutral-900">Product Supplier</div>
                                     <div className="text-xs text-neutral-500 mt-1">Sells materials & products</div>
@@ -161,7 +179,11 @@ export default function PartnerOnboardingForm() {
                         <div className={`p-4 border rounded-xl cursor-pointer transition-all ${isDesigner ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-neutral-200 hover:border-primary-200 bg-white'}`}
                             onClick={() => setIsDesigner(!isDesigner)}>
                             <div className="flex items-center space-x-3">
-                                <Checkbox checked={isDesigner} onCheckedChange={(c) => setIsDesigner(!!c)} />
+                                <Checkbox
+                                    checked={isDesigner}
+                                    onCheckedChange={(c) => setIsDesigner(!!c)}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
                                 <div>
                                     <div className="font-bold text-neutral-900">Design Provider</div>
                                     <div className="text-xs text-neutral-500 mt-1">Architectural/Interior services</div>
@@ -172,7 +194,11 @@ export default function PartnerOnboardingForm() {
                         <div className={`p-4 border rounded-xl cursor-pointer transition-all ${isServiceProvider ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-neutral-200 hover:border-primary-200 bg-white'}`}
                             onClick={() => setIsServiceProvider(!isServiceProvider)}>
                             <div className="flex items-center space-x-3">
-                                <Checkbox checked={isServiceProvider} onCheckedChange={(c) => setIsServiceProvider(!!c)} />
+                                <Checkbox
+                                    checked={isServiceProvider}
+                                    onCheckedChange={(c) => setIsServiceProvider(!!c)}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
                                 <div>
                                     <div className="font-bold text-neutral-900">Service Provider</div>
                                     <div className="text-xs text-neutral-500 mt-1">Contractors & Technicians</div>
@@ -195,7 +221,7 @@ export default function PartnerOnboardingForm() {
                         <div className="space-y-4">
                             <Label>Product Categories</Label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {PRODUCT_CATEGORIES.map(cat => (
+                                {categoriesToDisplay.map(cat => (
                                     <div key={cat} className="flex items-center space-x-2">
                                         <Checkbox id={`cat-${cat}`}
                                             checked={selectedCategories.includes(cat)}

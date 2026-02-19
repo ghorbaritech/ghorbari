@@ -74,19 +74,63 @@ export default async function ServiceDetailPage({ params }: Params) {
                             </ul>
                         </div>
 
-                        {/* Reviews Section Placeholder */}
-                        <div className="bg-neutral-50 rounded-xl p-8 mb-12">
-                            <h3 className="text-xl font-bold mb-6">Customer Reviews</h3>
-                            <div className="space-y-6">
-                                <div className="pb-6 border-b border-neutral-200">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="font-bold">Rahim Ahmed</span>
-                                        <div className="flex text-yellow-500 text-sm">★★★★★</div>
-                                    </div>
-                                    <p className="text-neutral-600 text-sm">"Excellent service provided by the team. The designs were modern and functional."</p>
+                        {/* Terms & Conditions */}
+                        <div className="mb-12">
+                            <h3 className="text-xl font-bold mb-6">Service Terms & Conditions</h3>
+                            <div className="space-y-4">
+                                <div className="flex gap-4 p-4 border border-neutral-100 rounded-xl bg-neutral-50">
+                                    <div className="font-bold text-sm min-w-[120px]">Payment Terms</div>
+                                    <div className="text-sm text-neutral-600">50% advance payment required to start work. Remaining 50% upon completion.</div>
+                                </div>
+                                <div className="flex gap-4 p-4 border border-neutral-100 rounded-xl bg-neutral-50">
+                                    <div className="font-bold text-sm min-w-[120px]">Timeline</div>
+                                    <div className="text-sm text-neutral-600">Project timeline may vary based on material availability and site conditions. Delays due to external factors are not penalized.</div>
+                                </div>
+                                <div className="flex gap-4 p-4 border border-neutral-100 rounded-xl bg-neutral-50">
+                                    <div className="font-bold text-sm min-w-[120px]">Warranty</div>
+                                    <div className="text-sm text-neutral-600">We provide a 6-month service warranty on all installations. Material warranty depends on the manufacturer.</div>
                                 </div>
                             </div>
-                            <Button variant="link" className="px-0 mt-4">View All Reviews</Button>
+                        </div>
+
+                        {/* Reviews Section */}
+                        <div className="bg-neutral-50 rounded-xl p-8 mb-12">
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="text-xl font-bold">Customer Reviews</h3>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-2xl font-bold">4.9</span>
+                                    <div className="flex text-amber-500">
+                                        <Star className="w-5 h-5 fill-current" />
+                                        <Star className="w-5 h-5 fill-current" />
+                                        <Star className="w-5 h-5 fill-current" />
+                                        <Star className="w-5 h-5 fill-current" />
+                                        <Star className="w-5 h-5 fill-current" />
+                                    </div>
+                                    <span className="text-neutral-500 text-sm">(120 Reviews)</span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                {[
+                                    { name: "Rahim Ahmed", rating: 5, date: "2 days ago", comment: "Excellent service provided by the team. The designs were modern and functional." },
+                                    { name: "Sumaia Khan", rating: 5, date: "1 week ago", comment: "Very professional behavior. They completed the work on time and cleaned up afterwards." },
+                                    { name: "Tanvir Hasan", rating: 4, date: "3 weeks ago", comment: "Good quality work but slightly expensive compared to market rate. Worth it for the hassle-free experience though." }
+                                ].map((review, idx) => (
+                                    <div key={idx} className="pb-6 border-b border-neutral-200 last:border-0 last:pb-0">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="font-bold">{review.name}</span>
+                                            <span className="text-xs text-neutral-400">{review.date}</span>
+                                        </div>
+                                        <div className="flex text-amber-500 text-sm mb-2">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'fill-current' : 'text-neutral-200 fill-neutral-200'}`} />
+                                            ))}
+                                        </div>
+                                        <p className="text-neutral-600 text-sm">"{review.comment}"</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <Button variant="outline" className="w-full mt-6 bg-white hover:bg-neutral-100">View All Reviews</Button>
                         </div>
                     </div>
 

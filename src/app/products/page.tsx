@@ -12,7 +12,10 @@ import { getProducts, getCategories, getBrands } from "@/services/productService
 import { PromoBannerSection } from "@/components/sections/PromoBannerSection";
 import { BrandBar } from "@/components/sections/BrandBar";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 export default function ProductsPage() {
+    const { language } = useLanguage();
     const [products, setProducts] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [brands, setBrands] = useState<string[]>([]);
@@ -96,7 +99,7 @@ export default function ProductsPage() {
                                                 onCheckedChange={() => handleCategoryToggle(c.id)}
                                             />
                                             <label htmlFor={c.id} className="text-xs font-black uppercase tracking-widest text-neutral-500 group-hover:text-primary-600 cursor-pointer transition-colors">
-                                                {c.name}
+                                                {(language === 'BN' && c.name_bn) ? c.name_bn : c.name}
                                             </label>
                                         </div>
                                     ))}
@@ -167,7 +170,8 @@ export default function ProductsPage() {
                                         price={product.base_price.toLocaleString()}
                                         image={product.images?.[0] || ""}
                                         rating={product.rating || 0}
-                                        category={product.category?.name || "Materials"}
+                                        category={product.category?.name}
+                                        categoryBn={product.category?.name_bn}
                                         categoryId={product.category_id}
                                         sellerId={product.seller_id}
                                         sellerName={product.seller?.business_name}
