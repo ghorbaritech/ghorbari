@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { adminSignIn } from './actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,12 +11,22 @@ export default function AdminLoginPage() {
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
 
+    const router = useRouter()
+
     async function handleSubmit(formData: FormData) {
         setLoading(true)
         setError(null)
-        const result = await adminSignIn(formData)
-        if (result?.error) {
-            setError(result.error)
+        try {
+            const result = await adminSignIn(formData)
+
+            if (result?.error) {
+                setError(result.error)
+                setLoading(false)
+            } else if (result?.success) {
+                router.push('/admin')
+            }
+        } catch (err) {
+            setError("An unexpected error occurred. Please try again.")
             setLoading(false)
         }
     }

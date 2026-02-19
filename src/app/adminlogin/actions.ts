@@ -40,13 +40,10 @@ export async function adminSignIn(formData: FormData) {
             return { error: 'Unauthorized: Access restricted to Administrators only.' }
         }
     } catch (err: any) {
-        if (err?.message === 'NEXT_REDIRECT') {
-            throw err;
-        }
         console.error('Unexpected Admin Login Error:', err)
         console.error('Error Details:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
         return { error: `An unexpected error occurred: ${err.message || 'Unknown error'}` }
     }
 
-    redirect('/admin')
+    return { success: true }
 }
