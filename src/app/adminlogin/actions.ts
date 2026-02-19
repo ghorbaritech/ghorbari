@@ -4,31 +4,44 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
 export async function adminSignIn(formData: FormData) {
-    const supabase = await createClient()
+    try {
+        const supabase = await createClient()
 
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
+        const email = formData.get('email') as string
+        const password = formData.get('password') as string
 
-    const { data: { user }, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-    })
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        })
 
-    if (error) {
-        return { error: error.message }
-    }
+        if (error) {
+            console.error('Admin Login Error:', error.message)
+            return { error: error.message }
+        }
 
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user?.id)
-        .single()
+        const user = data.user;
 
-    console.log('Admin Login Attempt:', { email, role: profile?.role });
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user?.id)
+            .single()
 
-    if (!profile || profile.role !== 'admin') {
-        await supabase.auth.signOut()
-        return { error: 'Unauthorized: Access restricted to Administrators only.' }
+        if (profileError) {
+            console.error('Profile Fetch Error:', profileError)
+            return { error: 'Failed to verify admin privileges.' }
+        }
+
+        console.log('Admin Login Attempt:', { email, role: profile?.role });
+
+        if (!profile || profile.role !== 'admin') {
+            await supabase.auth.signOut()
+            return { error: 'Unauthorized: Access restricted to Administrators only.' }
+        }
+    } catch (err: any) {
+        console.error('Unexpected Admin Login Error:', err)
+        return { error: 'An unexpected error occurred. Please try again.' }
     }
 
     redirect('/admin')
