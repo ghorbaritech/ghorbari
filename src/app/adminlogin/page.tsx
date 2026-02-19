@@ -1,8 +1,10 @@
+'use client'
+
 import { useState } from 'react'
 import { adminSignIn } from './actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ShieldCheck } from 'lucide-react'
+// import { ShieldCheck } from 'lucide-react'
 
 export default function AdminLoginPage() {
     const [error, setError] = useState<string | null>(null)
