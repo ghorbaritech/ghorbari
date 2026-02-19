@@ -39,6 +39,10 @@ export function createMockClient(): any {
                     getSession: () => Promise.resolve({ data: { session: null }, error: null }),
                     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
                     signOut: () => Promise.resolve({ error: null }),
+                    signInWithPassword: () => Promise.resolve({
+                        data: { user: null, session: null },
+                        error: { message: 'Supabase credentials missing on server. Please configure NEXT_PUBLIC_SUPABASE_URL and KEY.' }
+                    }),
                 };
             }
 

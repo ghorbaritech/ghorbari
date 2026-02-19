@@ -10,6 +10,20 @@ export async function adminSignIn(formData: FormData) {
         const email = formData.get('email') as string
         const password = formData.get('password') as string
 
+        console.log('Admin SignIn Action - Start');
+        console.log('Supabase Client:', !!supabase);
+        console.log('Supabase Auth:', !!supabase?.auth);
+        console.log('SignInWithPassword Function:', typeof supabase?.auth?.signInWithPassword);
+
+        if (!supabase || !supabase.auth || typeof supabase.auth.signInWithPassword !== 'function') {
+            console.error('CRITICAL: Supabase client or auth definition failing', {
+                hasClient: !!supabase,
+                hasAuth: !!supabase?.auth,
+                authType: typeof supabase?.auth,
+                signInType: typeof supabase?.auth?.signInWithPassword
+            });
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,

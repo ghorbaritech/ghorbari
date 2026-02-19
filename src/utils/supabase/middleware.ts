@@ -8,8 +8,24 @@ export async function updateSession(request: NextRequest) {
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    // const url = 'https://nnrzszujwhutbgghtjwc.supabase.co'
+    // const key = '...'
 
-    if (!url || !key) {
+    // Validate URL format
+    const isValidUrl = (urlString: string | undefined) => {
+        try {
+            return urlString && new URL(urlString);
+        } catch (e) {
+            return false;
+        }
+    };
+
+    if (!url || !key || !isValidUrl(url)) {
+        if (!isValidUrl(url) && url) {
+            console.error('Invalid Supabase URL provided in middleware:', url);
+        }
+        // If credentials are missing or invalid, we can't refresh the session.
+        // Just return the response as is to prevent crashing.
         return supabaseResponse
     }
 
