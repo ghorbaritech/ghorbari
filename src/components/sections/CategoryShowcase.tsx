@@ -53,15 +53,22 @@ export function CategoryShowcase({ title, category, bgClass = "bg-white", link =
         async function fetchProducts() {
             setLoading(true);
             try {
-                // Fetch real products by category name
-                const data = await getProducts({ categoryName: category });
+                // Determine if category is UUID or Name
+                const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category);
+
+                let data;
+                if (isUUID) {
+                    data = await getProducts({ categoryId: category });
+                } else {
+                    data = await getProducts({ categoryName: category });
+                }
 
                 if (data && data.length > 0) {
                     setProducts(data);
                 } else {
                     // Fallback to dummy data if no real products found
-                    console.log(`No products found for ${category}, utilizing dummy data.`);
                     const dummyKey = (category && Object.keys(DUMMY_PRODUCTS).find(k => category.includes(k) || k.includes(category))) || "Building Materials";
+                    console.log(`No products found for ${category}, utilizing dummy data key: ${dummyKey}`);
                     setProducts(DUMMY_PRODUCTS[dummyKey] || []);
                 }
 
@@ -160,4 +167,3 @@ export function CategoryShowcase({ title, category, bgClass = "bg-white", link =
         </section>
     );
 }
-
