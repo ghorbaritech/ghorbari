@@ -9,18 +9,28 @@ export function createMockClient(): any {
     const mockResponse = { data: null, error: null, count: null, status: 200, statusText: 'OK' };
     const mockPromise = Promise.resolve(mockResponse);
 
-    const handler: ProxyHandler<any> = {
+    const queryHandler: ProxyHandler<any> = {
+        get(target, prop) {
+            if (prop === 'then') {
+                return (onfulfilled: any, onrejected: any) => mockPromise.then(onfulfilled, onrejected);
+            }
+            if (prop === 'catch') return (onrejected: any) => mockPromise.catch(onrejected);
+            if (prop === 'finally') return (onfinally: any) => mockPromise.finally(onfinally);
+
+            // Chain
+            const mockFunc = () => new Proxy({}, queryHandler);
+            // Make the function returned by the chain also produce a thenable (it does by returning proxy)
+            // But if we await the function object itself? (unlikely for query builder methods)
+            // However, to be safe and consistent with previous "any" typing:
+            (mockFunc as any).then = (onfulfilled: any, onrejected: any) => mockPromise.then(onfulfilled, onrejected);
+            return mockFunc;
+        }
+    };
+
+    const clientHandler: ProxyHandler<any> = {
         get(target, prop): any {
-            // Special case for thenable (Promise compatibility)
+            // Client itself is NOT thenable
             if (prop === 'then') return undefined;
-
-            // Handle common methods by returning a function that returns the proxy (chaining)
-            const mockFunc = () => new Proxy({}, handler);
-
-            // Add promise-like behavior to the proxy itself for awaitable calls
-            (mockFunc as any).then = (onfulfilled: any) => mockPromise.then(onfulfilled);
-            (mockFunc as any).catch = (onrejected: any) => mockPromise.catch(onrejected);
-            (mockFunc as any).finally = (onfinally: any) => mockPromise.finally(onfinally);
 
             // Specific mocks for common auth methods
             if (prop === 'auth') {
@@ -32,9 +42,11 @@ export function createMockClient(): any {
                 };
             }
 
+            // Default: return query chain start
+            const mockFunc = () => new Proxy({}, queryHandler);
             return mockFunc;
         }
     };
 
-    return new Proxy({}, handler);
+    return new Proxy({}, clientHandler);
 }
