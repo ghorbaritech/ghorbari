@@ -85,7 +85,7 @@ export default function SellerOrdersPage() {
         const loadMilestones = async () => {
             setLoadingMilestones(true);
             try {
-                let current = selectedOrder.milestones || [];
+                const current = selectedOrder.milestones || [];
                 const templateStages = await getApplicableMilestones('product'); // Default product milestones
 
                 if (templateStages) {

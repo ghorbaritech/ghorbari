@@ -40,33 +40,21 @@ export default function AdminMessagesPage() {
 
     const supabase = createClient()
 
-    useEffect(() => {
-        fetchConversations()
 
-        const channel = supabase
-            .channel('public:messages')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
-                if (selectedConversation && payload.new.conversation_id === selectedConversation.id) {
-                    setMessages(prev => [...prev, payload.new as Message])
-                    scrollToBottom()
-                }
-                fetchConversations()
-            })
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [selectedConversation])
-
-    useEffect(() => {
-        if (selectedConversation) {
-            fetchMessages(selectedConversation.id)
-        }
-    }, [selectedConversation])
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+
+    const fetchMessages = async (id: string) => {
+        const { data } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('conversation_id', id)
+            .order('created_at', { ascending: true })
+
+        setMessages(data || [])
+        scrollToBottom()
     }
 
     const fetchConversations = async () => {
@@ -91,16 +79,36 @@ export default function AdminMessagesPage() {
         setLoading(false)
     }
 
-    const fetchMessages = async (id: string) => {
-        const { data } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('conversation_id', id)
-            .order('created_at', { ascending: true })
+    useEffect(() => {
+        const loadConversations = async () => {
+            await fetchConversations()
+        }
+        loadConversations()
 
-        setMessages(data || [])
-        scrollToBottom()
-    }
+        const channel = supabase
+            .channel('public:messages')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
+                if (selectedConversation && payload.new.conversation_id === selectedConversation.id) {
+                    setMessages(prev => [...prev, payload.new as Message])
+                    scrollToBottom()
+                }
+                fetchConversations()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [selectedConversation])
+
+    useEffect(() => {
+        if (selectedConversation) {
+            const loadMessages = async () => {
+                await fetchMessages(selectedConversation.id)
+            }
+            loadMessages()
+        }
+    }, [selectedConversation])
 
     const sendMessage = async () => {
         if (!newMessage.trim() || !selectedConversation || !userId) return

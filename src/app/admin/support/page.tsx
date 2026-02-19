@@ -34,10 +34,6 @@ export default function AdminSupportPage() {
 
     const supabase = createClient()
 
-    useEffect(() => {
-        fetchTickets()
-    }, [])
-
     async function fetchTickets() {
         setLoading(true)
 
@@ -64,6 +60,13 @@ export default function AdminSupportPage() {
         }
         setLoading(false)
     }
+
+    useEffect(() => {
+        const loadTickets = async () => {
+            await fetchTickets()
+        }
+        loadTickets()
+    }, [])
 
     // Filter Logic
     const customerTickets = tickets.filter(t => t.sender?.role === 'customer')

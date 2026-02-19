@@ -60,8 +60,7 @@ export default function SellerCampaignsPage() {
                 ...formData,
                 seller_id: seller.id,
                 value: Number(formData.value),
-                // @ts-ignore
-                discount_type: formData.discount_type
+                discount_type: formData.discount_type as "percentage" | "fixed"
             });
             setIsCreateOpen(false);
             setFormData({ title: "", code: "", discount_type: "percentage", value: 0, start_date: new Date().toISOString().slice(0, 10), end_date: "" });

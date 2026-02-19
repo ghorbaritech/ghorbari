@@ -43,42 +43,23 @@ function ChatInterface() {
 
     const supabase = createClient()
 
-    useEffect(() => {
-        const init = async () => {
-            await fetchConversations()
-            // If partnerId is provided, try to find or create conversation
-            if (partnerId) {
-                handleStartChatWithPartner(partnerId)
-            }
-        }
-        init()
 
-        const channel = supabase
-            .channel('public:messages')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
-                if (selectedConversation && payload.new.conversation_id === selectedConversation.id) {
-                    setMessages(prev => [...prev, payload.new as Message])
-                    scrollToBottom()
-                }
-                fetchConversations()
-            })
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [selectedConversation, partnerId])
-
-    useEffect(() => {
-        if (selectedConversation) {
-            fetchMessages(selectedConversation.id)
-        }
-    }, [selectedConversation])
 
     const scrollToBottom = () => {
         setTimeout(() => {
             messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
         }, 100)
+    }
+
+    const fetchMessages = async (id: string) => {
+        const { data } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('conversation_id', id)
+            .order('created_at', { ascending: true })
+
+        setMessages(data || [])
+        scrollToBottom()
     }
 
     const fetchConversations = async () => {
@@ -101,17 +82,6 @@ function ChatInterface() {
             setConversations(enriched)
         }
         setLoading(false)
-    }
-
-    const fetchMessages = async (id: string) => {
-        const { data } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('conversation_id', id)
-            .order('created_at', { ascending: true })
-
-        setMessages(data || [])
-        scrollToBottom()
     }
 
     const sendMessage = async () => {
@@ -160,6 +130,41 @@ function ChatInterface() {
             }
         }
     }
+
+    useEffect(() => {
+        const init = async () => {
+            await fetchConversations()
+            // If partnerId is provided, try to find or create conversation
+            if (partnerId) {
+                handleStartChatWithPartner(partnerId)
+            }
+        }
+        init()
+
+        const channel = supabase
+            .channel('public:messages')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
+                if (selectedConversation && payload.new.conversation_id === selectedConversation.id) {
+                    setMessages(prev => [...prev, payload.new as Message])
+                    scrollToBottom()
+                }
+                fetchConversations()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [selectedConversation, partnerId])
+
+    useEffect(() => {
+        if (selectedConversation) {
+            const loadMessages = async () => {
+                await fetchMessages(selectedConversation.id)
+            }
+            loadMessages()
+        }
+    }, [selectedConversation])
 
     const handleContactSupport = async () => {
         const { data: admin } = await supabase

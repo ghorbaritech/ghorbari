@@ -3,10 +3,10 @@
 import * as React from "react"
 import { X } from "lucide-react"
 
+import { useToast } from "@/components/ui/use-toast"
+
 export function Toaster() {
-    // We need to import useToast locally to avoid circular dependencies if we were to import from the file we are defining?
-    // Actually, we can import from use-toast.
-    const { toasts, dismiss } = require("./use-toast").useToast()
+    const { toasts, dismiss } = useToast()
 
     if (!toasts.length) return null
 
@@ -17,8 +17,8 @@ export function Toaster() {
                     <div
                         key={id}
                         className={`${variant === "destructive"
-                                ? "destructive group border-red-500 bg-red-600 text-white"
-                                : "border bg-white text-neutral-950"
+                            ? "destructive group border-red-500 bg-red-600 text-white"
+                            : "border bg-white text-neutral-950"
                             } group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-xl border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full`}
                         {...props}
                     >

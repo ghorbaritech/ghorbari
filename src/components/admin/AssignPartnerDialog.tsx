@@ -23,23 +23,23 @@ export function AssignPartnerDialog({ onAssign }: { onAssign: (id: string) => vo
     const supabase = createClient()
 
     useEffect(() => {
+        async function fetchPartners() {
+            setLoading(true)
+            // Fetch verified sellers (retailers/freelancers)
+            // In a real app, you might want to join with profiles to get names if business_name isn't enough
+            const { data } = await supabase
+                .from('sellers')
+                .select('*')
+                .eq('verification_status', 'verified')
+                .ilike('business_name', `%${search}%`)
+                .limit(10)
+
+            setPartners(data || [])
+            setLoading(false)
+        }
+
         if (open) fetchPartners()
-    }, [open])
-
-    async function fetchPartners() {
-        setLoading(true)
-        // Fetch verified sellers (retailers/freelancers)
-        // In a real app, you might want to join with profiles to get names if business_name isn't enough
-        const { data } = await supabase
-            .from('sellers')
-            .select('*')
-            .eq('verification_status', 'verified')
-            .ilike('business_name', `%${search}%`)
-            .limit(10)
-
-        setPartners(data || [])
-        setLoading(false)
-    }
+    }, [open, search, supabase])
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>

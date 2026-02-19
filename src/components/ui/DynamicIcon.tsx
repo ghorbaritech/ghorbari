@@ -9,7 +9,6 @@ interface DynamicIconProps extends React.SVGProps<SVGSVGElement> {
 }
 
 export const DynamicIcon = memo(({ name, className, ...props }: DynamicIconProps) => {
-    // @ts-ignore - Dynamic access to Lucide icons
     const Icon = (Icons as any)[name];
 
     if (!Icon) {

@@ -31,7 +31,8 @@ export function CompareProvider({ children }: { children: React.ReactNode }) {
         const saved = localStorage.getItem("compareList");
         if (saved) {
             try {
-                setCompareList(JSON.parse(saved));
+                const parsed = JSON.parse(saved);
+                setTimeout(() => setCompareList(parsed), 0);
             } catch (e) {
                 console.error("Failed to parse compare list", e);
             }

@@ -50,7 +50,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const savedCart = localStorage.getItem('ghorbari_cart');
         if (savedCart) {
             try {
-                setItems(JSON.parse(savedCart));
+                const parsed = JSON.parse(savedCart);
+                setTimeout(() => setItems(parsed), 0);
             } catch (e) {
                 console.error('Failed to parse cart', e);
             }

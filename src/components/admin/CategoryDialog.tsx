@@ -241,7 +241,7 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
                                 />
                                 {formData.icon && (
                                     <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-neutral-100 p-1 rounded">
-                                        {/* @ts-ignore */}
+                                        {/* @ts-expect-error: Lucide icons are dynamic */}
                                         <Loader2 className="w-0 h-0 hidden" /> {/* Dummy to keep import if needed, but we need dynamic icon here too */}
                                         {/* We can't easily render dynamic icon here without the helper, but distinct component logic applies. 
                                             Let's just show the text for now or add a helper if easy. 

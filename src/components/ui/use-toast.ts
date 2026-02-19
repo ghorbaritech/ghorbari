@@ -22,7 +22,7 @@ export interface Toast {
     variant?: "default" | "destructive"
 }
 
-let listeners: Array<(state: any) => void> = []
+const listeners: Array<(state: any) => void> = []
 let memoryState: { toasts: Toast[] } = { toasts: [] }
 
 function dispatch(action: any) {

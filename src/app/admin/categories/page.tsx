@@ -11,7 +11,6 @@ import { CategoryDialog } from "@/components/admin/CategoryDialog";
 // Helper component for dynamic icons
 const DynamicIcon = ({ name, className }: { name?: string; className?: string }) => {
     if (!name) return <Tag className={className} />;
-    // @ts-ignore - Dynamic access to Lucide icons
     const Icon = (Icons as any)[name];
     return Icon ? <Icon className={className} /> : <Tag className={className} />;
 };
@@ -177,8 +176,7 @@ export default function AdminCategoriesPage() {
                                                 {cat.icon_url && cat.icon_url.startsWith('http') ? (
                                                     <img src={cat.icon_url} alt="" className="w-6 h-6 rounded object-cover" />
                                                 ) : (
-                                                    // @ts-ignore
-                                                    <DynamicIcon name={cat.icon || cat.icon_url} className={`w-5 h-5 ${cat.level === 0 ? 'text-primary-600' : 'text-neutral-400'
+                                                    <DynamicIcon name={cat.icon || cat.icon_url || undefined} className={`w-5 h-5 ${cat.level === 0 ? 'text-primary-600' : 'text-neutral-400'
                                                         }`} />
                                                 )}
                                                 {cat.name}

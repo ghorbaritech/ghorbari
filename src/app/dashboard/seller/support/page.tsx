@@ -19,17 +19,10 @@ export default function SupportPage() {
     const [tickets, setTickets] = useState<any[]>([])
     const [orders, setOrders] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
-    const [showCreateForm, setShowCreateForm] = useState(false)
+    const [showCreateForm, setShowCreateForm] = useState(!!prefillOrderId)
     const [submitting, setSubmitting] = useState(false)
 
     const supabase = createClient()
-
-    useEffect(() => {
-        if (prefillOrderId) {
-            setShowCreateForm(true)
-        }
-        fetchData()
-    }, [prefillOrderId])
 
     async function fetchData() {
         setLoading(true)
@@ -59,6 +52,10 @@ export default function SupportPage() {
 
         setLoading(false)
     }
+
+    useEffect(() => {
+        fetchData()
+    }, [prefillOrderId])
 
     async function handleCreateTicket(formData: FormData) {
         setSubmitting(true)

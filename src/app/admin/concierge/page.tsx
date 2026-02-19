@@ -634,7 +634,7 @@ export default function ConciergeOrderPage() {
                                                     onChange={(e) => setDesignForm({ ...designForm, requirements: { ...designForm.requirements, provider_id: e.target.value } })}
                                                 >
                                                     <option value="">Select Provider...</option>
-                                                    {/* @ts-ignore */}
+
                                                     {providers?.map((p: any) => (
                                                         <option key={p.id} value={p.id}>{p.business_name} ({p.contact_person})</option>
                                                     ))}
