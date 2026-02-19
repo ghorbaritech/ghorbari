@@ -129,7 +129,7 @@ export default function InventoryPage() {
                     description: row.description || '',
                     is_quote_only: row.is_quote_only === 'true',
                     status: 'active',
-                    images: ['https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800'] // Placeholder
+                    images: row.image_url ? [row.image_url] : ['https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800']
                 }));
 
                 const { error } = await supabase.from('products').insert(productsToInsert);
