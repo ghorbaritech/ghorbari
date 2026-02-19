@@ -78,13 +78,27 @@ export default function ConciergeOrderPage() {
         if (!searchCustomer) return
         setLoading(true)
         const supabase = createClient()
-        const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .or(`email.eq.${searchCustomer},phone_number.eq.${searchCustomer}`)
-            .single()
 
-        setCustomer(data)
+        let query = supabase.from('profiles').select('*')
+
+        // Smart Search Logic
+        if (searchCustomer.includes('@')) {
+            query = query.eq('email', searchCustomer)
+        } else if (/^\+?\d+$/.test(searchCustomer)) {
+            query = query.eq('phone_number', searchCustomer)
+        } else {
+            // Name search (partial match)
+            query = query.ilike('full_name', `%${searchCustomer}%`).limit(1)
+        }
+
+        const { data, error } = await query.maybeSingle()
+
+        if (!data) {
+            alert('Customer not found. Please try exact email or phone number.')
+            setCustomer(null)
+        } else {
+            setCustomer(data)
+        }
         setLoading(false)
     }
 
