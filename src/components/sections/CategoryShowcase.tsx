@@ -144,11 +144,11 @@ export function CategoryShowcase({ title, category, bgClass = "bg-white", link =
                                     price={product.base_price.toLocaleString()}
                                     image={product.images?.[0] || ""}
                                     rating={product.rating || 4.5}
-                                    category={product.category?.name || category}
+                                    category={product.seller?.business_name || product.category?.name || category}
                                     categoryBn={product.category?.name_bn}
                                     categoryId={product.category?.id || product.cat_id}
                                     sellerId={product.seller_id}
-                                    sellerName={product.seller_name}
+                                    sellerName={product.seller?.business_name}
                                     compact={true}
                                 />
                             </div>
