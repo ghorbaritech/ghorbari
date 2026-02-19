@@ -29,8 +29,8 @@ export default function AdminLoginPage() {
                         </div>
                     </div>
                     */}
-                    <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">Admin Console</h2>
-                    <p className="mt-4 text-xs font-bold text-neutral-500 uppercase tracking-[0.3em]">Restricted Access Area</p>
+                    <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">Admin Console v2</h2>
+                    <p className="mt-4 text-xs font-bold text-neutral-500 uppercase tracking-[0.3em]">Login Area - Version 2</p>
                 </div>
 
                 <form className="mt-8 space-y-6" onSubmit={async (e) => {
