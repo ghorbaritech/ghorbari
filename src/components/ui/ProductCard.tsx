@@ -93,11 +93,22 @@ export function ProductCard({
 
             {/* Info */}
             <div className={`flex flex-col flex-1 gap-2 ${compact ? 'p-3' : 'p-5'}`}>
-                {/* Header: Category + Rating */}
+                {/* Header: Seller Name (top tag) + Rating */}
                 <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest truncate max-w-[70%]">
-                        {displayCategory}
-                    </span>
+                    {/* Top tag = Seller name, clickable */}
+                    {sellerName && sellerId ? (
+                        <Link
+                            href={`/partner/${sellerId}`}
+                            className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest truncate max-w-[70%] hover:text-primary-600 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {sellerName}
+                        </Link>
+                    ) : (
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest truncate max-w-[70%]">
+                            {sellerName || displayCategory}
+                        </span>
+                    )}
                     <div className="flex items-center gap-1 text-amber-500 text-[10px] font-bold">
                         <Star className="w-3 h-3 fill-amber-500" />
                         {rating}
@@ -111,23 +122,10 @@ export function ProductCard({
                     </h4>
                 </Link>
 
-                {/* Seller Info — always visible, links to seller profile */}
-                {sellerName && sellerId && (
-                    <div className="text-[10px] text-neutral-400 font-medium mb-1">
-                        <Link
-                            href={`/partner/${sellerId}`}
-                            className="hover:text-primary-600 hover:underline transition-colors font-bold"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            {sellerName}
-                        </Link>
-                    </div>
-                )}
-
-                {/* Full seller info row — non-compact only */}
-                {!compact && sellerName && !sellerId && (
-                    <div className="mt-auto text-[10px] text-neutral-400 font-medium mb-2">
-                        Seller: <span className="text-neutral-600">{sellerName}</span>
+                {/* Below title = actual category (Cement, Sand, etc.) */}
+                {displayCategory && (
+                    <div className="text-[10px] text-neutral-500 font-medium mb-1 uppercase tracking-wide">
+                        {displayCategory}
                     </div>
                 )}
 
