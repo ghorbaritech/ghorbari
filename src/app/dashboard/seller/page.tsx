@@ -15,15 +15,21 @@ import {
     Search,
     MoreVertical,
     CheckCircle2,
-    XCircle
+    XCircle,
+    User,
+    ExternalLink
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
 
 export default function SellerDashboard() {
     const [products, setProducts] = useState<any[]>([])
     const [orders, setOrders] = useState<any[]>([])
     const [assignedTasks, setAssignedTasks] = useState<any[]>([])
     const [showAddForm, setShowAddForm] = useState(false)
+    const [showEditProfile, setShowEditProfile] = useState(false)
+    const [profileSaving, setProfileSaving] = useState(false)
+    const [profileSaved, setProfileSaved] = useState(false)
     const [loading, setLoading] = useState(false)
     const [seller, setSeller] = useState<any>(null)
     const supabase = createClient()
@@ -81,6 +87,32 @@ export default function SellerDashboard() {
             setShowAddForm(false)
         }
         setLoading(false)
+    }
+
+    async function handleSaveProfile(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+        if (!seller) return
+        setProfileSaving(true)
+        const form = e.currentTarget
+        const fd = new FormData(form)
+        const updates: any = {
+            bio: fd.get('bio'),
+            shop_photo_url: fd.get('shop_photo_url'),
+            gallery_urls: (fd.get('gallery_urls') as string)?.split('\n').map((u: string) => u.trim()).filter(Boolean),
+            terms_and_conditions: fd.get('terms_and_conditions'),
+            location: fd.get('location'),
+            phone: fd.get('phone'),
+            email: fd.get('email'),
+            website: fd.get('website'),
+            founded_year: parseInt(fd.get('founded_year') as string) || null,
+        }
+        const { error } = await supabase.from('sellers').update(updates).eq('id', seller.id)
+        if (!error) {
+            setSeller({ ...seller, ...updates })
+            setProfileSaved(true)
+            setTimeout(() => { setProfileSaved(false); setShowEditProfile(false) }, 1500)
+        }
+        setProfileSaving(false)
     }
 
     return (
@@ -164,7 +196,18 @@ export default function SellerDashboard() {
                                             <h2 className="text-2xl font-black text-neutral-900 italic uppercase">My Store Health</h2>
                                             <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mt-1">Status: <span className="text-green-600">{seller?.is_active ? 'ONLINE' : 'OFFLINE'}</span> • Verification: <span className="text-blue-600">{seller?.verification_status || 'Pending'}</span></p>
                                         </div>
-                                        <Button variant="outline" className="rounded-xl border-neutral-200 uppercase text-[10px] font-black tracking-widest">Edit Profile</Button>
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" onClick={() => setShowEditProfile(true)} className="rounded-xl border-neutral-200 uppercase text-[10px] font-black tracking-widest gap-1">
+                                                <User className="w-3 h-3" /> Edit Profile
+                                            </Button>
+                                            {seller?.id && (
+                                                <Link href={`/partner/${seller.id}`} target="_blank">
+                                                    <Button variant="ghost" className="rounded-xl uppercase text-[10px] font-black tracking-widest gap-1 text-neutral-400">
+                                                        <ExternalLink className="w-3 h-3" /> View Public Page
+                                                    </Button>
+                                                </Link>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="mt-6 grid grid-cols-3 gap-4">
                                         <div className="p-4 bg-neutral-50 rounded-2xl">
@@ -320,6 +363,75 @@ export default function SellerDashboard() {
                         </div>
                     </div>
                 </div>
+
+                {/* Edit Profile Modal */}
+                {showEditProfile && (
+                    <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
+                        <Card className="w-full max-w-2xl bg-white rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+                            <div className="p-8 border-b border-neutral-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                                <div>
+                                    <h2 className="text-3xl font-black text-neutral-900 italic uppercase tracking-tighter">Edit Public Profile</h2>
+                                    <p className="text-neutral-400 font-bold uppercase text-[10px] tracking-widest">Visible on your seller page</p>
+                                </div>
+                                <Button variant="ghost" onClick={() => setShowEditProfile(false)} className="rounded-full w-12 h-12 hover:bg-neutral-100">
+                                    <XCircle className="w-6 h-6 text-neutral-300" />
+                                </Button>
+                            </div>
+                            <div className="overflow-y-auto p-8">
+                                <form id="profile-form" onSubmit={handleSaveProfile} className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1 col-span-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Business Summary / Bio</label>
+                                            <textarea name="bio" defaultValue={seller?.bio || ''} rows={4} className="w-full p-4 rounded-2xl bg-neutral-50 border-none font-medium resize-none focus:outline-none focus:ring-2 focus:ring-neutral-200 text-sm" placeholder="Tell customers about your business, experience, and values..." />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Location / City</label>
+                                            <Input name="location" defaultValue={seller?.location || ''} className="h-12 rounded-2xl bg-neutral-50 border-none" placeholder="e.g. Mirpur, Dhaka" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Founded Year</label>
+                                            <Input name="founded_year" type="number" defaultValue={seller?.founded_year || ''} className="h-12 rounded-2xl bg-neutral-50 border-none" placeholder="e.g. 2015" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Phone</label>
+                                            <Input name="phone" defaultValue={seller?.phone || ''} className="h-12 rounded-2xl bg-neutral-50 border-none" placeholder="+880 17XX XXXXXX" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Email</label>
+                                            <Input name="email" type="email" defaultValue={seller?.email || ''} className="h-12 rounded-2xl bg-neutral-50 border-none" placeholder="contact@yourbusiness.com" />
+                                        </div>
+                                        <div className="space-y-1 col-span-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Website URL</label>
+                                            <Input name="website" defaultValue={seller?.website || ''} className="h-12 rounded-2xl bg-neutral-50 border-none" placeholder="https://yourbusiness.com" />
+                                        </div>
+                                        <div className="space-y-1 col-span-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Shop / Banner Photo URL</label>
+                                            <Input name="shop_photo_url" defaultValue={seller?.shop_photo_url || ''} className="h-12 rounded-2xl bg-neutral-50 border-none" placeholder="https://link-to-your-shop-photo.jpg" />
+                                        </div>
+                                        <div className="space-y-1 col-span-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Gallery Image URLs (one per line)</label>
+                                            <textarea name="gallery_urls" defaultValue={seller?.gallery_urls?.join('\n') || ''} rows={4} className="w-full p-4 rounded-2xl bg-neutral-50 border-none font-medium resize-none focus:outline-none focus:ring-2 focus:ring-neutral-200 text-sm font-mono" placeholder="https://photo1.jpg&#10;https://photo2.jpg&#10;..." />
+                                            <p className="text-xs text-neutral-400">Paste URLs of delivered order photos, one per line. Max 6 shown.</p>
+                                        </div>
+                                        <div className="space-y-1 col-span-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Terms &amp; Conditions</label>
+                                            <textarea name="terms_and_conditions" defaultValue={seller?.terms_and_conditions || ''} rows={5} className="w-full p-4 rounded-2xl bg-neutral-50 border-none font-medium resize-none focus:outline-none focus:ring-2 focus:ring-neutral-200 text-sm" placeholder="Enter your return policy, delivery terms, etc..." />
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div className="p-8 border-t border-neutral-100 bg-white sticky bottom-0">
+                                <Button
+                                    onClick={() => (document.getElementById('profile-form') as HTMLFormElement)?.requestSubmit()}
+                                    disabled={profileSaving}
+                                    className="w-full h-14 bg-neutral-900 text-white font-black uppercase tracking-widest rounded-2xl"
+                                >
+                                    {profileSaved ? '✓ Profile Saved!' : profileSaving ? 'Saving...' : 'Save Public Profile'}
+                                </Button>
+                            </div>
+                        </Card>
+                    </div>
+                )}
 
                 {/* Add Product Modal (Re-using logic from previously) */}
                 {showAddForm && (

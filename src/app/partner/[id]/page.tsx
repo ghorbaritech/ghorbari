@@ -2,245 +2,332 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, CheckCircle2, Phone, Mail, Globe, Hammer, PenTool, Package } from "lucide-react";
+import {
+    Star, MapPin, CheckCircle2, Phone, Mail, Globe,
+    Package, ShoppingBag, TrendingUp, Award, ChevronDown, ChevronUp,
+    Calendar, MessageSquare, Image as ImageIcon
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPartnerById } from "@/services/partnerService";
+import { getSellerProfile } from "@/services/sellerService";
 
 interface Params {
     params: Promise<{ id: string }>;
 }
 
-export default async function PartnerProfilePage({ params }: Params) {
-    const { id } = await params;
+function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg" }) {
+    const cls = size === "lg" ? "w-6 h-6" : "w-3.5 h-3.5";
+    return (
+        <div className="flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map(s => (
+                <Star key={s} className={`${cls} ${s <= Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-neutral-200"}`} />
+            ))}
+        </div>
+    );
+}
 
-    const partner = await getPartnerById(id);
-    if (!partner) return notFound();
+export default async function SellerProfilePage({ params }: Params) {
+    const { id } = await params;
+    const seller = await getSellerProfile(id);
+
+    if (!seller) return notFound();
+
+    const formatCurrency = (n: number) =>
+        n >= 10000000 ? `৳${(n / 10000000).toFixed(1)}Cr`
+            : n >= 100000 ? `৳${(n / 100000).toFixed(1)}L`
+                : `৳${n.toLocaleString()}`;
+
+    const maxReviewCount = Math.max(...seller.ratingBreakdown.map((r: any) => r.count), 1);
 
     return (
-        <main className="min-h-screen flex flex-col font-sans bg-neutral-50/50">
+        <main className="min-h-screen flex flex-col font-sans bg-neutral-50">
             <Navbar />
 
-            {/* Header Banner */}
-            <div className="h-64 bg-neutral-900 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-neutral-900 to-transparent z-10" />
+            {/* ── HERO BANNER ── */}
+            <div className="relative h-72 md:h-96 bg-neutral-900 overflow-hidden">
                 <Image
-                    src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200"
-                    alt="Cover"
+                    src={seller.shopPhotoUrl}
+                    alt={`${seller.businessName} shop`}
                     fill
-                    className="object-cover opacity-50"
+                    className="object-cover opacity-60"
+                    priority
                 />
-            </div>
-
-            <div className="container mx-auto px-4 -mt-20 relative z-20 mb-12">
-                <div className="bg-white rounded-[32px] shadow-xl border border-neutral-100 p-8 flex flex-col md:flex-row gap-8 items-start">
-                    {/* Brand Logo */}
-                    <div className="w-32 h-32 rounded-2xl bg-white p-2 shadow-lg border border-neutral-100 flex-shrink-0">
-                        <div className="w-full h-full relative rounded-xl overflow-hidden bg-neutral-50">
-                            <Image
-                                src="https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=300"
-                                alt="Logo"
-                                fill
-                                className="object-cover"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Basic Info */}
-                    <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-3 mb-2">
-                            {partner.roles.includes('seller') && <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">Product Supplier</Badge>}
-                            {partner.roles.includes('designer') && <Badge className="bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200">Design Partner</Badge>}
-                            {partner.roles.includes('service_provider') && <Badge className="bg-orange-50 text-orange-700 hover:bg-orange-100 border-orange-200">Service Pro</Badge>}
-                        </div>
-
-                        <h1 className="text-3xl md:text-4xl font-black text-neutral-900 mb-2">{partner.name}</h1>
-
-                        <div className="flex items-center gap-4 text-sm text-neutral-500 mb-6">
-                            <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {partner.location}</span>
-                            <span className="flex items-center gap-1 text-yellow-500 font-bold"><Star className="w-4 h-4 fill-current" /> {partner.rating} ({partner.reviews} Reviews)</span>
-                            <span className="flex items-center gap-1 text-green-600 font-bold"><CheckCircle2 className="w-4 h-4" /> Verified Partner</span>
-                        </div>
-
-                        <p className="text-neutral-600 max-w-2xl leading-relaxed mb-6">{partner.bio}</p>
-
-                        <div className="flex flex-wrap gap-3">
-                            <Button className="bg-neutral-900 rounded-xl font-bold">Contact Partner</Button>
-                            <Button variant="outline" className="rounded-xl border-neutral-200">Request Quote</Button>
-                        </div>
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="flex md:flex-col gap-6 p-6 bg-neutral-50 rounded-2xl border border-neutral-100 min-w-[200px]">
-                        <div className="text-center md:text-left">
-                            <div className="text-2xl font-black text-neutral-900">{partner.stats.projects}</div>
-                            <div className="text-xs uppercase tracking-widest text-neutral-500 font-bold">Projects Done</div>
-                        </div>
-                        <div className="text-center md:text-left">
-                            <div className="text-2xl font-black text-neutral-900">{partner.stats.products}</div>
-                            <div className="text-xs uppercase tracking-widest text-neutral-500 font-bold">Products Listed</div>
-                        </div>
-                        <div className="text-center md:text-left">
-                            <div className="text-2xl font-black text-neutral-900">{partner.stats.happyClients}</div>
-                            <div className="text-xs uppercase tracking-widest text-neutral-500 font-bold">Happy Clients</div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-8">
+                    <div className="container mx-auto">
+                        {seller.verificationStatus === 'verified' && (
+                            <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-2">
+                                <CheckCircle2 className="w-4 h-4" /> Verified Partner
+                            </div>
+                        )}
+                        <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">{seller.businessName}</h1>
+                        <div className="flex flex-wrap items-center gap-4 mt-2 text-neutral-300 text-sm">
+                            {seller.location && <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {seller.location}</span>}
+                            {seller.foundedYear && <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> Est. {seller.foundedYear}</span>}
+                            {seller.stats.avgRating > 0 && (
+                                <span className="flex items-center gap-1.5">
+                                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                    <span className="text-white font-bold">{seller.stats.avgRating}</span>
+                                    <span>({seller.reviews.length} reviews)</span>
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Main Content Tabs */}
-                <div className="mt-12 grid grid-cols-1 lg:grid-cols-4 gap-10">
-                    <aside className="lg:col-span-1 space-y-8">
-                        {/* Contact Info */}
-                        <div className="bg-white p-6 rounded-[32px] border border-neutral-100 shadow-sm">
-                            <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">Contact Details</h3>
-                            <div className="space-y-4 text-sm">
-                                <div className="flex items-center gap-3 text-neutral-600">
-                                    <Phone className="w-4 h-4 text-primary-500" />
-                                    <span>+880 1700 000000</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-neutral-600">
-                                    <Mail className="w-4 h-4 text-primary-500" />
-                                    <span>contact@ecobuild.com</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-neutral-600">
-                                    <Globe className="w-4 h-4 text-primary-500" />
-                                    <span>www.ecobuild.com</span>
-                                </div>
-                            </div>
+            <div className="container mx-auto px-4 py-10">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+                    {/* ── LEFT SIDEBAR ── */}
+                    <aside className="lg:col-span-1 space-y-5">
+
+                        {/* Contact Card */}
+                        <div className="bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm space-y-4">
+                            <h3 className="font-black text-sm uppercase tracking-widest text-neutral-400">Contact</h3>
+                            {seller.phone && (
+                                <a href={`tel:${seller.phone}`} className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors text-sm">
+                                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <Phone className="w-4 h-4 text-blue-600" />
+                                    </div>
+                                    {seller.phone}
+                                </a>
+                            )}
+                            {seller.email && (
+                                <a href={`mailto:${seller.email}`} className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors text-sm">
+                                    <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <Mail className="w-4 h-4 text-purple-600" />
+                                    </div>
+                                    <span className="truncate">{seller.email}</span>
+                                </a>
+                            )}
+                            {seller.website && (
+                                <a href={seller.website} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors text-sm">
+                                    <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <Globe className="w-4 h-4 text-green-600" />
+                                    </div>
+                                    <span className="truncate">{seller.website.replace(/^https?:\/\//, '')}</span>
+                                </a>
+                            )}
+                            {!seller.phone && !seller.email && !seller.website && (
+                                <p className="text-sm text-neutral-400 italic">Contact details not provided.</p>
+                            )}
+                            <Link href={`/products?seller=${seller.id}`} className="block">
+                                <Button className="w-full bg-neutral-900 hover:bg-black text-white rounded-xl font-bold mt-2">
+                                    Request Quote
+                                </Button>
+                            </Link>
                         </div>
 
-                        {/* Specializations */}
-                        <div className="bg-white p-6 rounded-[32px] border border-neutral-100 shadow-sm">
-                            <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">Expertise</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {partner.tags.map(tag => (
-                                    <span key={tag} className="px-3 py-1 bg-neutral-100 text-neutral-600 text-xs font-bold rounded-lg uppercase tracking-wide">{tag}</span>
-                                ))}
+                        {/* Categories */}
+                        {seller.primaryCategories.length > 0 && (
+                            <div className="bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm">
+                                <h3 className="font-black text-sm uppercase tracking-widest text-neutral-400 mb-4">Supplies</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {seller.primaryCategories.map((cat: string) => (
+                                        <span key={cat} className="px-3 py-1 bg-neutral-100 text-neutral-700 text-xs font-bold rounded-lg uppercase tracking-wide">{cat}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Stats */}
+                        <div className="bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm space-y-5">
+                            <h3 className="font-black text-sm uppercase tracking-widest text-neutral-400">Performance</h3>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <ShoppingBag className="w-5 h-5 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <div className="font-black text-xl text-neutral-900">{seller.stats.totalOrders.toLocaleString()}</div>
+                                    <div className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Orders Served</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <TrendingUp className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <div>
+                                    <div className="font-black text-xl text-neutral-900">{formatCurrency(seller.stats.totalOrderValue)}</div>
+                                    <div className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Total Value</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <Package className="w-5 h-5 text-amber-600" />
+                                </div>
+                                <div>
+                                    <div className="font-black text-xl text-neutral-900">{seller.stats.productsListed}</div>
+                                    <div className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Products Listed</div>
+                                </div>
                             </div>
                         </div>
                     </aside>
 
-                    <div className="lg:col-span-3 space-y-12">
-                        {/* 1. Design Portfolio Section */}
-                        {partner.roles.includes('designer') && (
-                            <section>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-purple-100 text-purple-600 rounded-xl">
-                                        <PenTool className="w-6 h-6" />
-                                    </div>
-                                    <h2 className="text-2xl font-black text-neutral-900">Design Portfolio</h2>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* TODO: Add real portfolio data structure. For now using placeholder array if empty */}
-                                    {(partner.details.designer?.portfolio_items?.length ? partner.details.designer.portfolio_items : [1, 2]).map((item: any, i: number) => (
-                                        <div key={i} className="group cursor-pointer">
-                                            <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-neutral-100">
-                                                <Image
-                                                    src={item?.image || `https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80`}
-                                                    alt="Project"
-                                                    fill
-                                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                                />
-                                            </div>
-                                            <h3 className="font-bold text-lg text-neutral-900 group-hover:text-primary-600 transition-colors">
-                                                {item?.title || "Modern Residential Project"}
-                                            </h3>
-                                            <p className="text-sm text-neutral-500">
-                                                {partner.location} • {item?.type || "Architectural Design"}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
+                    {/* ── MAIN CONTENT ── */}
+                    <div className="lg:col-span-3 space-y-10">
 
-                        {/* 2. Products Section */}
-                        {partner.roles.includes('seller') && (
-                            <section>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
-                                        <Package className="w-6 h-6" />
+                        {/* ── PRODUCTS ── */}
+                        <section>
+                            <div className="flex items-center justify-between mb-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
+                                        <Package className="w-5 h-5 text-blue-600" />
                                     </div>
-                                    <h2 className="text-2xl font-black text-neutral-900">Featured Products</h2>
+                                    <h2 className="text-xl font-black text-neutral-900">Products</h2>
                                 </div>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                                    {/* Mocking products for now as we need a separate fetchProductsBySeller call */}
-                                    {[1, 2, 3].map(i => (
-                                        <div key={i} className="border border-neutral-100 rounded-2xl p-4 bg-white hover:shadow-lg transition-shadow">
-                                            <div className="relative aspect-square rounded-xl overflow-hidden mb-3 bg-neutral-50 mb-4">
-                                                <Image
-                                                    src={`https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400`}
-                                                    alt="Product"
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            </div>
-                                            <div className="font-bold text-neutral-900 mb-1">Premium Material {i}</div>
-                                            <div className="text-primary-600 font-black text-lg">৳ 550</div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="mt-6 text-center">
-                                    <Link href={`/products?seller=${partner.id}`}>
-                                        <Button variant="outline" className="rounded-xl">View All Products</Button>
-                                    </Link>
-                                </div>
-                            </section>
-                        )}
-
-                        {/* 3. Services Section */}
-                        {partner.roles.includes('service_provider') && (
-                            <section>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-orange-100 text-orange-600 rounded-xl">
-                                        <Hammer className="w-6 h-6" />
-                                    </div>
-                                    <h2 className="text-2xl font-black text-neutral-900">Construction Services</h2>
-                                </div>
-                                <div className="space-y-4">
-                                    {(partner.details.serviceProvider?.service_types || ['General Contracting']).map((service: string, i: number) => (
-                                        <div key={i} className="flex gap-6 p-6 border border-neutral-100 rounded-2xl bg-white items-center">
-                                            <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-100">
-                                                <Image
-                                                    src={`https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=200`}
-                                                    alt="Service"
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-lg text-neutral-900">{service}</h3>
-                                                <p className="text-sm text-neutral-500 mb-2">Professional {service} services with {partner.details.serviceProvider?.experience_years || 5}+ years of experience.</p>
-                                                <div className="text-xs font-bold uppercase tracking-widest text-primary-600">Starting at ৳ 120/sqft</div>
-                                                <Button size="sm" variant="outline" className="h-8 text-xs mt-3">Request Quote</Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
-
-                        {/* 4. Reviews Section (Mocked for now as requested) */}
-                        <section className="pt-12 border-t border-neutral-100">
-                            <h2 className="text-2xl font-black text-neutral-900 mb-8">Client Reviews</h2>
-                            <div className="bg-neutral-50 rounded-[32px] p-8 text-center border border-neutral-100">
-                                <div className="flex justify-center mb-4">
-                                    <div className="flex text-yellow-500">
-                                        {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-6 h-6 fill-current" />)}
-                                    </div>
-                                </div>
-                                <h3 className="text-xl font-bold text-neutral-900 mb-2">Excellent Service!</h3>
-                                <p className="text-neutral-600 max-w-lg mx-auto italic">"We hired them for both architectural design and material supply. The coordination was seamless and the quality of materials was top notch."</p>
-                                <div className="mt-6 flex items-center justify-center gap-3">
-                                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold">JD</div>
-                                    <div className="text-left">
-                                        <div className="font-bold text-neutral-900 text-sm">Jamal Din</div>
-                                        <div className="text-xs text-neutral-500">Gulshan, Dhaka</div>
-                                    </div>
-                                </div>
+                                <Link href={`/products?seller=${seller.id}`}>
+                                    <Button variant="ghost" size="sm" className="text-neutral-500 font-bold text-xs uppercase tracking-widest">View All →</Button>
+                                </Link>
                             </div>
+
+                            {seller.products.length > 0 ? (
+                                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                                    {seller.products.map((product: any) => (
+                                        <Link key={product.id} href={`/products/${product.id}`}>
+                                            <div className="group bg-white border border-neutral-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-neutral-200 transition-all duration-300">
+                                                <div className="relative aspect-square bg-neutral-50 overflow-hidden">
+                                                    <Image
+                                                        src={product.images?.[0] || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400'}
+                                                        alt={product.title}
+                                                        fill
+                                                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                                    />
+                                                </div>
+                                                <div className="p-3">
+                                                    <p className="font-bold text-neutral-900 text-sm leading-tight line-clamp-2 mb-1">{product.title}</p>
+                                                    <p className="font-black text-neutral-900 text-base">৳{parseFloat(product.base_price).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="bg-white border border-neutral-100 rounded-2xl p-12 text-center">
+                                    <Package className="w-12 h-12 text-neutral-200 mx-auto mb-3" />
+                                    <p className="text-neutral-400 font-bold">No products listed yet</p>
+                                </div>
+                            )}
                         </section>
+
+                        {/* ── REVIEWS ── */}
+                        <section className="bg-white rounded-3xl border border-neutral-100 shadow-sm p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center">
+                                    <Star className="w-5 h-5 text-amber-600" />
+                                </div>
+                                <h2 className="text-xl font-black text-neutral-900">Reviews & Ratings</h2>
+                            </div>
+
+                            {seller.reviews.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                                    {/* Average Score */}
+                                    <div className="flex flex-col items-center justify-center text-center p-6 bg-neutral-50 rounded-2xl">
+                                        <div className="text-6xl font-black text-neutral-900 mb-2">{seller.stats.avgRating}</div>
+                                        <StarRating rating={seller.stats.avgRating} size="lg" />
+                                        <div className="text-sm text-neutral-400 font-bold mt-2">{seller.reviews.length} Reviews</div>
+                                    </div>
+                                    {/* Star Breakdown */}
+                                    <div className="md:col-span-2 space-y-2 justify-center flex flex-col">
+                                        {seller.ratingBreakdown.map((row: any) => (
+                                            <div key={row.star} className="flex items-center gap-3">
+                                                <span className="text-xs font-bold text-neutral-500 w-6 text-right">{row.star}</span>
+                                                <Star className="w-3 h-3 fill-amber-400 text-amber-400 flex-shrink-0" />
+                                                <div className="flex-1 h-2 bg-neutral-100 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-amber-400 rounded-full transition-all"
+                                                        style={{ width: `${(row.count / maxReviewCount) * 100}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-xs font-bold text-neutral-400 w-4">{row.count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 mb-6">
+                                    <MessageSquare className="w-10 h-10 text-neutral-200 mx-auto mb-2" />
+                                    <p className="text-neutral-400 font-bold text-sm">No reviews yet — be the first!</p>
+                                </div>
+                            )}
+
+                            {/* Review Cards */}
+                            {seller.reviews.length > 0 && (
+                                <div className="space-y-4 mt-2">
+                                    {seller.reviews.slice(0, 5).map((review: any) => (
+                                        <div key={review.id} className="p-5 bg-neutral-50 rounded-2xl border border-neutral-100">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-black text-sm">
+                                                        {(review.reviewer?.full_name || 'A')[0].toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-neutral-900 text-sm">{review.reviewer?.full_name || 'Anonymous'}</div>
+                                                        <div className="text-xs text-neutral-400">{new Date(review.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                                                    </div>
+                                                </div>
+                                                <StarRating rating={review.rating} />
+                                            </div>
+                                            {review.comment && <p className="text-sm text-neutral-600 leading-relaxed">{review.comment}</p>}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+
+                        {/* ── GALLERY ── */}
+                        {seller.galleryUrls.length > 0 && (
+                            <section>
+                                <div className="flex items-center gap-3 mb-5">
+                                    <div className="w-9 h-9 bg-pink-100 rounded-xl flex items-center justify-center">
+                                        <ImageIcon className="w-5 h-5 text-pink-600" />
+                                    </div>
+                                    <h2 className="text-xl font-black text-neutral-900">Delivery Gallery</h2>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {seller.galleryUrls.slice(0, 6).map((url: string, i: number) => (
+                                        <div key={i} className={`relative rounded-2xl overflow-hidden bg-neutral-100 ${i === 0 ? 'row-span-2 aspect-[3/4]' : 'aspect-square'}`}>
+                                            <Image src={url} alt={`Gallery ${i + 1}`} fill className="object-cover hover:scale-105 transition-transform duration-500" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* ── ABOUT / BIO ── */}
+                        {seller.bio && (
+                            <section className="bg-white rounded-3xl border border-neutral-100 shadow-sm p-8">
+                                <div className="flex items-center gap-3 mb-5">
+                                    <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                        <Award className="w-5 h-5 text-indigo-600" />
+                                    </div>
+                                    <h2 className="text-xl font-black text-neutral-900">About the Business</h2>
+                                </div>
+                                <p className="text-neutral-600 leading-relaxed whitespace-pre-wrap">{seller.bio}</p>
+                            </section>
+                        )}
+
+                        {/* ── TERMS & CONDITIONS ── */}
+                        {seller.termsAndConditions && (
+                            <section className="bg-white rounded-3xl border border-neutral-100 shadow-sm overflow-hidden">
+                                <details className="group">
+                                    <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center">
+                                                <CheckCircle2 className="w-5 h-5 text-gray-600" />
+                                            </div>
+                                            <h2 className="text-xl font-black text-neutral-900">Terms &amp; Conditions</h2>
+                                        </div>
+                                        <ChevronDown className="w-5 h-5 text-neutral-400 group-open:rotate-180 transition-transform" />
+                                    </summary>
+                                    <div className="px-8 pb-8 pt-2">
+                                        <div className="h-px bg-neutral-100 mb-6" />
+                                        <p className="text-neutral-600 leading-relaxed text-sm whitespace-pre-wrap">{seller.termsAndConditions}</p>
+                                    </div>
+                                </details>
+                            </section>
+                        )}
                     </div>
                 </div>
             </div>

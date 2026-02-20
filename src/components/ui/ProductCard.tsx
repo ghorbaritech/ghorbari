@@ -111,18 +111,23 @@ export function ProductCard({
                     </h4>
                 </Link>
 
-                {/* Seller Info (Hide in compact mode if desired, or keep small) */}
-                {!compact && (
+                {/* Seller Info — always visible, links to seller profile */}
+                {sellerName && sellerId && (
+                    <div className="text-[10px] text-neutral-400 font-medium mb-1">
+                        <Link
+                            href={`/partner/${sellerId}`}
+                            className="hover:text-primary-600 hover:underline transition-colors font-bold"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {sellerName}
+                        </Link>
+                    </div>
+                )}
+
+                {/* Full seller info row — non-compact only */}
+                {!compact && sellerName && !sellerId && (
                     <div className="mt-auto text-[10px] text-neutral-400 font-medium mb-2">
-                        Seller: <span className="text-neutral-600">
-                            {sellerId ? (
-                                <a href={`/partner/${sellerId}`} className="hover:text-primary-600 hover:underline transition-colors">
-                                    {sellerName}
-                                </a>
-                            ) : (
-                                sellerName
-                            )}
-                        </span>
+                        Seller: <span className="text-neutral-600">{sellerName}</span>
                     </div>
                 )}
 
