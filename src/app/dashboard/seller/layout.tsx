@@ -1,8 +1,25 @@
 "use client"
 import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, Settings, LogOut, DollarSign, Tag, Archive, MessageSquare, HelpCircle } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { LayoutDashboard, ShoppingBag, Settings, LogOut, DollarSign, Tag, Archive, MessageSquare, HelpCircle, User } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+
+function NavLink({ href, icon: Icon, label, exact = false }: { href: string; icon: any; label: string; exact?: boolean }) {
+    const pathname = usePathname();
+    const isActive = exact ? pathname === href : (pathname === href || pathname.startsWith(href + "/"));
+    return (
+        <Link
+            href={href}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${isActive
+                ? "bg-neutral-900 text-white"
+                : "text-neutral-600 hover:bg-neutral-50"
+                }`}
+        >
+            <Icon className="w-5 h-5" /> {label}
+        </Link>
+    );
+}
 
 export default function SellerDashboardLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -16,31 +33,16 @@ export default function SellerDashboardLayout({ children }: { children: React.Re
                             <div className="text-xs opacity-70">Retail Partner</div>
                         </div>
                         <nav className="p-4 space-y-1">
-                            <Link href="/dashboard/seller" className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 rounded-lg text-neutral-600 font-medium">
-                                <LayoutDashboard className="w-5 h-5" /> Overview
-                            </Link>
-                            <Link href="/dashboard/seller/products" className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 rounded-lg text-neutral-600 font-medium">
-                                <Archive className="w-5 h-5" /> Products
-                            </Link>
-                            <Link href="/dashboard/seller/orders" className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 rounded-lg text-neutral-600 font-medium">
-                                <ShoppingBag className="w-5 h-5" /> Orders
-                            </Link>
-                            <Link href="/dashboard/seller/finance" className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 rounded-lg text-neutral-600 font-medium">
-                                <DollarSign className="w-5 h-5" /> Finance
-                            </Link>
-                            <Link href="/dashboard/seller/campaigns" className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 rounded-lg text-neutral-600 font-medium">
-                                <Tag className="w-5 h-5" /> Campaigns
-                            </Link>
-                            <Link href="/dashboard/seller/messages" className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 rounded-lg text-neutral-600 font-medium">
-                                <MessageSquare className="w-5 h-5" /> Messages
-                            </Link>
-                            <Link href="/dashboard/seller/support" className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 rounded-lg text-neutral-600 font-medium">
-                                <HelpCircle className="w-5 h-5" /> Support
-                            </Link>
-                            <div className="my-2 h-px bg-neutral-100"></div>
-                            <Link href="/dashboard/seller/settings" className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 rounded-lg text-neutral-600 font-medium">
-                                <Settings className="w-5 h-5" /> Settings
-                            </Link>
+                            <NavLink href="/dashboard/seller" icon={LayoutDashboard} label="Overview" exact />
+                            <NavLink href="/dashboard/seller/products" icon={Archive} label="Products" />
+                            <NavLink href="/dashboard/seller/orders" icon={ShoppingBag} label="Orders" />
+                            <NavLink href="/dashboard/seller/finance" icon={DollarSign} label="Finance" />
+                            <NavLink href="/dashboard/seller/campaigns" icon={Tag} label="Campaigns" />
+                            <NavLink href="/dashboard/seller/messages" icon={MessageSquare} label="Messages" />
+                            <NavLink href="/dashboard/seller/profile" icon={User} label="Profile" />
+                            <NavLink href="/dashboard/seller/support" icon={HelpCircle} label="Support" />
+                            <div className="my-2 h-px bg-neutral-100" />
+                            <NavLink href="/dashboard/seller/settings" icon={Settings} label="Settings" />
                             <button className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium">
                                 <LogOut className="w-5 h-5" /> Sign Out
                             </button>
