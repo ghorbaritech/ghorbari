@@ -147,6 +147,7 @@ export function CategoryShowcase({ title, category, bgClass = "bg-white", link =
                                     category={product.category?.name || category}
                                     categoryBn={product.category?.name_bn}
                                     categoryId={product.category?.id || product.cat_id}
+                                    subcategory={product.sub_category || undefined}
                                     sellerId={product.seller_id}
                                     sellerName={product.seller?.business_name}
                                     compact={true}

@@ -16,6 +16,7 @@ interface ProductCardProps {
     category?: string;
     categoryBn?: string | null;
     categoryId?: string;
+    subcategory?: string;
     tag?: string;
     discount?: string;
     compact?: boolean;
@@ -38,6 +39,7 @@ export function ProductCard({
     category,
     categoryBn,
     categoryId,
+    subcategory,
     tag,
     discount,
     sellerId,
@@ -115,17 +117,17 @@ export function ProductCard({
                     </div>
                 </div>
 
-                {/* Title */}
+                {/* Title — links to product detail page */}
                 <Link href={productLink} className="block">
-                    <h4 className="font-bold text-neutral-900 leading-tight text-sm group-hover:text-primary-600 transition-colors line-clamp-2 mb-1 cursor-pointer">
+                    <h4 className="font-bold text-neutral-900 leading-tight text-sm group-hover:text-primary-600 group-hover:underline transition-colors line-clamp-2 mb-1 cursor-pointer">
                         {name}
                     </h4>
                 </Link>
 
-                {/* Below title = actual category (Cement, Sand, etc.) */}
-                {displayCategory && (
+                {/* Below title = subcategory (e.g. Cement, Sand, Bricks) */}
+                {(subcategory || displayCategory) && (
                     <div className="text-[10px] text-neutral-500 font-medium mb-1 uppercase tracking-wide">
-                        {displayCategory}
+                        {subcategory || displayCategory}
                     </div>
                 )}
 
