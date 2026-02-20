@@ -8,7 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Filter, ArrowRight, Loader2 } from "lucide-react";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { useEffect, useState } from "react";
-import { getProducts, getCategories, getBrands } from "@/services/productService";
+import { getProducts, getCategories } from "@/services/productService";
+import { createClient } from "@/utils/supabase/client";
 import { PromoBannerSection } from "@/components/sections/PromoBannerSection";
 import { BrandBar } from "@/components/sections/BrandBar";
 
@@ -17,50 +18,60 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function ProductsPage() {
     const { language } = useLanguage();
     const [products, setProducts] = useState<any[]>([]);
-    const [categories, setCategories] = useState<any[]>([]);
-    const [brands, setBrands] = useState<string[]>([]);
+    const [subcategories, setSubcategories] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
     const [minPrice, setMinPrice] = useState<string>("");
     const [maxPrice, setMaxPrice] = useState<string>("");
+    const supabase = createClient();
 
     useEffect(() => {
         async function fetchInitialData() {
             setLoading(true);
-            const [prodData, catData, brandData] = await Promise.all([
-                getProducts(),
-                getCategories('product'),
-                getBrands()
-            ]);
+            // Fetch all products and derive distinct subcategories from them
+            const prodData = await getProducts();
             setProducts(prodData);
-            setCategories(catData);
-            setBrands(brandData);
+
+            // Collect distinct sub_category values from products
+            const subs = Array.from(
+                new Set(
+                    prodData
+                        .map((p: any) => p.sub_category)
+                        .filter(Boolean)
+                )
+            ) as string[];
+            setSubcategories(subs.sort());
             setLoading(false);
         }
         fetchInitialData();
     }, []);
 
+
     const handleFilterPrice = async () => {
         setLoading(true);
-        const data = await getProducts({
-            categoryId: selectedCategory || undefined,
+        const all = await getProducts({
             minPrice: minPrice ? parseInt(minPrice) : undefined,
             maxPrice: maxPrice ? parseInt(maxPrice) : undefined
         });
-        setProducts(data);
+        const filtered = selectedSubcategory
+            ? all.filter((p: any) => p.sub_category === selectedSubcategory)
+            : all;
+        setProducts(filtered);
         setLoading(false);
     };
 
-    const handleCategoryToggle = async (id: string) => {
-        const newCat = selectedCategory === id ? null : id;
-        setSelectedCategory(newCat);
+    const handleSubcategoryToggle = async (sub: string) => {
+        const newSub = selectedSubcategory === sub ? null : sub;
+        setSelectedSubcategory(newSub);
         setLoading(true);
-        const data = await getProducts({
-            categoryId: newCat || undefined,
+        const all = await getProducts({
             minPrice: minPrice ? parseInt(minPrice) : undefined,
             maxPrice: maxPrice ? parseInt(maxPrice) : undefined
         });
-        setProducts(data);
+        const filtered = newSub
+            ? all.filter((p: any) => p.sub_category === newSub)
+            : all;
+        setProducts(filtered);
         setLoading(false);
     };
 
@@ -90,19 +101,25 @@ export default function ProductsPage() {
                         <div className="hidden lg:block space-y-8 bg-white p-8 rounded-[32px] border border-neutral-100 shadow-sm sticky top-24">
                             <div>
                                 <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">Supply Categories</h3>
-                                <div className="space-y-4">
-                                    {categories.map(c => (
-                                        <div key={c.id} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleCategoryToggle(c.id)}>
-                                            <Checkbox
-                                                id={c.id}
-                                                checked={selectedCategory === c.id}
-                                                onCheckedChange={() => handleCategoryToggle(c.id)}
-                                            />
-                                            <label htmlFor={c.id} className="text-xs font-black uppercase tracking-widest text-neutral-500 group-hover:text-primary-600 cursor-pointer transition-colors">
-                                                {(language === 'BN' && c.name_bn) ? c.name_bn : c.name}
-                                            </label>
-                                        </div>
-                                    ))}
+                                <div className="space-y-3">
+                                    {subcategories.length > 0 ? (
+                                        subcategories.map(sub => (
+                                            <div key={sub} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleSubcategoryToggle(sub)}>
+                                                <Checkbox
+                                                    id={sub}
+                                                    checked={selectedSubcategory === sub}
+                                                    onCheckedChange={() => handleSubcategoryToggle(sub)}
+                                                />
+                                                <label htmlFor={sub} className="text-xs font-black uppercase tracking-widest text-neutral-500 group-hover:text-primary-600 cursor-pointer transition-colors">
+                                                    {sub}
+                                                </label>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-[10px] text-neutral-300 font-bold uppercase tracking-widest italic">
+                                            No subcategories yet — add them when uploading products.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -173,6 +190,7 @@ export default function ProductsPage() {
                                         category={product.category?.name}
                                         categoryBn={product.category?.name_bn}
                                         categoryId={product.category_id}
+                                        subcategory={product.sub_category || undefined}
                                         sellerId={product.seller_id}
                                         sellerName={product.seller?.business_name}
                                         tag={product.brand}
