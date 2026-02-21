@@ -99,11 +99,11 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
         }
     };
 
-    // Filter potential parents: must be same type, and cannot be self or children
+    // Filter potential parents: must be same type and not self
     const availableParents = allCategories.filter(c =>
         c.type === formData.type &&
-        c.id !== category?.id &&
-        (c.level === undefined || c.level < 3) // Allow up to level 3 (Root→Sub→Item→Sub-Item)
+        c.id !== category?.id
+        // No level cap — hierarchy can go as deep as needed
     );
 
     // Determine what level we'll be creating
@@ -111,8 +111,8 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
     const parentLevel = parentCategory?.level ?? -1;
     const isSubLevel = parentLevel === 0 || category?.level === 1;
     const isItemLevel = parentLevel === 1 || category?.level === 2;
-    const isSubItemLevel = parentLevel === 2 || category?.level === 3;
-    // Show price/unit for any level with a parent (sub, item, sub-item)
+    // Level >= 2 means we're in sub-item territory (unlimited depth)
+    const isSubItemLevel = parentLevel >= 2 || (category?.level !== undefined && category.level >= 3);
     const showMetadata = isSubLevel || isItemLevel || isSubItemLevel;
 
     // Contextual title
@@ -127,10 +127,11 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
     };
 
     const getLevelLabel = () => {
-        if (isSubItemLevel) return "Sub-Item (Level 3)";
-        if (isItemLevel) return "Item (Level 2)";
-        if (isSubLevel) return "Subcategory (Level 1)";
-        return "Root Category (Level 0)";
+        const lvl = parentLevel >= 0 ? parentLevel + 1 : (category?.level ?? 0);
+        if (lvl === 0) return "Root Category (Level 0)";
+        if (lvl === 1) return "Subcategory (Level 1)";
+        if (lvl === 2) return "Item (Level 2)";
+        return `Sub-Item (Level ${lvl})`;
     };
 
     return (

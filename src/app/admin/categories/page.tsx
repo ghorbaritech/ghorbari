@@ -235,15 +235,15 @@ export default function AdminCategoriesPage() {
                                         </td>
                                         <td className="p-4">
                                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide ${cat.level === 0 ? 'bg-neutral-900 text-white' :
-                                                    cat.level === 1 ? 'bg-neutral-200 text-neutral-700' :
-                                                        cat.level === 2 ? 'bg-neutral-100 text-neutral-500' :
-                                                            'bg-neutral-50 text-neutral-400 border border-neutral-200'
+                                                cat.level === 1 ? 'bg-neutral-200 text-neutral-700' :
+                                                    cat.level === 2 ? 'bg-neutral-100 text-neutral-500' :
+                                                        'bg-neutral-50 text-neutral-400 border border-neutral-200'
                                                 }`}>
-                                                {cat.level === 0 ? 'Root' : cat.level === 1 ? 'Sub' : cat.level === 2 ? 'Item' : 'Sub-Item'}
+                                                {cat.level === 0 ? 'Root' : cat.level === 1 ? 'Sub' : cat.level === 2 ? 'Item' : `Sub-Item L${cat.level}`}
                                             </span>
                                         </td>
                                         <td className="p-4 text-xs">
-                                            {cat.level === 2 && cat.metadata ? (
+                                            {cat.level >= 2 && cat.metadata ? (
                                                 <div className="space-y-1">
                                                     {cat.metadata.unit && <div><span className="text-neutral-400">Unit:</span> {cat.metadata.unit}</div>}
                                                     {cat.metadata.price && <div><span className="text-neutral-400">Price:</span> ৳{cat.metadata.price}</div>}
@@ -283,8 +283,8 @@ export default function AdminCategoriesPage() {
                                                         +Item
                                                     </Button>
                                                 )}
-                                                {/* Item → add Sub-Item */}
-                                                {cat.level === 2 && (
+                                                {/* Item or any Sub-Item → add another Sub-Item (unlimited depth) */}
+                                                {cat.level >= 2 && (
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
