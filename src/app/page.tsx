@@ -8,6 +8,9 @@ import { DesignServicesSection } from "@/components/sections/DesignServicesSecti
 import { ServiceShowcase } from "@/components/sections/ServiceShowcase";
 import { getHomeContent } from "@/app/admin/cms/actions";
 
+// Always fetch fresh data — prevents Next.js from serving a stale cached build
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const contentMap = await getHomeContent();
 

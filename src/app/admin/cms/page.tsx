@@ -22,6 +22,7 @@ import { getHomeContent, updateHomeSection, getCMSDependencies } from './actions
 export default function CMSPage() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [saveAlert, setSaveAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
     const [content, setContent] = useState<any>({})
     const [dependencies, setDependencies] = useState<any>({ categories: [], designPackages: [], servicePackages: [] })
     const [activeTab, setActiveTab] = useState('categories')
@@ -59,13 +60,22 @@ export default function CMSPage() {
 
     const handleSave = async (sectionKey: string, sectionContent: any) => {
         setSaving(true)
-        const result = await updateHomeSection(sectionKey, sectionContent)
-        if (result.success) {
-            setContent({ ...content, [sectionKey]: sectionContent })
-        } else {
-            console.error(result.message)
+        setSaveAlert(null)
+        try {
+            const result = await updateHomeSection(sectionKey, sectionContent)
+            if (result.success) {
+                setContent({ ...content, [sectionKey]: sectionContent })
+                setSaveAlert({ type: 'success', message: 'Saved successfully! Home page will reflect changes shortly.' })
+            } else {
+                console.error(result.message)
+                setSaveAlert({ type: 'error', message: `Save failed: ${result.message}` })
+            }
+        } catch (err: any) {
+            console.error('Save exception:', err)
+            setSaveAlert({ type: 'error', message: `Save error: ${err?.message || 'Unknown error'}` })
         }
         setSaving(false)
+        setTimeout(() => setSaveAlert(null), 6000)
     }
 
     if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-neutral-400" /></div>
@@ -76,6 +86,14 @@ export default function CMSPage() {
                 <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight italic">CMS Manager</h1>
                 <p className="text-neutral-500 font-medium">Control dynamic content on the home page.</p>
             </header>
+
+            {/* Save Alert Banner */}
+            {saveAlert && (
+                <div className={`px-5 py-4 rounded-2xl font-bold text-sm flex items-center gap-3 ${saveAlert.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                    <span>{saveAlert.type === 'success' ? '✅' : '❌'}</span>
+                    {saveAlert.message}
+                </div>
+            )}
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
                 <TabsList className="bg-white p-1 rounded-2xl h-auto flex-wrap shadow-sm border border-neutral-100">
@@ -277,9 +295,10 @@ export default function CMSPage() {
                                         variant="ghost"
                                         size="icon"
                                         className="absolute top-4 right-4 text-neutral-300 hover:text-red-500 hover:bg-red-50"
-                                        onClick={() => {
+                                        onClick={async () => {
                                             const newSections = content['product_sections'].filter((s: any) => s.id !== section.id)
                                             setContent({ ...content, product_sections: newSections })
+                                            await handleSave('product_sections', newSections)
                                         }}
                                     >
                                         <Trash2 className="w-5 h-5" />
