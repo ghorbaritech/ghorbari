@@ -79,6 +79,14 @@ export default function AdminCategoriesPage() {
         setIsDialogOpen(true);
     };
 
+    // Open dialog pre-filled to add a sub-item under an item
+    const openAddSubItemDialog = (parent: Category) => {
+        setSelectedCategory(null);
+        setDefaultParentId(parent.id);
+        setDefaultType(parent.type);
+        setIsDialogOpen(true);
+    };
+
     // Open dialog for editing
     const openEditDialog = (category: Category) => {
         setSelectedCategory(category);
@@ -178,6 +186,7 @@ export default function AdminCategoriesPage() {
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-neutral-900 inline-block" /> Root Category</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-neutral-400 inline-block" /> Subcategory</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-neutral-200 inline-block" /> Item</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-neutral-100 border border-neutral-200 inline-block" /> Sub-Item</span>
                 <span className="flex items-center gap-1.5 ml-auto text-neutral-400 text-[10px] italic">{categories.length} total categories</span>
             </div>
 
@@ -226,10 +235,11 @@ export default function AdminCategoriesPage() {
                                         </td>
                                         <td className="p-4">
                                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide ${cat.level === 0 ? 'bg-neutral-900 text-white' :
-                                                cat.level === 1 ? 'bg-neutral-200 text-neutral-700' :
-                                                    'bg-neutral-100 text-neutral-500'
+                                                    cat.level === 1 ? 'bg-neutral-200 text-neutral-700' :
+                                                        cat.level === 2 ? 'bg-neutral-100 text-neutral-500' :
+                                                            'bg-neutral-50 text-neutral-400 border border-neutral-200'
                                                 }`}>
-                                                {cat.level === 0 ? 'Root' : cat.level === 1 ? 'Sub' : 'Item'}
+                                                {cat.level === 0 ? 'Root' : cat.level === 1 ? 'Sub' : cat.level === 2 ? 'Item' : 'Sub-Item'}
                                             </span>
                                         </td>
                                         <td className="p-4 text-xs">
@@ -247,7 +257,7 @@ export default function AdminCategoriesPage() {
                                         </td>
                                         <td className="p-4">
                                             <div className="flex items-center justify-end gap-1">
-                                                {/* Root category: show + Sub button */}
+                                                {/* Root → add Subcategory */}
                                                 {cat.level === 0 && (
                                                     <Button
                                                         size="sm"
@@ -260,7 +270,7 @@ export default function AdminCategoriesPage() {
                                                         +Sub
                                                     </Button>
                                                 )}
-                                                {/* Subcategory: show + Item button */}
+                                                {/* Subcategory → add Item */}
                                                 {cat.level === 1 && (
                                                     <Button
                                                         size="sm"
@@ -271,6 +281,19 @@ export default function AdminCategoriesPage() {
                                                     >
                                                         <FilePlus className="w-3.5 h-3.5 mr-1" />
                                                         +Item
+                                                    </Button>
+                                                )}
+                                                {/* Item → add Sub-Item */}
+                                                {cat.level === 2 && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-7 px-2 text-[10px] font-bold text-violet-600 hover:text-violet-700 hover:bg-violet-50"
+                                                        onClick={() => openAddSubItemDialog(cat)}
+                                                        title={`Add sub-item under ${cat.name}`}
+                                                    >
+                                                        <FilePlus className="w-3.5 h-3.5 mr-1" />
+                                                        +Sub-Item
                                                     </Button>
                                                 )}
                                                 <Button size="icon" variant="ghost" className="h-8 w-8 hover:text-primary-600" onClick={() => openEditDialog(cat)}>

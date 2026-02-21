@@ -103,18 +103,23 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
     const availableParents = allCategories.filter(c =>
         c.type === formData.type &&
         c.id !== category?.id &&
-        (c.level === undefined || c.level < 2) // Can only be parent if level < 2 (so max depth is 3: 0->1->2)
+        (c.level === undefined || c.level < 3) // Allow up to level 3 (Root→Sub→Item→Sub-Item)
     );
 
     // Determine what level we'll be creating
     const parentCategory = allCategories.find(c => c.id === formData.parent_id);
-    const isItemLevel = (parentCategory?.level === 1) || (category?.level === 2);
-    const isSubLevel = parentCategory?.level === 0 && !isItemLevel;
+    const parentLevel = parentCategory?.level ?? -1;
+    const isSubLevel = parentLevel === 0 || category?.level === 1;
+    const isItemLevel = parentLevel === 1 || category?.level === 2;
+    const isSubItemLevel = parentLevel === 2 || category?.level === 3;
+    // Show price/unit for any level with a parent (sub, item, sub-item)
+    const showMetadata = isSubLevel || isItemLevel || isSubItemLevel;
 
     // Contextual title
     const getDialogTitle = () => {
         if (category) return "Edit Category";
         if (defaultParentId && parentCategory) {
+            if (isSubItemLevel) return `Add Sub-Item under "${parentCategory.name}"`;
             if (isItemLevel) return `Add Item under "${parentCategory.name}"`;
             return `Add Subcategory under "${parentCategory.name}"`;
         }
@@ -122,6 +127,7 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
     };
 
     const getLevelLabel = () => {
+        if (isSubItemLevel) return "Sub-Item (Level 3)";
         if (isItemLevel) return "Item (Level 2)";
         if (isSubLevel) return "Subcategory (Level 1)";
         return "Root Category (Level 0)";
@@ -222,9 +228,11 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
                         />
                     </div>
 
-                    {isItemLevel && (
+                    {showMetadata && (
                         <div className="p-4 bg-neutral-50 rounded-lg space-y-3 border border-neutral-100">
-                            <h4 className="text-xs font-bold text-neutral-700 uppercase tracking-wide">Item Metadata</h4>
+                            <h4 className="text-xs font-bold text-neutral-700 uppercase tracking-wide">
+                                {isSubItemLevel ? 'Sub-Item Details' : isItemLevel ? 'Item Details' : 'Pricing & Unit'}
+                            </h4>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
@@ -241,31 +249,33 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="price" className="text-xs">Benchmark Price</Label>
+                                    <Label htmlFor="price" className="text-xs">Price (৳)</Label>
                                     <Input
                                         id="price"
                                         type="number"
                                         className="h-8 text-xs"
                                         placeholder="e.g. 550"
-                                        value={formData.metadata?.price || 0}
+                                        value={formData.metadata?.price || ""}
                                         onChange={(e) => setFormData({
                                             ...formData,
-                                            metadata: { ...formData.metadata, price: parseFloat(e.target.value) }
+                                            metadata: { ...formData.metadata, price: parseFloat(e.target.value) || 0 }
                                         })}
                                     />
                                 </div>
                             </div>
 
-                            <div className="space-y-1">
-                                <Label htmlFor="brands" className="text-xs">Brands (Comma separated)</Label>
-                                <Input
-                                    id="brands"
-                                    className="h-8 text-xs"
-                                    placeholder="e.g. Shah, Bashundhara, Seven Rings"
-                                    value={brandsInput}
-                                    onChange={(e) => setBrandsInput(e.target.value)}
-                                />
-                            </div>
+                            {(isItemLevel || isSubItemLevel) && (
+                                <div className="space-y-1">
+                                    <Label htmlFor="brands" className="text-xs">Brands (Comma separated)</Label>
+                                    <Input
+                                        id="brands"
+                                        className="h-8 text-xs"
+                                        placeholder="e.g. Shah, Bashundhara, Seven Rings"
+                                        value={brandsInput}
+                                        onChange={(e) => setBrandsInput(e.target.value)}
+                                    />
+                                </div>
+                            )}
                         </div>
                     )}
 
