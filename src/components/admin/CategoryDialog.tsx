@@ -15,14 +15,17 @@ interface CategoryDialogProps {
     category?: Category | null;
     allCategories: Category[];
     onSuccess: () => void;
+    // Pre-fill parent and type when adding sub/item inline
+    defaultParentId?: string | null;
+    defaultType?: CategoryType;
 }
 
-export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuccess }: CategoryDialogProps) {
+export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuccess, defaultParentId, defaultType }: CategoryDialogProps) {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<Partial<Category>>({
         name: "",
-        type: "product",
-        parent_id: "none",
+        type: defaultType || "product",
+        parent_id: defaultParentId || "none",
         icon_url: "",
         metadata: { unit: "", price: "", frequency: "Monthly", brands: [] }
     });
@@ -43,15 +46,15 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
         } else {
             setFormData({
                 name: "",
-                type: "product",
-                parent_id: "none",
+                type: defaultType || "product",
+                parent_id: defaultParentId || "none",
                 icon: "",
                 icon_url: "",
                 metadata: { unit: "", price: "", frequency: "Monthly", brands: [] }
             });
             setBrandsInput("");
         }
-    }, [category, isOpen]);
+    }, [category, isOpen, defaultParentId, defaultType]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -103,18 +106,41 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
         (c.level === undefined || c.level < 2) // Can only be parent if level < 2 (so max depth is 3: 0->1->2)
     );
 
-    // Check if we should show metadata fields (only if parent is selected and parent is level 1, meaning we are creating level 2 item)
-    // OR if we are editing a level 2 item
+    // Determine what level we'll be creating
     const parentCategory = allCategories.find(c => c.id === formData.parent_id);
     const isItemLevel = (parentCategory?.level === 1) || (category?.level === 2);
+    const isSubLevel = parentCategory?.level === 0 && !isItemLevel;
+
+    // Contextual title
+    const getDialogTitle = () => {
+        if (category) return "Edit Category";
+        if (defaultParentId && parentCategory) {
+            if (isItemLevel) return `Add Item under "${parentCategory.name}"`;
+            return `Add Subcategory under "${parentCategory.name}"`;
+        }
+        return "Add New Category";
+    };
+
+    const getLevelLabel = () => {
+        if (isItemLevel) return "Item (Level 2)";
+        if (isSubLevel) return "Subcategory (Level 1)";
+        return "Root Category (Level 0)";
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{category ? "Edit Category" : "Add New Category"}</DialogTitle>
+                    <DialogTitle>{getDialogTitle()}</DialogTitle>
                     <DialogDescription>
-                        {category ? "Modify existing category details." : "Create a new category, subcategory, or item."}
+                        {category ? "Modify existing category details." : (
+                            <span className="inline-flex items-center gap-1.5">
+                                Creating
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${isItemLevel ? 'bg-neutral-100 text-neutral-600' : isSubLevel ? 'bg-neutral-200 text-neutral-700' : 'bg-neutral-900 text-white'}`}>
+                                    {getLevelLabel()}
+                                </span>
+                            </span>
+                        )}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -125,7 +151,7 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
                             onValueChange={(val: CategoryType) => {
                                 setFormData({ ...formData, type: val, parent_id: "none" }); // Reset parent when type changes
                             }}
-                            disabled={!!category}
+                            disabled={!!category || !!defaultType}
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder="Select type" />
@@ -138,28 +164,42 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
                         </Select>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="parent">Parent Category (Optional)</Label>
-                        <Select
-                            value={formData.parent_id || "none"}
-                            onValueChange={(val: string) => setFormData({ ...formData, parent_id: val })}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select parent" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">None (Top Level)</SelectItem>
-                                {availableParents.map(p => (
-                                    <SelectItem key={p.id} value={p.id}>
-                                        {p.level === 1 ? "-- " : ""}{p.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <p className="text-[10px] text-neutral-500">
-                            Select a parent to create a Subcategory or Item. Max depth is 3 levels.
-                        </p>
-                    </div>
+                    {/* Only show parent selector when not using inline add (no defaultParentId) */}
+                    {!defaultParentId && (
+                        <div className="space-y-2">
+                            <Label htmlFor="parent">Parent Category (Optional)</Label>
+                            <Select
+                                value={formData.parent_id || "none"}
+                                onValueChange={(val: string) => setFormData({ ...formData, parent_id: val })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select parent" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None (Root Category)</SelectItem>
+                                    {availableParents.map(p => (
+                                        <SelectItem key={p.id} value={p.id}>
+                                            {p.level === 1 ? "── " : ""}{p.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-[10px] text-neutral-500">
+                                Select a parent to create a Subcategory or Item. Max depth is 3 levels.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Show pre-filled parent info when using inline add */}
+                    {defaultParentId && parentCategory && (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-neutral-50 rounded-lg border border-neutral-100 text-sm">
+                            <span className="text-neutral-500 text-xs font-medium">Parent:</span>
+                            <span className="font-bold text-neutral-900">{parentCategory.name}</span>
+                            <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${parentCategory.level === 0 ? 'bg-neutral-900 text-white' : 'bg-neutral-200 text-neutral-700'}`}>
+                                {parentCategory.level === 0 ? 'Root' : 'Sub'}
+                            </span>
+                        </div>
+                    )}
 
                     <div className="space-y-2">
                         <Label htmlFor="name">Name (English)</Label>
@@ -232,23 +272,12 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
                             <Label htmlFor="iconName">Icon Name (Lucide)</Label>
-                            <div className="relative">
-                                <Input
-                                    id="iconName"
-                                    value={formData.icon || ""}
-                                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                                    placeholder="e.g. Hammer, Zap"
-                                />
-                                {formData.icon && (
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-neutral-100 p-1 rounded">
-                                        {/* @ts-expect-error: Lucide icons are dynamic */}
-                                        <Loader2 className="w-0 h-0 hidden" /> {/* Dummy to keep import if needed, but we need dynamic icon here too */}
-                                        {/* We can't easily render dynamic icon here without the helper, but distinct component logic applies. 
-                                            Let's just show the text for now or add a helper if easy. 
-                                            Actually, let's keep it simple. */}
-                                    </div>
-                                )}
-                            </div>
+                            <Input
+                                id="iconName"
+                                value={formData.icon || ""}
+                                onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                                placeholder="e.g. Hammer, Zap"
+                            />
                             <p className="text-[10px] text-neutral-500">
                                 See <a href="https://lucide.dev/icons" target="_blank" className="text-primary-600 underline">Lucide Icons</a>
                             </p>
@@ -268,7 +297,7 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
                         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
                         <Button type="submit" disabled={loading}>
                             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                            {category ? "Save Changes" : "Create Category"}
+                            {category ? "Save Changes" : "Create"}
                         </Button>
                     </DialogFooter>
                 </form>

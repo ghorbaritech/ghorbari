@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import * as Icons from "lucide-react"; // Import all for dynamic rendering
-import { Plus, Search, Edit, Trash2, Tag, Layers, PenTool } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Tag, Layers, PenTool, FolderPlus, FilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getCategories, Category, deleteCategory } from "@/services/categoryService";
@@ -24,6 +24,8 @@ export default function AdminCategoriesPage() {
     // Dialog State
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const [defaultParentId, setDefaultParentId] = useState<string | null>(null);
+    const [defaultType, setDefaultType] = useState<"product" | "service" | "design" | undefined>(undefined);
 
     const fetchCategories = async () => {
         setLoading(true);
@@ -42,7 +44,7 @@ export default function AdminCategoriesPage() {
     }, []);
 
     const handleDelete = async (id: string) => {
-        if (confirm("Are you sure you want to delete this category?")) {
+        if (confirm("Are you sure you want to delete this category? All subcategories and items under it will also be deleted.")) {
             try {
                 await deleteCategory(id);
                 fetchCategories();
@@ -53,14 +55,43 @@ export default function AdminCategoriesPage() {
         }
     };
 
-    const openAddDialog = () => {
+    // Open dialog for a brand new root category
+    const openAddRootDialog = () => {
         setSelectedCategory(null);
+        setDefaultParentId(null);
+        setDefaultType(undefined);
         setIsDialogOpen(true);
     };
 
+    // Open dialog pre-filled to add a subcategory under a root
+    const openAddSubDialog = (parent: Category) => {
+        setSelectedCategory(null);
+        setDefaultParentId(parent.id);
+        setDefaultType(parent.type);
+        setIsDialogOpen(true);
+    };
+
+    // Open dialog pre-filled to add an item under a subcategory
+    const openAddItemDialog = (parent: Category) => {
+        setSelectedCategory(null);
+        setDefaultParentId(parent.id);
+        setDefaultType(parent.type);
+        setIsDialogOpen(true);
+    };
+
+    // Open dialog for editing
     const openEditDialog = (category: Category) => {
         setSelectedCategory(category);
+        setDefaultParentId(null);
+        setDefaultType(undefined);
         setIsDialogOpen(true);
+    };
+
+    const handleCloseDialog = () => {
+        setIsDialogOpen(false);
+        setSelectedCategory(null);
+        setDefaultParentId(null);
+        setDefaultType(undefined);
     };
 
     const filteredCategories = categories.filter(cat => {
@@ -86,12 +117,10 @@ export default function AdminCategoriesPage() {
         const addChildren = (parent: Category) => {
             sorted.push(parent);
             const children = cats.filter(c => c.parent_id === parent.id);
-            // Sort children by name
             children.sort((a, b) => a.name.localeCompare(b.name));
             children.forEach(child => addChildren(child));
         };
 
-        // Sort roots by type then name
         roots.sort((a, b) => {
             if (a.type !== b.type) return a.type.localeCompare(b.type);
             return a.name.localeCompare(b.name);
@@ -112,8 +141,8 @@ export default function AdminCategoriesPage() {
                     </h1>
                     <p className="text-neutral-500 mt-1">Manage products, services, and design categories.</p>
                 </div>
-                <Button onClick={openAddDialog} className="bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg shadow-primary-200">
-                    <Plus className="w-4 h-4 mr-2" /> Add Category
+                <Button onClick={openAddRootDialog} className="bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg shadow-primary-200">
+                    <Plus className="w-4 h-4 mr-2" /> Add Root Category
                 </Button>
             </div>
 
@@ -144,6 +173,14 @@ export default function AdminCategoriesPage() {
                 </div>
             </div>
 
+            {/* Legend */}
+            <div className="flex items-center gap-6 text-xs font-medium text-neutral-500">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-neutral-900 inline-block" /> Root Category</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-neutral-400 inline-block" /> Subcategory</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-neutral-200 inline-block" /> Item</span>
+                <span className="flex items-center gap-1.5 ml-auto text-neutral-400 text-[10px] italic">{categories.length} total categories</span>
+            </div>
+
             {/* List */}
             <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
                 <div className="overflow-x-auto">
@@ -168,21 +205,18 @@ export default function AdminCategoriesPage() {
                                 </tr>
                             ) : (
                                 sortedFilteredCategories.map((cat) => (
-                                    <tr key={cat.id} className="hover:bg-neutral-50/50 transition-colors">
-                                        <td className="p-4 font-bold text-neutral-900 flex items-center gap-3">
+                                    <tr key={cat.id} className="hover:bg-neutral-50/50 transition-colors group">
+                                        <td className="p-4 font-bold text-neutral-900">
                                             <div style={{ paddingLeft: `${(cat.level || 0) * 24}px` }} className="flex items-center gap-2">
                                                 {cat.level > 0 && <span className="text-neutral-300">└─</span>}
-                                                {/* Render Icon: Priority to Lucide name, then URL, then default */}
                                                 {cat.icon_url && cat.icon_url.startsWith('http') ? (
                                                     <img src={cat.icon_url} alt="" className="w-6 h-6 rounded object-cover" />
                                                 ) : (
-                                                    <DynamicIcon name={cat.icon || cat.icon_url || undefined} className={`w-5 h-5 ${cat.level === 0 ? 'text-primary-600' : 'text-neutral-400'
-                                                        }`} />
+                                                    <DynamicIcon name={cat.icon || cat.icon_url || undefined} className={`w-5 h-5 ${cat.level === 0 ? 'text-primary-600' : 'text-neutral-400'}`} />
                                                 )}
                                                 {cat.name}
                                             </div>
                                         </td>
-
 
                                         <td className="p-4">
                                             <div className="flex items-center gap-2 text-sm font-medium capitalize text-neutral-600">
@@ -211,8 +245,34 @@ export default function AdminCategoriesPage() {
                                                 </div>
                                             ) : <span className="text-neutral-300">-</span>}
                                         </td>
-                                        <td className="p-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
+                                        <td className="p-4">
+                                            <div className="flex items-center justify-end gap-1">
+                                                {/* Root category: show + Sub button */}
+                                                {cat.level === 0 && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-7 px-2 text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        onClick={() => openAddSubDialog(cat)}
+                                                        title={`Add subcategory under ${cat.name}`}
+                                                    >
+                                                        <FolderPlus className="w-3.5 h-3.5 mr-1" />
+                                                        +Sub
+                                                    </Button>
+                                                )}
+                                                {/* Subcategory: show + Item button */}
+                                                {cat.level === 1 && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-7 px-2 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        onClick={() => openAddItemDialog(cat)}
+                                                        title={`Add item under ${cat.name}`}
+                                                    >
+                                                        <FilePlus className="w-3.5 h-3.5 mr-1" />
+                                                        +Item
+                                                    </Button>
+                                                )}
                                                 <Button size="icon" variant="ghost" className="h-8 w-8 hover:text-primary-600" onClick={() => openEditDialog(cat)}>
                                                     <Edit className="w-4 h-4" />
                                                 </Button>
@@ -231,10 +291,12 @@ export default function AdminCategoriesPage() {
 
             <CategoryDialog
                 isOpen={isDialogOpen}
-                onClose={() => setIsDialogOpen(false)}
+                onClose={handleCloseDialog}
                 category={selectedCategory}
                 allCategories={categories}
                 onSuccess={fetchCategories}
+                defaultParentId={defaultParentId}
+                defaultType={defaultType}
             />
         </div>
     );
