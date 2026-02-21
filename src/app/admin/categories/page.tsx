@@ -252,7 +252,7 @@ export default function AdminCategoriesPage() {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-7 px-2 text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        className="h-7 px-2 text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                                         onClick={() => openAddSubDialog(cat)}
                                                         title={`Add subcategory under ${cat.name}`}
                                                     >
@@ -265,7 +265,7 @@ export default function AdminCategoriesPage() {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-7 px-2 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        className="h-7 px-2 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                                         onClick={() => openAddItemDialog(cat)}
                                                         title={`Add item under ${cat.name}`}
                                                     >
