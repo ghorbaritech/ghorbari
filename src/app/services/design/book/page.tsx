@@ -9,18 +9,14 @@ import { RadioCardGroup, Option } from '@/components/design/WizardFormComponents
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Car, Trees, Waves, Dog, Baby } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Car, Trees, Waves, Dog, Baby, FileText, CheckCircle2, UserCircle, Map as MapIcon, Hash, CheckSquare } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
 // Service Types
 type ServiceType = 'structural-architectural' | 'interior';
 
-// Question Data (to be moved to separate file later if large)
-const SERVICE_OPTIONS: Option[] = [
-    { id: 'structural-architectural', label: 'Structural & Architectural Design', icon: Building2, description: 'Full engineering and structural planning followed by architectural layout design step-by-step.' },
-    { id: 'interior', label: 'Interior Design', icon: PaintBucket, description: 'Decor, furniture layout, and aesthetic planning.' },
-];
-
+// Interior Options
 const VIBE_OPTIONS: Option[] = [
     { id: 'Modern', label: 'Modern / Minimalist', image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=400&fit=crop' },
     { id: 'Traditional', label: 'Traditional / Brick', image: 'https://images.unsplash.com/photo-1592595896551-12b371d546d5?w=400&h=400&fit=crop' },
@@ -41,9 +37,7 @@ function DesignBookingWizard() {
     const searchParams = useSearchParams();
     const supabase = createClient();
 
-    // Initialize service type from URL if present
     const urlService = searchParams.get('service');
-    // Map old URLs to new structure
     const initialService = (urlService === 'structural' || urlService === 'architectural')
         ? 'structural-architectural'
         : urlService as ServiceType | null;
@@ -52,24 +46,36 @@ function DesignBookingWizard() {
     const [serviceType, setServiceType] = useState<ServiceType | null>(initialService);
     const [loading, setLoading] = useState(false);
 
+    // Eligible designers fetched from DB
+    const [designers, setDesigners] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Fetch eligible designers
+        async function fetchDesigners() {
+            // Fetching active designers directly
+            const { data } = await supabase.from('designers').select('*');
+            if (data) setDesigners(data);
+        }
+        fetchDesigners();
+    }, []);
+
     // Form State
     const [formData, setFormData] = useState({
-        // Architectural
-        landArea: '',
-        orientation: [] as string[],
-        floors: '',
-        bedrooms: '',
-        bathrooms: '',
-        maidRoom: false,
-        parking: '',
-        vibe: '',
-        // Structural
-        soilTest: null as boolean | null,
-        futureFloors: '',
-        roofFeatures: [] as string[],
-        hasArchPlan: null as boolean | null,
-        // Interior
-        propertyType: '', // Apartment, Single Room
+        // Structural/Architectural New Fields
+        designerOption: '' as 'approval' | 'design' | 'both' | '',
+        hasDeed: false,
+        hasSurveyMap: false,
+        hasMutation: false,
+        hasTax: false,
+        hasNID: false,
+        hasLandPermit: false,
+        hasBuildingApproval: false,
+
+        designerSelectionType: '' as 'ghorbari' | 'list' | '',
+        selectedDesignerId: null as string | null,
+
+        // Interior 
+        propertyType: '',
         sqft: '',
         floorPref: '',
         ceilingPref: '',
@@ -87,24 +93,38 @@ function DesignBookingWizard() {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const user = (await supabase.auth.getUser()).data.user;
+            const userResponse = await supabase.auth.getUser();
+            const user = userResponse.data.user;
 
             if (!user) {
-                // Redirect to login if not authenticated (should handle this better in real app)
                 router.push('/login?redirect=/services/design/book');
                 return;
             }
 
+            // Calculate tentative pricing (basic placeholder logic based on rules)
+            let tentativePrice = 0;
+            if (serviceType === 'structural-architectural') {
+                if (formData.designerSelectionType === 'ghorbari') {
+                    if (formData.designerOption === 'both') tentativePrice = 80000;
+                    else if (formData.designerOption === 'design') tentativePrice = 50000;
+                    else tentativePrice = 30000;
+                } else {
+                    tentativePrice = 60000; // Flat baseline for third-party profiles for now
+                }
+            } else if (serviceType === 'interior') {
+                tentativePrice = 20000;
+            }
+
+            const payloadDetails = { ...formData, tentativePrice };
+
             const { error } = await supabase.from('design_bookings').insert({
                 user_id: user.id,
                 service_type: serviceType,
-                status: 'pending',
-                details: formData
+                status: 'pending', // Waiting for admin verification
+                details: payloadDetails
             });
 
             if (error) throw error;
-
-            // Success
             router.push('/dashboard/customer?booking=success');
         } catch (err) {
             console.error(err);
@@ -116,7 +136,6 @@ function DesignBookingWizard() {
 
     // --- Render Logic ---
 
-    // Step 0: Service Selection
     if (step === 0) {
         return (
             <MainLayout>
@@ -124,14 +143,17 @@ function DesignBookingWizard() {
                     title="Start Your Design Journey"
                     description="Select the type of design service you need to get started."
                     currentStep={0}
-                    totalSteps={serviceType === 'structural-architectural' ? 3 : 2}
+                    totalSteps={serviceType === 'structural-architectural' ? 5 : 2}
                     onNext={nextStep}
                     onBack={() => { }}
                     isFirstStep
                     canNext={!!serviceType}
                 >
                     <RadioCardGroup
-                        options={SERVICE_OPTIONS}
+                        options={[
+                            { id: 'structural-architectural', label: 'Structural & Architectural Design', icon: Building2, description: 'Find a designer for building approvals and layouts.' },
+                            { id: 'interior', label: 'Interior Design', icon: PaintBucket, description: 'Decor, furniture layout, and aesthetic planning.' },
+                        ]}
                         selected={serviceType}
                         onChange={(id) => setServiceType(id as ServiceType)}
                     />
@@ -140,78 +162,35 @@ function DesignBookingWizard() {
         );
     }
 
-    // Structural & Architectural Steps Merged
+    // --- STRUCTURAL & ARCHITECTURAL ---
     if (serviceType === 'structural-architectural') {
+        let showsApprovalQ = formData.designerOption === 'approval' || formData.designerOption === 'both';
+        let showsDesignQ = formData.designerOption === 'design' || formData.designerOption === 'both';
+        let skippableListStep = formData.designerSelectionType === 'ghorbari';
+
+        const getDynamicTotalSteps = () => skippableListStep ? 4 : 5;
+
         if (step === 1) {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Structural Details"
-                        description="Help us understand the engineering requirements first."
+                        title="Find a Designer"
+                        description="What kind of designer service do you need?"
                         currentStep={1}
-                        totalSteps={3}
+                        totalSteps={getDynamicTotalSteps()}
                         onNext={nextStep}
                         onBack={prevStep}
-                        canNext={!!formData.futureFloors}
+                        canNext={!!formData.designerOption}
                     >
-                        <div className="space-y-8">
-                            {/* Soil Test */}
-                            <div>
-                                <Label className="text-base font-bold mb-4 block">Has a Soil Test been conducted?</Label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {['Yes', 'No'].map(opt => (
-                                        <div
-                                            key={opt}
-                                            className={`border rounded-xl p-6 text-center cursor-pointer font-bold ${formData.soilTest === (opt === 'Yes') ? 'bg-primary-600 text-white border-primary-600' : 'bg-white hover:bg-neutral-50'}`}
-                                            onClick={() => updateData('soilTest', opt === 'Yes')}
-                                        >
-                                            {opt}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Floors */}
-                            <div>
-                                <Label className="text-base font-bold mb-3 block">Total Intended Floors (Future)</Label>
-                                <Input
-                                    type="number"
-                                    placeholder="e.g. 6"
-                                    className="h-12"
-                                    value={formData.futureFloors}
-                                    onChange={(e) => updateData('futureFloors', e.target.value)}
-                                />
-                            </div>
-
-                            {/* Roof Features */}
-                            <div>
-                                <Label className="text-base font-bold mb-3 block">Rooftop Plans</Label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div
-                                        className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer ${formData.roofFeatures.includes('garden') ? 'bg-primary-50 border-primary-600' : ''}`}
-                                        onClick={() => {
-                                            const has = formData.roofFeatures.includes('garden');
-                                            updateData('roofFeatures', has ? formData.roofFeatures.filter(x => x !== 'garden') : [...formData.roofFeatures, 'garden']);
-                                        }}
-                                    >
-                                        <Checkbox checked={formData.roofFeatures.includes('garden')} />
-                                        <Trees className="w-5 h-5 text-green-600" />
-                                        <span className="font-bold text-sm">Roof Garden</span>
-                                    </div>
-                                    <div
-                                        className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer ${formData.roofFeatures.includes('pool') ? 'bg-primary-50 border-primary-600' : ''}`}
-                                        onClick={() => {
-                                            const has = formData.roofFeatures.includes('pool');
-                                            updateData('roofFeatures', has ? formData.roofFeatures.filter(x => x !== 'pool') : [...formData.roofFeatures, 'pool']);
-                                        }}
-                                    >
-                                        <Checkbox checked={formData.roofFeatures.includes('pool')} />
-                                        <Waves className="w-5 h-5 text-blue-500" />
-                                        <span className="font-bold text-sm">Swimming Pool</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <RadioCardGroup
+                            options={[
+                                { id: 'approval', label: 'Building Approval', icon: FileText, description: 'Get necessary approvals from authorities.' },
+                                { id: 'design', label: 'Building Design', icon: Building2, description: 'Floor plans, elevations, and structural modeling.' },
+                                { id: 'both', label: 'Building Approval & Design', icon: CheckSquare, description: 'Comprehensive design and approval package.' },
+                            ]}
+                            selected={formData.designerOption}
+                            onChange={(id) => updateData('designerOption', id)}
+                        />
                     </WizardStep>
                 </MainLayout>
             );
@@ -221,76 +200,79 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Plot & Basic Requirements"
-                        description="Now tell us about your land and basic structure needs for Architectural design."
+                        title="Document Checklist"
+                        description="Let us know what documents you already have ready."
                         currentStep={2}
-                        totalSteps={3}
+                        totalSteps={getDynamicTotalSteps()}
                         onNext={nextStep}
                         onBack={prevStep}
-                        canNext={!!formData.landArea && !!formData.floors}
+                        canNext={true}
                     >
                         <div className="space-y-8">
-                            {/* Land Area */}
-                            <div>
-                                <Label className="text-base font-bold mb-3 block">Total Land Area (Katha)</Label>
-                                <div className="relative">
-                                    <Input
-                                        type="number"
-                                        placeholder="e.g. 5"
-                                        className="pl-10 h-12 text-lg font-bold"
-                                        value={formData.landArea}
-                                        onChange={(e) => updateData('landArea', e.target.value)}
-                                    />
-                                    <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-5 h-5" />
-                                </div>
-                            </div>
-
-                            {/* Floors & Parking */}
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <Label className="text-base font-bold mb-3 block">Number of Floors</Label>
-                                    <Input
-                                        type="number"
-                                        placeholder="e.g. 4"
-                                        className="h-12"
-                                        value={formData.floors}
-                                        onChange={(e) => updateData('floors', e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="text-base font-bold mb-3 block">Parking Spots</Label>
-                                    <div className="relative">
-                                        <Input
-                                            type="number"
-                                            placeholder="e.g. 1"
-                                            className="pl-10 h-12"
-                                            value={formData.parking}
-                                            onChange={(e) => updateData('parking', e.target.value)}
-                                        />
-                                        <Car className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-5 h-5" />
+                            {showsApprovalQ && (
+                                <div className="space-y-4">
+                                    <Label className="text-lg font-bold block text-primary-900 border-b pb-2">Approval Documents</Label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasDeed ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasDeed', !formData.hasDeed)}>
+                                            <Checkbox checked={formData.hasDeed} className="mt-1" />
+                                            <div>
+                                                <span className="font-bold text-sm block">Deed Document</span>
+                                                <span className="text-xs text-neutral-500">Lease, Purchase, Ownership, Heba, or Power of Attorney</span>
+                                            </div>
+                                        </div>
+                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasSurveyMap ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasSurveyMap', !formData.hasSurveyMap)}>
+                                            <Checkbox checked={formData.hasSurveyMap} className="mt-1" />
+                                            <div>
+                                                <span className="font-bold text-sm block">Digital Survey Map</span>
+                                                <span className="text-xs text-neutral-500">With Geo-Coordinates at corners</span>
+                                            </div>
+                                        </div>
+                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasMutation ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasMutation', !formData.hasMutation)}>
+                                            <Checkbox checked={formData.hasMutation} className="mt-1" />
+                                            <div>
+                                                <span className="font-bold text-sm block">Khatian / Mutation</span>
+                                                <span className="text-xs text-neutral-500">Latest mutation copy</span>
+                                            </div>
+                                        </div>
+                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasTax ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasTax', !formData.hasTax)}>
+                                            <Checkbox checked={formData.hasTax} className="mt-1" />
+                                            <div>
+                                                <span className="font-bold text-sm block">Land Development Tax</span>
+                                                <span className="text-xs text-neutral-500">Up to date clear tax receipt</span>
+                                            </div>
+                                        </div>
+                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasNID ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasNID', !formData.hasNID)}>
+                                            <Checkbox checked={formData.hasNID} className="mt-1" />
+                                            <div>
+                                                <span className="font-bold text-sm block">NID / Passport</span>
+                                                <span className="text-xs text-neutral-500">Owner's identification</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
-                            {/* Orientation */}
-                            <div>
-                                <Label className="text-base font-bold mb-3 block">Plot Orientation (Facing)</Label>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                    {['North', 'South', 'East', 'West'].map(dir => (
-                                        <div
-                                            key={dir}
-                                            className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all ${formData.orientation.includes(dir) ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`}
-                                            onClick={() => {
-                                                const current = formData.orientation;
-                                                updateData('orientation', current.includes(dir) ? current.filter(d => d !== dir) : [...current, dir]);
-                                            }}
-                                        >
-                                            <Checkbox checked={formData.orientation.includes(dir)} />
-                                            <span className="font-bold text-sm">{dir}</span>
+                            {showsDesignQ && (
+                                <div className="space-y-4">
+                                    <Label className="text-lg font-bold block text-primary-900 border-b pb-2">Design Documents</Label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasLandPermit ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasLandPermit', !formData.hasLandPermit)}>
+                                            <Checkbox checked={formData.hasLandPermit} className="mt-1" />
+                                            <div>
+                                                <span className="font-bold text-sm block">Land Permit</span>
+                                                <span className="text-xs text-neutral-500">Current land use permit</span>
+                                            </div>
                                         </div>
-                                    ))}
+                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasBuildingApproval ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasBuildingApproval', !formData.hasBuildingApproval)}>
+                                            <Checkbox checked={formData.hasBuildingApproval} className="mt-1" />
+                                            <div>
+                                                <span className="font-bold text-sm block">Building Approval</span>
+                                                <span className="text-xs text-neutral-500">Previous or existing approval copies</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </WizardStep>
                 </MainLayout>
@@ -301,62 +283,144 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Style & Features"
-                        description="Choose the vibe and internal layout preferences."
+                        title="Choose Designer Route"
+                        description="How would you like to proceed with your designer?"
                         currentStep={3}
-                        totalSteps={3}
-                        onNext={handleSubmit}
+                        totalSteps={getDynamicTotalSteps()}
+                        onNext={() => {
+                            if (formData.designerSelectionType === 'ghorbari') setStep(5);
+                            else nextStep();
+                        }}
                         onBack={prevStep}
-                        isLastStep
-                        canNext={!!formData.vibe}
+                        canNext={!!formData.designerSelectionType}
                     >
-                        <div className="space-y-8">
-                            {/* Rooms */}
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <Label className="text-base font-bold mb-3 block">Bedrooms (Per Unit)</Label>
-                                    <div className="relative">
-                                        <Input
-                                            type="number"
-                                            placeholder="3"
-                                            className="pl-10 h-12"
-                                            value={formData.bedrooms}
-                                            onChange={(e) => updateData('bedrooms', e.target.value)}
-                                        />
-                                        <BedDouble className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-5 h-5" />
+                        <RadioCardGroup
+                            options={[
+                                { id: 'ghorbari', label: 'Suggested by Ghorbari', icon: CheckCircle2, description: 'We will assign the best verified expert for your needs automatically.' },
+                                { id: 'list', label: 'Choose from Profiles', icon: UserCircle, description: 'Browse eligible designer profiles and select one yourself.' },
+                            ]}
+                            selected={formData.designerSelectionType}
+                            onChange={(id) => updateData('designerSelectionType', id)}
+                        />
+                    </WizardStep>
+                </MainLayout>
+            );
+        }
+
+        if (step === 4) {
+            return (
+                <MainLayout>
+                    <WizardStep
+                        title="Select a Designer"
+                        description="Choose a designer from our verified experts."
+                        currentStep={4}
+                        totalSteps={5}
+                        onNext={nextStep}
+                        onBack={prevStep}
+                        canNext={!!formData.selectedDesignerId}
+                    >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {designers.length > 0 ? (
+                                designers.map((designer: any) => (
+                                    <div
+                                        key={designer.id}
+                                        className={`border-2 rounded-2xl p-6 cursor-pointer transition-all flex flex-col gap-4 ${formData.selectedDesignerId === designer.id ? 'border-primary-600 bg-primary-50 shadow-md ring-4 ring-primary-600/20' : 'border-neutral-200 hover:border-primary-300 hover:shadow-sm bg-white'}`}
+                                        onClick={() => updateData('selectedDesignerId', designer.id)}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center border-2 border-white shadow-sm flex-shrink-0">
+                                                <span className="text-primary-800 font-bold text-xl uppercase">{(designer.company_name || designer.contact_person_name || 'D').substring(0, 2)}</span>
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-lg text-neutral-900">{designer.company_name || designer.contact_person_name}</h3>
+                                                <p className="text-sm text-neutral-500 font-medium">{designer.experience_years ? `${designer.experience_years} Years Experience` : 'Verified Expert'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="pt-4 border-t border-neutral-100 flex flex-wrap gap-2">
+                                            {(designer.specializations || ['General Design']).slice(0, 3).map((spec: string) => (
+                                                <span key={spec} className="px-3 py-1 bg-white border border-neutral-200 text-neutral-600 text-xs font-bold rounded-full">{spec}</span>
+                                            ))}
+                                        </div>
                                     </div>
+                                ))
+                            ) : (
+                                <div className="col-span-full py-12 text-center text-neutral-500 bg-white rounded-2xl border border-dashed">
+                                    <UserCircle className="w-12 h-12 mx-auto text-neutral-300 mb-3" />
+                                    <p className="font-bold text-lg">No designers currently available online.</p>
+                                    <p className="text-sm">Please go back and select the Ghorbari suggested option for now.</p>
                                 </div>
+                            )}
+                        </div>
+                    </WizardStep>
+                </MainLayout>
+            );
+        }
+
+        if (step === 5) {
+            let price = 0;
+            if (formData.designerOption === 'both') price = 80000;
+            else if (formData.designerOption === 'design') price = 50000;
+            else price = 30000;
+
+            const selectedDesigner = designers.find((d: any) => d.id === formData.selectedDesignerId);
+            const providerName = formData.designerSelectionType === 'ghorbari' ? 'Ghorbari Assigned Expert' : (selectedDesigner?.company_name || selectedDesigner?.contact_person_name || 'Selected Designer');
+
+            return (
+                <MainLayout>
+                    <WizardStep
+                        title="Review & Confirm Booking"
+                        description="Please review your details. The price shown is tentative and awaits admin verification."
+                        currentStep={getDynamicTotalSteps()}
+                        totalSteps={getDynamicTotalSteps()}
+                        onNext={handleSubmit}
+                        onBack={() => {
+                            if (formData.designerSelectionType === 'ghorbari') setStep(3);
+                            else setStep(4);
+                        }}
+                        isLastStep
+                        canNext={true}
+                        nextLabel={loading ? "Generating Request..." : "Confirm & Request Verification"}
+                    >
+                        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden text-left">
+                            <div className="bg-primary-50 p-6 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
-                                    <Label className="text-base font-bold mb-3 block">Bathrooms</Label>
-                                    <div className="relative">
-                                        <Input
-                                            type="number"
-                                            placeholder="3"
-                                            className="pl-10 h-12"
-                                            value={formData.bathrooms}
-                                            onChange={(e) => updateData('bathrooms', e.target.value)}
-                                        />
-                                        <Bath className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-5 h-5" />
-                                    </div>
+                                    <h3 className="text-xl font-bold text-primary-900">Tentative Quotation</h3>
+                                    <p className="text-sm font-medium text-primary-700/80 mt-1">Status: Waiting for Admin Verification upon submission</p>
+                                </div>
+                                <div className="text-left md:text-right">
+                                    <p className="text-3xl font-black text-primary-700">৳ {price.toLocaleString()}</p>
+                                    <p className="text-xs font-bold text-primary-600 uppercase tracking-widest mt-1">Starting Price</p>
                                 </div>
                             </div>
 
-                            {/* Maid Room Checkbox */}
-                            <div className="flex items-center space-x-2 border p-4 rounded-xl cursor-pointer" onClick={() => updateData('maidRoom', !formData.maidRoom)}>
-                                <Checkbox checked={formData.maidRoom} />
-                                <label className="text-sm font-bold cursor-pointer">Include Maid's Room / Service Area</label>
-                            </div>
+                            <div className="p-6 space-y-6">
+                                <div>
+                                    <h4 className="text-sm font-bold text-neutral-400 uppercase tracking-wider mb-3">Service Details</h4>
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 border-b gap-2">
+                                        <span className="font-bold text-neutral-700 flex-shrink-0">Service Area</span>
+                                        <span className="font-black text-neutral-900 capitalize text-left sm:text-right">{formData.designerOption.replace('-', ' & ')}</span>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 border-b gap-2">
+                                        <span className="font-bold text-neutral-700 flex-shrink-0">Assigned Provider</span>
+                                        <span className="font-black text-neutral-900 text-left sm:text-right break-words max-w-xs">{providerName}</span>
+                                    </div>
+                                </div>
 
-                            {/* Vibe Selection */}
-                            <div>
-                                <Label className="text-base font-bold mb-4 block">Choose Your Vibe</Label>
-                                <RadioCardGroup
-                                    options={VIBE_OPTIONS}
-                                    selected={formData.vibe}
-                                    onChange={(id) => updateData('vibe', id)}
-                                    columns={4}
-                                    showCheck
-                                />
+                                <div>
+                                    <h4 className="text-sm font-bold text-neutral-400 uppercase tracking-wider mb-3">Documents Ready</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {formData.hasDeed && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Deed</span>}
+                                        {formData.hasSurveyMap && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Survey Map</span>}
+                                        {formData.hasMutation && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Mutation</span>}
+                                        {formData.hasTax && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Tax</span>}
+                                        {formData.hasNID && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">NID</span>}
+                                        {formData.hasLandPermit && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Land Permit</span>}
+                                        {formData.hasBuildingApproval && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Building Approval</span>}
+                                        {(!formData.hasDeed && !formData.hasSurveyMap && !formData.hasMutation && !formData.hasTax && !formData.hasNID && !formData.hasLandPermit && !formData.hasBuildingApproval) && (
+                                            <span className="text-sm text-neutral-500 italic">No documents checked yet.</span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </WizardStep>
@@ -365,7 +429,7 @@ function DesignBookingWizard() {
         }
     }
 
-    // Interior Steps
+    // --- INTERIOR DESIGN ---
     if (serviceType === 'interior') {
         if (step === 1) {
             return (
@@ -380,7 +444,6 @@ function DesignBookingWizard() {
                         canNext={!!formData.propertyType && !!formData.sqft}
                     >
                         <div className="space-y-8">
-                            {/* Property Type */}
                             <div>
                                 <Label className="text-base font-bold mb-4 block">What are we designing?</Label>
                                 <RadioCardGroup
@@ -395,7 +458,6 @@ function DesignBookingWizard() {
                                 />
                             </div>
 
-                            {/* Size & Budget */}
                             <div className="grid grid-cols-2 gap-6">
                                 <div>
                                     <Label className="text-base font-bold mb-3 block">Size (Sq. Ft)</Label>
@@ -438,7 +500,6 @@ function DesignBookingWizard() {
                         canNext={!!formData.floorPref}
                     >
                         <div className="space-y-8">
-                            {/* Flooring */}
                             <div>
                                 <Label className="text-base font-bold mb-4 block">Floor Preference</Label>
                                 <RadioCardGroup
@@ -455,7 +516,6 @@ function DesignBookingWizard() {
                                 />
                             </div>
 
-                            {/* Ceiling */}
                             <div>
                                 <Label className="text-base font-bold mb-4 block">Ceiling Work</Label>
                                 <RadioCardGroup
@@ -471,7 +531,6 @@ function DesignBookingWizard() {
                                 />
                             </div>
 
-                            {/* Lifestyle */}
                             <div className="flex items-center space-x-2 border p-6 rounded-xl cursor-pointer bg-neutral-50" onClick={() => updateData('hasKidsPets', !formData.hasKidsPets)}>
                                 <Checkbox checked={formData.hasKidsPets} />
                                 <div className="flex items-center gap-2">
@@ -487,7 +546,6 @@ function DesignBookingWizard() {
         }
     }
 
-    // Default Fallback
     return null;
 }
 
