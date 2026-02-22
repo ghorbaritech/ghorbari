@@ -2,10 +2,11 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Star, MapPin, CheckCircle2, Phone, Mail, Globe,
     Package, ShoppingBag, TrendingUp, Award, ChevronDown, ChevronUp,
-    Calendar, MessageSquare, Image as ImageIcon
+    Calendar, MessageSquare, Image as ImageIcon, Briefcase, Ruler, ShieldCheck
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -38,7 +39,11 @@ export default async function SellerProfilePage({ params }: Params) {
             : n >= 100000 ? `৳${(n / 100000).toFixed(1)}L`
                 : `৳${n.toLocaleString()}`;
 
-    const maxReviewCount = Math.max(...seller.ratingBreakdown.map((r: any) => r.count), 1);
+    const maxReviewCount = seller.ratingBreakdown.length > 0 ? Math.max(...seller.ratingBreakdown.map((r: any) => r.count), 1) : 1;
+
+    // Determine Default Tab
+    let defaultTab = "products";
+    if (seller.hasDesignServices && !seller.hasProducts) defaultTab = "design";
 
     return (
         <main className="min-h-screen flex flex-col font-sans bg-neutral-50">
@@ -78,10 +83,10 @@ export default async function SellerProfilePage({ params }: Params) {
             </div>
 
             <div className="container mx-auto px-4 py-10">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
 
-                    {/* ── LEFT SIDEBAR ── */}
-                    <aside className="lg:col-span-1 space-y-5">
+                    {/* ── LEFT SIDEBAR (Col 1-3) ── */}
+                    <aside className="lg:col-span-4 xl:col-span-3 space-y-5">
 
                         {/* Contact Card */}
                         <div className="bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm space-y-4">
@@ -165,51 +170,115 @@ export default async function SellerProfilePage({ params }: Params) {
                         </div>
                     </aside>
 
-                    {/* ── MAIN CONTENT ── */}
-                    <div className="lg:col-span-3 space-y-10">
+                    {/* ── MAIN CONTENT (Col 4-9) ── */}
+                    <div className="lg:col-span-8 xl:col-span-6 space-y-10">
 
-                        {/* ── PRODUCTS ── */}
-                        <section>
-                            <div className="flex items-center justify-between mb-5">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
-                                        <Package className="w-5 h-5 text-blue-600" />
+                        <Tabs defaultValue={defaultTab} className="w-full">
+                            <TabsList className="grid w-full lg:w-fit grid-cols-2 md:grid-cols-3 bg-neutral-100 rounded-xl p-1 mb-8">
+                                {seller.hasProducts && (
+                                    <TabsTrigger value="products" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm">Products Shop</TabsTrigger>
+                                )}
+                                {seller.hasDesignServices && (
+                                    <TabsTrigger value="design" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-primary-700 data-[state=active]:shadow-sm">Design Services</TabsTrigger>
+                                )}
+                                {/* Placeholder for generalized services tab later */}
+                            </TabsList>
+
+                            {/* ── PRODUCTS TAB ── */}
+                            {seller.hasProducts && (
+                                <TabsContent value="products" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                                    <div className="flex items-center justify-between mb-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
+                                                <Package className="w-5 h-5 text-blue-600" />
+                                            </div>
+                                            <h2 className="text-xl font-black text-neutral-900">Products</h2>
+                                        </div>
+                                        <Link href={`/products?seller=${seller.id}`}>
+                                            <Button variant="ghost" size="sm" className="text-neutral-500 font-bold text-xs uppercase tracking-widest">View All →</Button>
+                                        </Link>
                                     </div>
-                                    <h2 className="text-xl font-black text-neutral-900">Products</h2>
-                                </div>
-                                <Link href={`/products?seller=${seller.id}`}>
-                                    <Button variant="ghost" size="sm" className="text-neutral-500 font-bold text-xs uppercase tracking-widest">View All →</Button>
-                                </Link>
-                            </div>
 
-                            {seller.products.length > 0 ? (
-                                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                                    {seller.products.map((product: any) => (
-                                        <Link key={product.id} href={`/products/${product.id}`}>
-                                            <div className="group bg-white border border-neutral-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-neutral-200 transition-all duration-300">
-                                                <div className="relative aspect-square bg-neutral-50 overflow-hidden">
-                                                    <Image
-                                                        src={product.images?.[0] || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400'}
-                                                        alt={product.title}
-                                                        fill
-                                                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                                    />
+                                    {seller.products.length > 0 ? (
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                            {seller.products.map((product: any) => (
+                                                <Link key={product.id} href={`/products/${product.id}`}>
+                                                    <div className="group bg-white border border-neutral-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-neutral-200 transition-all duration-300">
+                                                        <div className="relative aspect-square bg-neutral-50 overflow-hidden">
+                                                            <Image
+                                                                src={product.images?.[0] || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400'}
+                                                                alt={product.title}
+                                                                fill
+                                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                                            />
+                                                        </div>
+                                                        <div className="p-3">
+                                                            <p className="font-bold text-neutral-900 text-sm leading-tight line-clamp-2 mb-1">{product.title}</p>
+                                                            <p className="font-black text-neutral-900 text-base">৳{parseFloat(product.base_price).toLocaleString()}</p>
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="bg-white border border-neutral-100 rounded-2xl p-12 text-center">
+                                            <Package className="w-12 h-12 text-neutral-200 mx-auto mb-3" />
+                                            <p className="text-neutral-400 font-bold">No products listed yet</p>
+                                        </div>
+                                    )}
+                                </TabsContent>
+                            )}
+
+                            {/* ── DESIGN SERVICES TAB ── */}
+                            {seller.hasDesignServices && (
+                                <TabsContent value="design" className="mt-0 focus-visible:outline-none focus-visible:ring-0 space-y-8">
+                                    <div className="bg-primary-50 rounded-3xl p-8 border border-primary-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                                        <div>
+                                            <h2 className="text-2xl font-black text-primary-900 mb-2">About Our Services</h2>
+                                            <p className="text-primary-700 max-w-lg leading-relaxed">Let our expert team handle your structural planning, building approvals, and aesthetic interior setups starting today.</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Designer Specs */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-white rounded-2xl p-6 border shadow-sm">
+                                            <div className="flex gap-4 items-start">
+                                                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                    <Briefcase className="w-5 h-5 text-indigo-600" />
                                                 </div>
-                                                <div className="p-3">
-                                                    <p className="font-bold text-neutral-900 text-sm leading-tight line-clamp-2 mb-1">{product.title}</p>
-                                                    <p className="font-black text-neutral-900 text-base">৳{parseFloat(product.base_price).toLocaleString()}</p>
+                                                <div>
+                                                    <h3 className="font-bold text-neutral-900 mb-1">Experience Focus</h3>
+                                                    <p className="text-sm text-neutral-600 mb-3">{seller.designerDetails?.experienceYears} Years in the Industry</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {seller.designerDetails?.specializations?.map((spec: string) => (
+                                                            <Badge key={spec} variant="outline" className="bg-neutral-50">{spec}</Badge>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="bg-white border border-neutral-100 rounded-2xl p-12 text-center">
-                                    <Package className="w-12 h-12 text-neutral-200 mx-auto mb-3" />
-                                    <p className="text-neutral-400 font-bold">No products listed yet</p>
-                                </div>
+                                        </div>
+
+                                        {seller.designerDetails?.portfolioUrl && (
+                                            <div className="bg-white rounded-2xl p-6 border shadow-sm">
+                                                <div className="flex gap-4 items-start">
+                                                    <div className="w-10 h-10 bg-pink-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                        <Ruler className="w-5 h-5 text-pink-600" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-neutral-900 mb-1">External Portfolio</h3>
+                                                        <p className="text-sm text-neutral-600 mb-3">View their complete catalog of external projects and blueprints.</p>
+                                                        <a href={seller.designerDetails.portfolioUrl} target="_blank" rel="noreferrer" className="text-primary-600 font-bold text-sm hover:underline">
+                                                            Visit External Site →
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </TabsContent>
                             )}
-                        </section>
+
+                        </Tabs>
 
                         {/* ── REVIEWS ── */}
                         <section className="bg-white rounded-3xl border border-neutral-100 shadow-sm p-8">
@@ -329,6 +398,69 @@ export default async function SellerProfilePage({ params }: Params) {
                             </section>
                         )}
                     </div>
+
+                    {/* ── RIGHT SIDEBAR : FLOATING BOOKING CART (Col 10-12) ── */}
+                    <aside className="hidden xl:block xl:col-span-3 relative">
+                        <div className="sticky top-24 space-y-6">
+                            {seller.hasDesignServices && (
+                                <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100 p-6 flex flex-col">
+                                    {/* Header */}
+                                    <div className="mb-6 text-center">
+                                        <div className="mx-auto w-12 h-12 bg-primary-50 rounded-full flex items-center justify-center mb-3">
+                                            <ShieldCheck className="w-6 h-6 text-primary-600" />
+                                        </div>
+                                        <h2 className="text-xl font-black text-neutral-900">Hire this Expert</h2>
+                                        <p className="text-sm text-neutral-500 mt-1">Book a consultation or service instantly through Ghorbari.</p>
+                                    </div>
+
+                                    {/* Summary List */}
+                                    <div className="space-y-4 mb-8 flex-grow">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-neutral-600 font-medium">Experience</span>
+                                            <span className="font-bold text-neutral-900">{seller.designerDetails?.experienceYears} Years</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-neutral-600 font-medium">Response Time</span>
+                                            <span className="font-bold text-green-600">Usually 2 Hours</span>
+                                        </div>
+                                        <div className="flex flex-col gap-2 pt-4 border-t border-neutral-100">
+                                            <span className="text-neutral-600 font-medium text-sm">Top Specializations</span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {seller.designerDetails?.specializations?.slice(0, 3).map((spec: string) => (
+                                                    <Badge key={spec} variant="secondary" className="bg-neutral-100 text-neutral-600 text-[10px] uppercase font-bold">{spec}</Badge>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Action */}
+                                    <Link href={`/services/design/book?designerId=${seller.designerDetails?.id}`} className="mt-auto block">
+                                        <Button className="w-full bg-primary-600 hover:bg-primary-700 text-white rounded-xl py-6 text-[15px] shadow-lg shadow-primary-500/25 transition-all outline-none border-none group relative overflow-hidden font-black">
+                                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+                                            <span className="relative z-10 flex items-center justify-center gap-2">
+                                                Start Booking <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-1 transition-transform" />
+                                            </span>
+                                        </Button>
+                                    </Link>
+
+                                    <p className="text-center text-[11px] text-neutral-400 mt-4 font-bold tracking-wide uppercase">No upfront payment required</p>
+                                </div>
+                            )}
+
+                            {/* Mobile App Promo (Optional fallback if no design services) */}
+                            {!seller.hasDesignServices && (
+                                <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-3xl p-6 text-white text-center shadow-lg relative overflow-hidden">
+                                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                                    <MessageSquare className="w-8 h-8 text-white/80 mx-auto mb-3" />
+                                    <h3 className="font-black text-lg mb-2">Have a question?</h3>
+                                    <p className="text-sm text-neutral-300 mb-6 leading-relaxed">Contact the supplier directly to negotiate bulk pricing or ask about delivery.</p>
+                                    <Button variant="outline" className="w-full bg-white/10 border-white/20 hover:bg-white/20 text-white rounded-xl font-bold border-none">
+                                        Send Message
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </aside>
                 </div>
             </div>
 

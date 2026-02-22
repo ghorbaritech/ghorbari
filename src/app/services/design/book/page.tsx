@@ -336,10 +336,15 @@ function DesignBookingWizard() {
                                                 <p className="text-sm text-neutral-500 font-medium">{designer.experience_years ? `${designer.experience_years} Years Experience` : 'Verified Expert'}</p>
                                             </div>
                                         </div>
-                                        <div className="pt-4 border-t border-neutral-100 flex flex-wrap gap-2">
-                                            {(designer.specializations || ['General Design']).slice(0, 3).map((spec: string) => (
-                                                <span key={spec} className="px-3 py-1 bg-white border border-neutral-200 text-neutral-600 text-xs font-bold rounded-full">{spec}</span>
-                                            ))}
+                                        <div className="pt-4 border-t border-neutral-100 flex flex-wrap gap-2 items-center justify-between">
+                                            <div className="flex flex-wrap gap-2">
+                                                {(designer.specializations || ['General Design']).slice(0, 3).map((spec: string) => (
+                                                    <span key={spec} className="px-3 py-1 bg-white border border-neutral-200 text-neutral-600 text-xs font-bold rounded-full">{spec}</span>
+                                                ))}
+                                            </div>
+                                            <a href={`/partner/${designer.user_id}`} target="_blank" rel="noreferrer" className="text-primary-600 font-bold text-xs hover:underline flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                                View Profile →
+                                            </a>
                                         </div>
                                     </div>
                                 ))
