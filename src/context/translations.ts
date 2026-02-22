@@ -7,11 +7,10 @@ export const translations = {
         nav_signup: "Sign Up",
         nav_help: "Help Center",
         nav_logout: "Logout",
-        nav_all_categories: "All Categories",
+        nav_all_categories: "Everything",
         nav_design_planning: "Design & Planning",
         nav_marketplace: "Product Marketplace",
-        nav_structural_health: "Structural Health",
-        nav_renovation: "Renovation Services",
+        nav_renovation: "Services",
         nav_create_account: "Create Account",
 
         // Hero / General
@@ -88,11 +87,10 @@ export const translations = {
         nav_signup: "সাইন আপ",
         nav_help: "হেল্প সেন্টার",
         nav_logout: "লগআউট",
-        nav_all_categories: "সকল ক্যাটাগরি",
+        nav_all_categories: "সবকিছু",
         nav_design_planning: "ডিজাইন ও পরিকল্পনা",
         nav_marketplace: "পণ্যের মার্কেটপ্লেস",
-        nav_structural_health: "স্ট্রাকচারাল হেলথ",
-        nav_renovation: "রেনোভেশন সেবা",
+        nav_renovation: "সেবা সমূহ",
         nav_create_account: "অ্যাকাউন্ট তৈরি করুন",
 
         // Hero / General

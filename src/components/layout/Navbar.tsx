@@ -5,12 +5,14 @@ import Image from "next/image";
 import { Search, ShoppingCart, User, Menu, X, ArrowRight, LayoutDashboard, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useCart } from "@/context/CartContext";
 import { CartDrawer } from "../cart/CartDrawer";
 import { useLanguage } from "@/context/LanguageContext";
+import { MegaMenu } from "./MegaMenu";
+import { getCategories, Category } from "@/services/categoryService";
 
 export function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,6 +23,11 @@ export function Navbar() {
     const { itemCount, isDrawerOpen, closeDrawer, openDrawer } = useCart();
     const router = useRouter();
     const supabase = createClient();
+
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [activeSection, setActiveSection] = useState<'all' | 'design' | 'product' | 'service' | null>(null);
+    const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
+    const megaMenuTimeout = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         async function fetchUser() {
@@ -36,7 +43,30 @@ export function Navbar() {
             }
         }
         fetchUser();
+
+        async function fetchCategories() {
+            try {
+                const data = await getCategories();
+                setCategories(data);
+            } catch (e) {
+                console.error("Failed to fetch categories for menu:", e);
+            }
+        }
+        fetchCategories();
     }, []);
+
+    const handleMouseEnter = (section: 'all' | 'design' | 'product' | 'service') => {
+        if (megaMenuTimeout.current) clearTimeout(megaMenuTimeout.current);
+        setActiveSection(section);
+        setIsMegaMenuOpen(true);
+    };
+
+    const handleMouseLeave = () => {
+        megaMenuTimeout.current = setTimeout(() => {
+            setIsMegaMenuOpen(false);
+            setActiveSection(null);
+        }, 150);
+    };
 
     const handleSearch = () => {
         if (searchQuery.trim()) {
@@ -158,19 +188,51 @@ export function Navbar() {
             <CartDrawer isOpen={isDrawerOpen} onClose={() => closeDrawer()} />
 
             <div className="border-b hidden md:block overflow-x-auto no-scrollbar">
-                <div className="container mx-auto px-8">
+                <div className="container mx-auto px-8" onMouseLeave={handleMouseLeave}>
                     <nav className="flex items-center gap-10 h-12 text-[12px] font-bold text-neutral-600 uppercase tracking-tight whitespace-nowrap">
-                        <div className="flex items-center gap-2 cursor-pointer hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">
+                        <div
+                            onMouseEnter={() => handleMouseEnter('all')}
+                            className="flex items-center gap-2 cursor-pointer hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600"
+                        >
                             <Menu className="w-4 h-4" />
                             <span>{t.nav_all_categories}</span>
                         </div>
-                        <Link href="/services/design/book" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_design_planning}</Link>
-                        <Link href="/products" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_marketplace}</Link>
-                        <Link href="/services" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_structural_health}</Link>
-                        <Link href="/services" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">{t.nav_renovation}</Link>
-                        {/* <Link href="/compare" className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600">Compare</Link> */}
+                        <Link
+                            href="/services/design/book"
+                            onMouseEnter={() => handleMouseEnter('design')}
+                            className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600"
+                        >
+                            {t.nav_design_planning}
+                        </Link>
+                        <Link
+                            href="/products"
+                            onMouseEnter={() => handleMouseEnter('product')}
+                            className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600"
+                        >
+                            {t.nav_marketplace}
+                        </Link>
+                        <Link
+                            href="/services"
+                            onMouseEnter={() => handleMouseEnter('service')}
+                            className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600"
+                        >
+                            {t.nav_renovation}
+                        </Link>
                     </nav>
                 </div>
+            </div>
+
+            <div className="relative" onMouseEnter={() => { if (megaMenuTimeout.current) clearTimeout(megaMenuTimeout.current); }}>
+                <MegaMenu
+                    isOpen={isMegaMenuOpen}
+                    activeSection={activeSection}
+                    categories={categories}
+                    onClose={() => {
+                        setIsMegaMenuOpen(false);
+                        setActiveSection(null);
+                    }}
+                    onMouseLeave={handleMouseLeave}
+                />
             </div>
 
             {
@@ -193,9 +255,6 @@ export function Navbar() {
                             </Link>
                             <Link href="/products" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
                                 {t.nav_marketplace} <ArrowRight className="w-4 h-4 text-neutral-300" />
-                            </Link>
-                            <Link href="/services" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
-                                {t.nav_structural_health} <ArrowRight className="w-4 h-4 text-neutral-300" />
                             </Link>
                             <Link href="/services" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
                                 {t.nav_renovation} <ArrowRight className="w-4 h-4 text-neutral-300" />
