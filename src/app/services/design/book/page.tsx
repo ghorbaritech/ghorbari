@@ -319,7 +319,7 @@ function DesignBookingWizard() {
                         onBack={prevStep}
                         canNext={!!formData.selectedDesignerId}
                     >
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 w-full max-w-5xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mx-auto px-4 sm:px-0">
                             {designers.length > 0 ? (
                                 designers.map((designer: any) => {
                                     const isSelected = formData.selectedDesignerId === designer.id;
@@ -332,13 +332,13 @@ function DesignBookingWizard() {
                                         <div
                                             key={designer.id}
                                             onClick={() => updateData('selectedDesignerId', designer.id)}
-                                            className={`group relative flex flex-col bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border-2 ${isSelected
-                                                ? 'border-primary-600 shadow-lg ring-4 ring-primary-500/10'
-                                                : 'border-neutral-100 shadow-sm hover:shadow-xl hover:border-neutral-200'
+                                            className={`group relative flex flex-col bg-white rounded-[24px] overflow-hidden cursor-pointer transition-all duration-300 border-[1.5px] ${isSelected
+                                                    ? 'border-primary-600 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-4 ring-primary-500/10'
+                                                    : 'border-neutral-200 shadow-sm hover:shadow-xl hover:-translate-y-1'
                                                 }`}
                                         >
                                             {/* Top Image Section */}
-                                            <div className="relative h-56 w-full overflow-hidden bg-neutral-100">
+                                            <div className="relative h-[250px] w-full overflow-hidden bg-neutral-100">
                                                 <img
                                                     src={coverImage}
                                                     alt={designer.company_name || 'Designer Portfolio'}
@@ -355,49 +355,47 @@ function DesignBookingWizard() {
                                             </div>
 
                                             {/* Content Section */}
-                                            <div className="p-6 flex flex-col flex-grow">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <h3 className="font-black text-2xl text-neutral-900 tracking-tight leading-tight group-hover:text-primary-600 transition-colors">
+                                            <div className="p-7 flex flex-col flex-grow">
+                                                <div className="mb-6">
+                                                    <h3 className="font-black text-[22px] md:text-2xl text-neutral-900 tracking-tight leading-tight group-hover:text-primary-600 transition-colors uppercase">
+                                                        <a
+                                                            href={`/partner/${designer.user_id}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="hover:underline decoration-2 underline-offset-4"
+                                                        >
                                                             {designer.company_name || designer.contact_person_name}
-                                                        </h3>
-                                                        <p className="text-neutral-500 text-sm mt-1 mb-4 line-clamp-2">
-                                                            {(designer.specializations && designer.specializations.length > 0)
-                                                                ? designer.specializations.join(" • ")
-                                                                : 'Complete building blueprints & permits'}
-                                                        </p>
-                                                    </div>
+                                                        </a>
+                                                    </h3>
+                                                    <p className="text-neutral-500 text-[15px] mt-2 leading-relaxed">
+                                                        {(designer.specializations && designer.specializations.length > 0)
+                                                            ? designer.specializations.join(" • ")
+                                                            : 'Complete building blueprints & permits'}
+                                                    </p>
                                                 </div>
 
                                                 {/* Action Area (Bottom) */}
                                                 <div className="mt-auto pt-6 border-t border-neutral-100 flex items-end justify-between">
                                                     <div>
-                                                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Starting From</p>
-                                                        <p className="font-black text-2xl text-neutral-900 leading-none">
-                                                            ৳{basePrice.toLocaleString()}
-                                                        </p>
+                                                        <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-1.5">Starting From</p>
+                                                        <div className="flex items-center gap-0.5">
+                                                            <span className="font-black text-2xl text-neutral-900">৳</span>
+                                                            <span className="font-black text-2xl md:text-[28px] text-neutral-900 leading-none tracking-tight">
+                                                                {basePrice.toLocaleString()}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                     <Button
-                                                        className={`rounded-xl px-8 py-6 font-black shadow-md transition-all text-sm ${isSelected
-                                                            ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/25'
-                                                            : 'bg-neutral-900 hover:bg-black text-white'
+                                                        className={`rounded-[14px] px-8 h-[48px] font-black shadow-md transition-all text-sm uppercase tracking-wider ${isSelected
+                                                                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/25'
+                                                                : 'bg-[#111111] hover:bg-black text-white'
                                                             }`}
                                                     >
                                                         {isSelected ? 'SELECTED' : 'BOOK NOW'}
                                                     </Button>
                                                 </div>
                                             </div>
-
-                                            {/* View Full Profile Link */}
-                                            <a
-                                                href={`/partner/${designer.user_id}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="absolute top-4 left-4 z-10 bg-black/50 hover:bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                View Full Profile →
-                                            </a>
                                         </div>
                                     );
                                 })

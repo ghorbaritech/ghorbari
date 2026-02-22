@@ -12,6 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSellerProfile } from "@/services/sellerService";
+import { ProfileCheckoutCart } from "@/components/design/ProfileCheckoutCart";
 
 interface Params {
     params: Promise<{ id: string }>;
@@ -403,48 +404,10 @@ export default async function SellerProfilePage({ params }: Params) {
                     <aside className="hidden xl:block xl:col-span-3 relative">
                         <div className="sticky top-24 space-y-6">
                             {seller.hasDesignServices && (
-                                <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100 p-6 flex flex-col">
-                                    {/* Header */}
-                                    <div className="mb-6 text-center">
-                                        <div className="mx-auto w-12 h-12 bg-primary-50 rounded-full flex items-center justify-center mb-3">
-                                            <ShieldCheck className="w-6 h-6 text-primary-600" />
-                                        </div>
-                                        <h2 className="text-xl font-black text-neutral-900">Hire this Expert</h2>
-                                        <p className="text-sm text-neutral-500 mt-1">Book a consultation or service instantly through Ghorbari.</p>
-                                    </div>
-
-                                    {/* Summary List */}
-                                    <div className="space-y-4 mb-8 flex-grow">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-neutral-600 font-medium">Experience</span>
-                                            <span className="font-bold text-neutral-900">{seller.designerDetails?.experienceYears} Years</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-neutral-600 font-medium">Response Time</span>
-                                            <span className="font-bold text-green-600">Usually 2 Hours</span>
-                                        </div>
-                                        <div className="flex flex-col gap-2 pt-4 border-t border-neutral-100">
-                                            <span className="text-neutral-600 font-medium text-sm">Top Specializations</span>
-                                            <div className="flex flex-wrap gap-1">
-                                                {seller.designerDetails?.specializations?.slice(0, 3).map((spec: string) => (
-                                                    <Badge key={spec} variant="secondary" className="bg-neutral-100 text-neutral-600 text-[10px] uppercase font-bold">{spec}</Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Action */}
-                                    <Link href={`/services/design/book?designerId=${seller.designerDetails?.id}`} className="mt-auto block">
-                                        <Button className="w-full bg-primary-600 hover:bg-primary-700 text-white rounded-xl py-6 text-[15px] shadow-lg shadow-primary-500/25 transition-all outline-none border-none group relative overflow-hidden font-black">
-                                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
-                                            <span className="relative z-10 flex items-center justify-center gap-2">
-                                                Start Booking <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-1 transition-transform" />
-                                            </span>
-                                        </Button>
-                                    </Link>
-
-                                    <p className="text-center text-[11px] text-neutral-400 mt-4 font-bold tracking-wide uppercase">No upfront payment required</p>
-                                </div>
+                                <ProfileCheckoutCart
+                                    designerId={seller.designerDetails?.id}
+                                    providerName={seller.businessName || 'Verified Partner'}
+                                />
                             )}
 
                             {/* Mobile App Promo (Optional fallback if no design services) */}
