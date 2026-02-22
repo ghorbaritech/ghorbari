@@ -30,7 +30,7 @@ const CategoryTree = ({
     if (children.length === 0) return null;
 
     if (depth === 0) {
-        // Direct children of the active root (Level 1 typically, but dynamically handles subcategories)
+        // Direct children of the active root (Level 1 typically, Column Headers like "Specific Area" or "Full Apartment")
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 {children.map(child => (
@@ -38,7 +38,7 @@ const CategoryTree = ({
                         <Link
                             href={getLink(child)}
                             onClick={onClose}
-                            className="font-bold text-neutral-900 hover:text-primary-600 pb-1 border-b text-sm"
+                            className="font-bold text-neutral-900 hover:text-primary-600 pb-2 border-b text-[15px] uppercase tracking-wide"
                         >
                             {child.name}
                         </Link>
@@ -57,25 +57,40 @@ const CategoryTree = ({
 
     // Nested children recursively displayed (Levels 2, 3, 4...)
     return (
-        <ul className={`flex flex-col gap-2 ${depth > 1 ? "pl-4 mt-1 border-l border-neutral-100" : ""}`}>
-            {children.map(child => (
-                <li key={child.id}>
-                    <Link
-                        href={getLink(child)}
-                        onClick={onClose}
-                        className="text-xs text-neutral-600 hover:text-primary-600 transition-colors block py-0.5"
-                    >
-                        {child.name}
-                    </Link>
-                    <CategoryTree
-                        categories={categories}
-                        parentId={child.id}
-                        onClose={onClose}
-                        getLink={getLink}
-                        depth={depth + 1}
-                    />
-                </li>
-            ))}
+        <ul className={`flex flex-col ${depth === 1 ? "gap-4" : depth === 2 ? "gap-2 mt-2" : "gap-1.5 pl-3 mt-1.5 border-l-2 border-neutral-100"}`}>
+            {children.map(child => {
+                // Determine styling based on depth
+                let linkStyle = "";
+                if (depth === 1) {
+                    // Level 2 (e.g. Bed Room, Full House Design)
+                    linkStyle = "font-bold text-[14px] text-neutral-800 hover:text-primary-600";
+                } else if (depth === 2) {
+                    // Level 3 (e.g. Living Room Design, Regular Bedroom Design)
+                    linkStyle = "text-sm text-neutral-600 hover:text-primary-600 font-medium";
+                } else {
+                    // Level 4+ (e.g. full remodelling)
+                    linkStyle = "text-xs text-neutral-500 hover:text-primary-600";
+                }
+
+                return (
+                    <li key={child.id} className={depth === 1 ? "flex flex-col" : ""}>
+                        <Link
+                            href={getLink(child)}
+                            onClick={onClose}
+                            className={`transition-colors block ${linkStyle}`}
+                        >
+                            {child.name}
+                        </Link>
+                        <CategoryTree
+                            categories={categories}
+                            parentId={child.id}
+                            onClose={onClose}
+                            getLink={getLink}
+                            depth={depth + 1}
+                        />
+                    </li>
+                );
+            })}
         </ul>
     );
 };
