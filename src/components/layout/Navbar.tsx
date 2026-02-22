@@ -191,29 +191,25 @@ export function Navbar() {
                 <div className="container mx-auto px-8" onMouseLeave={handleMouseLeave}>
                     <nav className="flex items-center gap-10 h-12 text-[12px] font-bold text-neutral-600 uppercase tracking-tight whitespace-nowrap">
                         <div
-                            onMouseEnter={() => handleMouseEnter('all')}
-                            className="flex items-center gap-2 cursor-pointer hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600"
+                            className="flex items-center gap-2 py-4 border-b-2 border-transparent"
                         >
                             <Menu className="w-4 h-4" />
                             <span>{t.nav_all_categories}</span>
                         </div>
                         <Link
                             href="/services/design/book"
-                            onMouseEnter={() => handleMouseEnter('design')}
                             className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600"
                         >
                             {t.nav_design_planning}
                         </Link>
                         <Link
                             href="/products"
-                            onMouseEnter={() => handleMouseEnter('product')}
                             className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600"
                         >
                             {t.nav_marketplace}
                         </Link>
                         <Link
                             href="/services"
-                            onMouseEnter={() => handleMouseEnter('service')}
                             className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600"
                         >
                             {t.nav_renovation}
@@ -222,6 +218,7 @@ export function Navbar() {
                 </div>
             </div>
 
+            {/* MegaMenu temporarily disabled
             <div className="relative" onMouseEnter={() => { if (megaMenuTimeout.current) clearTimeout(megaMenuTimeout.current); }}>
                 <MegaMenu
                     isOpen={isMegaMenuOpen}
@@ -234,6 +231,7 @@ export function Navbar() {
                     onMouseLeave={handleMouseLeave}
                 />
             </div>
+            */}
 
             {
                 isMenuOpen && (

@@ -13,12 +13,11 @@ import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Car, Trees, Waves
 import { createClient } from '@/utils/supabase/client';
 
 // Service Types
-type ServiceType = 'architectural' | 'structural' | 'interior';
+type ServiceType = 'structural-architectural' | 'interior';
 
 // Question Data (to be moved to separate file later if large)
 const SERVICE_OPTIONS: Option[] = [
-    { id: 'architectural', label: 'Architectural Design', icon: Home, description: 'Floor plans, elevations, and 3D modeling.' },
-    { id: 'structural', label: 'Structural Design', icon: Building2, description: 'Safety analysis, foundation, and detailed engineering.' },
+    { id: 'structural-architectural', label: 'Structural & Architectural Design', icon: Building2, description: 'Full engineering and structural planning followed by architectural layout design step-by-step.' },
     { id: 'interior', label: 'Interior Design', icon: PaintBucket, description: 'Decor, furniture layout, and aesthetic planning.' },
 ];
 
@@ -43,7 +42,12 @@ function DesignBookingWizard() {
     const supabase = createClient();
 
     // Initialize service type from URL if present
-    const initialService = searchParams.get('service') as ServiceType | null;
+    const urlService = searchParams.get('service');
+    // Map old URLs to new structure
+    const initialService = (urlService === 'structural' || urlService === 'architectural')
+        ? 'structural-architectural'
+        : urlService as ServiceType | null;
+
     const [step, setStep] = useState(initialService ? 1 : 0);
     const [serviceType, setServiceType] = useState<ServiceType | null>(initialService);
     const [loading, setLoading] = useState(false);
@@ -120,7 +124,7 @@ function DesignBookingWizard() {
                     title="Start Your Design Journey"
                     description="Select the type of design service you need to get started."
                     currentStep={0}
-                    totalSteps={serviceType === 'architectural' ? 3 : 2} // Simplified logic
+                    totalSteps={serviceType === 'structural-architectural' ? 3 : 2}
                     onNext={nextStep}
                     onBack={() => { }}
                     isFirstStep
@@ -136,15 +140,90 @@ function DesignBookingWizard() {
         );
     }
 
-    // Architectural Steps
-    if (serviceType === 'architectural') {
+    // Structural & Architectural Steps Merged
+    if (serviceType === 'structural-architectural') {
         if (step === 1) {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Plot & Basic Requirements"
-                        description="Tell us about your land and basic structure needs."
+                        title="Structural Details"
+                        description="Help us understand the engineering requirements first."
                         currentStep={1}
+                        totalSteps={3}
+                        onNext={nextStep}
+                        onBack={prevStep}
+                        canNext={!!formData.futureFloors}
+                    >
+                        <div className="space-y-8">
+                            {/* Soil Test */}
+                            <div>
+                                <Label className="text-base font-bold mb-4 block">Has a Soil Test been conducted?</Label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {['Yes', 'No'].map(opt => (
+                                        <div
+                                            key={opt}
+                                            className={`border rounded-xl p-6 text-center cursor-pointer font-bold ${formData.soilTest === (opt === 'Yes') ? 'bg-primary-600 text-white border-primary-600' : 'bg-white hover:bg-neutral-50'}`}
+                                            onClick={() => updateData('soilTest', opt === 'Yes')}
+                                        >
+                                            {opt}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Floors */}
+                            <div>
+                                <Label className="text-base font-bold mb-3 block">Total Intended Floors (Future)</Label>
+                                <Input
+                                    type="number"
+                                    placeholder="e.g. 6"
+                                    className="h-12"
+                                    value={formData.futureFloors}
+                                    onChange={(e) => updateData('futureFloors', e.target.value)}
+                                />
+                            </div>
+
+                            {/* Roof Features */}
+                            <div>
+                                <Label className="text-base font-bold mb-3 block">Rooftop Plans</Label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div
+                                        className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer ${formData.roofFeatures.includes('garden') ? 'bg-primary-50 border-primary-600' : ''}`}
+                                        onClick={() => {
+                                            const has = formData.roofFeatures.includes('garden');
+                                            updateData('roofFeatures', has ? formData.roofFeatures.filter(x => x !== 'garden') : [...formData.roofFeatures, 'garden']);
+                                        }}
+                                    >
+                                        <Checkbox checked={formData.roofFeatures.includes('garden')} />
+                                        <Trees className="w-5 h-5 text-green-600" />
+                                        <span className="font-bold text-sm">Roof Garden</span>
+                                    </div>
+                                    <div
+                                        className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer ${formData.roofFeatures.includes('pool') ? 'bg-primary-50 border-primary-600' : ''}`}
+                                        onClick={() => {
+                                            const has = formData.roofFeatures.includes('pool');
+                                            updateData('roofFeatures', has ? formData.roofFeatures.filter(x => x !== 'pool') : [...formData.roofFeatures, 'pool']);
+                                        }}
+                                    >
+                                        <Checkbox checked={formData.roofFeatures.includes('pool')} />
+                                        <Waves className="w-5 h-5 text-blue-500" />
+                                        <span className="font-bold text-sm">Swimming Pool</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </WizardStep>
+                </MainLayout>
+            );
+        }
+
+        if (step === 2) {
+            return (
+                <MainLayout>
+                    <WizardStep
+                        title="Plot & Basic Requirements"
+                        description="Now tell us about your land and basic structure needs for Architectural design."
+                        currentStep={2}
                         totalSteps={3}
                         onNext={nextStep}
                         onBack={prevStep}
@@ -218,13 +297,13 @@ function DesignBookingWizard() {
             );
         }
 
-        if (step === 2) {
+        if (step === 3) {
             return (
                 <MainLayout>
                     <WizardStep
                         title="Style & Features"
                         description="Choose the vibe and internal layout preferences."
-                        currentStep={2}
+                        currentStep={3}
                         totalSteps={3}
                         onNext={handleSubmit}
                         onBack={prevStep}
@@ -278,85 +357,6 @@ function DesignBookingWizard() {
                                     columns={4}
                                     showCheck
                                 />
-                            </div>
-                        </div>
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
-    }
-
-    // Structural Steps
-    if (serviceType === 'structural') {
-        if (step === 1) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        title="Structural Details"
-                        description="Help us understand the engineering requirements."
-                        currentStep={1}
-                        totalSteps={2}
-                        onNext={handleSubmit}
-                        onBack={prevStep}
-                        isLastStep
-                        canNext={!!formData.futureFloors}
-                    >
-                        <div className="space-y-8">
-                            {/* Soil Test */}
-                            <div>
-                                <Label className="text-base font-bold mb-4 block">Has a Soil Test been conducted?</Label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {['Yes', 'No'].map(opt => (
-                                        <div
-                                            key={opt}
-                                            className={`border rounded-xl p-6 text-center cursor-pointer font-bold ${formData.soilTest === (opt === 'Yes') ? 'bg-primary-600 text-white border-primary-600' : 'bg-white hover:bg-neutral-50'}`}
-                                            onClick={() => updateData('soilTest', opt === 'Yes')}
-                                        >
-                                            {opt}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Floors */}
-                            <div>
-                                <Label className="text-base font-bold mb-3 block">Total Intended Floors (Future)</Label>
-                                <Input
-                                    type="number"
-                                    placeholder="e.g. 6"
-                                    className="h-12"
-                                    value={formData.futureFloors}
-                                    onChange={(e) => updateData('futureFloors', e.target.value)}
-                                />
-                            </div>
-
-                            {/* Roof Features */}
-                            <div>
-                                <Label className="text-base font-bold mb-3 block">Rooftop Plans</Label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div
-                                        className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer ${formData.roofFeatures.includes('garden') ? 'bg-primary-50 border-primary-600' : ''}`}
-                                        onClick={() => {
-                                            const has = formData.roofFeatures.includes('garden');
-                                            updateData('roofFeatures', has ? formData.roofFeatures.filter(x => x !== 'garden') : [...formData.roofFeatures, 'garden']);
-                                        }}
-                                    >
-                                        <Checkbox checked={formData.roofFeatures.includes('garden')} />
-                                        <Trees className="w-5 h-5 text-green-600" />
-                                        <span className="font-bold text-sm">Roof Garden</span>
-                                    </div>
-                                    <div
-                                        className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer ${formData.roofFeatures.includes('pool') ? 'bg-primary-50 border-primary-600' : ''}`}
-                                        onClick={() => {
-                                            const has = formData.roofFeatures.includes('pool');
-                                            updateData('roofFeatures', has ? formData.roofFeatures.filter(x => x !== 'pool') : [...formData.roofFeatures, 'pool']);
-                                        }}
-                                    >
-                                        <Checkbox checked={formData.roofFeatures.includes('pool')} />
-                                        <Waves className="w-5 h-5 text-blue-500" />
-                                        <span className="font-bold text-sm">Swimming Pool</span>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </WizardStep>
