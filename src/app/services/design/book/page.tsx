@@ -437,45 +437,57 @@ function DesignBookingWizard() {
                         }}
                         isLastStep
                         canNext={true}
-                        nextLabel={loading ? "Generating Request..." : "Confirm & Request Verification"}
+                        nextLabel={loading ? "Generating Request..." : "Complete Booking"}
                     >
-                        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden text-left">
-                            <div className="bg-primary-50 p-6 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div className="bg-white rounded-[16px] border border-neutral-300 shadow-sm overflow-hidden text-left mx-auto max-w-2xl mt-4">
+                            {/* Inner Header Section */}
+                            <div className="bg-[#f3fbfa] p-8 border-b border-neutral-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                 <div>
-                                    <h3 className="text-xl font-bold text-primary-900">Tentative Quotation</h3>
-                                    <p className="text-sm font-medium text-primary-700/80 mt-1">Status: Waiting for Admin Verification upon submission</p>
+                                    <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">Tentative Quotation</h3>
+                                    <p className="text-[13px] font-medium text-neutral-600 mt-2">Status: Waiting for Admin Verification upon submission</p>
                                 </div>
                                 <div className="text-left md:text-right">
-                                    <p className="text-3xl font-black text-primary-700">৳ {price.toLocaleString()}</p>
-                                    <p className="text-xs font-bold text-primary-600 uppercase tracking-widest mt-1">Starting Price</p>
+                                    <div className="flex items-center md:justify-end gap-1 font-black text-[32px] text-[#0a1b3d] leading-none">
+                                        <span className="text-[26px]">৳</span> {price.toLocaleString()}
+                                    </div>
+                                    <p className="text-[11px] font-black tracking-widest text-[#0a1b3d]/70 uppercase mt-2">Starting Price</p>
                                 </div>
                             </div>
 
-                            <div className="p-6 space-y-6">
-                                <div>
-                                    <h4 className="text-sm font-bold text-neutral-400 uppercase tracking-wider mb-3">Service Details</h4>
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 border-b gap-2">
-                                        <span className="font-bold text-neutral-700 flex-shrink-0">Service Area</span>
-                                        <span className="font-black text-neutral-900 capitalize text-left sm:text-right">{formData.designerOption.replace('-', ' & ')}</span>
+                            {/* Body Section */}
+                            <div className="p-8 space-y-8 bg-white">
+
+                                {/* Service Details Block */}
+                                <div className="space-y-1">
+                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">Service Details</h4>
+
+                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
+                                        <span className="text-[16px] font-bold text-neutral-700">Service Area</span>
+                                        <span className="text-[16px] font-black text-neutral-900 capitalize">
+                                            {formData.designerOption === 'both' ? 'Both' : formData.designerOption}
+                                        </span>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 border-b gap-2">
-                                        <span className="font-bold text-neutral-700 flex-shrink-0">Assigned Provider</span>
-                                        <span className="font-black text-neutral-900 text-left sm:text-right break-words max-w-xs">{providerName}</span>
+
+                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
+                                        <span className="text-[16px] font-bold text-neutral-700">Assigned Provider</span>
+                                        <span className="text-[16px] font-black text-neutral-900">{providerName}</span>
                                     </div>
                                 </div>
 
-                                <div>
-                                    <h4 className="text-sm font-bold text-neutral-400 uppercase tracking-wider mb-3">Documents Ready</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {formData.hasDeed && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Deed</span>}
-                                        {formData.hasSurveyMap && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Survey Map</span>}
-                                        {formData.hasMutation && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Mutation</span>}
-                                        {formData.hasTax && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Tax</span>}
-                                        {formData.hasNID && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">NID</span>}
-                                        {formData.hasLandPermit && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Land Permit</span>}
-                                        {formData.hasBuildingApproval && <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-bold text-xs border border-green-200">Building Approval</span>}
+                                {/* Documents Ready Block */}
+                                <div className="pt-2">
+                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-5">Documents Ready</h4>
+
+                                    <div className="flex flex-wrap gap-2.5">
+                                        {formData.hasDeed && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Deed</span>}
+                                        {formData.hasSurveyMap && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Survey Map</span>}
+                                        {formData.hasMutation && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Mutation</span>}
+                                        {formData.hasTax && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Tax</span>}
+                                        {formData.hasNID && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">NID</span>}
+                                        {formData.hasLandPermit && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Land Permit</span>}
+                                        {formData.hasBuildingApproval && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Building Approval</span>}
                                         {(!formData.hasDeed && !formData.hasSurveyMap && !formData.hasMutation && !formData.hasTax && !formData.hasNID && !formData.hasLandPermit && !formData.hasBuildingApproval) && (
-                                            <span className="text-sm text-neutral-500 italic">No documents checked yet.</span>
+                                            <span className="text-[13px] text-neutral-400 italic font-medium px-2 py-1">No documents checked yet.</span>
                                         )}
                                     </div>
                                 </div>

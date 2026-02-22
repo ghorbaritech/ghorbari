@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WizardStepProps {
@@ -12,6 +12,7 @@ interface WizardStepProps {
     isFirstStep?: boolean;
     isLastStep?: boolean;
     canNext?: boolean;
+    nextLabel?: string;
     children: React.ReactNode;
 }
 
@@ -25,6 +26,7 @@ export function WizardStep({
     isFirstStep = false,
     isLastStep = false,
     canNext = true,
+    nextLabel,
     children
 }: WizardStepProps) {
     const progress = ((currentStep) / (totalSteps - 1)) * 100;
@@ -78,9 +80,12 @@ export function WizardStep({
                     <Button
                         onClick={onNext}
                         disabled={!canNext}
-                        className="rounded-full px-8 h-12 font-bold shadow-lg shadow-primary-200"
+                        className={`rounded-full px-8 h-12 font-bold shadow-lg ${isLastStep
+                                ? 'bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white shadow-[#1e3a8a]/30'
+                                : 'bg-primary-600 shadow-primary-200'
+                            }`}
                     >
-                        {isLastStep ? 'Complete Booking' : 'Continue'}
+                        {nextLabel ? nextLabel : (isLastStep ? 'Complete Booking' : 'Continue')}
                         {!isLastStep && <ArrowRight className="w-4 h-4 ml-2" />}
                     </Button>
                 </div>
