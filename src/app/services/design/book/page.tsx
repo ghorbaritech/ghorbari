@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Car, Trees, Waves, Dog, Baby, FileText, CheckCircle2, UserCircle, Map as MapIcon, Hash, CheckSquare, Star } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
@@ -319,7 +320,7 @@ function DesignBookingWizard() {
                         onBack={prevStep}
                         canNext={!!formData.selectedDesignerId}
                     >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mx-auto px-4 sm:px-0">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mx-auto px-4 sm:px-0">
                             {designers.length > 0 ? (
                                 designers.map((designer: any) => {
                                     const isSelected = formData.selectedDesignerId === designer.id;
@@ -332,70 +333,60 @@ function DesignBookingWizard() {
                                         <div
                                             key={designer.id}
                                             onClick={() => updateData('selectedDesignerId', designer.id)}
-                                            className={`group relative flex flex-col bg-white rounded-[24px] overflow-hidden cursor-pointer transition-all duration-300 border-[1.5px] ${isSelected
-                                                    ? 'border-primary-600 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-4 ring-primary-500/10'
-                                                    : 'border-neutral-200 shadow-sm hover:shadow-xl hover:-translate-y-1'
-                                                }`}
+                                            className={`relative group h-full cursor-pointer transition-transform duration-300 hover:-translate-y-2 ${isSelected ? 'ring-4 ring-primary-600 rounded-xl overflow-hidden' : ''}`}
                                         >
-                                            {/* Top Image Section */}
-                                            <div className="relative h-[250px] w-full overflow-hidden bg-neutral-100">
-                                                <img
-                                                    src={coverImage}
-                                                    alt={designer.company_name || 'Designer Portfolio'}
-                                                    className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
-                                                />
-                                                {/* Gradient Overlay for Text Readability */}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                                                {/* Floating Rating Badge */}
-                                                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm border border-black/5">
-                                                    <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                                                    <span className="text-sm font-black text-neutral-900">{rating}</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Content Section */}
-                                            <div className="p-7 flex flex-col flex-grow">
-                                                <div className="mb-6">
-                                                    <h3 className="font-black text-[22px] md:text-2xl text-neutral-900 tracking-tight leading-tight group-hover:text-primary-600 transition-colors uppercase">
-                                                        <a
-                                                            href={`/partner/${designer.user_id}`}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className="hover:underline decoration-2 underline-offset-4"
-                                                        >
-                                                            {designer.company_name || designer.contact_person_name}
-                                                        </a>
-                                                    </h3>
-                                                    <p className="text-neutral-500 text-[15px] mt-2 leading-relaxed">
-                                                        {(designer.specializations && designer.specializations.length > 0)
-                                                            ? designer.specializations.join(" • ")
-                                                            : 'Complete building blueprints & permits'}
-                                                    </p>
-                                                </div>
-
-                                                {/* Action Area (Bottom) */}
-                                                <div className="mt-auto pt-6 border-t border-neutral-100 flex items-end justify-between">
-                                                    <div>
-                                                        <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-1.5">Starting From</p>
-                                                        <div className="flex items-center gap-0.5">
-                                                            <span className="font-black text-2xl text-neutral-900">৳</span>
-                                                            <span className="font-black text-2xl md:text-[28px] text-neutral-900 leading-none tracking-tight">
-                                                                {basePrice.toLocaleString()}
+                                            <Card className={`border-neutral-200 shadow-lg overflow-hidden h-full flex flex-col ${isSelected ? 'border-primary-600 bg-primary-50/30' : 'border-none'}`}>
+                                                <div className="relative h-[250px] w-full overflow-hidden">
+                                                    <img
+                                                        src={coverImage}
+                                                        alt={designer.company_name || 'Designer Portfolio'}
+                                                        className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
+                                                    />
+                                                    <div className="absolute top-4 left-4 flex flex-wrap gap-2 pr-4">
+                                                        {(designer.specializations || []).slice(0, 2).map((tag: string) => (
+                                                            <span key={tag} className="bg-white text-neutral-900 text-[10px] font-black px-3 py-1.5 rounded-md uppercase tracking-wide shadow-sm">
+                                                                {tag}
                                                             </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="p-6 flex flex-col flex-grow">
+                                                    <div className="flex justify-between items-start mb-2 gap-3">
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="text-[18px] md:text-xl font-black text-neutral-900 mb-1.5 uppercase tracking-tight truncate">
+                                                                {designer.company_name || designer.contact_person_name}
+                                                            </h3>
+                                                            <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest">
+                                                                {designer.experience_years ? `${designer.experience_years} Years Experience` : 'Verified Expert'}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 bg-neutral-50 px-2.5 py-1.5 rounded-lg shrink-0">
+                                                            <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                                            <span className="font-black text-[15px] tracking-tight">{rating}</span>
                                                         </div>
                                                     </div>
-                                                    <Button
-                                                        className={`rounded-[14px] px-8 h-[48px] font-black shadow-md transition-all text-sm uppercase tracking-wider ${isSelected
-                                                                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/25'
-                                                                : 'bg-[#111111] hover:bg-black text-white'
-                                                            }`}
-                                                    >
-                                                        {isSelected ? 'SELECTED' : 'BOOK NOW'}
-                                                    </Button>
+
+                                                    <div className="mt-6 pt-5 border-t border-neutral-100 flex items-center justify-between gap-4 mt-auto">
+                                                        <div>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Starting From</p>
+                                                            <div className="flex items-center gap-0.5">
+                                                                <span className="font-bold text-base text-neutral-900 mt-0.5">৳</span>
+                                                                <span className="font-black text-2xl text-neutral-900 tracking-tight">
+                                                                    {basePrice.toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            className={`rounded-xl px-6 font-black uppercase tracking-wider text-xs h-12 transition-all shrink-0 ${isSelected
+                                                                ? 'bg-primary-600 hover:bg-primary-700 text-white'
+                                                                : 'bg-black hover:bg-neutral-800 text-white'
+                                                                }`}
+                                                        >
+                                                            {isSelected ? 'SELECTED' : 'BOOK NOW'}
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            </Card>
                                         </div>
                                     );
                                 })
