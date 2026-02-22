@@ -319,37 +319,90 @@ function DesignBookingWizard() {
                         onBack={prevStep}
                         canNext={!!formData.selectedDesignerId}
                     >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 w-full max-w-5xl mx-auto">
                             {designers.length > 0 ? (
-                                designers.map((designer: any) => (
-                                    <div
-                                        key={designer.id}
-                                        className={`border-2 rounded-2xl p-6 cursor-pointer transition-all flex flex-col gap-4 ${formData.selectedDesignerId === designer.id ? 'border-primary-600 bg-primary-50 shadow-md ring-4 ring-primary-600/20' : 'border-neutral-200 hover:border-primary-300 hover:shadow-sm bg-white'}`}
-                                        onClick={() => updateData('selectedDesignerId', designer.id)}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center border-2 border-white shadow-sm flex-shrink-0">
-                                                <span className="text-primary-800 font-bold text-xl uppercase">{(designer.company_name || designer.contact_person_name || 'D').substring(0, 2)}</span>
+                                designers.map((designer: any) => {
+                                    const isSelected = formData.selectedDesignerId === designer.id;
+                                    // Use a placeholder visual if no portfolio URL exists
+                                    const coverImage = designer.portfolioUrl || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=800';
+                                    const rating = designer.rating || "4.9";
+                                    const basePrice = designer.starting_price || (designer.hasDesignServices ? 50000 : 25000);
+
+                                    return (
+                                        <div
+                                            key={designer.id}
+                                            onClick={() => updateData('selectedDesignerId', designer.id)}
+                                            className={`group relative flex flex-col bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border-2 ${isSelected
+                                                    ? 'border-primary-600 shadow-lg ring-4 ring-primary-500/10'
+                                                    : 'border-neutral-100 shadow-sm hover:shadow-xl hover:border-neutral-200'
+                                                }`}
+                                        >
+                                            {/* Top Image Section */}
+                                            <div className="relative h-56 w-full overflow-hidden bg-neutral-100">
+                                                <img
+                                                    src={coverImage}
+                                                    alt={designer.company_name || 'Designer Portfolio'}
+                                                    className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
+                                                />
+                                                {/* Gradient Overlay for Text Readability */}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                                                {/* Floating Rating Badge */}
+                                                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm border border-black/5">
+                                                    <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                                                    <span className="text-sm font-black text-neutral-900">{rating}</span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="font-bold text-lg text-neutral-900">{designer.company_name || designer.contact_person_name}</h3>
-                                                <p className="text-sm text-neutral-500 font-medium">{designer.experience_years ? `${designer.experience_years} Years Experience` : 'Verified Expert'}</p>
+
+                                            {/* Content Section */}
+                                            <div className="p-6 flex flex-col flex-grow">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h3 className="font-black text-2xl text-neutral-900 tracking-tight leading-tight group-hover:text-primary-600 transition-colors">
+                                                            {designer.company_name || designer.contact_person_name}
+                                                        </h3>
+                                                        <p className="text-neutral-500 text-sm mt-1 mb-4 line-clamp-2">
+                                                            {(designer.specializations && designer.specializations.length > 0)
+                                                                ? designer.specializations.join(" • ")
+                                                                : 'Complete building blueprints & permits'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Action Area (Bottom) */}
+                                                <div className="mt-auto pt-6 border-t border-neutral-100 flex items-end justify-between">
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Starting From</p>
+                                                        <p className="font-black text-2xl text-neutral-900 leading-none">
+                                                            ৳{basePrice.toLocaleString()}
+                                                        </p>
+                                                    </div>
+                                                    <Button
+                                                        className={`rounded-xl px-8 py-6 font-black shadow-md transition-all text-sm ${isSelected
+                                                                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/25'
+                                                                : 'bg-neutral-900 hover:bg-black text-white'
+                                                            }`}
+                                                    >
+                                                        {isSelected ? 'SELECTED' : 'BOOK NOW'}
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="pt-4 border-t border-neutral-100 flex flex-wrap gap-2 items-center justify-between">
-                                            <div className="flex flex-wrap gap-2">
-                                                {(designer.specializations || ['General Design']).slice(0, 3).map((spec: string) => (
-                                                    <span key={spec} className="px-3 py-1 bg-white border border-neutral-200 text-neutral-600 text-xs font-bold rounded-full">{spec}</span>
-                                                ))}
-                                            </div>
-                                            <a href={`/partner/${designer.user_id}`} target="_blank" rel="noreferrer" className="text-primary-600 font-bold text-xs hover:underline flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                                                View Profile →
+
+                                            {/* View Full Profile Link */}
+                                            <a
+                                                href={`/partner/${designer.user_id}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="absolute top-4 left-4 z-10 bg-black/50 hover:bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                View Full Profile →
                                             </a>
                                         </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             ) : (
-                                <div className="col-span-full py-12 text-center text-neutral-500 bg-white rounded-2xl border border-dashed">
+                                <div className="col-span-full py-12 text-center text-neutral-500 bg-white rounded-3xl border border-dashed border-neutral-200">
                                     <UserCircle className="w-12 h-12 mx-auto text-neutral-300 mb-3" />
                                     <p className="font-bold text-lg">No designers currently available online.</p>
                                     <p className="text-sm">Please go back and select the Ghorbari suggested option for now.</p>
