@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Car, Trees, Waves, Dog, Baby, FileText, CheckCircle2, UserCircle, Map as MapIcon, Hash, CheckSquare } from 'lucide-react';
+import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Car, Trees, Waves, Dog, Baby, FileText, CheckCircle2, UserCircle, Map as MapIcon, Hash, CheckSquare, Star } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
 // Service Types
@@ -333,8 +333,8 @@ function DesignBookingWizard() {
                                             key={designer.id}
                                             onClick={() => updateData('selectedDesignerId', designer.id)}
                                             className={`group relative flex flex-col bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border-2 ${isSelected
-                                                    ? 'border-primary-600 shadow-lg ring-4 ring-primary-500/10'
-                                                    : 'border-neutral-100 shadow-sm hover:shadow-xl hover:border-neutral-200'
+                                                ? 'border-primary-600 shadow-lg ring-4 ring-primary-500/10'
+                                                : 'border-neutral-100 shadow-sm hover:shadow-xl hover:border-neutral-200'
                                                 }`}
                                         >
                                             {/* Top Image Section */}
@@ -379,8 +379,8 @@ function DesignBookingWizard() {
                                                     </div>
                                                     <Button
                                                         className={`rounded-xl px-8 py-6 font-black shadow-md transition-all text-sm ${isSelected
-                                                                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/25'
-                                                                : 'bg-neutral-900 hover:bg-black text-white'
+                                                            ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/25'
+                                                            : 'bg-neutral-900 hover:bg-black text-white'
                                                             }`}
                                                     >
                                                         {isSelected ? 'SELECTED' : 'BOOK NOW'}
