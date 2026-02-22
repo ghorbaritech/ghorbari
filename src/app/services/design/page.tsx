@@ -11,18 +11,11 @@ import { designServices, designCategories, featuredProjects, clientReviews } fro
 
 const topBanners = [
     {
-        title: "Structural Design",
+        title: "Structural & Architectural Design",
         icon: Building2,
         href: "/services/design/book?service=structural",
-        overlay: "bg-[#7c2d12]/90",
-        image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200&fit=crop"
-    },
-    {
-        title: "Architectural Design",
-        icon: Ruler,
-        href: "/services/design/book?service=architectural",
         overlay: "bg-[#064e3b]/90",
-        image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&fit=crop"
+        image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200&fit=crop"
     },
     {
         title: "Interior Design",
@@ -55,7 +48,7 @@ export default function DesignServicesPage() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-6">
                     {topBanners.map((banner, idx) => (
                         <div key={idx} className="group relative h-60 rounded-[32px] overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
                             {/* Background Image */}
