@@ -13,6 +13,73 @@ interface MegaMenuProps {
     onClose: () => void;
 }
 
+const CategoryTree = ({
+    categories,
+    parentId,
+    onClose,
+    getLink,
+    depth = 0
+}: {
+    categories: Category[],
+    parentId: string,
+    onClose: () => void,
+    getLink: (c: Category) => string,
+    depth?: number
+}) => {
+    const children = categories.filter(c => c.parent_id === parentId);
+    if (children.length === 0) return null;
+
+    if (depth === 0) {
+        // Direct children of the active root (Level 1 typically, but dynamically handles subcategories)
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {children.map(child => (
+                    <div key={child.id} className="flex flex-col gap-3">
+                        <Link
+                            href={getLink(child)}
+                            onClick={onClose}
+                            className="font-bold text-neutral-900 hover:text-primary-600 pb-1 border-b text-sm"
+                        >
+                            {child.name}
+                        </Link>
+                        <CategoryTree
+                            categories={categories}
+                            parentId={child.id}
+                            onClose={onClose}
+                            getLink={getLink}
+                            depth={depth + 1}
+                        />
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    // Nested children recursively displayed (Levels 2, 3, 4...)
+    return (
+        <ul className={`flex flex-col gap-2 ${depth > 1 ? "pl-4 mt-1 border-l border-neutral-100" : ""}`}>
+            {children.map(child => (
+                <li key={child.id}>
+                    <Link
+                        href={getLink(child)}
+                        onClick={onClose}
+                        className="text-xs text-neutral-600 hover:text-primary-600 transition-colors block py-0.5"
+                    >
+                        {child.name}
+                    </Link>
+                    <CategoryTree
+                        categories={categories}
+                        parentId={child.id}
+                        onClose={onClose}
+                        getLink={getLink}
+                        depth={depth + 1}
+                    />
+                </li>
+            ))}
+        </ul>
+    );
+};
+
 export function MegaMenu({ isOpen, activeSection, categories, onMouseLeave, onClose }: MegaMenuProps) {
     const [activeRootId, setActiveRootId] = useState<string | null>(null);
 
@@ -43,13 +110,7 @@ export function MegaMenu({ isOpen, activeSection, categories, onMouseLeave, onCl
     }
 
     const rootCategories = currentCategories.filter(c => c.level === 0);
-    const getChildren = (parentId: string) => currentCategories.filter(c => c.parent_id === parentId);
-
     const activeRoot = rootCategories.find(c => c.id === activeRootId);
-    let subCategories: Category[] = [];
-    if (activeRootId) {
-        subCategories = getChildren(activeRootId);
-    }
 
     // Determine target link based on type
     const getLink = (category: Category) => {
@@ -93,46 +154,21 @@ export function MegaMenu({ isOpen, activeSection, categories, onMouseLeave, onCl
                     )}
                 </div>
 
-                {/* Level 1 & Level 2: Subcategories and their items */}
+                {/* Level 1+: Subcategories and their items mapped recursively */}
                 <div className="w-3/4 p-8 overflow-y-auto no-scrollbar max-h-[70vh]">
-                    {activeRoot && subCategories.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                            {subCategories.map((sub) => {
-                                const items = getChildren(sub.id);
-                                return (
-                                    <div key={sub.id} className="flex flex-col gap-3">
-                                        <Link
-                                            href={getLink(sub)}
-                                            onClick={onClose}
-                                            className="font-bold text-neutral-900 hover:text-primary-600 pb-1 border-b"
-                                        >
-                                            {sub.name}
-                                        </Link>
-                                        {items.length > 0 && (
-                                            <ul className="flex flex-col gap-2">
-                                                {items.map(item => (
-                                                    <li key={item.id}>
-                                                        <Link
-                                                            href={getLink(item)}
-                                                            onClick={onClose}
-                                                            className="text-sm text-neutral-600 hover:text-primary-600 transition-colors"
-                                                        >
-                                                            {item.name}
-                                                        </Link>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                    {activeRoot ? (
+                        <CategoryTree
+                            categories={currentCategories}
+                            parentId={activeRoot.id}
+                            onClose={onClose}
+                            getLink={getLink}
+                        />
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-neutral-400">
-                            {activeRoot ? (
-                                <p>View all {activeRoot.name}</p>
-                            ) : (
+                            {rootCategories.length > 0 ? (
                                 <p>Select a category</p>
+                            ) : (
+                                <p>No categories available</p>
                             )}
                         </div>
                     )}
