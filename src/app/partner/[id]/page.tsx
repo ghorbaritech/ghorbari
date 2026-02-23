@@ -336,9 +336,7 @@ export default async function SellerProfilePage({ params }: Params) {
                                                                         </div>
                                                                     </div>
 
-                                                                    <a href="#booking-cart" className="bg-[#0f172a] hover:bg-[#1e293b] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:shadow-lg hover:shadow-neutral-900/20 active:scale-95 inline-block text-center">
-                                                                        BOOK NOW
-                                                                    </a>
+                                                                    <BookNowButton packageId={pkg.id} />
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -390,9 +388,7 @@ export default async function SellerProfilePage({ params }: Params) {
                                                                         </div>
                                                                     </div>
 
-                                                                    <a href="#booking-cart" className="bg-[#0f172a] hover:bg-[#1e293b] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:shadow-lg hover:shadow-neutral-900/20 active:scale-95 inline-block text-center">
-                                                                        BOOK NOW
-                                                                    </a>
+                                                                    <BookNowButton packageId={pkg.id} />
                                                                 </div>
                                                             </div>
                                                         </div>
