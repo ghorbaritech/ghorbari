@@ -13,6 +13,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSellerProfile } from "@/services/sellerService";
 import { ProfileCheckoutCart } from "@/components/design/ProfileCheckoutCart";
+import { DesignCartProvider } from "@/components/design/DesignCartProvider";
+import { BookNowButton } from "@/components/design/BookNowButton";
 
 interface Params {
     params: Promise<{ id: string }>;
@@ -96,458 +98,460 @@ export default async function SellerProfilePage({ params }: Params) {
             </div>
 
             <div className="container mx-auto px-4 py-10">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
+                <DesignCartProvider>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
 
-                    {/* ── LEFT SIDEBAR (Col 1-3) ── */}
-                    <aside className="lg:col-span-4 xl:col-span-3 space-y-5">
+                        {/* ── LEFT SIDEBAR (Col 1-3) ── */}
+                        <aside className="lg:col-span-4 xl:col-span-3 space-y-5">
 
-                        {/* Contact Card */}
-                        <div className="bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm space-y-4">
-                            <h3 className="font-black text-sm uppercase tracking-widest text-neutral-400">Contact</h3>
-                            {seller.phone && (
-                                <a href={`tel:${seller.phone}`} className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors text-sm">
-                                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <Phone className="w-4 h-4 text-blue-600" />
-                                    </div>
-                                    {seller.phone}
-                                </a>
-                            )}
-                            {seller.email && (
-                                <a href={`mailto:${seller.email}`} className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors text-sm">
-                                    <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <Mail className="w-4 h-4 text-purple-600" />
-                                    </div>
-                                    <span className="truncate">{seller.email}</span>
-                                </a>
-                            )}
-                            {seller.website && (
-                                <a href={seller.website} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors text-sm">
-                                    <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <Globe className="w-4 h-4 text-green-600" />
-                                    </div>
-                                    <span className="truncate">{seller.website.replace(/^https?:\/\//, '')}</span>
-                                </a>
-                            )}
-                            {!seller.phone && !seller.email && !seller.website && (
-                                <p className="text-sm text-neutral-400 italic">Contact details not provided.</p>
-                            )}
-                            <Link href={`/products?seller=${seller.id}`} className="block">
-                                <Button className="w-full bg-neutral-900 hover:bg-black text-white rounded-xl font-bold mt-2">
-                                    Request Quote
-                                </Button>
-                            </Link>
-                        </div>
-
-                        {/* Categories */}
-                        {seller.primaryCategories.length > 0 && (
-                            <div className="bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm">
-                                <h3 className="font-black text-sm uppercase tracking-widest text-neutral-400 mb-4">Supplies</h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {seller.primaryCategories.map((cat: string) => (
-                                        <span key={cat} className="px-3 py-1 bg-neutral-100 text-neutral-700 text-xs font-bold rounded-lg uppercase tracking-wide">{cat}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Stats */}
-                        <div className="bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm space-y-5">
-                            <h3 className="font-black text-sm uppercase tracking-widest text-neutral-400">Performance</h3>
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <ShoppingBag className="w-5 h-5 text-emerald-600" />
-                                </div>
-                                <div>
-                                    <div className="font-black text-xl text-neutral-900">{seller.stats.totalOrders.toLocaleString()}</div>
-                                    <div className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Orders Served</div>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <TrendingUp className="w-5 h-5 text-blue-600" />
-                                </div>
-                                <div>
-                                    <div className="font-black text-xl text-neutral-900">{formatCurrency(seller.stats.totalOrderValue)}</div>
-                                    <div className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Total Value</div>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <Package className="w-5 h-5 text-amber-600" />
-                                </div>
-                                <div>
-                                    <div className="font-black text-xl text-neutral-900">{seller.stats.productsListed}</div>
-                                    <div className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Products Listed</div>
-                                </div>
-                            </div>
-                        </div>
-                    </aside>
-
-                    {/* ── MAIN CONTENT (Col 4-9) ── */}
-                    <div className="lg:col-span-8 xl:col-span-6 space-y-10">
-
-                        <Tabs defaultValue={defaultTab} className="w-full">
-                            <TabsList className="grid w-full lg:w-fit grid-cols-2 md:grid-cols-3 bg-neutral-100 rounded-xl p-1 mb-8">
-                                {seller.hasProducts && (
-                                    <TabsTrigger value="products" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm">Products Shop</TabsTrigger>
+                            {/* Contact Card */}
+                            <div className="bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm space-y-4">
+                                <h3 className="font-black text-sm uppercase tracking-widest text-neutral-400">Contact</h3>
+                                {seller.phone && (
+                                    <a href={`tel:${seller.phone}`} className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors text-sm">
+                                        <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Phone className="w-4 h-4 text-blue-600" />
+                                        </div>
+                                        {seller.phone}
+                                    </a>
                                 )}
-                                {seller.hasDesignServices && (
-                                    <TabsTrigger value="design" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-primary-700 data-[state=active]:shadow-sm">Design Services</TabsTrigger>
+                                {seller.email && (
+                                    <a href={`mailto:${seller.email}`} className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors text-sm">
+                                        <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Mail className="w-4 h-4 text-purple-600" />
+                                        </div>
+                                        <span className="truncate">{seller.email}</span>
+                                    </a>
                                 )}
-                                {/* Placeholder for generalized services tab later */}
-                            </TabsList>
-
-                            {/* ── PRODUCTS TAB ── */}
-                            {seller.hasProducts && (
-                                <TabsContent value="products" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                                    <div className="flex items-center justify-between mb-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
-                                                <Package className="w-5 h-5 text-blue-600" />
-                                            </div>
-                                            <h2 className="text-xl font-black text-neutral-900">Products</h2>
+                                {seller.website && (
+                                    <a href={seller.website} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors text-sm">
+                                        <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Globe className="w-4 h-4 text-green-600" />
                                         </div>
-                                        <Link href={`/products?seller=${seller.id}`}>
-                                            <Button variant="ghost" size="sm" className="text-neutral-500 font-bold text-xs uppercase tracking-widest">View All →</Button>
-                                        </Link>
-                                    </div>
-
-                                    {seller.products.length > 0 ? (
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                            {seller.products.map((product: any) => (
-                                                <Link key={product.id} href={`/products/${product.id}`}>
-                                                    <div className="group bg-white border border-neutral-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-neutral-200 transition-all duration-300">
-                                                        <div className="relative aspect-square bg-neutral-50 overflow-hidden">
-                                                            <Image
-                                                                src={product.images?.[0] || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400'}
-                                                                alt={product.title}
-                                                                fill
-                                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                                            />
-                                                        </div>
-                                                        <div className="p-3">
-                                                            <p className="font-bold text-neutral-900 text-sm leading-tight line-clamp-2 mb-1">{product.title}</p>
-                                                            <p className="font-black text-neutral-900 text-base">৳{parseFloat(product.base_price).toLocaleString()}</p>
-                                                        </div>
-                                                    </div>
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="bg-white border border-neutral-100 rounded-2xl p-12 text-center">
-                                            <Package className="w-12 h-12 text-neutral-200 mx-auto mb-3" />
-                                            <p className="text-neutral-400 font-bold">No products listed yet</p>
-                                        </div>
-                                    )}
-                                </TabsContent>
-                            )}
-
-                            {/* ── DESIGN SERVICES TAB ── */}
-                            {seller.hasDesignServices && (
-                                <TabsContent value="design" className="mt-0 focus-visible:outline-none focus-visible:ring-0 space-y-8">
-                                    <div className="bg-primary-50 rounded-3xl p-8 border border-primary-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                                        <div>
-                                            <h2 className="text-2xl font-black text-primary-900 mb-2">About Our Services</h2>
-                                            <p className="text-primary-700 max-w-lg leading-relaxed">Let our expert team handle your structural planning, building approvals, and aesthetic interior setups starting today.</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Designer Specs */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="bg-white rounded-2xl p-6 border shadow-sm">
-                                            <div className="flex gap-4 items-start">
-                                                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                    <Briefcase className="w-5 h-5 text-indigo-600" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-neutral-900 mb-1">Experience Focus</h3>
-                                                    <p className="text-sm text-neutral-600 mb-3">{seller.designerDetails?.experienceYears} Years in the Industry</p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {seller.designerDetails?.specializations?.map((spec: string) => (
-                                                            <Badge key={spec} variant="outline" className="bg-neutral-50">{spec}</Badge>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {seller.designerDetails?.portfolioUrl && (
-                                            <div className="bg-white rounded-2xl p-6 border shadow-sm">
-                                                <div className="flex gap-4 items-start">
-                                                    <div className="w-10 h-10 bg-pink-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                        <Ruler className="w-5 h-5 text-pink-600" />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="font-bold text-neutral-900 mb-1">External Portfolio</h3>
-                                                        <p className="text-sm text-neutral-600 mb-3">View their complete catalog of external projects and blueprints.</p>
-                                                        <a href={seller.designerDetails.portfolioUrl} target="_blank" rel="noreferrer" className="text-primary-600 font-bold text-sm hover:underline">
-                                                            Visit External Site →
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* ── DESIGN PACKAGES (INVENTORY) ── */}
-                                    {structuralPackages.length > 0 && (
-                                        <div className="space-y-6 pt-4">
-                                            <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">Building & Structural Packages</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
-                                                {structuralPackages.map((pkg: any) => (
-                                                    <div key={pkg.id} className="group bg-white border border-neutral-100 rounded-[20px] overflow-hidden hover:shadow-xl hover:shadow-neutral-900/5 hover:-translate-y-1 transition-all duration-300 flex flex-col">
-                                                        {/* Image Container */}
-                                                        <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
-                                                            <Image
-                                                                src={pkg.images?.[0] || 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800'}
-                                                                alt={pkg.title}
-                                                                fill
-                                                                className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                                                            />
-                                                            {/* Rating Badge Overlay */}
-                                                            <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm border border-black/5">
-                                                                <Star className="w-4 h-4 text-[#ff6b00] fill-[#ff6b00]" />
-                                                                <span className="text-sm font-bold text-neutral-900">{seller.stats.avgRating || '4.9'}</span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Content Container */}
-                                                        <div className="p-6 flex flex-col flex-grow">
-                                                            <div className="mb-4">
-                                                                <h3 className="text-[18px] font-black tracking-tight text-[#0f172a] mb-2 leading-tight">
-                                                                    {pkg.title}
-                                                                </h3>
-                                                                <p className="text-[14px] text-neutral-500 font-medium line-clamp-2 leading-relaxed">
-                                                                    {pkg.description}
-                                                                </p>
-                                                            </div>
-
-                                                            {/* Bottom CTA Area */}
-                                                            <div className="mt-auto pt-4 border-t border-neutral-100/60 flex items-center justify-between">
-                                                                <div>
-                                                                    <span className="text-[10px] font-black tracking-widest text-[#0f172a]/40 uppercase mb-1 block">
-                                                                        STARTING FROM
-                                                                    </span>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <span className="text-[20px] font-black text-[#0f172a]">৳{pkg.price.toLocaleString()}</span>
-                                                                    </div>
-                                                                </div>
-
-                                                                <a href="#booking-cart" className="bg-[#0f172a] hover:bg-[#1e293b] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:shadow-lg hover:shadow-neutral-900/20 active:scale-95 inline-block text-center">
-                                                                    BOOK NOW
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {interiorPackages.length > 0 && (
-                                        <div className="space-y-6 pt-2">
-                                            <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">Interior Design Packages</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
-                                                {interiorPackages.map((pkg: any) => (
-                                                    <div key={pkg.id} className="group bg-white border border-neutral-100 rounded-[20px] overflow-hidden hover:shadow-xl hover:shadow-neutral-900/5 hover:-translate-y-1 transition-all duration-300 flex flex-col">
-                                                        {/* Image Container */}
-                                                        <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
-                                                            <Image
-                                                                src={pkg.images?.[0] || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800'}
-                                                                alt={pkg.title}
-                                                                fill
-                                                                className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                                                            />
-                                                            {/* Rating Badge Overlay */}
-                                                            <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm border border-black/5">
-                                                                <Star className="w-4 h-4 text-[#ff6b00] fill-[#ff6b00]" />
-                                                                <span className="text-sm font-bold text-neutral-900">{seller.stats.avgRating || '4.9'}</span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Content Container */}
-                                                        <div className="p-6 flex flex-col flex-grow">
-                                                            <div className="mb-4">
-                                                                <h3 className="text-[18px] font-black tracking-tight text-[#0f172a] mb-2 leading-tight">
-                                                                    {pkg.title}
-                                                                </h3>
-                                                                <p className="text-[14px] text-neutral-500 font-medium line-clamp-2 leading-relaxed">
-                                                                    {pkg.description}
-                                                                </p>
-                                                            </div>
-
-                                                            {/* Bottom CTA Area */}
-                                                            <div className="mt-auto pt-4 border-t border-neutral-100/60 flex items-center justify-between">
-                                                                <div>
-                                                                    <span className="text-[10px] font-black tracking-widest text-[#0f172a]/40 uppercase mb-1 block">
-                                                                        STARTING FROM
-                                                                    </span>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <span className="text-[20px] font-black text-[#0f172a]">৳{pkg.price.toLocaleString()}</span>
-                                                                    </div>
-                                                                </div>
-
-                                                                <a href="#booking-cart" className="bg-[#0f172a] hover:bg-[#1e293b] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:shadow-lg hover:shadow-neutral-900/20 active:scale-95 inline-block text-center">
-                                                                    BOOK NOW
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                </TabsContent>
-                            )}
-
-                        </Tabs>
-
-                        {/* ── REVIEWS ── */}
-                        <section className="bg-white rounded-3xl border border-neutral-100 shadow-sm p-8">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center">
-                                    <Star className="w-5 h-5 text-amber-600" />
-                                </div>
-                                <h2 className="text-xl font-black text-neutral-900">Reviews & Ratings</h2>
+                                        <span className="truncate">{seller.website.replace(/^https?:\/\//, '')}</span>
+                                    </a>
+                                )}
+                                {!seller.phone && !seller.email && !seller.website && (
+                                    <p className="text-sm text-neutral-400 italic">Contact details not provided.</p>
+                                )}
+                                <Link href={`/products?seller=${seller.id}`} className="block">
+                                    <Button className="w-full bg-neutral-900 hover:bg-black text-white rounded-xl font-bold mt-2">
+                                        Request Quote
+                                    </Button>
+                                </Link>
                             </div>
 
-                            {seller.reviews.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                                    {/* Average Score */}
-                                    <div className="flex flex-col items-center justify-center text-center p-6 bg-neutral-50 rounded-2xl">
-                                        <div className="text-6xl font-black text-neutral-900 mb-2">{seller.stats.avgRating}</div>
-                                        <StarRating rating={seller.stats.avgRating} size="lg" />
-                                        <div className="text-sm text-neutral-400 font-bold mt-2">{seller.reviews.length} Reviews</div>
-                                    </div>
-                                    {/* Star Breakdown */}
-                                    <div className="md:col-span-2 space-y-2 justify-center flex flex-col">
-                                        {seller.ratingBreakdown.map((row: any) => (
-                                            <div key={row.star} className="flex items-center gap-3">
-                                                <span className="text-xs font-bold text-neutral-500 w-6 text-right">{row.star}</span>
-                                                <Star className="w-3 h-3 fill-amber-400 text-amber-400 flex-shrink-0" />
-                                                <div className="flex-1 h-2 bg-neutral-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-amber-400 rounded-full transition-all"
-                                                        style={{ width: `${(row.count / maxReviewCount) * 100}%` }}
-                                                    />
-                                                </div>
-                                                <span className="text-xs font-bold text-neutral-400 w-4">{row.count}</span>
-                                            </div>
+                            {/* Categories */}
+                            {seller.primaryCategories.length > 0 && (
+                                <div className="bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm">
+                                    <h3 className="font-black text-sm uppercase tracking-widest text-neutral-400 mb-4">Supplies</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {seller.primaryCategories.map((cat: string) => (
+                                            <span key={cat} className="px-3 py-1 bg-neutral-100 text-neutral-700 text-xs font-bold rounded-lg uppercase tracking-wide">{cat}</span>
                                         ))}
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="text-center py-8 mb-6">
-                                    <MessageSquare className="w-10 h-10 text-neutral-200 mx-auto mb-2" />
-                                    <p className="text-neutral-400 font-bold text-sm">No reviews yet — be the first!</p>
-                                </div>
                             )}
 
-                            {/* Review Cards */}
-                            {seller.reviews.length > 0 && (
-                                <div className="space-y-4 mt-2">
-                                    {seller.reviews.slice(0, 5).map((review: any) => (
-                                        <div key={review.id} className="p-5 bg-neutral-50 rounded-2xl border border-neutral-100">
-                                            <div className="flex items-start justify-between mb-2">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-black text-sm">
-                                                        {(review.reviewer?.full_name || 'A')[0].toUpperCase()}
+                            {/* Stats */}
+                            <div className="bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm space-y-5">
+                                <h3 className="font-black text-sm uppercase tracking-widest text-neutral-400">Performance</h3>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <ShoppingBag className="w-5 h-5 text-emerald-600" />
+                                    </div>
+                                    <div>
+                                        <div className="font-black text-xl text-neutral-900">{seller.stats.totalOrders.toLocaleString()}</div>
+                                        <div className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Orders Served</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <TrendingUp className="w-5 h-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <div className="font-black text-xl text-neutral-900">{formatCurrency(seller.stats.totalOrderValue)}</div>
+                                        <div className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Total Value</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <Package className="w-5 h-5 text-amber-600" />
+                                    </div>
+                                    <div>
+                                        <div className="font-black text-xl text-neutral-900">{seller.stats.productsListed}</div>
+                                        <div className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Products Listed</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+
+                        {/* ── MAIN CONTENT (Col 4-9) ── */}
+                        <div className="lg:col-span-8 xl:col-span-6 space-y-10">
+
+                            <Tabs defaultValue={defaultTab} className="w-full">
+                                <TabsList className="grid w-full lg:w-fit grid-cols-2 md:grid-cols-3 bg-neutral-100 rounded-xl p-1 mb-8">
+                                    {seller.hasProducts && (
+                                        <TabsTrigger value="products" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm">Products Shop</TabsTrigger>
+                                    )}
+                                    {seller.hasDesignServices && (
+                                        <TabsTrigger value="design" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-primary-700 data-[state=active]:shadow-sm">Design Services</TabsTrigger>
+                                    )}
+                                    {/* Placeholder for generalized services tab later */}
+                                </TabsList>
+
+                                {/* ── PRODUCTS TAB ── */}
+                                {seller.hasProducts && (
+                                    <TabsContent value="products" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                                        <div className="flex items-center justify-between mb-5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
+                                                    <Package className="w-5 h-5 text-blue-600" />
+                                                </div>
+                                                <h2 className="text-xl font-black text-neutral-900">Products</h2>
+                                            </div>
+                                            <Link href={`/products?seller=${seller.id}`}>
+                                                <Button variant="ghost" size="sm" className="text-neutral-500 font-bold text-xs uppercase tracking-widest">View All →</Button>
+                                            </Link>
+                                        </div>
+
+                                        {seller.products.length > 0 ? (
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                {seller.products.map((product: any) => (
+                                                    <Link key={product.id} href={`/products/${product.id}`}>
+                                                        <div className="group bg-white border border-neutral-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-neutral-200 transition-all duration-300">
+                                                            <div className="relative aspect-square bg-neutral-50 overflow-hidden">
+                                                                <Image
+                                                                    src={product.images?.[0] || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400'}
+                                                                    alt={product.title}
+                                                                    fill
+                                                                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                                                />
+                                                            </div>
+                                                            <div className="p-3">
+                                                                <p className="font-bold text-neutral-900 text-sm leading-tight line-clamp-2 mb-1">{product.title}</p>
+                                                                <p className="font-black text-neutral-900 text-base">৳{parseFloat(product.base_price).toLocaleString()}</p>
+                                                            </div>
+                                                        </div>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="bg-white border border-neutral-100 rounded-2xl p-12 text-center">
+                                                <Package className="w-12 h-12 text-neutral-200 mx-auto mb-3" />
+                                                <p className="text-neutral-400 font-bold">No products listed yet</p>
+                                            </div>
+                                        )}
+                                    </TabsContent>
+                                )}
+
+                                {/* ── DESIGN SERVICES TAB ── */}
+                                {seller.hasDesignServices && (
+                                    <TabsContent value="design" className="mt-0 focus-visible:outline-none focus-visible:ring-0 space-y-8">
+                                        <div className="bg-primary-50 rounded-3xl p-8 border border-primary-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                                            <div>
+                                                <h2 className="text-2xl font-black text-primary-900 mb-2">About Our Services</h2>
+                                                <p className="text-primary-700 max-w-lg leading-relaxed">Let our expert team handle your structural planning, building approvals, and aesthetic interior setups starting today.</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Designer Specs */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="bg-white rounded-2xl p-6 border shadow-sm">
+                                                <div className="flex gap-4 items-start">
+                                                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                        <Briefcase className="w-5 h-5 text-indigo-600" />
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-neutral-900 text-sm">{review.reviewer?.full_name || 'Anonymous'}</div>
-                                                        <div className="text-xs text-neutral-400">{new Date(review.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                                                        <h3 className="font-bold text-neutral-900 mb-1">Experience Focus</h3>
+                                                        <p className="text-sm text-neutral-600 mb-3">{seller.designerDetails?.experienceYears} Years in the Industry</p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {seller.designerDetails?.specializations?.map((spec: string) => (
+                                                                <Badge key={spec} variant="outline" className="bg-neutral-50">{spec}</Badge>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <StarRating rating={review.rating} />
                                             </div>
-                                            {review.comment && <p className="text-sm text-neutral-600 leading-relaxed">{review.comment}</p>}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </section>
 
-                        {/* ── GALLERY ── */}
-                        {seller.galleryUrls.length > 0 && (
-                            <section>
-                                <div className="flex items-center gap-3 mb-5">
-                                    <div className="w-9 h-9 bg-pink-100 rounded-xl flex items-center justify-center">
-                                        <ImageIcon className="w-5 h-5 text-pink-600" />
-                                    </div>
-                                    <h2 className="text-xl font-black text-neutral-900">Delivery Gallery</h2>
-                                </div>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                    {seller.galleryUrls.slice(0, 6).map((url: string, i: number) => (
-                                        <div key={i} className={`relative rounded-2xl overflow-hidden bg-neutral-100 ${i === 0 ? 'row-span-2 aspect-[3/4]' : 'aspect-square'}`}>
-                                            <Image src={url} alt={`Gallery ${i + 1}`} fill className="object-cover hover:scale-105 transition-transform duration-500" />
+                                            {seller.designerDetails?.portfolioUrl && (
+                                                <div className="bg-white rounded-2xl p-6 border shadow-sm">
+                                                    <div className="flex gap-4 items-start">
+                                                        <div className="w-10 h-10 bg-pink-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                            <Ruler className="w-5 h-5 text-pink-600" />
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="font-bold text-neutral-900 mb-1">External Portfolio</h3>
+                                                            <p className="text-sm text-neutral-600 mb-3">View their complete catalog of external projects and blueprints.</p>
+                                                            <a href={seller.designerDetails.portfolioUrl} target="_blank" rel="noreferrer" className="text-primary-600 font-bold text-sm hover:underline">
+                                                                Visit External Site →
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
 
-                        {/* ── ABOUT / BIO ── */}
-                        {seller.bio && (
+                                        {/* ── DESIGN PACKAGES (INVENTORY) ── */}
+                                        {structuralPackages.length > 0 && (
+                                            <div className="space-y-6 pt-4">
+                                                <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">Building & Structural Packages</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+                                                    {structuralPackages.map((pkg: any) => (
+                                                        <div key={pkg.id} className="group bg-white border border-neutral-100 rounded-[20px] overflow-hidden hover:shadow-xl hover:shadow-neutral-900/5 hover:-translate-y-1 transition-all duration-300 flex flex-col">
+                                                            {/* Image Container */}
+                                                            <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
+                                                                <Image
+                                                                    src={pkg.images?.[0] || 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800'}
+                                                                    alt={pkg.title}
+                                                                    fill
+                                                                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                                                />
+                                                                {/* Rating Badge Overlay */}
+                                                                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm border border-black/5">
+                                                                    <Star className="w-4 h-4 text-[#ff6b00] fill-[#ff6b00]" />
+                                                                    <span className="text-sm font-bold text-neutral-900">{seller.stats.avgRating || '4.9'}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Content Container */}
+                                                            <div className="p-6 flex flex-col flex-grow">
+                                                                <div className="mb-4">
+                                                                    <h3 className="text-[18px] font-black tracking-tight text-[#0f172a] mb-2 leading-tight">
+                                                                        {pkg.title}
+                                                                    </h3>
+                                                                    <p className="text-[14px] text-neutral-500 font-medium line-clamp-2 leading-relaxed">
+                                                                        {pkg.description}
+                                                                    </p>
+                                                                </div>
+
+                                                                {/* Bottom CTA Area */}
+                                                                <div className="mt-auto pt-4 border-t border-neutral-100/60 flex items-center justify-between">
+                                                                    <div>
+                                                                        <span className="text-[10px] font-black tracking-widest text-[#0f172a]/40 uppercase mb-1 block">
+                                                                            STARTING FROM
+                                                                        </span>
+                                                                        <div className="flex items-center gap-1">
+                                                                            <span className="text-[20px] font-black text-[#0f172a]">৳{pkg.price.toLocaleString()}</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <a href="#booking-cart" className="bg-[#0f172a] hover:bg-[#1e293b] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:shadow-lg hover:shadow-neutral-900/20 active:scale-95 inline-block text-center">
+                                                                        BOOK NOW
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {interiorPackages.length > 0 && (
+                                            <div className="space-y-6 pt-2">
+                                                <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">Interior Design Packages</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+                                                    {interiorPackages.map((pkg: any) => (
+                                                        <div key={pkg.id} className="group bg-white border border-neutral-100 rounded-[20px] overflow-hidden hover:shadow-xl hover:shadow-neutral-900/5 hover:-translate-y-1 transition-all duration-300 flex flex-col">
+                                                            {/* Image Container */}
+                                                            <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
+                                                                <Image
+                                                                    src={pkg.images?.[0] || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800'}
+                                                                    alt={pkg.title}
+                                                                    fill
+                                                                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                                                />
+                                                                {/* Rating Badge Overlay */}
+                                                                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm border border-black/5">
+                                                                    <Star className="w-4 h-4 text-[#ff6b00] fill-[#ff6b00]" />
+                                                                    <span className="text-sm font-bold text-neutral-900">{seller.stats.avgRating || '4.9'}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Content Container */}
+                                                            <div className="p-6 flex flex-col flex-grow">
+                                                                <div className="mb-4">
+                                                                    <h3 className="text-[18px] font-black tracking-tight text-[#0f172a] mb-2 leading-tight">
+                                                                        {pkg.title}
+                                                                    </h3>
+                                                                    <p className="text-[14px] text-neutral-500 font-medium line-clamp-2 leading-relaxed">
+                                                                        {pkg.description}
+                                                                    </p>
+                                                                </div>
+
+                                                                {/* Bottom CTA Area */}
+                                                                <div className="mt-auto pt-4 border-t border-neutral-100/60 flex items-center justify-between">
+                                                                    <div>
+                                                                        <span className="text-[10px] font-black tracking-widest text-[#0f172a]/40 uppercase mb-1 block">
+                                                                            STARTING FROM
+                                                                        </span>
+                                                                        <div className="flex items-center gap-1">
+                                                                            <span className="text-[20px] font-black text-[#0f172a]">৳{pkg.price.toLocaleString()}</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <a href="#booking-cart" className="bg-[#0f172a] hover:bg-[#1e293b] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:shadow-lg hover:shadow-neutral-900/20 active:scale-95 inline-block text-center">
+                                                                        BOOK NOW
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                    </TabsContent>
+                                )}
+
+                            </Tabs>
+
+                            {/* ── REVIEWS ── */}
                             <section className="bg-white rounded-3xl border border-neutral-100 shadow-sm p-8">
-                                <div className="flex items-center gap-3 mb-5">
-                                    <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center">
-                                        <Award className="w-5 h-5 text-indigo-600" />
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center">
+                                        <Star className="w-5 h-5 text-amber-600" />
                                     </div>
-                                    <h2 className="text-xl font-black text-neutral-900">About the Business</h2>
+                                    <h2 className="text-xl font-black text-neutral-900">Reviews & Ratings</h2>
                                 </div>
-                                <p className="text-neutral-600 leading-relaxed whitespace-pre-wrap">{seller.bio}</p>
-                            </section>
-                        )}
 
-                        {/* ── TERMS & CONDITIONS ── */}
-                        {seller.termsAndConditions && (
-                            <section className="bg-white rounded-3xl border border-neutral-100 shadow-sm overflow-hidden">
-                                <details className="group">
-                                    <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center">
-                                                <CheckCircle2 className="w-5 h-5 text-gray-600" />
-                                            </div>
-                                            <h2 className="text-xl font-black text-neutral-900">Terms &amp; Conditions</h2>
+                                {seller.reviews.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                                        {/* Average Score */}
+                                        <div className="flex flex-col items-center justify-center text-center p-6 bg-neutral-50 rounded-2xl">
+                                            <div className="text-6xl font-black text-neutral-900 mb-2">{seller.stats.avgRating}</div>
+                                            <StarRating rating={seller.stats.avgRating} size="lg" />
+                                            <div className="text-sm text-neutral-400 font-bold mt-2">{seller.reviews.length} Reviews</div>
                                         </div>
-                                        <ChevronDown className="w-5 h-5 text-neutral-400 group-open:rotate-180 transition-transform" />
-                                    </summary>
-                                    <div className="px-8 pb-8 pt-2">
-                                        <div className="h-px bg-neutral-100 mb-6" />
-                                        <p className="text-neutral-600 leading-relaxed text-sm whitespace-pre-wrap">{seller.termsAndConditions}</p>
+                                        {/* Star Breakdown */}
+                                        <div className="md:col-span-2 space-y-2 justify-center flex flex-col">
+                                            {seller.ratingBreakdown.map((row: any) => (
+                                                <div key={row.star} className="flex items-center gap-3">
+                                                    <span className="text-xs font-bold text-neutral-500 w-6 text-right">{row.star}</span>
+                                                    <Star className="w-3 h-3 fill-amber-400 text-amber-400 flex-shrink-0" />
+                                                    <div className="flex-1 h-2 bg-neutral-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-amber-400 rounded-full transition-all"
+                                                            style={{ width: `${(row.count / maxReviewCount) * 100}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-xs font-bold text-neutral-400 w-4">{row.count}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                </details>
-                            </section>
-                        )}
-                    </div>
+                                ) : (
+                                    <div className="text-center py-8 mb-6">
+                                        <MessageSquare className="w-10 h-10 text-neutral-200 mx-auto mb-2" />
+                                        <p className="text-neutral-400 font-bold text-sm">No reviews yet — be the first!</p>
+                                    </div>
+                                )}
 
-                    {/* ── RIGHT SIDEBAR : FLOATING BOOKING CART (Col 10-12) ── */}
-                    <aside className="hidden xl:block xl:col-span-3 relative">
-                        <div id="booking-cart" className="sticky top-24 space-y-6 scroll-mt-24">
-                            {seller.hasDesignServices && (
-                                <ProfileCheckoutCart
-                                    designerId={seller.designerDetails?.id}
-                                    providerName={seller.businessName || 'Verified Partner'}
-                                    packages={seller.designPackages || []}
-                                />
+                                {/* Review Cards */}
+                                {seller.reviews.length > 0 && (
+                                    <div className="space-y-4 mt-2">
+                                        {seller.reviews.slice(0, 5).map((review: any) => (
+                                            <div key={review.id} className="p-5 bg-neutral-50 rounded-2xl border border-neutral-100">
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-black text-sm">
+                                                            {(review.reviewer?.full_name || 'A')[0].toUpperCase()}
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-bold text-neutral-900 text-sm">{review.reviewer?.full_name || 'Anonymous'}</div>
+                                                            <div className="text-xs text-neutral-400">{new Date(review.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                                                        </div>
+                                                    </div>
+                                                    <StarRating rating={review.rating} />
+                                                </div>
+                                                {review.comment && <p className="text-sm text-neutral-600 leading-relaxed">{review.comment}</p>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </section>
+
+                            {/* ── GALLERY ── */}
+                            {seller.galleryUrls.length > 0 && (
+                                <section>
+                                    <div className="flex items-center gap-3 mb-5">
+                                        <div className="w-9 h-9 bg-pink-100 rounded-xl flex items-center justify-center">
+                                            <ImageIcon className="w-5 h-5 text-pink-600" />
+                                        </div>
+                                        <h2 className="text-xl font-black text-neutral-900">Delivery Gallery</h2>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        {seller.galleryUrls.slice(0, 6).map((url: string, i: number) => (
+                                            <div key={i} className={`relative rounded-2xl overflow-hidden bg-neutral-100 ${i === 0 ? 'row-span-2 aspect-[3/4]' : 'aspect-square'}`}>
+                                                <Image src={url} alt={`Gallery ${i + 1}`} fill className="object-cover hover:scale-105 transition-transform duration-500" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
                             )}
 
-                            {/* Mobile App Promo (Optional fallback if no design services) */}
-                            {!seller.hasDesignServices && (
-                                <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-3xl p-6 text-white text-center shadow-lg relative overflow-hidden">
-                                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-                                    <MessageSquare className="w-8 h-8 text-white/80 mx-auto mb-3" />
-                                    <h3 className="font-black text-lg mb-2">Have a question?</h3>
-                                    <p className="text-sm text-neutral-300 mb-6 leading-relaxed">Contact the supplier directly to negotiate bulk pricing or ask about delivery.</p>
-                                    <Button variant="outline" className="w-full bg-white/10 border-white/20 hover:bg-white/20 text-white rounded-xl font-bold border-none">
-                                        Send Message
-                                    </Button>
-                                </div>
+                            {/* ── ABOUT / BIO ── */}
+                            {seller.bio && (
+                                <section className="bg-white rounded-3xl border border-neutral-100 shadow-sm p-8">
+                                    <div className="flex items-center gap-3 mb-5">
+                                        <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                            <Award className="w-5 h-5 text-indigo-600" />
+                                        </div>
+                                        <h2 className="text-xl font-black text-neutral-900">About the Business</h2>
+                                    </div>
+                                    <p className="text-neutral-600 leading-relaxed whitespace-pre-wrap">{seller.bio}</p>
+                                </section>
+                            )}
+
+                            {/* ── TERMS & CONDITIONS ── */}
+                            {seller.termsAndConditions && (
+                                <section className="bg-white rounded-3xl border border-neutral-100 shadow-sm overflow-hidden">
+                                    <details className="group">
+                                        <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center">
+                                                    <CheckCircle2 className="w-5 h-5 text-gray-600" />
+                                                </div>
+                                                <h2 className="text-xl font-black text-neutral-900">Terms &amp; Conditions</h2>
+                                            </div>
+                                            <ChevronDown className="w-5 h-5 text-neutral-400 group-open:rotate-180 transition-transform" />
+                                        </summary>
+                                        <div className="px-8 pb-8 pt-2">
+                                            <div className="h-px bg-neutral-100 mb-6" />
+                                            <p className="text-neutral-600 leading-relaxed text-sm whitespace-pre-wrap">{seller.termsAndConditions}</p>
+                                        </div>
+                                    </details>
+                                </section>
                             )}
                         </div>
-                    </aside>
-                </div>
+
+                        {/* ── RIGHT SIDEBAR : FLOATING BOOKING CART (Col 10-12) ── */}
+                        <aside className="hidden xl:block xl:col-span-3 relative">
+                            <div id="booking-cart" className="sticky top-24 space-y-6 scroll-mt-24">
+                                {seller.hasDesignServices && (
+                                    <ProfileCheckoutCart
+                                        designerId={seller.designerDetails?.id}
+                                        providerName={seller.businessName || 'Verified Partner'}
+                                        packages={seller.designPackages || []}
+                                    />
+                                )}
+
+                                {/* Mobile App Promo (Optional fallback if no design services) */}
+                                {!seller.hasDesignServices && (
+                                    <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-3xl p-6 text-white text-center shadow-lg relative overflow-hidden">
+                                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                                        <MessageSquare className="w-8 h-8 text-white/80 mx-auto mb-3" />
+                                        <h3 className="font-black text-lg mb-2">Have a question?</h3>
+                                        <p className="text-sm text-neutral-300 mb-6 leading-relaxed">Contact the supplier directly to negotiate bulk pricing or ask about delivery.</p>
+                                        <Button variant="outline" className="w-full bg-white/10 border-white/20 hover:bg-white/20 text-white rounded-xl font-bold border-none">
+                                            Send Message
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </aside>
+                    </div>
+                </DesignCartProvider>
             </div>
 
             <Footer />

@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/client';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { useDesignCart } from './DesignCartProvider';
+import { X, Check } from 'lucide-react';
 
 interface ProfileCheckoutCartProps {
     designerId: string;
@@ -16,12 +18,12 @@ interface ProfileCheckoutCartProps {
 export function ProfileCheckoutCart({ designerId, providerName, packages = [] }: ProfileCheckoutCartProps) {
     const router = useRouter();
     const supabase = createClient();
+    const { selectedPackageIds, removePackage, clearCart } = useDesignCart();
 
     const [loading, setLoading] = useState(false);
 
-    // If packages exist, use the first package's ID as default, else fallback to 'both' like before
-    const defaultPackageId = packages.length > 0 ? packages[0].id : 'both';
-    const [selectedPackageId, setSelectedPackageId] = useState<string>(defaultPackageId);
+    // Compute derived state
+    const selectedPackages = packages.filter(p => selectedPackageIds.includes(p.id));
 
     // Document states
     const [docs, setDocs] = useState({
@@ -38,18 +40,14 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
         setDocs(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    let price = 80000;
+    let price = 0;
 
     // Dynamic price calculation
     if (packages.length > 0) {
-        const selectedPkg = packages.find(p => p.id === selectedPackageId);
-        if (selectedPkg) {
-            price = selectedPkg.price;
-        }
+        price = selectedPackages.reduce((sum, pkg) => sum + pkg.price, 0);
     } else {
         // Fallback pricing
-        if (selectedPackageId === 'design') price = 50000;
-        if (selectedPackageId === 'approval') price = 30000;
+        price = 80000;
     }
 
     const handleSubmit = async () => {
@@ -64,13 +62,15 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
                 return;
             }
 
-            const selectedPackageObj = packages.find(p => p.id === selectedPackageId);
-
             const payloadDetails = {
-                designerOption: selectedPackageId, // Keep for backward compatibility 
-                packageId: selectedPackageId,
-                packageUnit: selectedPackageObj?.unit || 'job',
-                packageTitle: selectedPackageObj?.title,
+                designerOption: selectedPackageIds.length > 0 ? selectedPackageIds.join(',') : 'legacy',
+                packageIds: selectedPackageIds,
+                packagesInfo: selectedPackages.map(p => ({
+                    id: p.id,
+                    title: p.title,
+                    unit: p.unit,
+                    price: p.price
+                })),
                 ...docs,
                 designerSelectionType: 'list',
                 selectedDesignerId: designerId,
@@ -85,6 +85,7 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
             });
 
             if (error) throw error;
+            clearCart();
             router.push('/dashboard/customer?booking=success');
         } catch (err) {
             console.error(err);
@@ -117,32 +118,36 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
 
                     <div className="space-y-3">
                         <div>
-                            <Label className="text-[12px] font-bold text-neutral-600 mb-1.5 block">Service Package</Label>
-                            <select
-                                value={selectedPackageId}
-                                onChange={(e) => setSelectedPackageId(e.target.value)}
-                                className="w-full bg-neutral-50 border border-neutral-200 text-neutral-900 text-[14px] font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all appearance-none cursor-pointer"
-                                style={{
-                                    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                                    backgroundRepeat: 'no-repeat',
-                                    backgroundPosition: 'right 1rem center',
-                                    backgroundSize: '1em'
-                                }}
-                            >
-                                {packages.length > 0 ? (
-                                    packages.map(pkg => (
-                                        <option key={pkg.id} value={pkg.id}>
-                                            {pkg.title} (৳{pkg.price.toLocaleString()})
-                                        </option>
-                                    ))
-                                ) : (
-                                    <>
-                                        <option value="both">Approval & Design</option>
-                                        <option value="design">Building Design Only</option>
-                                        <option value="approval">Building Approval Only</option>
-                                    </>
-                                )}
-                            </select>
+                            <Label className="text-[12px] font-bold text-neutral-600 mb-1.5 block">Selected Packages</Label>
+
+                            {selectedPackages.length > 0 ? (
+                                <div className="space-y-2">
+                                    {selectedPackages.map(pkg => (
+                                        <div key={pkg.id} className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3">
+                                            <div className="flex-1 min-w-0 pr-2">
+                                                <p className="text-[13px] font-bold text-neutral-900 truncate">{pkg.title}</p>
+                                                <p className="text-[11px] font-bold text-primary-600">৳{pkg.price.toLocaleString()}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => removePackage(pkg.id)}
+                                                className="w-6 h-6 flex items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors flex-shrink-0"
+                                                type="button"
+                                                title="Remove package"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : packages.length > 0 ? (
+                                <div className="bg-neutral-50 border border-dashed border-neutral-300 rounded-xl p-6 text-center">
+                                    <p className="text-[12px] font-bold text-neutral-500">Pick packages from the inventory lists</p>
+                                </div>
+                            ) : (
+                                <div className="bg-neutral-50 px-4 py-3 border border-neutral-200 rounded-xl text-center">
+                                    <p className="text-[12px] font-bold text-neutral-500">Service Custom Booking</p>
+                                </div>
+                            )}
                         </div>
 
                         <div>
