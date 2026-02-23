@@ -199,7 +199,7 @@ function DesignBookingWizard() {
 
             const { error } = await supabase.from('design_bookings').insert({
                 user_id: user.id,
-                service_type: serviceType,
+                service_type: serviceType === 'structural-architectural' ? 'architectural' : serviceType,
                 status: 'pending', // Waiting for admin verification
                 details: payloadDetails
             });

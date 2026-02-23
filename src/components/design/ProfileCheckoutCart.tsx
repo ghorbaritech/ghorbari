@@ -131,7 +131,7 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
 
             const { error } = await supabase.from('design_bookings').insert({
                 user_id: user.id,
-                service_type: 'structural-architectural',
+                service_type: 'architectural',
                 status: 'pending',
                 details: payloadDetails
             });
@@ -336,8 +336,8 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
                                                 key={time}
                                                 onClick={() => setScheduleData({ ...scheduleData, time })}
                                                 className={`text-xs py-2.5 rounded-lg border font-bold transition-all ${scheduleData.time === time
-                                                        ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/10'
-                                                        : 'bg-white text-neutral-600 border-neutral-200 hover:border-blue-300 hover:bg-blue-50'
+                                                    ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/10'
+                                                    : 'bg-white text-neutral-600 border-neutral-200 hover:border-blue-300 hover:bg-blue-50'
                                                     }`}
                                             >
                                                 {time}
