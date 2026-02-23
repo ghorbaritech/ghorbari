@@ -97,13 +97,28 @@ function DesignBookingWizard() {
         designerSelectionType: '' as 'ghorbari' | 'list' | '',
         selectedDesignerId: null as string | null,
 
-        // Interior 
-        propertyType: '',
-        sqft: '',
-        floorPref: '',
-        ceilingPref: '',
-        budget: '',
-        hasKidsPets: false,
+        // Interior - Setup
+        propertyType: '', // 'Full house' | 'Full Apartment' | 'Specific Area'
+
+        // Full House
+        houseType: '', // 'Duplex' | 'Multistoried'
+        intFloors: '',
+        intUnitsPerFloor: '',
+        intAreaPerUnit: '',
+
+        // Full Apartment
+        aptSize: '',
+        aptRooms: '',
+        aptInspiration: null as File | null,
+
+        // Specific Area
+        specificAreaType: '', // 'Living Room' | 'Drawing Room' | 'Bed Room' | 'Bath Room' | 'Kitchen' | 'Balcony' | 'Rooftop' | 'Entrance'
+        bedRoomType: '', // 'Master Bedroom' | 'General Bedroom' | 'Welcome Newborn' | 'Teenagers Special' | 'Children Bedroom'
+        designScope: '', // 'Entire New Design' | 'Specific Renovation'
+        roomSize: '',
+        roomInspiration: null as File | null,
+        roomImage: null as File | null,
+        specificInstruction: '',
     });
 
     const updateData = (key: string, value: any) => {
@@ -149,7 +164,38 @@ function DesignBookingWizard() {
                 tentativePrice = 20000;
             }
 
-            const payloadDetails = { ...formData, tentativePrice };
+            const uploadFile = async (file: File | null) => {
+                if (!file) return null;
+                try {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                    const { error } = await supabase.storage.from('design_assets').upload(`document_uploads/${fileName}`, file);
+                    if (error) {
+                        console.error("File upload failed:", error);
+                        return null;
+                    }
+                    const { data: urlData } = supabase.storage.from('design_assets').getPublicUrl(`document_uploads/${fileName}`);
+                    return urlData.publicUrl;
+                } catch (e) {
+                    console.error(e);
+                    return null;
+                }
+            };
+
+            let aptInspirationUrl = await uploadFile(formData.aptInspiration);
+            let roomInspirationUrl = await uploadFile(formData.roomInspiration);
+            let roomImageUrl = await uploadFile(formData.roomImage);
+
+            const payloadDetails: any = {
+                ...formData,
+                tentativePrice,
+                aptInspirationUrl,
+                roomInspirationUrl,
+                roomImageUrl
+            };
+            delete payloadDetails.aptInspiration;
+            delete payloadDetails.roomInspiration;
+            delete payloadDetails.roomImage;
 
             const { error } = await supabase.from('design_bookings').insert({
                 user_id: user.id,
@@ -772,50 +818,29 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Space & Budget"
-                        description="Define the scope of your interior design project."
+                        key={`step1-int-${lang}`}
+                        lang={lang}
+                        title={t.startJourneyTitle || "Start Your Design Journey"}
+                        description={t.startJourneyDesc || "Select the type of design service you need to get started."}
                         currentStep={1}
-                        totalSteps={2}
+                        totalSteps={3}
                         onNext={nextStep}
                         onBack={prevStep}
-                        canNext={!!formData.propertyType && !!formData.sqft}
+                        canNext={!!formData.propertyType}
                     >
                         <div className="space-y-8">
                             <div>
-                                <Label className="text-base font-bold mb-4 block">What are we designing?</Label>
+                                <Label className="text-base font-bold mb-4 block text-neutral-800">What are we designing?</Label>
                                 <RadioCardGroup
                                     options={[
-                                        { id: 'Full Apartment', label: 'Full Apartment', icon: Home },
-                                        { id: 'Single Room', label: 'Single Room', icon: BedDouble },
-                                        { id: 'Office', label: 'Office Space', icon: Building2 },
+                                        { id: 'Full house', label: t.fullHouse || 'Full house', icon: Building2 },
+                                        { id: 'Full Apartment', label: t.fullApt || 'Full Apartment', icon: Home },
+                                        { id: 'Specific Area', label: t.specificArea || 'Specific Area', icon: BedDouble },
                                     ]}
                                     selected={formData.propertyType}
                                     onChange={(id) => updateData('propertyType', id)}
                                     columns={3}
                                 />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <Label className="text-base font-bold mb-3 block">Size (Sq. Ft)</Label>
-                                    <Input
-                                        type="number"
-                                        placeholder="e.g. 1200"
-                                        className="h-12"
-                                        value={formData.sqft}
-                                        onChange={(e) => updateData('sqft', e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="text-base font-bold mb-3 block">Est. Budget (Lakh)</Label>
-                                    <Input
-                                        type="number"
-                                        placeholder="e.g. 15"
-                                        className="h-12"
-                                        value={formData.budget}
-                                        onChange={(e) => updateData('budget', e.target.value)}
-                                    />
-                                </div>
                             </div>
                         </div>
                     </WizardStep>
@@ -827,55 +852,151 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Style & Materials"
-                        description="Preferences for finishes and lifestyle needs."
+                        key={`step2-int-${lang}`}
+                        lang={lang}
+                        title={t.projectReqs || "Project Requirements"}
+                        description={t.spaceLayoutDesc || "Tell us about the space and requirements."}
                         currentStep={2}
                         totalSteps={2}
                         onNext={handleSubmit}
                         onBack={prevStep}
                         isLastStep
-                        canNext={!!formData.floorPref}
+                        canNext={
+                            (formData.propertyType === 'Full house' && !!formData.houseType && !!formData.intFloors && !!formData.intUnitsPerFloor && !!formData.intAreaPerUnit) ||
+                            (formData.propertyType === 'Full Apartment' && !!formData.aptSize && !!formData.aptRooms) ||
+                            (formData.propertyType === 'Specific Area' && !!formData.specificAreaType && (formData.specificAreaType !== 'Bed Room' || !!formData.bedRoomType) && !!formData.designScope && !!formData.roomSize)
+                        }
                     >
                         <div className="space-y-8">
-                            <div>
-                                <Label className="text-base font-bold mb-4 block">Floor Preference</Label>
-                                <RadioCardGroup
-                                    options={[
-                                        { id: 'Local Tiles', label: 'Local Tiles' },
-                                        { id: 'Imported Tiles', label: 'Imported Tiles' },
-                                        { id: 'Marble', label: 'Marble' },
-                                        { id: 'Wooden', label: 'Wooden Laminate' },
-                                    ]}
-                                    selected={formData.floorPref}
-                                    onChange={(id) => updateData('floorPref', id)}
-                                    columns={2}
-                                    showCheck
-                                />
-                            </div>
+                            {formData.propertyType === 'Full house' && (
+                                <>
+                                    <div>
+                                        <Label className="text-base font-bold mb-4 block text-neutral-800">{t.typeOfHouse || "Type of House"}</Label>
+                                        <RadioCardGroup
+                                            options={[
+                                                { id: 'Duplex', label: t.duplex || 'Duplex' },
+                                                { id: 'Multistoried', label: t.multistoried || 'Multistoried' },
+                                            ]}
+                                            selected={formData.houseType}
+                                            onChange={(id) => updateData('houseType', id)}
+                                            columns={2}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-neutral-100">
+                                        <div className="space-y-3">
+                                            <Label className="font-bold text-neutral-700">{t.numFloors || "Number of floor"}</Label>
+                                            <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.intFloors} onChange={(e) => updateData('intFloors', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="font-bold text-neutral-700">{t.unitsEachFloor || "Unit Each Floor"}</Label>
+                                            <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.intUnitsPerFloor} onChange={(e) => updateData('intUnitsPerFloor', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="font-bold text-neutral-700">{t.areaEachUnit || "Area Each Unit"}</Label>
+                                            <Input type="number" placeholder="e.g. 1500 sqft" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.intAreaPerUnit} onChange={(e) => updateData('intAreaPerUnit', e.target.value)} />
+                                        </div>
+                                    </div>
+                                </>
+                            )}
 
-                            <div>
-                                <Label className="text-base font-bold mb-4 block">Ceiling Work</Label>
-                                <RadioCardGroup
-                                    options={[
-                                        { id: 'Paint', label: 'Simple Paint' },
-                                        { id: 'Gypsum', label: 'Gypsum False Ceiling' },
-                                        { id: 'Wooden', label: 'Wooden Features' },
-                                    ]}
-                                    selected={formData.ceilingPref}
-                                    onChange={(id) => updateData('ceilingPref', id)}
-                                    columns={3}
-                                    showCheck
-                                />
-                            </div>
+                            {formData.propertyType === 'Full Apartment' && (
+                                <>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        <div className="space-y-3">
+                                            <Label className="font-bold text-neutral-700">{t.aptSize || "Apartment Size"}</Label>
+                                            <Input type="number" placeholder="e.g. 1200 sqft" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.aptSize} onChange={(e) => updateData('aptSize', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="font-bold text-neutral-700">{t.noOfRoom || "No of Room"}</Label>
+                                            <Input type="number" placeholder="e.g. 3" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.aptRooms} onChange={(e) => updateData('aptRooms', e.target.value)} />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3 pt-4 border-t border-neutral-100">
+                                        <Label className="font-bold text-neutral-700">{t.inspiration || "Inspiration (attachment image or pdf)"}</Label>
+                                        <Input type="file" accept="image/*,.pdf" className="h-12 flex items-center bg-neutral-50/50 border-neutral-200 file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-[#effdf5] file:text-[#00a651] hover:file:bg-[#d6f6e5] cursor-pointer" onChange={(e) => updateData('aptInspiration', e.target.files?.[0] || null)} />
+                                    </div>
+                                </>
+                            )}
 
-                            <div className="flex items-center space-x-2 border p-6 rounded-xl cursor-pointer bg-neutral-50" onClick={() => updateData('hasKidsPets', !formData.hasKidsPets)}>
-                                <Checkbox checked={formData.hasKidsPets} />
-                                <div className="flex items-center gap-2">
-                                    <span className="font-bold cursor-pointer">Do you have kids or pets?</span>
-                                    <Baby className="w-5 h-5 text-neutral-400" />
-                                    <Dog className="w-5 h-5 text-neutral-400" />
-                                </div>
-                            </div>
+                            {formData.propertyType === 'Specific Area' && (
+                                <>
+                                    <div>
+                                        <Label className="text-base font-bold mb-4 block text-neutral-800">{t.specificArea || "Select Area"}</Label>
+                                        <RadioCardGroup
+                                            options={[
+                                                { id: 'Living Room', label: t.livingRoom || 'Living Room' },
+                                                { id: 'Drawing Room', label: t.drawingRoom || 'Drawing Room' },
+                                                { id: 'Bed Room', label: t.bedRoom || 'Bed Room' },
+                                                { id: 'Bath Room', label: t.bathRoom || 'Bath Room' },
+                                                { id: 'Kitchen', label: t.kitchen || 'Kitchen' },
+                                                { id: 'Balcony', label: t.balcony || 'Balcony' },
+                                                { id: 'Rooftop', label: t.rooftop || 'Rooftop' },
+                                                { id: 'Entrance', label: t.entrance || 'Entrance' },
+                                            ]}
+                                            selected={formData.specificAreaType}
+                                            onChange={(id) => updateData('specificAreaType', id)}
+                                            columns={4}
+                                        />
+                                    </div>
+
+                                    {formData.specificAreaType === 'Bed Room' && (
+                                        <div className="pt-4 border-t border-neutral-100">
+                                            <Label className="text-base font-bold mb-4 block text-neutral-800">{t.bedRoom || "Select Bedroom Type"}</Label>
+                                            <RadioCardGroup
+                                                options={[
+                                                    { id: 'Master Bedroom', label: t.masterBed || 'Master Bedroom' },
+                                                    { id: 'General Bedroom', label: t.generalBed || 'General Bedroom' },
+                                                    { id: 'Welcome Newborn', label: t.welcomeNewborn || 'Welcome Newborn' },
+                                                    { id: 'Teenagers Special', label: t.teenagersSpecial || 'Teenagers Special' },
+                                                    { id: 'Children Bedroom', label: t.childrenBed || 'Children Bedroom' },
+                                                ]}
+                                                selected={formData.bedRoomType}
+                                                onChange={(id) => updateData('bedRoomType', id)}
+                                                columns={3}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {(formData.specificAreaType && (formData.specificAreaType !== 'Bed Room' || formData.bedRoomType)) && (
+                                        <div className="pt-4 border-t border-neutral-100 space-y-8">
+                                            <div>
+                                                <Label className="text-base font-bold mb-4 block text-neutral-800">Design Scope</Label>
+                                                <RadioCardGroup
+                                                    options={[
+                                                        { id: 'Entire New Design', label: t.entireNewDesign || 'Entire New Design' },
+                                                        { id: 'Specific Renovation', label: t.specificRenovation || 'Specific Renovation' },
+                                                    ]}
+                                                    selected={formData.designScope}
+                                                    onChange={(id) => updateData('designScope', id)}
+                                                    columns={2}
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                                <div className="space-y-3">
+                                                    <Label className="font-bold text-neutral-700">{t.roomSize || "Room Size"}</Label>
+                                                    <Input type="number" placeholder="e.g. 150 sqft" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.roomSize} onChange={(e) => updateData('roomSize', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <Label className="font-bold text-neutral-700">{t.anyInstruction || "Any specific instruction"}</Label>
+                                                    <Input type="text" placeholder="e.g. Keep it minimal" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.specificInstruction} onChange={(e) => updateData('specificInstruction', e.target.value)} />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                                <div className="space-y-3">
+                                                    <Label className="font-bold text-neutral-700">{t.inspiration || "Inspiration (attachment image or pdf)"}</Label>
+                                                    <Input type="file" accept="image/*,.pdf" className="h-12 flex items-center bg-neutral-50/50 border-neutral-200 file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-[#effdf5] file:text-[#00a651] hover:file:bg-[#d6f6e5] cursor-pointer" onChange={(e) => updateData('roomInspiration', e.target.files?.[0] || null)} />
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <Label className="font-bold text-neutral-700">{t.imageOfRoom || "Image of the room"}</Label>
+                                                    <Input type="file" accept="image/*" className="h-12 flex items-center bg-neutral-50/50 border-neutral-200 file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-[#effdf5] file:text-[#00a651] hover:file:bg-[#d6f6e5] cursor-pointer" onChange={(e) => updateData('roomImage', e.target.files?.[0] || null)} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
                     </WizardStep>
                 </MainLayout>
