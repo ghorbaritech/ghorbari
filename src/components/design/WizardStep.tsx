@@ -13,6 +13,7 @@ interface WizardStepProps {
     isLastStep?: boolean;
     canNext?: boolean;
     nextLabel?: string;
+    lang?: 'en' | 'bn';
     children: React.ReactNode;
 }
 
@@ -27,17 +28,34 @@ export function WizardStep({
     isLastStep = false,
     canNext = true,
     nextLabel,
+    lang = 'en',
     children
 }: WizardStepProps) {
     const progress = ((currentStep) / (totalSteps - 1)) * 100;
+
+    const t = lang === 'bn' ? {
+        step: "ধাপ",
+        of: "এর",
+        complete: "% সম্পন্ন",
+        back: "পিছনে",
+        continue: "চালিয়ে যান",
+        completeBooking: "বুকিং সম্পন্ন করুন"
+    } : {
+        step: "Step",
+        of: "of",
+        complete: "% Complete",
+        back: "Back",
+        continue: "Continue",
+        completeBooking: "Complete Booking"
+    };
 
     return (
         <div className="w-full max-w-3xl mx-auto px-6 py-8">
             {/* Progress Bar */}
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-2 text-xs font-bold text-neutral-400 uppercase tracking-widest">
-                    <span>Step {currentStep + 1} of {totalSteps}</span>
-                    <span>{Math.round(progress)}% Complete</span>
+                    <span>{t.step} {currentStep + 1} {t.of} {totalSteps}</span>
+                    <span>{Math.round(progress)}{t.complete}</span>
                 </div>
                 <div className="h-2 w-full bg-neutral-100 rounded-full overflow-hidden">
                     <motion.div
@@ -74,18 +92,18 @@ export function WizardStep({
                         disabled={isFirstStep}
                         className={`text-neutral-500 font-bold ${isFirstStep ? 'opacity-0 pointer-events-none' : ''}`}
                     >
-                        <ArrowLeft className="w-4 h-4 mr-2" /> Back
+                        <ArrowLeft className="w-4 h-4 mr-2" /> {t.back}
                     </Button>
 
                     <Button
                         onClick={onNext}
                         disabled={!canNext}
                         className={`rounded-full px-8 h-12 font-bold shadow-lg ${isLastStep
-                                ? 'bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white shadow-[#1e3a8a]/30'
-                                : 'bg-primary-600 shadow-primary-200'
+                            ? 'bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white shadow-[#1e3a8a]/30'
+                            : 'bg-primary-600 shadow-primary-200'
                             }`}
                     >
-                        {nextLabel ? nextLabel : (isLastStep ? 'Complete Booking' : 'Continue')}
+                        {nextLabel ? nextLabel : (isLastStep ? t.completeBooking : t.continue)}
                         {!isLastStep && <ArrowRight className="w-4 h-4 ml-2" />}
                     </Button>
                 </div>

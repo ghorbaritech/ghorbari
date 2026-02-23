@@ -13,16 +13,18 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Car, Trees, Waves, Dog, Baby, FileText, CheckCircle2, UserCircle, Map as MapIcon, Hash, CheckSquare, Star } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { designTranslations } from '@/utils/designTranslations';
+import { useLanguage } from '@/context/LanguageContext';
 
 // Service Types
 type ServiceType = 'structural-architectural' | 'interior';
 
 // Interior Options
-const VIBE_OPTIONS: Option[] = [
-    { id: 'Modern', label: 'Modern / Minimalist', image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=400&fit=crop' },
-    { id: 'Traditional', label: 'Traditional / Brick', image: 'https://images.unsplash.com/photo-1592595896551-12b371d546d5?w=400&h=400&fit=crop' },
-    { id: 'Luxury', label: 'Duplex Luxury', image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=400&fit=crop' },
-    { id: 'Eco', label: 'Green / Eco-Friendly', image: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?w=400&h=400&fit=crop' },
+const getVibeOptions = (lang: string): Option[] => [
+    { id: 'Modern', label: lang === 'bn' ? 'মডার্ন / মিনিমালিস্ট' : 'Modern / Minimalist', image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=400&fit=crop' },
+    { id: 'Traditional', label: lang === 'bn' ? 'ঐতিহ্যবাহী / ব্রিক' : 'Traditional / Brick', image: 'https://images.unsplash.com/photo-1592595896551-12b371d546d5?w=400&h=400&fit=crop' },
+    { id: 'Luxury', label: lang === 'bn' ? 'ডুপ্লেক্স লাক্সারি' : 'Duplex Luxury', image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=400&fit=crop' },
+    { id: 'Eco', label: lang === 'bn' ? 'সবুজ / পরিবেশ-বান্ধব' : 'Green / Eco-Friendly', image: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?w=400&h=400&fit=crop' },
 ];
 
 export default function DesignBookingPage() {
@@ -42,6 +44,10 @@ function DesignBookingWizard() {
     const initialService = (urlService === 'structural' || urlService === 'architectural')
         ? 'structural-architectural'
         : urlService as ServiceType | null;
+
+    const { language } = useLanguage();
+    const lang = language.toLowerCase() as 'en' | 'bn';
+    const t = designTranslations[lang];
 
     const [step, setStep] = useState(initialService ? 1 : 0);
     const [serviceType, setServiceType] = useState<ServiceType | null>(initialService);
@@ -163,8 +169,9 @@ function DesignBookingWizard() {
         return (
             <MainLayout>
                 <WizardStep
-                    title="Start Your Design Journey"
-                    description="Select the type of design service you need to get started."
+                    lang={lang}
+                    title={t.startJourneyTitle}
+                    description={t.startJourneyDesc}
                     currentStep={0}
                     totalSteps={serviceType === 'structural-architectural' ? 5 : 2}
                     onNext={nextStep}
@@ -174,8 +181,8 @@ function DesignBookingWizard() {
                 >
                     <RadioCardGroup
                         options={[
-                            { id: 'structural-architectural', label: 'Structural & Architectural Design', icon: Building2, description: 'Find a designer for building approvals and layouts.' },
-                            { id: 'interior', label: 'Interior Design', icon: PaintBucket, description: 'Decor, furniture layout, and aesthetic planning.' },
+                            { id: 'structural-architectural', label: t.structuralService, icon: Building2, description: t.structuralServiceDesc },
+                            { id: 'interior', label: t.interiorService, icon: PaintBucket, description: t.interiorServiceDesc },
                         ]}
                         selected={serviceType}
                         onChange={(id) => setServiceType(id as ServiceType)}
@@ -206,8 +213,9 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Find a Designer"
-                        description="What kind of designer service do you need?"
+                        lang={lang}
+                        title={t.findDesignerTitle}
+                        description={t.findDesignerDesc}
                         currentStep={visualStep}
                         totalSteps={getDynamicTotalSteps()}
                         onNext={nextStep}
@@ -216,9 +224,9 @@ function DesignBookingWizard() {
                     >
                         <RadioCardGroup
                             options={[
-                                { id: 'approval', label: 'Building Approval', icon: FileText, description: 'Get necessary approvals from authorities.' },
-                                { id: 'design', label: 'Building Design', icon: Building2, description: 'Floor plans, elevations, and structural modeling.' },
-                                { id: 'both', label: 'Building Approval & Design', icon: CheckSquare, description: 'Comprehensive design and approval package.' },
+                                { id: 'approval', label: t.buildingApproval, icon: FileText, description: t.buildingApprovalDesc },
+                                { id: 'design', label: t.buildingDesign, icon: Building2, description: t.buildingDesignDesc },
+                                { id: 'both', label: t.bothApprovalDesign, icon: CheckSquare, description: t.bothApprovalDesignDesc },
                             ]}
                             selected={formData.designerOption}
                             onChange={(id) => updateData('designerOption', id)}
@@ -232,8 +240,9 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Document Checklist"
-                        description="Let us know what documents you already have ready."
+                        lang={lang}
+                        title={t.docChecklistTitle}
+                        description={t.docChecklistDesc}
                         currentStep={visualStep}
                         totalSteps={getDynamicTotalSteps()}
                         onNext={() => {
@@ -246,41 +255,41 @@ function DesignBookingWizard() {
                         <div className="space-y-8">
                             {showsApprovalQ && (
                                 <div className="space-y-4">
-                                    <Label className="text-lg font-bold block text-primary-900 border-b pb-2">Approval Documents</Label>
+                                    <Label className="text-lg font-bold block text-primary-900 border-b pb-2">{t.approvalDocs}</Label>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasDeed ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasDeed', !formData.hasDeed)}>
                                             <Checkbox checked={formData.hasDeed} className="mt-1" />
                                             <div>
-                                                <span className="font-bold text-sm block">Deed Document</span>
-                                                <span className="text-xs text-neutral-500">Lease, Purchase, Ownership, Heba, or Power of Attorney</span>
+                                                <span className="font-bold text-sm block">{t.deedDoc}</span>
+                                                <span className="text-xs text-neutral-500">{t.deedDocDesc}</span>
                                             </div>
                                         </div>
                                         <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasSurveyMap ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasSurveyMap', !formData.hasSurveyMap)}>
                                             <Checkbox checked={formData.hasSurveyMap} className="mt-1" />
                                             <div>
-                                                <span className="font-bold text-sm block">Digital Survey Map</span>
-                                                <span className="text-xs text-neutral-500">With Geo-Coordinates at corners</span>
+                                                <span className="font-bold text-sm block">{t.surveyMap}</span>
+                                                <span className="text-xs text-neutral-500">{t.surveyMapDesc}</span>
                                             </div>
                                         </div>
                                         <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasMutation ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasMutation', !formData.hasMutation)}>
                                             <Checkbox checked={formData.hasMutation} className="mt-1" />
                                             <div>
-                                                <span className="font-bold text-sm block">Khatian / Mutation</span>
-                                                <span className="text-xs text-neutral-500">Latest mutation copy</span>
+                                                <span className="font-bold text-sm block">{t.mutation}</span>
+                                                <span className="text-xs text-neutral-500">{t.mutationDesc}</span>
                                             </div>
                                         </div>
                                         <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasTax ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasTax', !formData.hasTax)}>
                                             <Checkbox checked={formData.hasTax} className="mt-1" />
                                             <div>
-                                                <span className="font-bold text-sm block">Land Development Tax</span>
-                                                <span className="text-xs text-neutral-500">Up to date clear tax receipt</span>
+                                                <span className="font-bold text-sm block">{t.tax}</span>
+                                                <span className="text-xs text-neutral-500">{t.taxDesc}</span>
                                             </div>
                                         </div>
                                         <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasNID ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasNID', !formData.hasNID)}>
                                             <Checkbox checked={formData.hasNID} className="mt-1" />
                                             <div>
-                                                <span className="font-bold text-sm block">NID / Passport</span>
-                                                <span className="text-xs text-neutral-500">Owner's identification</span>
+                                                <span className="font-bold text-sm block">{t.nid}</span>
+                                                <span className="text-xs text-neutral-500">{t.nidDesc}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -289,20 +298,20 @@ function DesignBookingWizard() {
 
                             {showsDesignQ && (
                                 <div className="space-y-4">
-                                    <Label className="text-lg font-bold block text-primary-900 border-b pb-2">Design Documents</Label>
+                                    <Label className="text-lg font-bold block text-primary-900 border-b pb-2">{t.designDocs}</Label>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasLandPermit ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasLandPermit', !formData.hasLandPermit)}>
                                             <Checkbox checked={formData.hasLandPermit} className="mt-1" />
                                             <div>
-                                                <span className="font-bold text-sm block">Land Permit</span>
-                                                <span className="text-xs text-neutral-500">Current land use permit</span>
+                                                <span className="font-bold text-sm block">{t.landPermit}</span>
+                                                <span className="text-xs text-neutral-500">{t.landPermitDesc}</span>
                                             </div>
                                         </div>
                                         <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasBuildingApproval ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasBuildingApproval', !formData.hasBuildingApproval)}>
                                             <Checkbox checked={formData.hasBuildingApproval} className="mt-1" />
                                             <div>
-                                                <span className="font-bold text-sm block">Building Approval</span>
-                                                <span className="text-xs text-neutral-500">Previous or existing approval copies</span>
+                                                <span className="font-bold text-sm block">{t.buildingApprovalDoc}</span>
+                                                <span className="text-xs text-neutral-500">{t.buildingApprovalDocDesc}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -318,8 +327,9 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Space & Layout"
-                        description="Tell us about the land dimensions and floor requirements."
+                        lang={lang}
+                        title={t.spaceLayoutTitle}
+                        description={t.spaceLayoutDesc}
                         currentStep={visualStep}
                         totalSteps={getDynamicTotalSteps()}
                         onNext={() => setStep(4)}
@@ -331,22 +341,22 @@ function DesignBookingWizard() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                                 {/* Q1: Land Area */}
                                 <div className="space-y-3">
-                                    <Label className="font-bold text-neutral-700">What is the total land area (in Katha)?</Label>
+                                    <Label className="font-bold text-neutral-700">{t.landAreaQ}</Label>
                                     <Input type="number" placeholder="e.g. 5" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.landAreaKatha} onChange={(e) => updateData('landAreaKatha', e.target.value)} />
                                 </div>
                                 {/* Q3: Initial floors */}
                                 <div className="space-y-3">
-                                    <Label className="font-bold text-neutral-700">How many floors?</Label>
+                                    <Label className="font-bold text-neutral-700">{t.floorsQ}</Label>
                                     <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.initialFloors} onChange={(e) => updateData('initialFloors', e.target.value)} />
                                 </div>
                                 {/* Q4: Bed per req */}
                                 <div className="space-y-3">
-                                    <Label className="font-bold text-neutral-700">Bedrooms needed per floor?</Label>
+                                    <Label className="font-bold text-neutral-700">{t.bedsQ}</Label>
                                     <Input type="number" placeholder="e.g. 3" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.bedroomsPerFloor} onChange={(e) => updateData('bedroomsPerFloor', e.target.value)} />
                                 </div>
                                 {/* Q5: Bath per req */}
                                 <div className="space-y-3">
-                                    <Label className="font-bold text-neutral-700">Bathrooms needed per floor?</Label>
+                                    <Label className="font-bold text-neutral-700">{t.bathsQ}</Label>
                                     <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.bathroomsPerFloor} onChange={(e) => updateData('bathroomsPerFloor', e.target.value)} />
                                 </div>
                             </div>
@@ -360,8 +370,9 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Plot & Features"
-                        description="Let us know the physical details of your plot and extra requirements."
+                        lang={lang}
+                        title={t.plotFeaturesTitle}
+                        description={t.plotFeaturesDesc}
                         currentStep={visualStep}
                         totalSteps={getDynamicTotalSteps()}
                         onNext={() => setStep(5)}
@@ -371,12 +382,12 @@ function DesignBookingWizard() {
                         <div className="max-w-3xl mx-auto space-y-10">
                             {/* Q2: Orientation check */}
                             <div className="space-y-4">
-                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">What is the orientation of the plot?</Label>
+                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">{t.orientationQ}</Label>
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                    {['North', 'South', 'East', 'West'].map(opt => (
+                                    {(['North', 'South', 'East', 'West'] as const).map(opt => (
                                         <div key={opt} className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all ${formData.plotOrientation.includes(opt) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('plotOrientation', opt)}>
                                             <Checkbox checked={formData.plotOrientation.includes(opt)} className="mt-0.5" />
-                                            <span className="text-sm font-bold">{opt}</span>
+                                            <span className="text-sm font-bold">{t[opt as keyof typeof t] || opt}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -384,12 +395,12 @@ function DesignBookingWizard() {
 
                             {/* Q6: Special zones */}
                             <div className="space-y-4">
-                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">Do you require special zones?</Label>
+                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">{t.specialZonesQ}</Label>
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                    {['Prayer room', 'Home Office', "Maid's room", 'Parking'].map(opt => (
+                                    {(['Prayer room', 'Home Office', "Maid's room", 'Parking'] as const).map(opt => (
                                         <div key={opt} className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all ${formData.specialZones.includes(opt) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('specialZones', opt)}>
                                             <Checkbox checked={formData.specialZones.includes(opt)} className="mt-0.5" />
-                                            <span className="text-sm font-bold">{opt}</span>
+                                            <span className="text-sm font-bold">{t[opt as keyof typeof t] || opt}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -397,25 +408,25 @@ function DesignBookingWizard() {
 
                             {/* Q7: Soil Test */}
                             <div className="space-y-4 pt-4">
-                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">Has a Soil Test been conducted?</Label>
+                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">{t.soilTestQ}</Label>
                                 <div className="flex gap-4 max-w-md">
-                                    <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-4 cursor-pointer transition-all ${formData.soilTest === 'Yes' ? 'bg-primary-600 text-white border-primary-600 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => updateData('soilTest', 'Yes')}>Yes</div>
-                                    <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-4 cursor-pointer transition-all ${formData.soilTest === 'No' ? 'bg-primary-600 text-white border-primary-600 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => updateData('soilTest', 'No')}>No</div>
+                                    <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-4 cursor-pointer transition-all ${formData.soilTest === 'Yes' ? 'bg-primary-600 text-white border-primary-600 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => updateData('soilTest', 'Yes')}>{t.yes}</div>
+                                    <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-4 cursor-pointer transition-all ${formData.soilTest === 'No' ? 'bg-primary-600 text-white border-primary-600 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => updateData('soilTest', 'No')}>{t.no}</div>
                                 </div>
                             </div>
 
                             {/* Q8: Features */}
                             <div className="space-y-4 pt-4">
-                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">Any roof garden or swimming pool on top floor?</Label>
+                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">{t.roofFeaturesQ}</Label>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                    {['Roof garden', 'Swimming pool'].map(opt => (
+                                    {(['Roof garden', 'Swimming pool'] as const).map(opt => (
                                         <div key={opt} className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all ${formData.roofFeatures.includes(opt) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('roofFeatures', opt)}>
                                             <Checkbox checked={formData.roofFeatures.includes(opt)} className="mt-0.5" />
-                                            <span className="text-sm font-bold">{opt}</span>
+                                            <span className="text-sm font-bold">{t[opt as keyof typeof t] || opt}</span>
                                         </div>
                                     ))}
                                 </div>
-                                <p className="text-xs text-neutral-500 font-medium">(Requires higher load calculation)</p>
+                                <p className="text-xs text-neutral-500 font-medium">{t.requiresLoad}</p>
                             </div>
                         </div>
                     </WizardStep>
@@ -427,8 +438,9 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Design Aesthetics"
-                        description="Choose the visual vibe for your building design."
+                        lang={lang}
+                        title={t.aestheticsTitle}
+                        description={t.aestheticsDesc}
                         currentStep={visualStep}
                         totalSteps={getDynamicTotalSteps()}
                         onNext={() => setStep(6)}
@@ -439,7 +451,7 @@ function DesignBookingWizard() {
                             {/* Q9: Vibe */}
                             <div className="space-y-4 block">
                                 <RadioCardGroup
-                                    options={VIBE_OPTIONS}
+                                    options={getVibeOptions(lang)}
                                     selected={formData.structuralVibe}
                                     onChange={(id) => updateData('structuralVibe', id)}
                                 />
@@ -455,8 +467,9 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Choose Designer Route"
-                        description="How would you like to proceed with your designer?"
+                        lang={lang}
+                        title={t.chooseRouteTitle}
+                        description={t.chooseRouteDesc}
                         currentStep={visualStep}
                         totalSteps={getDynamicTotalSteps()}
                         onNext={() => {
@@ -471,8 +484,8 @@ function DesignBookingWizard() {
                     >
                         <RadioCardGroup
                             options={[
-                                { id: 'ghorbari', label: 'Suggested by Ghorbari', icon: CheckCircle2, description: 'We will assign the best verified expert for your needs automatically.' },
-                                { id: 'list', label: 'Choose from Profiles', icon: UserCircle, description: 'Browse eligible designer profiles and select one yourself.' },
+                                { id: 'ghorbari', label: t.suggestedOption, icon: CheckCircle2, description: t.suggestedOptionDesc },
+                                { id: 'list', label: t.listOption, icon: UserCircle, description: t.listOptionDesc },
                             ]}
                             selected={formData.designerSelectionType}
                             onChange={(id) => updateData('designerSelectionType', id)}
@@ -486,8 +499,9 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Select a Designer"
-                        description="Choose a designer from our verified experts."
+                        lang={lang}
+                        title={t.selectDesignerTitle}
+                        description={t.selectDesignerDesc}
                         currentStep={visualStep}
                         totalSteps={getDynamicTotalSteps()}
                         onNext={() => setStep(8)}
@@ -540,7 +554,7 @@ function DesignBookingWizard() {
                                                                 </h3>
                                                             </div>
                                                             <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest pl-7">
-                                                                {designer.experience_years ? `${designer.experience_years} Years Experience` : 'Verified Expert'}
+                                                                {designer.experience_years ? `${designer.experience_years} ${t.yearsExp}` : t.verifiedExpert}
                                                             </p>
                                                         </div>
                                                         <div className="flex items-center gap-1.5 bg-neutral-50 px-2.5 py-1.5 rounded-lg shrink-0">
@@ -551,7 +565,7 @@ function DesignBookingWizard() {
 
                                                     <div className="mt-6 pt-5 border-t border-neutral-100 flex items-center justify-between gap-4 mt-auto">
                                                         <div>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Starting From</p>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">{t.startingFrom}</p>
                                                             <div className="flex items-center gap-0.5">
                                                                 <span className="font-bold text-base text-neutral-900 mt-0.5">৳</span>
                                                                 <span className="font-black text-2xl text-neutral-900 tracking-tight">
@@ -565,7 +579,7 @@ function DesignBookingWizard() {
                                                                 : 'bg-black hover:bg-neutral-800 text-white'
                                                                 }`}
                                                         >
-                                                            {isSelected ? 'SELECTED' : 'BOOK NOW'}
+                                                            {isSelected ? t.selected : t.bookNow}
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -576,8 +590,8 @@ function DesignBookingWizard() {
                             ) : (
                                 <div className="col-span-full py-12 text-center text-neutral-500 bg-white rounded-3xl border border-dashed border-neutral-200">
                                     <UserCircle className="w-12 h-12 mx-auto text-neutral-300 mb-3" />
-                                    <p className="font-bold text-lg">No designers currently available online.</p>
-                                    <p className="text-sm">Please go back and select the Ghorbari suggested option for now.</p>
+                                    <p className="font-bold text-lg">{t.noDesigners}</p>
+                                    <p className="text-sm">{t.noDesignersDesc}</p>
                                 </div>
                             )}
                         </div>
@@ -598,8 +612,9 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        title="Review & Confirm Booking"
-                        description="Please review your details. The price shown is tentative and awaits admin verification."
+                        lang={lang}
+                        title={t.reviewTitle}
+                        description={t.reviewDesc}
                         currentStep={visualStep}
                         totalSteps={getDynamicTotalSteps()}
                         onNext={handleSubmit}
@@ -609,20 +624,20 @@ function DesignBookingWizard() {
                         }}
                         isLastStep
                         canNext={true}
-                        nextLabel={loading ? "Generating Request..." : "Complete Booking"}
+                        nextLabel={loading ? t.generatingReq : t.completeBooking}
                     >
                         <div className="bg-white rounded-[16px] border border-neutral-300 shadow-sm overflow-hidden text-left mx-auto max-w-2xl mt-4">
                             {/* Inner Header Section */}
                             <div className="bg-[#f3fbfa] p-8 border-b border-neutral-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                 <div>
-                                    <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">Tentative Quotation</h3>
-                                    <p className="text-[13px] font-medium text-neutral-600 mt-2">Status: Waiting for Admin Verification upon submission</p>
+                                    <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">{t.tentativeQuote}</h3>
+                                    <p className="text-[13px] font-medium text-neutral-600 mt-2">{t.statusWait}</p>
                                 </div>
                                 <div className="text-left md:text-right">
                                     <div className="flex items-center md:justify-end gap-1 font-black text-[32px] text-[#0a1b3d] leading-none">
                                         <span className="text-[26px]">৳</span> {price.toLocaleString()}
                                     </div>
-                                    <p className="text-[11px] font-black tracking-widest text-[#0a1b3d]/70 uppercase mt-2">Starting Price</p>
+                                    <p className="text-[11px] font-black tracking-widest text-[#0a1b3d]/70 uppercase mt-2">{t.startingPrice}</p>
                                 </div>
                             </div>
 
@@ -631,24 +646,24 @@ function DesignBookingWizard() {
 
                                 {/* Service Details Block */}
                                 <div className="space-y-1">
-                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">Service Details</h4>
+                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">{t.serviceDetails}</h4>
 
                                     <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
-                                        <span className="text-[16px] font-bold text-neutral-700">Service Area</span>
+                                        <span className="text-[16px] font-bold text-neutral-700">{t.serviceArea}</span>
                                         <span className="text-[16px] font-black text-neutral-900 capitalize">
                                             {formData.designerOption === 'both' ? 'Both' : formData.designerOption}
                                         </span>
                                     </div>
 
                                     <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
-                                        <span className="text-[16px] font-bold text-neutral-700">Assigned Provider</span>
+                                        <span className="text-[16px] font-bold text-neutral-700">{t.assignedProvider}</span>
                                         <span className="text-[16px] font-black text-neutral-900">{providerName}</span>
                                     </div>
                                 </div>
 
                                 {/* Documents Ready Block */}
                                 <div className="pt-2">
-                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-5">Documents Ready</h4>
+                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-5">{t.docsReady}</h4>
 
                                     <div className="flex flex-wrap gap-2.5">
                                         {formData.hasDeed && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Deed</span>}
@@ -659,7 +674,7 @@ function DesignBookingWizard() {
                                         {formData.hasLandPermit && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Land Permit</span>}
                                         {formData.hasBuildingApproval && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Building Approval</span>}
                                         {(!formData.hasDeed && !formData.hasSurveyMap && !formData.hasMutation && !formData.hasTax && !formData.hasNID && !formData.hasLandPermit && !formData.hasBuildingApproval) && (
-                                            <span className="text-[13px] text-neutral-400 italic font-medium px-2 py-1">No documents checked yet.</span>
+                                            <span className="text-[13px] text-neutral-400 italic font-medium px-2 py-1">{t.noDocs}</span>
                                         )}
                                     </div>
                                 </div>
@@ -667,33 +682,33 @@ function DesignBookingWizard() {
                                 {/* Design Requirements Block */}
                                 {showsDesignQ && (
                                     <div className="pt-6 border-t border-neutral-200/70 mt-6">
-                                        <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">Project Requirements</h4>
+                                        <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">{t.projectReqs}</h4>
                                         <div className="grid grid-cols-2 gap-y-5 gap-x-6">
                                             <div>
-                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">Land Area</p>
-                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">{formData.landAreaKatha || '-'} Katha</p>
+                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.landArea}</p>
+                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">{formData.landAreaKatha || '-'} {t.katha}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">Initial Floors</p>
+                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.initialFloors}</p>
                                                 <p className="text-[14px] font-black text-neutral-900 mt-0.5">{formData.initialFloors || '-'}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">Layout per Floor</p>
+                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.layoutPerFloor}</p>
                                                 <p className="text-[14px] font-black text-neutral-900 mt-0.5">
-                                                    {formData.bedroomsPerFloor || '-'} Bed, {formData.bathroomsPerFloor || '-'} Bath
+                                                    {formData.bedroomsPerFloor || '-'} {t.bed}, {formData.bathroomsPerFloor || '-'} {t.bath}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">Soil Test</p>
-                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">{formData.soilTest || '-'}</p>
+                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.soilTest}</p>
+                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">{t[(formData.soilTest || '') as keyof typeof t] || formData.soilTest || '-'}</p>
                                             </div>
                                             {(formData.plotOrientation.length > 0 || formData.specialZones.length > 0 || formData.roofFeatures.length > 0) && (
                                                 <div className="col-span-2">
-                                                    <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">Features & Zones</p>
+                                                    <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.featuresZones}</p>
                                                     <div className="flex flex-wrap gap-2 mt-1.5">
                                                         {[...formData.plotOrientation, ...formData.specialZones, ...formData.roofFeatures].map(tag => (
                                                             <span key={tag} className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded-md font-bold text-[11px] uppercase tracking-wide">
-                                                                {tag}
+                                                                {t[tag as keyof typeof t] || tag}
                                                             </span>
                                                         ))}
                                                     </div>
@@ -832,9 +847,9 @@ function DesignBookingWizard() {
 
 function MainLayout({ children }: { children: ReactNode }) {
     return (
-        <main className="min-h-screen flex flex-col font-sans bg-neutral-50">
+        <main className="min-h-screen flex flex-col font-sans bg-neutral-50 relative">
             <Navbar />
-            <div className="flex-1 flex flex-col justify-center py-12">
+            <div className="flex-1 flex flex-col justify-center py-12 px-4 md:px-0 mt-8 md:mt-0">
                 {children}
             </div>
             <Footer />
