@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -12,11 +12,11 @@ import { ClipboardList } from 'lucide-react';
 interface PreBookingModalProps {
     isOpen: boolean;
     setIsOpen: (val: boolean) => void;
-    journeyType: 'design' | 'approval' | 'interior' | null;
+    journeyTypes: ('design' | 'approval' | 'interior')[];
     onSubmit: (scheduleData: any, projectData: any) => Promise<void>;
 }
 
-export function PreBookingModal({ isOpen, setIsOpen, journeyType, onSubmit }: PreBookingModalProps) {
+export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit }: PreBookingModalProps) {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
 
@@ -82,7 +82,11 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyType, onSubmit }: Pr
             return;
         }
         setLoading(true);
-        const payloadData = journeyType === 'design' ? designData : journeyType === 'interior' ? interiorData : {};
+        const payloadData = {
+            design: journeyTypes.includes('design') ? designData : undefined,
+            interior: journeyTypes.includes('interior') ? interiorData : undefined,
+            approval: journeyTypes.includes('approval') ? true : undefined,
+        };
         await onSubmit(scheduleData, payloadData);
         setLoading(false);
     };
@@ -319,62 +323,60 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyType, onSubmit }: Pr
         </div>
     );
 
-    // Routing Logic to determine what renders
-    let totalSteps = 1;
-    let stepTitle = "";
-    let stepDesc = "";
-    let renderContent = () => <></>;
-    let canNext = true;
+    // Setup steps array dynamically
+    const steps: { title: string; desc: string; render: () => ReactNode; canNext: boolean }[] = [];
 
-    if (journeyType === 'approval') {
-        totalSteps = 1;
-        if (step === 1) {
-            stepTitle = "Schedule a Consultation";
-            stepDesc = "When should the designer or our admin contact you?";
-            renderContent = renderScheduleStep;
-            canNext = !!(scheduleData.date && scheduleData.time);
-        }
-    } else if (journeyType === 'design') {
-        totalSteps = 4;
-        if (step === 1) {
-            stepTitle = "Space and Layout";
-            stepDesc = "Let's capture the foundational scope of your building unit.";
-            renderContent = renderDesignStep1;
-            canNext = !!(designData.landAreaKatha && designData.initialFloors);
-        } else if (step === 2) {
-            stepTitle = "Plot Features";
-            stepDesc = "Any special considerations for your land?";
-            renderContent = renderDesignStep2;
-        } else if (step === 3) {
-            stepTitle = "Aesthetics & Style";
-            stepDesc = "Your preferred design influence.";
-            renderContent = renderDesignStep3;
-            canNext = !!designData.structuralVibe;
-        } else if (step === 4) {
-            stepTitle = "Schedule a Consultation";
-            stepDesc = "When should the designer or our admin contact you?";
-            renderContent = renderScheduleStep;
-            canNext = !!(scheduleData.date && scheduleData.time);
-        }
-    } else if (journeyType === 'interior') {
-        totalSteps = 2;
-        if (step === 1) {
-            stepTitle = "Interior Scope Details";
-            stepDesc = "What type of interior space are we refining?";
-            renderContent = renderInteriorStep1;
-            canNext = !!interiorData.propertyType &&
+    if (journeyTypes.includes('interior')) {
+        steps.push({
+            title: "Interior Scope Details",
+            desc: "What type of interior space are we refining?",
+            render: renderInteriorStep1,
+            canNext: !!interiorData.propertyType &&
                 (interiorData.propertyType !== 'Specific Area' ||
                     (!!interiorData.specificAreaType &&
                         (interiorData.specificAreaType !== 'Bed Room' || !!interiorData.bedRoomType) &&
                         !!interiorData.designScope &&
-                        !!interiorData.roomSize));
-        } else if (step === 2) {
-            stepTitle = "Schedule a Consultation";
-            stepDesc = "When should the designer or our admin contact you?";
-            renderContent = renderScheduleStep;
-            canNext = !!(scheduleData.date && scheduleData.time);
-        }
+                        !!interiorData.roomSize))
+        });
     }
+
+    if (journeyTypes.includes('design')) {
+        steps.push({
+            title: "Space and Layout",
+            desc: "Let's capture the foundational scope of your building unit.",
+            render: renderDesignStep1,
+            canNext: !!(designData.landAreaKatha && designData.initialFloors)
+        });
+        steps.push({
+            title: "Plot Features",
+            desc: "Any special considerations for your land?",
+            render: renderDesignStep2,
+            canNext: true
+        });
+        steps.push({
+            title: "Aesthetics & Style",
+            desc: "Your preferred design influence.",
+            render: renderDesignStep3,
+            canNext: !!designData.structuralVibe
+        });
+    }
+
+    if (journeyTypes.includes('approval') && !journeyTypes.includes('design')) {
+        // If approval is selected but NOT design, we don't have building design steps, 
+        // but we might still want a specific step? For now, the legacy logic just went to schedule.
+        // We can leave it as just schedule.
+    }
+
+    // Schedule step is always last
+    steps.push({
+        title: "Schedule a Consultation",
+        desc: "When should the designer or our admin contact you?",
+        render: renderScheduleStep,
+        canNext: !!(scheduleData.date && scheduleData.time)
+    });
+
+    const currentStepData = steps[step - 1] || steps[0];
+    const totalSteps = steps.length;
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -384,15 +386,15 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyType, onSubmit }: Pr
                         Step {step} of {totalSteps}
                     </span>
                     <DialogTitle className="text-xl font-black text-[#0a1b3d]">
-                        {stepTitle}
+                        {currentStepData.title}
                     </DialogTitle>
                     <DialogDescription className="text-neutral-500 text-sm mt-1">
-                        {stepDesc}
+                        {currentStepData.desc}
                     </DialogDescription>
                 </div>
 
                 <div className="p-6">
-                    {renderContent()}
+                    {currentStepData.render()}
                 </div>
 
                 <div className="p-6 pt-0 border-t border-neutral-100 flex gap-3 mt-2 bg-neutral-50/50">
@@ -410,7 +412,7 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyType, onSubmit }: Pr
                             : 'bg-[#0a1b3d] hover:bg-[#1a2f5c] text-white'
                             }`}
                         onClick={step === totalSteps ? handleFinalSubmit : handleNext}
-                        disabled={loading || !canNext}
+                        disabled={loading || !currentStepData.canNext}
                     >
                         {loading ? 'Booking...' : step === totalSteps ? 'Confirm Request' : 'Next Step'}
                     </Button>

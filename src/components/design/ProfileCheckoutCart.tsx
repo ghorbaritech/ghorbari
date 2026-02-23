@@ -39,9 +39,9 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
     //     price = 80000;
     // }
 
-    // Determine Journey Type from packages for the modal
-    const getJourneyType = (): 'design' | 'approval' | 'interior' | null => {
-        if (selectedPackages.length === 0) return null;
+    // Determine Journey Types from packages for the modal
+    const getJourneyTypes = (): ('design' | 'approval' | 'interior')[] => {
+        if (selectedPackages.length === 0) return [];
 
         const checkCategory = (c: any, keyword: string): boolean => {
             if (!c) return false;
@@ -50,6 +50,7 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
             return checkCategory(c.parent, keyword);
         };
 
+        const types: ('design' | 'approval' | 'interior')[] = [];
         let hasBuildingLogic = false;
         let hasApproval = false;
         let hasInterior = false;
@@ -70,11 +71,11 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
             }
         });
 
-        if (hasInterior) return 'interior';
-        if (hasBuildingLogic) return 'design';
-        if (hasApproval) return 'approval';
+        if (hasInterior) types.push('interior');
+        if (hasBuildingLogic) types.push('design');
+        if (hasApproval) types.push('approval');
 
-        return 'design'; // Fallback
+        return types.length > 0 ? types : ['design']; // Fallback
     };
     // Document states
     const [docs, setDocs] = useState({
@@ -127,6 +128,7 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
                 return;
             }
 
+            const journeyTypes = getJourneyTypes();
             const payloadDetails = {
                 designerOption: selectedPackageIds.length > 0 ? selectedPackageIds.join(',') : 'legacy',
                 packageIds: selectedPackageIds,
@@ -141,10 +143,11 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
                 selectedDesignerId: designerId,
                 tentativePrice: price,
                 projectScope: isJourneyFlow ? 'Provided in Journey' : projectData,
-                preferredSchedule: scheduleData
+                preferredSchedule: scheduleData,
+                journeyTypes // Include the types in metadata
             };
 
-            const serviceType = getJourneyType() === 'interior' ? 'interior' : 'architectural';
+            const serviceType = journeyTypes.includes('interior') ? 'interior' : 'architectural';
 
             const { error } = await supabase.from('design_bookings').insert({
                 user_id: user.id,
@@ -279,7 +282,7 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
             <PreBookingModal
                 isOpen={isModalOpen}
                 setIsOpen={setIsModalOpen}
-                journeyType={getJourneyType()}
+                journeyTypes={getJourneyTypes()}
                 onSubmit={handleModalSubmit}
             />
         </div>
