@@ -82,8 +82,13 @@ function DesignBookingWizard() {
         landAreaKatha: '',
         plotOrientation: [] as string[],
         initialFloors: '',
-        bedroomsPerFloor: '',
-        bathroomsPerFloor: '',
+        unitsPerFloor: '',
+        bedroomsPerUnit: '',
+        bathroomsPerUnit: '',
+        drawingRoomPerUnit: '',
+        kitchenPerUnit: '',
+        balconyPerUnit: '',
+        othersPerUnit: '',
         specialZones: [] as string[],
         structuralVibe: '',
         soilTest: '',
@@ -353,15 +358,36 @@ function DesignBookingWizard() {
                                     <Label className="font-bold text-neutral-700">{t.floorsQ}</Label>
                                     <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.initialFloors} onChange={(e) => updateData('initialFloors', e.target.value)} />
                                 </div>
-                                {/* Q4: Bed per req */}
-                                <div className="space-y-3">
-                                    <Label className="font-bold text-neutral-700">{t.bedsQ}</Label>
-                                    <Input type="number" placeholder="e.g. 3" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.bedroomsPerFloor} onChange={(e) => updateData('bedroomsPerFloor', e.target.value)} />
+                            </div>
+
+                            <div className="border-t border-neutral-200/60 pt-6 mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="space-y-3 text-left">
+                                    <Label className="font-bold text-neutral-700">{t.unitsQ}</Label>
+                                    <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.unitsPerFloor} onChange={(e) => updateData('unitsPerFloor', e.target.value)} />
                                 </div>
-                                {/* Q5: Bath per req */}
-                                <div className="space-y-3">
+                                <div className="space-y-3 text-left">
+                                    <Label className="font-bold text-neutral-700">{t.bedsQ}</Label>
+                                    <Input type="number" placeholder="e.g. 3" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.bedroomsPerUnit} onChange={(e) => updateData('bedroomsPerUnit', e.target.value)} />
+                                </div>
+                                <div className="space-y-3 text-left">
                                     <Label className="font-bold text-neutral-700">{t.bathsQ}</Label>
-                                    <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.bathroomsPerFloor} onChange={(e) => updateData('bathroomsPerFloor', e.target.value)} />
+                                    <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.bathroomsPerUnit} onChange={(e) => updateData('bathroomsPerUnit', e.target.value)} />
+                                </div>
+                                <div className="space-y-3 text-left">
+                                    <Label className="font-bold text-neutral-700">{t.drawingQ}</Label>
+                                    <Input type="number" placeholder="e.g. 1" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.drawingRoomPerUnit} onChange={(e) => updateData('drawingRoomPerUnit', e.target.value)} />
+                                </div>
+                                <div className="space-y-3 text-left">
+                                    <Label className="font-bold text-neutral-700">{t.kitchenQ}</Label>
+                                    <Input type="number" placeholder="e.g. 1" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.kitchenPerUnit} onChange={(e) => updateData('kitchenPerUnit', e.target.value)} />
+                                </div>
+                                <div className="space-y-3 text-left">
+                                    <Label className="font-bold text-neutral-700">{t.balconyQ}</Label>
+                                    <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.balconyPerUnit} onChange={(e) => updateData('balconyPerUnit', e.target.value)} />
+                                </div>
+                                <div className="space-y-3 text-left sm:col-span-2 lg:col-span-3">
+                                    <Label className="font-bold text-neutral-700">{t.othersQ}</Label>
+                                    <Input type="text" placeholder="e.g. Dining, Family living" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.othersPerUnit} onChange={(e) => updateData('othersPerUnit', e.target.value)} />
                                 </div>
                             </div>
                         </div>
@@ -701,11 +727,17 @@ function DesignBookingWizard() {
                                                 <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.initialFloors}</p>
                                                 <p className="text-[14px] font-black text-neutral-900 mt-0.5">{formData.initialFloors || '-'}</p>
                                             </div>
-                                            <div>
-                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.layoutPerFloor}</p>
-                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">
-                                                    {formData.bedroomsPerFloor || '-'} {t.bed}, {formData.bathroomsPerFloor || '-'} {t.bath}
-                                                </p>
+                                            <div className="col-span-2 mt-4 pt-4 border-t border-neutral-100">
+                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide mb-3">{t.layoutPerUnit}</p>
+                                                <div className="flex flex-wrap gap-2 text-[13px] font-bold text-neutral-800">
+                                                    {formData.unitsPerFloor && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.unitsPerFloor} {t.unit}/floor</span>}
+                                                    {formData.bedroomsPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.bedroomsPerUnit} {t.bed}</span>}
+                                                    {formData.bathroomsPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.bathroomsPerUnit} {t.bath}</span>}
+                                                    {formData.drawingRoomPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.drawingRoomPerUnit} {t.drawing}</span>}
+                                                    {formData.kitchenPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.kitchenPerUnit} {t.kitchen}</span>}
+                                                    {formData.balconyPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.balconyPerUnit} {t.balcony}</span>}
+                                                    {formData.othersPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.othersPerUnit}</span>}
+                                                </div>
                                             </div>
                                             <div>
                                                 <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.soilTest}</p>
