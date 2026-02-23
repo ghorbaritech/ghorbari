@@ -169,6 +169,7 @@ function DesignBookingWizard() {
         return (
             <MainLayout>
                 <WizardStep
+                    key={`step0-${lang}`}
                     lang={lang}
                     title={t.startJourneyTitle}
                     description={t.startJourneyDesc}
@@ -213,6 +214,7 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
+                        key={`step1-${lang}`}
                         lang={lang}
                         title={t.findDesignerTitle}
                         description={t.findDesignerDesc}
@@ -240,6 +242,7 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
+                        key={`step2-${lang}`}
                         lang={lang}
                         title={t.docChecklistTitle}
                         description={t.docChecklistDesc}
@@ -327,6 +330,7 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
+                        key={`step3-${lang}`}
                         lang={lang}
                         title={t.spaceLayoutTitle}
                         description={t.spaceLayoutDesc}
@@ -370,6 +374,7 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
+                        key={`step4-${lang}`}
                         lang={lang}
                         title={t.plotFeaturesTitle}
                         description={t.plotFeaturesDesc}
@@ -438,6 +443,7 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
+                        key={`step5-${lang}`}
                         lang={lang}
                         title={t.aestheticsTitle}
                         description={t.aestheticsDesc}
@@ -467,6 +473,7 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
+                        key={`step6-${lang}`}
                         lang={lang}
                         title={t.chooseRouteTitle}
                         description={t.chooseRouteDesc}
@@ -499,6 +506,7 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
+                        key={`step7-${lang}`}
                         lang={lang}
                         title={t.selectDesignerTitle}
                         description={t.selectDesignerDesc}
@@ -612,6 +620,7 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
+                        key={`step8-${lang}`}
                         lang={lang}
                         title={t.reviewTitle}
                         description={t.reviewDesc}
