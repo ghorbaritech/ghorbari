@@ -69,7 +69,7 @@ export async function getSellerProfile(sellerId: string) {
 
         supabase
             .from('design_packages')
-            .select('*, category:product_categories(name)')
+            .select('*, category:product_categories(id, name, parent:parent_id(id, name, parent:parent_id(id, name)))')
             .eq('designer_id', designerData?.id || 'none')
             .eq('is_active', true)
             .order('created_at', { ascending: false })

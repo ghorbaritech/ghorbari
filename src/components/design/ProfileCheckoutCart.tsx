@@ -39,6 +39,15 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
     //     price = 80000;
     // }
 
+    // Check if a category lineage matches keywords
+    const isInCategoryHierarchy = (category: any, keywords: string[]): boolean => {
+        if (!category) return false;
+        const nameMatch = keywords.some(k => category.name?.toLowerCase().includes(k));
+        if (nameMatch) return true;
+        if (category.parent) return isInCategoryHierarchy(category.parent, keywords);
+        return false;
+    };
+
     // Determine Journey Type from packages for the modal
     const getJourneyType = (): 'design' | 'approval' | 'interior' | null => {
         if (selectedPackages.length === 0) return null;
@@ -48,10 +57,15 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
         let hasInterior = false;
 
         selectedPackages.forEach(pkg => {
-            const title = pkg.title.toLowerCase();
-            if (title.includes('interior')) hasInterior = true;
-            if (title.includes('blueprint') || title.includes('architectural')) hasBuildingLogic = true;
-            if (title.includes('rajuk') || title.includes('approval')) hasApproval = true;
+            const isInterior = isInCategoryHierarchy(pkg.category, ['interior']);
+            const isApproval = isInCategoryHierarchy(pkg.category, ['approval', 'rajuk']);
+            const isDesign = isInCategoryHierarchy(pkg.category, ['design', 'structural', 'architectural']);
+
+            if (isInterior) hasInterior = true;
+            // Approval must be checked first if "building approval" is under "design" theoretically, but
+            // based on taxonomy, "Building Approval" is a specific subcat.
+            if (isApproval) hasApproval = true;
+            else if (isDesign) hasBuildingLogic = true;
         });
 
         if (hasInterior) return 'interior';

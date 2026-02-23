@@ -44,15 +44,24 @@ export default async function SellerProfilePage({ params }: Params) {
 
     const maxReviewCount = seller.ratingBreakdown.length > 0 ? Math.max(...seller.ratingBreakdown.map((r: any) => r.count), 1) : 1;
 
+    // Helper to check category lineage
+    const isInCategoryHierarchy = (category: any, keywords: string[]): boolean => {
+        if (!category) return false;
+        const nameMatch = keywords.some(k => category.name?.toLowerCase().includes(k));
+        if (nameMatch) return true;
+        if (category.parent) return isInCategoryHierarchy(category.parent, keywords);
+        return false;
+    };
+
     // Categorize Design Packages
-    const structuralKeywords = ['structural', 'architectural', 'building', 'approval'];
+    const structuralKeywords = ['structural', 'architectural', 'building', 'approval', 'design'];
     const structuralPackages = seller.designPackages?.filter((p: any) =>
-        structuralKeywords.some(k => p.category?.name?.toLowerCase().includes(k)) ||
-        structuralKeywords.some(k => p.title.toLowerCase().includes(k))
+        isInCategoryHierarchy(p.category, structuralKeywords) && !isInCategoryHierarchy(p.category, ['interior'])
     ) || [];
 
+    const interiorKeywords = ['interior'];
     const interiorPackages = seller.designPackages?.filter((p: any) =>
-        !structuralPackages.find((sp: any) => sp.id === p.id)
+        isInCategoryHierarchy(p.category, interiorKeywords)
     ) || [];
 
     // Determine Default Tab
