@@ -25,6 +25,7 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
         full_name: profile?.full_name || '',
         phone_number: profile?.phone_number || '',
         address: profile?.address || '',
+        oldPassword: '',
         password: '',
         confirmPassword: ''
     })
@@ -36,12 +37,22 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (formData.password && formData.password !== formData.confirmPassword) {
-            toast({
-                title: "Passwords do not match",
-                variant: "destructive"
-            })
-            return
+        if (formData.password) {
+            if (!formData.oldPassword) {
+                toast({
+                    title: "Old password required",
+                    description: "Please enter your current password to set a new one.",
+                    variant: "destructive"
+                })
+                return
+            }
+            if (formData.password !== formData.confirmPassword) {
+                toast({
+                    title: "Passwords do not match",
+                    variant: "destructive"
+                })
+                return
+            }
         }
 
         setSaving(true)
@@ -84,6 +95,22 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
 
         // Update password if provided
         if (formData.password) {
+            // First verify the old password by attempting a sign in
+            const { error: verifyError } = await supabase.auth.signInWithPassword({
+                email: email || '',
+                password: formData.oldPassword
+            })
+
+            if (verifyError) {
+                toast({
+                    title: "Incorrect current password",
+                    description: "Please check your old password and try again.",
+                    variant: "destructive"
+                })
+                setSaving(false)
+                return
+            }
+
             const { error: authError } = await supabase.auth.updateUser({
                 password: formData.password
             })
@@ -194,35 +221,56 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
                         <h4 className="text-sm font-semibold mb-3 text-neutral-800">Change Password (Optional)</h4>
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="password">New Password</Label>
+                                <Label htmlFor="oldPassword" className="font-semibold text-neutral-700">Current Password</Label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                                     <Input
-                                        id="password"
-                                        name="password"
+                                        id="oldPassword"
+                                        name="oldPassword"
                                         type="password"
-                                        value={formData.password}
+                                        value={formData.oldPassword}
                                         onChange={handleChange}
-                                        placeholder="Leave blank to keep current"
-                                        className="pl-9"
+                                        placeholder="Required to change password"
+                                        className="pl-9 bg-neutral-50 border-neutral-200"
                                     />
                                 </div>
                             </div>
-                            {formData.password && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                                    <div className="relative">
-                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                                        <Input
-                                            id="confirmPassword"
-                                            name="confirmPassword"
-                                            type="password"
-                                            value={formData.confirmPassword}
-                                            onChange={handleChange}
-                                            className="pl-9 bg-neutral-50 border-neutral-200"
-                                        />
+
+                            {formData.oldPassword && (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="password" className="font-semibold text-neutral-700">New Password</Label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                                            <Input
+                                                id="password"
+                                                name="password"
+                                                type="password"
+                                                value={formData.password}
+                                                onChange={handleChange}
+                                                placeholder="Enter new password"
+                                                className="pl-9 bg-neutral-50 border-neutral-200"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
+                                    {formData.password && (
+                                        <div className="space-y-2">
+                                            <Label htmlFor="confirmPassword" className="font-semibold text-neutral-700">Confirm New Password</Label>
+                                            <div className="relative">
+                                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                                                <Input
+                                                    id="confirmPassword"
+                                                    name="confirmPassword"
+                                                    type="password"
+                                                    value={formData.confirmPassword}
+                                                    onChange={handleChange}
+                                                    placeholder="Must match new password"
+                                                    className="pl-9 bg-neutral-50 border-neutral-200"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
