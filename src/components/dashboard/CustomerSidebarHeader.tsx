@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { User, Mail, Phone, Lock, Save, Loader2 } from 'lucide-react'
+import { User, Mail, Phone, Lock, Save, Loader2, MapPin } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 
 export function CustomerSidebarHeader({ profile, email }: { profile: any, email: string | undefined }) {
@@ -24,6 +24,7 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
     const [formData, setFormData] = useState({
         full_name: profile?.full_name || '',
         phone_number: profile?.phone_number || '',
+        address: profile?.address || '',
         password: '',
         confirmPassword: ''
     })
@@ -45,12 +46,30 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
 
         setSaving(true)
 
+        // Capture previous info as historical log
+        const changeLogEntry = {
+            timestamp: new Date().toISOString(),
+            previous_full_name: profile?.full_name,
+            previous_phone_number: profile?.phone_number,
+            previous_address: profile?.address,
+            updated_fields: [] as string[]
+        }
+
+        if (profile?.full_name !== formData.full_name) changeLogEntry.updated_fields.push('full_name')
+        if (profile?.phone_number !== formData.phone_number) changeLogEntry.updated_fields.push('phone_number')
+        if ((profile?.address || '') !== formData.address) changeLogEntry.updated_fields.push('address')
+
+        const currentLogs = profile?.change_log || []
+        const newLogs = changeLogEntry.updated_fields.length > 0 ? [...currentLogs, changeLogEntry] : currentLogs
+
         // Update profile
         const { error: profileError } = await supabase
             .from('profiles')
             .update({
                 full_name: formData.full_name,
                 phone_number: formData.phone_number,
+                address: formData.address,
+                change_log: newLogs
             })
             .eq('id', profile.id)
 
@@ -109,13 +128,13 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
                     </div>
                 </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] bg-white text-neutral-900 border-none shadow-2xl">
                 <DialogHeader>
-                    <DialogTitle>Update Profile</DialogTitle>
+                    <DialogTitle className="text-xl font-bold">Update Profile</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                <form onSubmit={handleSubmit} className="space-y-5 py-2">
                     <div className="space-y-2">
-                        <Label htmlFor="full_name">Full Name</Label>
+                        <Label htmlFor="full_name" className="font-semibold text-neutral-700">Full Name</Label>
                         <div className="relative">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                             <Input
@@ -123,27 +142,27 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
                                 name="full_name"
                                 value={formData.full_name}
                                 onChange={handleChange}
-                                className="pl-9"
+                                className="pl-9 bg-neutral-50 border-neutral-200"
                                 required
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email" className="font-semibold text-neutral-700">Email Address</Label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                             <Input
                                 id="email"
                                 value={email || ''}
                                 disabled
-                                className="pl-9 bg-neutral-100 opacity-70 cursor-not-allowed"
+                                className="pl-9 bg-neutral-100/50 border-neutral-200 text-neutral-500 cursor-not-allowed"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="phone_number">Phone Number</Label>
+                        <Label htmlFor="phone_number" className="font-semibold text-neutral-700">Phone Number</Label>
                         <div className="relative">
                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                             <Input
@@ -151,13 +170,28 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
                                 name="phone_number"
                                 value={formData.phone_number}
                                 onChange={handleChange}
-                                className="pl-9"
+                                className="pl-9 bg-neutral-50 border-neutral-200"
                             />
                         </div>
                     </div>
 
-                    <div className="pt-2 border-t mt-4">
-                        <h4 className="text-sm font-semibold mb-3">Change Password (Optional)</h4>
+                    <div className="space-y-2">
+                        <Label htmlFor="address" className="font-semibold text-neutral-700">Delivery Address</Label>
+                        <div className="relative">
+                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                            <Input
+                                id="address"
+                                name="address"
+                                value={formData.address}
+                                onChange={handleChange}
+                                placeholder="House, Road, Area, City"
+                                className="pl-9 bg-neutral-50 border-neutral-200"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-neutral-100 mt-4">
+                        <h4 className="text-sm font-semibold mb-3 text-neutral-800">Change Password (Optional)</h4>
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="password">New Password</Label>
@@ -185,7 +219,7 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
                                             type="password"
                                             value={formData.confirmPassword}
                                             onChange={handleChange}
-                                            className="pl-9"
+                                            className="pl-9 bg-neutral-50 border-neutral-200"
                                         />
                                     </div>
                                 </div>
@@ -193,8 +227,8 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
                         </div>
                     </div>
 
-                    <div className="pt-4 flex justify-end">
-                        <Button type="submit" disabled={saving}>
+                    <div className="pt-6 flex justify-end">
+                        <Button type="submit" disabled={saving} className="bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white rounded-lg px-6 font-semibold">
                             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                             Save Changes
                         </Button>
