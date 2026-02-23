@@ -291,24 +291,52 @@ export default async function SellerProfilePage({ params }: Params) {
 
                                     {/* ── DESIGN PACKAGES (INVENTORY) ── */}
                                     {structuralPackages.length > 0 && (
-                                        <div className="space-y-4 pt-4">
-                                            <h3 className="text-xl font-black text-neutral-900 border-l-4 border-indigo-600 pl-3">Building & Structural Packages</h3>
-                                            <div className="flex overflow-x-auto pb-6 snap-x snap-mandatory hide-scrollbar gap-4">
+                                        <div className="space-y-6 pt-4">
+                                            <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">Building & Structural Packages</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
                                                 {structuralPackages.map((pkg: any) => (
-                                                    <div key={pkg.id} className="min-w-[280px] sm:min-w-[320px] bg-white border border-neutral-200 rounded-2xl p-5 snap-start shadow-sm flex flex-col hover:border-indigo-300 transition-colors">
-                                                        <div className="mb-3">
-                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md mb-2 inline-block">
-                                                                {pkg.category?.name || 'Structural'}
-                                                            </span>
-                                                            <h4 className="font-bold text-neutral-900 line-clamp-2 leading-snug">{pkg.title}</h4>
-                                                        </div>
-                                                        <p className="text-sm text-neutral-500 line-clamp-3 mb-4 flex-grow">{pkg.description}</p>
-                                                        <div className="pt-4 border-t border-neutral-100 flex items-end justify-between mt-auto">
-                                                            <div>
-                                                                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest leading-none mb-1">Starting Price</p>
-                                                                <p className="font-black text-lg text-neutral-900 leading-none">৳{pkg.price.toLocaleString()}</p>
+                                                    <div key={pkg.id} className="group bg-white border border-neutral-100 rounded-[20px] overflow-hidden hover:shadow-xl hover:shadow-neutral-900/5 hover:-translate-y-1 transition-all duration-300 flex flex-col">
+                                                        {/* Image Container */}
+                                                        <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
+                                                            <Image
+                                                                src={pkg.images?.[0] || 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800'}
+                                                                alt={pkg.title}
+                                                                fill
+                                                                className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                                            />
+                                                            {/* Rating Badge Overlay */}
+                                                            <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm border border-black/5">
+                                                                <Star className="w-4 h-4 text-[#ff6b00] fill-[#ff6b00]" />
+                                                                <span className="text-sm font-bold text-neutral-900">{seller.stats.avgRating || '4.9'}</span>
                                                             </div>
-                                                            <span className="text-xs text-neutral-500 font-medium">/{pkg.unit}</span>
+                                                        </div>
+
+                                                        {/* Content Container */}
+                                                        <div className="p-6 flex flex-col flex-grow">
+                                                            <div className="mb-4">
+                                                                <h3 className="text-[18px] font-black tracking-tight text-[#0f172a] mb-2 leading-tight">
+                                                                    {pkg.title}
+                                                                </h3>
+                                                                <p className="text-[14px] text-neutral-500 font-medium line-clamp-2 leading-relaxed">
+                                                                    {pkg.description}
+                                                                </p>
+                                                            </div>
+
+                                                            {/* Bottom CTA Area */}
+                                                            <div className="mt-auto pt-4 border-t border-neutral-100/60 flex items-center justify-between">
+                                                                <div>
+                                                                    <span className="text-[10px] font-black tracking-widest text-[#0f172a]/40 uppercase mb-1 block">
+                                                                        STARTING FROM
+                                                                    </span>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span className="text-[20px] font-black text-[#0f172a]">৳{pkg.price.toLocaleString()}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <a href="#booking-cart" className="bg-[#0f172a] hover:bg-[#1e293b] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:shadow-lg hover:shadow-neutral-900/20 active:scale-95 inline-block text-center">
+                                                                    BOOK NOW
+                                                                </a>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -317,24 +345,52 @@ export default async function SellerProfilePage({ params }: Params) {
                                     )}
 
                                     {interiorPackages.length > 0 && (
-                                        <div className="space-y-4 pt-2">
-                                            <h3 className="text-xl font-black text-neutral-900 border-l-4 border-pink-600 pl-3">Interior Design Packages</h3>
-                                            <div className="flex overflow-x-auto pb-6 snap-x snap-mandatory hide-scrollbar gap-4">
+                                        <div className="space-y-6 pt-2">
+                                            <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">Interior Design Packages</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
                                                 {interiorPackages.map((pkg: any) => (
-                                                    <div key={pkg.id} className="min-w-[280px] sm:min-w-[320px] bg-white border border-neutral-200 rounded-2xl p-5 snap-start shadow-sm flex flex-col hover:border-pink-300 transition-colors">
-                                                        <div className="mb-3">
-                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-pink-600 bg-pink-50 px-2.5 py-1 rounded-md mb-2 inline-block">
-                                                                {pkg.category?.name || 'Interior'}
-                                                            </span>
-                                                            <h4 className="font-bold text-neutral-900 line-clamp-2 leading-snug">{pkg.title}</h4>
-                                                        </div>
-                                                        <p className="text-sm text-neutral-500 line-clamp-3 mb-4 flex-grow">{pkg.description}</p>
-                                                        <div className="pt-4 border-t border-neutral-100 flex items-end justify-between mt-auto">
-                                                            <div>
-                                                                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest leading-none mb-1">Starting Price</p>
-                                                                <p className="font-black text-lg text-neutral-900 leading-none">৳{pkg.price.toLocaleString()}</p>
+                                                    <div key={pkg.id} className="group bg-white border border-neutral-100 rounded-[20px] overflow-hidden hover:shadow-xl hover:shadow-neutral-900/5 hover:-translate-y-1 transition-all duration-300 flex flex-col">
+                                                        {/* Image Container */}
+                                                        <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
+                                                            <Image
+                                                                src={pkg.images?.[0] || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800'}
+                                                                alt={pkg.title}
+                                                                fill
+                                                                className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                                            />
+                                                            {/* Rating Badge Overlay */}
+                                                            <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm border border-black/5">
+                                                                <Star className="w-4 h-4 text-[#ff6b00] fill-[#ff6b00]" />
+                                                                <span className="text-sm font-bold text-neutral-900">{seller.stats.avgRating || '4.9'}</span>
                                                             </div>
-                                                            <span className="text-xs text-neutral-500 font-medium">/{pkg.unit}</span>
+                                                        </div>
+
+                                                        {/* Content Container */}
+                                                        <div className="p-6 flex flex-col flex-grow">
+                                                            <div className="mb-4">
+                                                                <h3 className="text-[18px] font-black tracking-tight text-[#0f172a] mb-2 leading-tight">
+                                                                    {pkg.title}
+                                                                </h3>
+                                                                <p className="text-[14px] text-neutral-500 font-medium line-clamp-2 leading-relaxed">
+                                                                    {pkg.description}
+                                                                </p>
+                                                            </div>
+
+                                                            {/* Bottom CTA Area */}
+                                                            <div className="mt-auto pt-4 border-t border-neutral-100/60 flex items-center justify-between">
+                                                                <div>
+                                                                    <span className="text-[10px] font-black tracking-widest text-[#0f172a]/40 uppercase mb-1 block">
+                                                                        STARTING FROM
+                                                                    </span>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span className="text-[20px] font-black text-[#0f172a]">৳{pkg.price.toLocaleString()}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <a href="#booking-cart" className="bg-[#0f172a] hover:bg-[#1e293b] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:shadow-lg hover:shadow-neutral-900/20 active:scale-95 inline-block text-center">
+                                                                    BOOK NOW
+                                                                </a>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -468,7 +524,7 @@ export default async function SellerProfilePage({ params }: Params) {
 
                     {/* ── RIGHT SIDEBAR : FLOATING BOOKING CART (Col 10-12) ── */}
                     <aside className="hidden xl:block xl:col-span-3 relative">
-                        <div className="sticky top-24 space-y-6">
+                        <div id="booking-cart" className="sticky top-24 space-y-6 scroll-mt-24">
                             {seller.hasDesignServices && (
                                 <ProfileCheckoutCart
                                     designerId={seller.designerDetails?.id}
