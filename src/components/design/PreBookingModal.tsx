@@ -219,34 +219,63 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyType, onSubmit }: Pr
 
             {interiorData.propertyType === 'Specific Area' && (
                 <div className="mt-6 space-y-4">
-                    <div className="space-y-2">
-                        <Label className="text-xs font-bold text-neutral-600">Area Type</Label>
-                        <select
-                            value={interiorData.specificAreaType}
-                            onChange={(e) => setInteriorData({ ...interiorData, specificAreaType: e.target.value })}
-                            className="flex h-11 w-full rounded-md border border-input bg-neutral-50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        >
-                            <option value="">Select an area...</option>
-                            <option value="Living Room">Living Room</option>
-                            <option value="Bed Room">Bed Room</option>
-                            <option value="Kitchen">Kitchen</option>
-                            <option value="Bath Room">Bath Room</option>
-                        </select>
+                    <div className="pt-4 border-t border-neutral-100">
+                        <Label className="text-xs font-bold text-neutral-600 mb-3 block">Select Area</Label>
+                        <RadioCardGroup
+                            options={[
+                                { id: 'Living Room', label: 'Living Room' },
+                                { id: 'Drawing Room', label: 'Drawing Room' },
+                                { id: 'Bed Room', label: 'Bed Room' },
+                                { id: 'Bath Room', label: 'Bath Room' },
+                                { id: 'Kitchen', label: 'Kitchen' },
+                                { id: 'Balcony', label: 'Balcony' },
+                                { id: 'Rooftop', label: 'Rooftop' },
+                                { id: 'Entrance', label: 'Entrance' },
+                            ]}
+                            selected={interiorData.specificAreaType}
+                            onChange={(id) => setInteriorData({ ...interiorData, specificAreaType: id })}
+                            columns={2}
+                        />
                     </div>
 
                     {interiorData.specificAreaType === 'Bed Room' && (
-                        <div className="space-y-2">
-                            <Label className="text-xs font-bold text-neutral-600">Bedroom Type</Label>
-                            <select
-                                value={interiorData.bedRoomType}
-                                onChange={(e) => setInteriorData({ ...interiorData, bedRoomType: e.target.value })}
-                                className="flex h-11 w-full rounded-md border border-input bg-neutral-50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            >
-                                <option value="">Select type...</option>
-                                <option value="Master Bedroom">Master Bedroom</option>
-                                <option value="Children Bedroom">Children Bedroom</option>
-                            </select>
+                        <div className="pt-4 border-t border-neutral-100">
+                            <Label className="text-xs font-bold text-neutral-600 mb-3 block">Bedroom Type</Label>
+                            <RadioCardGroup
+                                options={[
+                                    { id: 'Master Bedroom', label: 'Master Bedroom' },
+                                    { id: 'General Bedroom', label: 'General Bedroom' },
+                                    { id: 'Welcome Newborn', label: 'Welcome Newborn' },
+                                    { id: 'Teenagers Special', label: 'Teenagers Special' },
+                                    { id: 'Children Bedroom', label: 'Children Bedroom' },
+                                ]}
+                                selected={interiorData.bedRoomType}
+                                onChange={(id) => setInteriorData({ ...interiorData, bedRoomType: id })}
+                                columns={2}
+                            />
                         </div>
+                    )}
+
+                    {(interiorData.specificAreaType && (interiorData.specificAreaType !== 'Bed Room' || interiorData.bedRoomType)) && (
+                        <>
+                            <div className="pt-4 border-t border-neutral-100">
+                                <Label className="text-xs font-bold text-neutral-600 mb-3 block">Design Scope</Label>
+                                <RadioCardGroup
+                                    options={[
+                                        { id: 'Entire New Design', label: 'Entire New Design' },
+                                        { id: 'Specific Renovation', label: 'Specific Renovation' },
+                                    ]}
+                                    selected={interiorData.designScope}
+                                    onChange={(id) => setInteriorData({ ...interiorData, designScope: id })}
+                                    columns={2}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold text-neutral-600">Room Size (sqft)</Label>
+                                <Input type="number" placeholder="e.g. 150" value={interiorData.roomSize} onChange={(e) => setInteriorData({ ...interiorData, roomSize: e.target.value })} className="bg-neutral-50 h-11" />
+                            </div>
+                        </>
                     )}
 
                     <div className="space-y-2">
@@ -333,7 +362,12 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyType, onSubmit }: Pr
             stepTitle = "Interior Scope Details";
             stepDesc = "What type of interior space are we refining?";
             renderContent = renderInteriorStep1;
-            canNext = !!interiorData.propertyType;
+            canNext = !!interiorData.propertyType &&
+                (interiorData.propertyType !== 'Specific Area' ||
+                    (!!interiorData.specificAreaType &&
+                        (interiorData.specificAreaType !== 'Bed Room' || !!interiorData.bedRoomType) &&
+                        !!interiorData.designScope &&
+                        !!interiorData.roomSize));
         } else if (step === 2) {
             stepTitle = "Schedule a Consultation";
             stepDesc = "When should the designer or our admin contact you?";
