@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 
+import { CustomerSidebarHeader } from "@/components/dashboard/CustomerSidebarHeader";
+
 export default async function DashboardLayout({
     children,
 }: {
@@ -34,8 +36,10 @@ export default async function DashboardLayout({
 
     // Check role to determine if we should show the Customer Sidebar
     let isPartner = false
+    let profile = null;
     if (user) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+        const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        profile = userProfile;
         if (profile && ['seller', 'designer', 'service_provider', 'admin', 'partner'].includes(profile.role)) {
             isPartner = true
         }
@@ -56,17 +60,7 @@ export default async function DashboardLayout({
                 {/* Dashboard Sidebar */}
                 <aside className="w-full lg:w-64 flex-shrink-0">
                     <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden sticky top-24">
-                        <div className="p-6 border-b border-neutral-100 bg-neutral-900 text-white">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center font-bold text-lg">
-                                    M
-                                </div>
-                                <div>
-                                    <div className="font-bold">MD. Rahim</div>
-                                    <div className="text-xs opacity-70">Customer Account</div>
-                                </div>
-                            </div>
-                        </div>
+                        <CustomerSidebarHeader profile={profile} email={user.email} />
 
                         <nav className="p-4 space-y-1">
                             <Link href="/dashboard/customer" className="flex items-center gap-3 px-4 py-3 bg-primary-50 text-primary-700 rounded-lg font-medium">
