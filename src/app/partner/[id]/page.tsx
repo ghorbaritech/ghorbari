@@ -44,24 +44,26 @@ export default async function SellerProfilePage({ params }: Params) {
 
     const maxReviewCount = seller.ratingBreakdown.length > 0 ? Math.max(...seller.ratingBreakdown.map((r: any) => r.count), 1) : 1;
 
-    // Helper to check category lineage
-    const isInCategoryHierarchy = (category: any, keywords: string[]): boolean => {
-        if (!category) return false;
-        const nameMatch = keywords.some(k => category.name?.toLowerCase().includes(k));
-        if (nameMatch) return true;
-        if (category.parent) return isInCategoryHierarchy(category.parent, keywords);
-        return false;
+    // Categorize Design Packages using Taxonomy Traversal
+    const isStructural = (c: any): boolean => {
+        if (!c) return false;
+        const name = c.name?.toLowerCase() || '';
+        if (name.includes('structural') || name.includes('architectural') || name.includes('building') || name.includes('approval')) return true;
+        return isStructural(c.parent);
     };
 
-    // Categorize Design Packages
-    const structuralKeywords = ['structural', 'architectural', 'building', 'approval', 'design'];
-    const structuralPackages = seller.designPackages?.filter((p: any) =>
-        isInCategoryHierarchy(p.category, structuralKeywords) && !isInCategoryHierarchy(p.category, ['interior'])
-    ) || [];
+    const isInterior = (c: any): boolean => {
+        if (!c) return false;
+        const name = c.name?.toLowerCase() || '';
+        if (name.includes('interior')) return true;
+        return isInterior(c.parent);
+    };
 
-    const interiorKeywords = ['interior'];
+    const structuralPackages = seller.designPackages?.filter((p: any) => isStructural(p.category)) || [];
+
+    // Anything not explicitly structural falls to interior if it has interior lineage, or we default it to interior if unspecified but we have interior packages
     const interiorPackages = seller.designPackages?.filter((p: any) =>
-        isInCategoryHierarchy(p.category, interiorKeywords)
+        !structuralPackages.find((sp: any) => sp.id === p.id) && isInterior(p.category)
     ) || [];
 
     // Determine Default Tab
