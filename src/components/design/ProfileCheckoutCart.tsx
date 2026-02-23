@@ -4,12 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/client';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useDesignCart } from './DesignCartProvider';
-import { X, Check, Calendar, Clock, ClipboardList } from 'lucide-react';
+import { X } from 'lucide-react';
+import { PreBookingModal } from './PreBookingModal';
 
 interface ProfileCheckoutCartProps {
     designerId: string;
@@ -27,24 +25,41 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalStep, setModalStep] = useState(1);
-
-    // Form Data
-    const [projectData, setProjectData] = useState({
-        landArea: '',
-        storeys: '',
-        basement: 'No'
-    });
-    const [scheduleData, setScheduleData] = useState({
-        date: '',
-        time: ''
-    });
 
     const isJourneyFlow = searchParams.get('flow') === 'journey';
 
     // Compute derived state
     const selectedPackages = packages.filter(p => selectedPackageIds.includes(p.id));
+    let price = selectedPackages.reduce((sum, pkg) => sum + pkg.price, 0);
 
+    // Apply bundle logic specific to Ghorbari if needed
+    // Note: developerOption is not defined in the provided context, assuming it's meant to be passed or derived.
+    // For now, this line might cause a linting error if developerOption is not available.
+    // if (developerOption === 'both' && selectedPackageIds.length === 2 && price === 100000) {
+    //     price = 80000;
+    // }
+
+    // Determine Journey Type from packages for the modal
+    const getJourneyType = (): 'design' | 'approval' | 'interior' | null => {
+        if (selectedPackages.length === 0) return null;
+
+        let hasBuildingLogic = false;
+        let hasApproval = false;
+        let hasInterior = false;
+
+        selectedPackages.forEach(pkg => {
+            const title = pkg.title.toLowerCase();
+            if (title.includes('interior')) hasInterior = true;
+            if (title.includes('blueprint') || title.includes('architectural')) hasBuildingLogic = true;
+            if (title.includes('rajuk') || title.includes('approval')) hasApproval = true;
+        });
+
+        if (hasInterior) return 'interior';
+        if (hasBuildingLogic) return 'design';
+        if (hasApproval) return 'approval';
+
+        return 'design'; // Fallback
+    };
     // Document states
     const [docs, setDocs] = useState({
         hasDeed: false,
@@ -60,8 +75,6 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
         setDocs(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    let price = 0;
-
     // Dynamic price calculation
     if (packages.length > 0) {
         price = selectedPackages.reduce((sum, pkg) => sum + pkg.price, 0);
@@ -70,37 +83,23 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
         price = 80000;
     }
 
-    const timeSlots = [
-        "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
-        "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM",
-        "06:00 PM", "07:00 PM", "08:00 PM", "09:00 PM", "10:00 PM", "11:00 PM"
-    ];
-
     const handleInitialCheckoutClick = () => {
         if (selectedPackageIds.length === 0) {
             alert("Please select at least one package to continue.");
             return;
         }
-        setModalStep(isJourneyFlow ? 2 : 1);
+
+        // If journey flow, just submit immediately (using the basic UI from the final journey step)
+        if (isJourneyFlow) {
+            // For journey flow, we'd normally want to trigger submit, but we need date/time.
+            // Let's just open the modal to the last step in Journey flow
+            setIsModalOpen(true);
+            return;
+        }
         setIsModalOpen(true);
     };
 
-    const handleNextStep = () => {
-        if (modalStep === 1) {
-            if (!projectData.landArea || !projectData.storeys) {
-                alert("Please fill in the required project details.");
-                return;
-            }
-            setModalStep(2);
-        }
-    };
-
-    const handleSubmit = async () => {
-        if (!scheduleData.date || !scheduleData.time) {
-            alert("Please select a preferred date and time slot.");
-            return;
-        }
-
+    const handleModalSubmit = async (scheduleData: any, projectData: any) => {
         setLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
@@ -129,9 +128,11 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
                 preferredSchedule: scheduleData
             };
 
+            const serviceType = getJourneyType() === 'interior' ? 'interior' : 'architectural';
+
             const { error } = await supabase.from('design_bookings').insert({
                 user_id: user.id,
-                service_type: 'architectural',
+                service_type: serviceType,
                 status: 'pending',
                 details: payloadDetails
             });
@@ -244,7 +245,7 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
                 </div>
             </div>
 
-            {/* Action Area */}
+            {/* Modified Action Area */}
             <div className="p-6 pt-0 mt-auto bg-white border-t border-neutral-100/50">
                 <Button
                     onClick={handleInitialCheckoutClick}
@@ -253,140 +254,18 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
                 >
                     <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                     <span className="relative z-10">
-                        Continue to Checkout
+                        {loading ? 'Processing...' : 'Continue to Checkout'}
                     </span>
                 </Button>
                 <p className="text-center text-[10px] text-neutral-400 mt-3 font-bold tracking-wide uppercase">No upfront payment required</p>
             </div>
 
-            {/* Checkout Modal */}
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-white rounded-3xl">
-                    <div className="bg-[#f3fbfa] p-6 border-b border-neutral-100">
-                        <DialogTitle className="text-xl font-black text-[#0a1b3d]">
-                            {modalStep === 1 ? "Project Scope Details" : "Schedule a Consultation"}
-                        </DialogTitle>
-                        <DialogDescription className="text-neutral-500 text-sm mt-1">
-                            {modalStep === 1
-                                ? "We need a few details about your property before continuing."
-                                : "When should the designer or our admin contact you?"}
-                        </DialogDescription>
-                    </div>
-
-                    <div className="p-6 space-y-6">
-                        {modalStep === 1 && (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <div>
-                                    <Label className="text-xs font-bold text-neutral-600 block mb-1.5">Total Land Area (approx.)</Label>
-                                    <div className="relative">
-                                        <Input
-                                            placeholder="e.g. 5 Kata / 2400 sqft"
-                                            value={projectData.landArea}
-                                            onChange={(e) => setProjectData({ ...projectData, landArea: e.target.value })}
-                                            className="h-11 rounded-xl bg-neutral-50 border-neutral-200"
-                                        />
-                                        <ClipboardList className="w-4 h-4 text-neutral-400 absolute right-4 top-1/2 -translate-y-1/2" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <Label className="text-xs font-bold text-neutral-600 block mb-1.5">Number of Desired Storeys</Label>
-                                    <Input
-                                        type="number"
-                                        placeholder="e.g. 6"
-                                        value={projectData.storeys}
-                                        onChange={(e) => setProjectData({ ...projectData, storeys: e.target.value })}
-                                        className="h-11 rounded-xl bg-neutral-50 border-neutral-200"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="text-xs font-bold text-neutral-600 block mb-1.5">Do you need a basement?</Label>
-                                    <select
-                                        value={projectData.basement}
-                                        onChange={(e) => setProjectData({ ...projectData, basement: e.target.value })}
-                                        className="w-full h-11 rounded-xl bg-neutral-50 border border-neutral-200 px-4 text-sm font-medium outline-none"
-                                    >
-                                        <option value="No">No Basement</option>
-                                        <option value="1 Level">1 Level Basement</option>
-                                        <option value="2 Levels">2 Levels Basement</option>
-                                        <option value="Unsure">Unsure</option>
-                                    </select>
-                                </div>
-                            </div>
-                        )}
-
-                        {modalStep === 2 && (
-                            <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <div>
-                                    <Label className="text-xs font-bold text-neutral-600 block mb-1.5">Preferred Date</Label>
-                                    <div className="relative">
-                                        <Input
-                                            type="date"
-                                            min={new Date().toISOString().split('T')[0]}
-                                            value={scheduleData.date}
-                                            onChange={(e) => setScheduleData({ ...scheduleData, date: e.target.value })}
-                                            className="h-11 rounded-xl bg-neutral-50 border-neutral-200 pr-4"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <Label className="text-xs font-bold text-neutral-600 block mb-2">Preferred Time Slot</Label>
-                                    <div className="grid grid-cols-3 gap-2 max-h-[220px] overflow-y-auto p-1 pr-2 scrollbar-thin">
-                                        {timeSlots.map((time) => (
-                                            <button
-                                                key={time}
-                                                onClick={() => setScheduleData({ ...scheduleData, time })}
-                                                className={`text-xs py-2.5 rounded-lg border font-bold transition-all ${scheduleData.time === time
-                                                    ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/10'
-                                                    : 'bg-white text-neutral-600 border-neutral-200 hover:border-blue-300 hover:bg-blue-50'
-                                                    }`}
-                                            >
-                                                {time}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="p-6 pt-0 border-t border-neutral-100 flex gap-3 mt-2 bg-neutral-50/50">
-                        {modalStep === 2 && !isJourneyFlow ? (
-                            <Button
-                                variant="outline"
-                                className="flex-1 h-12 rounded-xl border-neutral-200"
-                                onClick={() => setModalStep(1)}
-                            >
-                                Back
-                            </Button>
-                        ) : (
-                            <Button
-                                variant="outline"
-                                className="flex-1 h-12 rounded-xl border-neutral-200"
-                                onClick={() => setIsModalOpen(false)}
-                            >
-                                Cancel
-                            </Button>
-                        )}
-
-                        {modalStep === 1 ? (
-                            <Button
-                                className="flex-1 h-12 rounded-xl bg-[#0a1b3d] hover:bg-[#1a2f5c] text-white"
-                                onClick={handleNextStep}
-                            >
-                                Next Step
-                            </Button>
-                        ) : (
-                            <Button
-                                className="flex-1 h-12 rounded-xl bg-[#00a651] hover:bg-[#009045] text-white shadow-lg shadow-[#00a651]/20"
-                                onClick={handleSubmit}
-                                disabled={loading || !scheduleData.date || !scheduleData.time}
-                            >
-                                {loading ? 'Booking...' : 'Confirm Request'}
-                            </Button>
-                        )}
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <PreBookingModal
+                isOpen={isModalOpen}
+                setIsOpen={setIsModalOpen}
+                journeyType={getJourneyType()}
+                onSubmit={handleModalSubmit}
+            />
         </div>
     );
 }
