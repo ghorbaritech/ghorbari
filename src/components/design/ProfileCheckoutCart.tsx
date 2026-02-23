@@ -10,15 +10,18 @@ import { Label } from '@/components/ui/label';
 interface ProfileCheckoutCartProps {
     designerId: string;
     providerName: string;
+    packages?: any[];
 }
 
-export function ProfileCheckoutCart({ designerId, providerName }: ProfileCheckoutCartProps) {
+export function ProfileCheckoutCart({ designerId, providerName, packages = [] }: ProfileCheckoutCartProps) {
     const router = useRouter();
     const supabase = createClient();
 
     const [loading, setLoading] = useState(false);
 
-    const [designerOption, setDesignerOption] = useState<'both' | 'design' | 'approval'>('both');
+    // If packages exist, use the first package's ID as default, else fallback to 'both' like before
+    const defaultPackageId = packages.length > 0 ? packages[0].id : 'both';
+    const [selectedPackageId, setSelectedPackageId] = useState<string>(defaultPackageId);
 
     // Document states
     const [docs, setDocs] = useState({
@@ -36,8 +39,18 @@ export function ProfileCheckoutCart({ designerId, providerName }: ProfileCheckou
     };
 
     let price = 80000;
-    if (designerOption === 'design') price = 50000;
-    if (designerOption === 'approval') price = 30000;
+
+    // Dynamic price calculation
+    if (packages.length > 0) {
+        const selectedPkg = packages.find(p => p.id === selectedPackageId);
+        if (selectedPkg) {
+            price = selectedPkg.price;
+        }
+    } else {
+        // Fallback pricing
+        if (selectedPackageId === 'design') price = 50000;
+        if (selectedPackageId === 'approval') price = 30000;
+    }
 
     const handleSubmit = async () => {
         setLoading(true);
@@ -51,8 +64,13 @@ export function ProfileCheckoutCart({ designerId, providerName }: ProfileCheckou
                 return;
             }
 
+            const selectedPackageObj = packages.find(p => p.id === selectedPackageId);
+
             const payloadDetails = {
-                designerOption,
+                designerOption: selectedPackageId, // Keep for backward compatibility 
+                packageId: selectedPackageId,
+                packageUnit: selectedPackageObj?.unit || 'job',
+                packageTitle: selectedPackageObj?.title,
                 ...docs,
                 designerSelectionType: 'list',
                 selectedDesignerId: designerId,
@@ -99,10 +117,10 @@ export function ProfileCheckoutCart({ designerId, providerName }: ProfileCheckou
 
                     <div className="space-y-3">
                         <div>
-                            <Label className="text-[12px] font-bold text-neutral-600 mb-1.5 block">Service Area</Label>
+                            <Label className="text-[12px] font-bold text-neutral-600 mb-1.5 block">Service Package</Label>
                             <select
-                                value={designerOption}
-                                onChange={(e) => setDesignerOption(e.target.value as any)}
+                                value={selectedPackageId}
+                                onChange={(e) => setSelectedPackageId(e.target.value)}
                                 className="w-full bg-neutral-50 border border-neutral-200 text-neutral-900 text-[14px] font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all appearance-none cursor-pointer"
                                 style={{
                                     backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
@@ -111,9 +129,19 @@ export function ProfileCheckoutCart({ designerId, providerName }: ProfileCheckou
                                     backgroundSize: '1em'
                                 }}
                             >
-                                <option value="both">Approval & Design</option>
-                                <option value="design">Building Design Only</option>
-                                <option value="approval">Building Approval Only</option>
+                                {packages.length > 0 ? (
+                                    packages.map(pkg => (
+                                        <option key={pkg.id} value={pkg.id}>
+                                            {pkg.title} (৳{pkg.price.toLocaleString()})
+                                        </option>
+                                    ))
+                                ) : (
+                                    <>
+                                        <option value="both">Approval & Design</option>
+                                        <option value="design">Building Design Only</option>
+                                        <option value="approval">Building Approval Only</option>
+                                    </>
+                                )}
                             </select>
                         </div>
 
@@ -146,8 +174,8 @@ export function ProfileCheckoutCart({ designerId, providerName }: ProfileCheckou
                                     key={key}
                                     onClick={() => toggleDoc(key as keyof typeof docs)}
                                     className={`px-3 py-1.5 rounded-full font-bold text-[11px] transition-all cursor-pointer select-none ${value
-                                            ? 'bg-[#effdf5] text-[#00a651] border border-[#d6f6e5]'
-                                            : 'bg-white text-neutral-500 border border-neutral-200 hover:bg-neutral-50 hover:text-neutral-700'
+                                        ? 'bg-[#effdf5] text-[#00a651] border border-[#d6f6e5]'
+                                        : 'bg-white text-neutral-500 border border-neutral-200 hover:bg-neutral-50 hover:text-neutral-700'
                                         }`}
                                 >
                                     {labelMap[key]}

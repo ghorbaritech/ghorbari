@@ -61,6 +61,10 @@ export default function DesignerPackagesPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
             const { data: designer } = await supabase.from('designers').select('id').eq('user_id', user.id).single();
+            if (!designer) {
+                alert("Designer profile not found");
+                return;
+            }
 
             if (editingPackage) {
                 await updateDesignPackage(editingPackage.id, formData);

@@ -45,7 +45,7 @@ export async function getSellerProfile(sellerId: string) {
     // 3. Fetch products, reviews, and order stats in parallel
     // We base these off the targetUserId mapping to the seller ID or designer target types
     const fetchSellerId = sellerData?.id || 'none'; // so we don't query null
-    const [productsRes, reviewsRes, ordersRes] = await Promise.all([
+    const [productsRes, reviewsRes, ordersRes, packagesRes] = await Promise.all([
         supabase
             .from('products')
             .select('id, title, base_price, images, category_id, status, sku')
@@ -65,12 +65,20 @@ export async function getSellerProfile(sellerId: string) {
             .from('orders')
             .select('id, total_amount, status')
             .eq('seller_id', fetchSellerId)
-            .eq('status', 'delivered')
+            .eq('status', 'delivered'),
+
+        supabase
+            .from('design_packages')
+            .select('*, category:product_categories(name)')
+            .eq('designer_id', designerData?.id || 'none')
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
     ])
 
     const products = productsRes.data || []
     const reviews = reviewsRes.data || []
     const orders = ordersRes.data || []
+    const designPackages = packagesRes.data || []
 
     // 4. Compute stats
     const totalOrders = (sellerData?.total_orders || orders.length) + (designerData?.completed_projects || 0)
@@ -147,6 +155,7 @@ export async function getSellerProfile(sellerId: string) {
             avgRating: Math.round(avgRating * 10) / 10
         },
         products,
+        designPackages,
         reviews,
         ratingBreakdown
     }

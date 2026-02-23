@@ -42,6 +42,17 @@ export default async function SellerProfilePage({ params }: Params) {
 
     const maxReviewCount = seller.ratingBreakdown.length > 0 ? Math.max(...seller.ratingBreakdown.map((r: any) => r.count), 1) : 1;
 
+    // Categorize Design Packages
+    const structuralKeywords = ['structural', 'architectural', 'building', 'approval'];
+    const structuralPackages = seller.designPackages?.filter((p: any) =>
+        structuralKeywords.some(k => p.category?.name?.toLowerCase().includes(k)) ||
+        structuralKeywords.some(k => p.title.toLowerCase().includes(k))
+    ) || [];
+
+    const interiorPackages = seller.designPackages?.filter((p: any) =>
+        !structuralPackages.find((sp: any) => sp.id === p.id)
+    ) || [];
+
     // Determine Default Tab
     let defaultTab = "products";
     if (seller.hasDesignServices && !seller.hasProducts) defaultTab = "design";
@@ -277,6 +288,60 @@ export default async function SellerProfilePage({ params }: Params) {
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* ── DESIGN PACKAGES (INVENTORY) ── */}
+                                    {structuralPackages.length > 0 && (
+                                        <div className="space-y-4 pt-4">
+                                            <h3 className="text-xl font-black text-neutral-900 border-l-4 border-indigo-600 pl-3">Building & Structural Packages</h3>
+                                            <div className="flex overflow-x-auto pb-6 snap-x snap-mandatory hide-scrollbar gap-4">
+                                                {structuralPackages.map((pkg: any) => (
+                                                    <div key={pkg.id} className="min-w-[280px] sm:min-w-[320px] bg-white border border-neutral-200 rounded-2xl p-5 snap-start shadow-sm flex flex-col hover:border-indigo-300 transition-colors">
+                                                        <div className="mb-3">
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md mb-2 inline-block">
+                                                                {pkg.category?.name || 'Structural'}
+                                                            </span>
+                                                            <h4 className="font-bold text-neutral-900 line-clamp-2 leading-snug">{pkg.title}</h4>
+                                                        </div>
+                                                        <p className="text-sm text-neutral-500 line-clamp-3 mb-4 flex-grow">{pkg.description}</p>
+                                                        <div className="pt-4 border-t border-neutral-100 flex items-end justify-between mt-auto">
+                                                            <div>
+                                                                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest leading-none mb-1">Starting Price</p>
+                                                                <p className="font-black text-lg text-neutral-900 leading-none">৳{pkg.price.toLocaleString()}</p>
+                                                            </div>
+                                                            <span className="text-xs text-neutral-500 font-medium">/{pkg.unit}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {interiorPackages.length > 0 && (
+                                        <div className="space-y-4 pt-2">
+                                            <h3 className="text-xl font-black text-neutral-900 border-l-4 border-pink-600 pl-3">Interior Design Packages</h3>
+                                            <div className="flex overflow-x-auto pb-6 snap-x snap-mandatory hide-scrollbar gap-4">
+                                                {interiorPackages.map((pkg: any) => (
+                                                    <div key={pkg.id} className="min-w-[280px] sm:min-w-[320px] bg-white border border-neutral-200 rounded-2xl p-5 snap-start shadow-sm flex flex-col hover:border-pink-300 transition-colors">
+                                                        <div className="mb-3">
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-pink-600 bg-pink-50 px-2.5 py-1 rounded-md mb-2 inline-block">
+                                                                {pkg.category?.name || 'Interior'}
+                                                            </span>
+                                                            <h4 className="font-bold text-neutral-900 line-clamp-2 leading-snug">{pkg.title}</h4>
+                                                        </div>
+                                                        <p className="text-sm text-neutral-500 line-clamp-3 mb-4 flex-grow">{pkg.description}</p>
+                                                        <div className="pt-4 border-t border-neutral-100 flex items-end justify-between mt-auto">
+                                                            <div>
+                                                                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest leading-none mb-1">Starting Price</p>
+                                                                <p className="font-black text-lg text-neutral-900 leading-none">৳{pkg.price.toLocaleString()}</p>
+                                                            </div>
+                                                            <span className="text-xs text-neutral-500 font-medium">/{pkg.unit}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                 </TabsContent>
                             )}
 
@@ -408,6 +473,7 @@ export default async function SellerProfilePage({ params }: Params) {
                                 <ProfileCheckoutCart
                                     designerId={seller.designerDetails?.id}
                                     providerName={seller.businessName || 'Verified Partner'}
+                                    packages={seller.designPackages || []}
                                 />
                             )}
 
