@@ -119,6 +119,8 @@ function DesignBookingWizard() {
         roomInspiration: null as File | null,
         roomImage: null as File | null,
         specificInstruction: '',
+        preferredDate: '',
+        preferredTime: '',
     });
 
     const updateData = (key: string, value: any) => {
@@ -191,11 +193,17 @@ function DesignBookingWizard() {
                 tentativePrice,
                 aptInspirationUrl,
                 roomInspirationUrl,
-                roomImageUrl
+                roomImageUrl,
+                preferredSchedule: {
+                    date: formData.preferredDate,
+                    time: formData.preferredTime
+                }
             };
             delete payloadDetails.aptInspiration;
             delete payloadDetails.roomInspiration;
             delete payloadDetails.roomImage;
+            delete payloadDetails.preferredDate;
+            delete payloadDetails.preferredTime;
 
             const { error } = await supabase.from('design_bookings').insert({
                 user_id: user.id,
@@ -214,6 +222,57 @@ function DesignBookingWizard() {
         }
     };
 
+    const timeSlots = [
+        "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
+        "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM",
+        "06:00 PM", "07:00 PM", "08:00 PM", "09:00 PM", "10:00 PM", "11:00 PM"
+    ];
+
+    const renderScheduleStep = (currentStep: number, totalSteps: number, next: () => void, back: () => void) => (
+        <WizardStep
+            key={`schedule-${lang}`}
+            lang={lang}
+            title={t.scheduleTitle}
+            description={t.scheduleDesc}
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            onNext={next}
+            onBack={back}
+            canNext={!!(formData.preferredDate && formData.preferredTime)}
+        >
+            <div className="max-w-md mx-auto space-y-8">
+                <div className="space-y-3">
+                    <Label className="font-bold text-neutral-700">{t.prefDateLabel}</Label>
+                    <Input
+                        type="date"
+                        min={new Date().toISOString().split('T')[0]}
+                        className="h-12 bg-neutral-50/50 border-neutral-200"
+                        value={formData.preferredDate}
+                        onChange={(e) => updateData('preferredDate', e.target.value)}
+                    />
+                </div>
+
+                <div className="space-y-4">
+                    <Label className="font-bold text-neutral-700">{t.prefTimeLabel}</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                        {timeSlots.map((time) => (
+                            <button
+                                key={time}
+                                onClick={() => updateData('preferredTime', time)}
+                                className={`text-xs py-3 rounded-xl border font-bold transition-all ${formData.preferredTime === time
+                                    ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md shadow-blue-900/10'
+                                    : 'bg-white text-neutral-600 border-neutral-200 hover:border-blue-300 hover:bg-blue-50'
+                                    }`}
+                            >
+                                {time}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </WizardStep>
+    );
+
     // --- Render Logic ---
 
     if (step === 0) {
@@ -225,7 +284,7 @@ function DesignBookingWizard() {
                     title={t.startJourneyTitle}
                     description={t.startJourneyDesc}
                     currentStep={0}
-                    totalSteps={serviceType === 'structural-architectural' ? 5 : 2}
+                    totalSteps={serviceType === 'structural-architectural' ? 5 : 4}
                     onNext={nextStep}
                     onBack={() => { }}
                     isFirstStep
@@ -251,7 +310,7 @@ function DesignBookingWizard() {
         let skippableListStep = formData.designerSelectionType === 'ghorbari';
 
         const getDynamicTotalSteps = () => {
-            let total = 8;
+            let total = 9; // Added 1 for schedule
             if (!showsDesignQ) total -= 3;
             if (skippableListStep) total -= 1;
             return total;
@@ -260,6 +319,8 @@ function DesignBookingWizard() {
         let visualStep = step;
         if (!showsDesignQ && step > 2) visualStep -= 3;
         if (skippableListStep && step > 6) visualStep -= 1;
+        // Adjust visual step for review if schedule is inserted
+        if (step === 9) visualStep = getDynamicTotalSteps();
 
         if (step === 1) {
             return (
@@ -681,6 +742,17 @@ function DesignBookingWizard() {
         }
 
         if (step === 8) {
+            return (
+                <MainLayout>
+                    {renderScheduleStep(visualStep, getDynamicTotalSteps(), () => setStep(9), () => {
+                        if (formData.designerSelectionType === 'ghorbari') setStep(6);
+                        else setStep(7);
+                    })}
+                </MainLayout>
+            );
+        }
+
+        if (step === 9) {
             let price = 0;
             if (formData.designerOption === 'both') price = 80000;
             else if (formData.designerOption === 'design') price = 50000;
@@ -699,10 +771,7 @@ function DesignBookingWizard() {
                         currentStep={visualStep}
                         totalSteps={getDynamicTotalSteps()}
                         onNext={handleSubmit}
-                        onBack={() => {
-                            if (formData.designerSelectionType === 'ghorbari') setStep(6);
-                            else setStep(7);
-                        }}
+                        onBack={() => setStep(8)}
                         isLastStep
                         canNext={true}
                         nextLabel={loading ? t.generatingReq : t.completeBooking}
@@ -739,6 +808,11 @@ function DesignBookingWizard() {
                                     <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
                                         <span className="text-[16px] font-bold text-neutral-700">{t.assignedProvider}</span>
                                         <span className="text-[16px] font-black text-neutral-900">{providerName}</span>
+                                    </div>
+
+                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
+                                        <span className="text-[16px] font-bold text-neutral-700">{t.prefDateLabel} & {t.prefTimeLabel}</span>
+                                        <span className="text-[16px] font-black text-neutral-900">{formData.preferredDate} | {formData.preferredTime}</span>
                                     </div>
                                 </div>
 
@@ -823,7 +897,7 @@ function DesignBookingWizard() {
                         title={t.startJourneyTitle || "Start Your Design Journey"}
                         description={t.startJourneyDesc || "Select the type of design service you need to get started."}
                         currentStep={1}
-                        totalSteps={3}
+                        totalSteps={4}
                         onNext={nextStep}
                         onBack={prevStep}
                         canNext={!!formData.propertyType}
@@ -857,10 +931,9 @@ function DesignBookingWizard() {
                         title={t.projectReqs || "Project Requirements"}
                         description={t.spaceLayoutDesc || "Tell us about the space and requirements."}
                         currentStep={2}
-                        totalSteps={2}
-                        onNext={handleSubmit}
+                        totalSteps={4}
+                        onNext={() => setStep(3)}
                         onBack={prevStep}
-                        isLastStep
                         canNext={
                             (formData.propertyType === 'Full house' && !!formData.houseType && !!formData.intFloors && !!formData.intUnitsPerFloor && !!formData.intAreaPerUnit) ||
                             (formData.propertyType === 'Full Apartment' && !!formData.aptSize && !!formData.aptRooms) ||
@@ -997,6 +1070,91 @@ function DesignBookingWizard() {
                                     )}
                                 </>
                             )}
+                        </div>
+                    </WizardStep>
+                </MainLayout>
+            );
+        }
+
+        if (step === 3) {
+            return (
+                <MainLayout>
+                    {renderScheduleStep(3, 4, () => setStep(4), () => setStep(2))}
+                </MainLayout>
+            );
+        }
+
+        if (step === 4) {
+            const tentativePrice = 20000;
+            const providerName = 'Ghorbari Assigned Expert';
+
+            return (
+                <MainLayout>
+                    <WizardStep
+                        key={`step4-int-${lang}`}
+                        lang={lang}
+                        title={t.reviewTitle}
+                        description={t.reviewDesc}
+                        currentStep={4}
+                        totalSteps={4}
+                        onNext={handleSubmit}
+                        onBack={() => setStep(3)}
+                        isLastStep
+                        canNext={true}
+                        nextLabel={loading ? t.generatingReq : t.completeBooking}
+                    >
+                        <div className="bg-white rounded-[16px] border border-neutral-300 shadow-sm overflow-hidden text-left mx-auto max-w-2xl mt-4">
+                            <div className="bg-[#f3fbfa] p-8 border-b border-neutral-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                <div>
+                                    <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">{t.tentativeQuote}</h3>
+                                    <p className="text-[13px] font-medium text-neutral-600 mt-2">{t.statusWait}</p>
+                                </div>
+                                <div className="text-left md:text-right">
+                                    <div className="flex items-center md:justify-end gap-1 font-black text-[32px] text-[#0a1b3d] leading-none">
+                                        <span className="text-[26px]">৳</span> {tentativePrice.toLocaleString()}
+                                    </div>
+                                    <p className="text-[11px] font-black tracking-widest text-[#0a1b3d]/70 uppercase mt-2">{t.startingPrice}</p>
+                                </div>
+                            </div>
+
+                            <div className="p-8 space-y-8 bg-white">
+                                <div className="space-y-1">
+                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">{t.serviceDetails}</h4>
+
+                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
+                                        <span className="text-[16px] font-bold text-neutral-700">{t.serviceArea}</span>
+                                        <span className="text-[16px] font-black text-neutral-900 capitalize">Interior Design ({formData.propertyType})</span>
+                                    </div>
+
+                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
+                                        <span className="text-[16px] font-bold text-neutral-700">{t.assignedProvider}</span>
+                                        <span className="text-[16px] font-black text-neutral-900">{providerName}</span>
+                                    </div>
+
+                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
+                                        <span className="text-[16px] font-bold text-neutral-700">{t.prefDateLabel} & {t.prefTimeLabel}</span>
+                                        <span className="text-[16px] font-black text-neutral-900">{formData.preferredDate} | {formData.preferredTime}</span>
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 border-t border-neutral-200/70 mt-6">
+                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">{t.projectReqs}</h4>
+                                    <div className="grid grid-cols-1 gap-y-4">
+                                        {formData.propertyType === 'Full house' && (
+                                            <p className="text-sm font-bold text-neutral-800">{formData.houseType} house, {formData.intFloors} floors, {formData.intUnitsPerFloor} units each.</p>
+                                        )}
+                                        {formData.propertyType === 'Full Apartment' && (
+                                            <p className="text-sm font-bold text-neutral-800">{formData.aptSize} sqft Apartment, {formData.aptRooms} rooms.</p>
+                                        )}
+                                        {formData.propertyType === 'Specific Area' && (
+                                            <p className="text-sm font-bold text-neutral-800">{formData.specificAreaType} ({formData.bedRoomType || 'N/A'}), {formData.roomSize} sqft - {formData.designScope}.</p>
+                                        )}
+                                        {formData.specificInstruction && (
+                                            <p className="text-xs text-neutral-600 mt-2 italic">Instruction: {formData.specificInstruction}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </WizardStep>
                 </MainLayout>

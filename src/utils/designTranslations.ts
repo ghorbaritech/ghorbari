@@ -134,7 +134,12 @@ export const designTranslations = {
         specificRenovation: "Specific Renovation",
         roomSize: "Room Size",
         imageOfRoom: "Image of the room",
-        anyInstruction: "Any specific instruction"
+        anyInstruction: "Any specific instruction",
+        scheduleTitle: "Schedule a Consultation",
+        scheduleDesc: "When should the designer or our admin contact you?",
+        prefDateLabel: "Preferred Date",
+        prefTimeLabel: "Preferred Time Slot",
+        alertSchedule: "Please select a preferred date and time slot."
     },
     bn: {
         startJourneyTitle: "আপনার ডিজাইনের যাত্রা শুরু করুন",
@@ -271,6 +276,11 @@ export const designTranslations = {
         specificRenovation: "নির্দিষ্ট রেনোভেশন",
         roomSize: "রুমের আকার",
         imageOfRoom: "রুমের ছবি",
-        anyInstruction: "কোনো নির্দিষ্ট নির্দেশনা"
+        anyInstruction: "কোনো নির্দিষ্ট নির্দেশনা",
+        scheduleTitle: "পরামর্শের জন্য সময় নির্ধারণ করুন",
+        scheduleDesc: "ডিজাইনার বা আমাদের অ্যাডমিন কখন আপনার সাথে যোগাযোগ করবেন?",
+        prefDateLabel: "পছন্দের তারিখ",
+        prefTimeLabel: "পছন্দের সময়",
+        alertSchedule: "অনুগ্রহ করে একটি পছন্দের তারিখ এবং সময় নির্বাচন করুন।"
     }
 };
