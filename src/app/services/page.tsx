@@ -132,40 +132,39 @@ export default function ServicesPage() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    {!selectedRootId ? (
-                                        // Show Root Categories
-                                        rootCategories.map(c => (
-                                            <div key={c.id} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleRootClick(c.id)}>
-                                                <div className="w-1.5 h-1.5 rounded-full bg-neutral-200 group-hover:bg-primary-600 transition-colors" />
-                                                <label className="text-xs font-black uppercase tracking-widest text-neutral-500 group-hover:text-primary-600 cursor-pointer transition-colors">
-                                                    {language === 'BN' ? c.name_bn || c.name : c.name}
+                                    {rootCategories.map(root => (
+                                        <div key={root.id} className="space-y-3">
+                                            {/* Root Category Label */}
+                                            <div
+                                                className={`flex items-center space-x-3 group cursor-pointer p-2 rounded-xl transition-all ${selectedRootId === root.id ? 'bg-primary-50' : 'hover:bg-neutral-50'}`}
+                                                onClick={() => handleRootClick(root.id)}
+                                            >
+                                                <div className={`w-1.5 h-1.5 rounded-full transition-colors ${selectedRootId === root.id ? 'bg-primary-600' : 'bg-neutral-200 group-hover:bg-primary-600'}`} />
+                                                <label className={`text-xs font-black uppercase tracking-widest cursor-pointer transition-colors ${selectedRootId === root.id ? 'text-primary-600' : 'text-neutral-500 group-hover:text-primary-600'}`}>
+                                                    {language === 'BN' ? root.name_bn || root.name : root.name}
                                                 </label>
                                             </div>
-                                        ))
-                                    ) : (
-                                        // Show Sub Categories
-                                        <div className="space-y-4">
-                                            <button
-                                                onClick={() => setSelectedRootId(null)}
-                                                className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 hover:text-neutral-600 mb-4"
-                                            >
-                                                <ArrowRight className="w-3 h-3 rotate-180" />
-                                                {language === 'BN' ? 'পেছনে ফিরুন' : 'Go Back'}
-                                            </button>
-                                            {subCategories.map(c => (
-                                                <div key={c.id} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleSubClick(c.id)}>
-                                                    <Checkbox
-                                                        id={c.id}
-                                                        checked={selectedSubId === c.id}
-                                                        onCheckedChange={() => handleSubClick(c.id)}
-                                                    />
-                                                    <label htmlFor={c.id} className="text-xs font-black uppercase tracking-widest text-neutral-500 group-hover:text-primary-600 cursor-pointer transition-colors">
-                                                        {language === 'BN' ? c.name_bn || c.name : c.name}
-                                                    </label>
+
+                                            {/* Nested Subcategories (Accordion Content) */}
+                                            {selectedRootId === root.id && subCategories.length > 0 && (
+                                                <div className="ml-6 space-y-4 pt-1 border-l-2 border-primary-100 pl-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                    {subCategories.map(sub => (
+                                                        <div key={sub.id} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleSubClick(sub.id)}>
+                                                            <Checkbox
+                                                                id={sub.id}
+                                                                checked={selectedSubId === sub.id}
+                                                                onCheckedChange={() => handleSubClick(sub.id)}
+                                                                className="border-neutral-300 data-[state=checked]:bg-primary-600 data-[state=checked]:border-primary-600"
+                                                            />
+                                                            <label htmlFor={sub.id} className={`text-[10px] font-bold uppercase tracking-widest cursor-pointer transition-colors ${selectedSubId === sub.id ? 'text-primary-600' : 'text-neutral-400 group-hover:text-primary-500'}`}>
+                                                                {language === 'BN' ? sub.name_bn || sub.name : sub.name}
+                                                            </label>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
+                                            )}
                                         </div>
-                                    )}
+                                    ))}
                                 </div>
                             </div>
 
