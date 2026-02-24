@@ -1,6 +1,5 @@
 "use client"
 
-// ... imports
 import { ArrowRight, ShoppingBag, PencilRuler, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";

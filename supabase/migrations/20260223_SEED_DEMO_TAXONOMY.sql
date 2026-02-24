@@ -1,6 +1,6 @@
 -- Migration: Seed Custom Categories and Packages for Aesthetic Architects
 
--- 1. Create Categories (Using existing helper from SEED_TAXONOMY or raw inserts)
+-- 1. Create Categories
 DO $$
 DECLARE
     v_structural_id UUID;
@@ -13,50 +13,88 @@ DECLARE
     v_master_bed_id UUID;
     
     v_designer_id UUID := '7a49eca1-1934-461a-8d68-cf55f360c650';
+
+    -- Helper variables for upserts
+    v_temp_id UUID;
 BEGIN
     -- [ STRUCTURAL ] --
     -- Root: Structural and Architectural Design
-    INSERT INTO public.product_categories (name, slug, level, section, is_active)
-    VALUES ('Structural and Architectural Design', 'structural-and-architectural-design', 0, 'design', true)
-    ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
-    RETURNING id INTO v_structural_id;
+    SELECT id INTO v_temp_id FROM public.product_categories WHERE slug = 'structural-and-architectural-design' LIMIT 1;
+    IF NOT FOUND THEN
+        INSERT INTO public.product_categories (name, slug, level, section, is_active)
+        VALUES ('Structural and Architectural Design', 'structural-and-architectural-design', 0, 'design', true)
+        RETURNING id INTO v_structural_id;
+    ELSE
+        UPDATE public.product_categories SET name = 'Structural and Architectural Design', level = 0, section = 'design', is_active = true WHERE id = v_temp_id;
+        v_structural_id := v_temp_id;
+    END IF;
 
     -- Sub: Building Design
-    INSERT INTO public.product_categories (name, slug, level, parent_id, section, is_active)
-    VALUES ('Building Design', 'building-design-sub', 1, v_structural_id, 'design', true)
-    ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, parent_id = EXCLUDED.parent_id
-    RETURNING id INTO v_bldg_design_id;
+    SELECT id INTO v_temp_id FROM public.product_categories WHERE slug = 'building-design-sub' LIMIT 1;
+    IF NOT FOUND THEN
+        INSERT INTO public.product_categories (name, slug, level, parent_id, section, is_active)
+        VALUES ('Building Design', 'building-design-sub', 1, v_structural_id, 'design', true)
+        RETURNING id INTO v_bldg_design_id;
+    ELSE
+        UPDATE public.product_categories SET name = 'Building Design', parent_id = v_structural_id, level = 1, section = 'design', is_active = true WHERE id = v_temp_id;
+        v_bldg_design_id := v_temp_id;
+    END IF;
 
     -- Sub: Building Approval
-    INSERT INTO public.product_categories (name, slug, level, parent_id, section, is_active)
-    VALUES ('Building Approval', 'building-approval-sub', 1, v_structural_id, 'design', true)
-    ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, parent_id = EXCLUDED.parent_id
-    RETURNING id INTO v_bldg_approval_id;
+    SELECT id INTO v_temp_id FROM public.product_categories WHERE slug = 'building-approval-sub' LIMIT 1;
+    IF NOT FOUND THEN
+        INSERT INTO public.product_categories (name, slug, level, parent_id, section, is_active)
+        VALUES ('Building Approval', 'building-approval-sub', 1, v_structural_id, 'design', true)
+        RETURNING id INTO v_bldg_approval_id;
+    ELSE
+        UPDATE public.product_categories SET name = 'Building Approval', parent_id = v_structural_id, level = 1, section = 'design', is_active = true WHERE id = v_temp_id;
+        v_bldg_approval_id := v_temp_id;
+    END IF;
 
     -- [ INTERIOR ] --
     -- Root: Interior Design
-    INSERT INTO public.product_categories (name, slug, level, section, is_active)
-    VALUES ('Interior Design', 'interior-design', 0, 'design', true)
-    ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
-    RETURNING id INTO v_interior_id;
+    SELECT id INTO v_temp_id FROM public.product_categories WHERE slug = 'interior-design' LIMIT 1;
+    IF NOT FOUND THEN
+        INSERT INTO public.product_categories (name, slug, level, section, is_active)
+        VALUES ('Interior Design', 'interior-design', 0, 'design', true)
+        RETURNING id INTO v_interior_id;
+    ELSE
+        UPDATE public.product_categories SET name = 'Interior Design', level = 0, section = 'design', is_active = true WHERE id = v_temp_id;
+        v_interior_id := v_temp_id;
+    END IF;
 
     -- Sub: Full Apartment
-    INSERT INTO public.product_categories (name, slug, level, parent_id, section, is_active)
-    VALUES ('Full Apartment', 'full-apartment-interior', 1, v_interior_id, 'design', true)
-    ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, parent_id = EXCLUDED.parent_id
-    RETURNING id INTO v_full_apt_id;
+    SELECT id INTO v_temp_id FROM public.product_categories WHERE slug = 'full-apartment-interior' LIMIT 1;
+    IF NOT FOUND THEN
+        INSERT INTO public.product_categories (name, slug, level, parent_id, section, is_active)
+        VALUES ('Full Apartment', 'full-apartment-interior', 1, v_interior_id, 'design', true)
+        RETURNING id INTO v_full_apt_id;
+    ELSE
+        UPDATE public.product_categories SET name = 'Full Apartment', parent_id = v_interior_id, level = 1, section = 'design', is_active = true WHERE id = v_temp_id;
+        v_full_apt_id := v_temp_id;
+    END IF;
     
     -- Sub: Specific Area
-    INSERT INTO public.product_categories (name, slug, level, parent_id, section, is_active)
-    VALUES ('Specific Area', 'specific-area-interior', 1, v_interior_id, 'design', true)
-    ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, parent_id = EXCLUDED.parent_id
-    RETURNING id INTO v_specific_area_id;
+    SELECT id INTO v_temp_id FROM public.product_categories WHERE slug = 'specific-area-interior' LIMIT 1;
+    IF NOT FOUND THEN
+        INSERT INTO public.product_categories (name, slug, level, parent_id, section, is_active)
+        VALUES ('Specific Area', 'specific-area-interior', 1, v_interior_id, 'design', true)
+        RETURNING id INTO v_specific_area_id;
+    ELSE
+        UPDATE public.product_categories SET name = 'Specific Area', parent_id = v_interior_id, level = 1, section = 'design', is_active = true WHERE id = v_temp_id;
+        v_specific_area_id := v_temp_id;
+    END IF;
 
     -- Sub-Sub: Master Bedroom
-    INSERT INTO public.product_categories (name, slug, level, parent_id, section, is_active)
-    VALUES ('Master Bedroom', 'master-bedroom-interior', 2, v_specific_area_id, 'design', true)
-    ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, parent_id = EXCLUDED.parent_id
-    RETURNING id INTO v_master_bed_id;
+    SELECT id INTO v_temp_id FROM public.product_categories WHERE slug = 'master-bedroom-interior' LIMIT 1;
+    IF NOT FOUND THEN
+        INSERT INTO public.product_categories (name, slug, level, parent_id, section, is_active)
+        VALUES ('Master Bedroom', 'master-bedroom-interior', 2, v_specific_area_id, 'design', true)
+        RETURNING id INTO v_master_bed_id;
+    ELSE
+        UPDATE public.product_categories SET name = 'Master Bedroom', parent_id = v_specific_area_id, level = 2, section = 'design', is_active = true WHERE id = v_temp_id;
+        v_master_bed_id := v_temp_id;
+    END IF;
 
 
     -- 2. Insert Packages for Aesthetic Architects

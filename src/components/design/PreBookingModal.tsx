@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioCardGroup, Option } from '@/components/design/WizardFormComponents';
 import { ClipboardList } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface PreBookingModalProps {
     isOpen: boolean;
@@ -17,6 +18,7 @@ interface PreBookingModalProps {
 }
 
 export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit }: PreBookingModalProps) {
+    const { language, t } = useLanguage();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
 
@@ -78,7 +80,7 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
 
     const handleFinalSubmit = async () => {
         if (!scheduleData.date || !scheduleData.time) {
-            alert("Please select a preferred date and time slot.");
+            alert(t.alert_schedule);
             return;
         }
         setLoading(true);
@@ -96,39 +98,39 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 max-h-[60vh] overflow-y-auto pr-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="text-xs font-bold text-neutral-600">Land Area (Katha)</Label>
+                    <Label className="text-xs font-bold text-neutral-600">{t.lbl_land_area}</Label>
                     <Input type="number" placeholder="e.g. 5" value={designData.landAreaKatha} onChange={(e) => setDesignData({ ...designData, landAreaKatha: e.target.value })} className="bg-neutral-50 h-11" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-xs font-bold text-neutral-600">Initial Floors</Label>
+                    <Label className="text-xs font-bold text-neutral-600">{t.lbl_initial_floors}</Label>
                     <Input type="number" placeholder="e.g. 2" value={designData.initialFloors} onChange={(e) => setDesignData({ ...designData, initialFloors: e.target.value })} className="bg-neutral-50 h-11" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-xs font-bold text-neutral-600">Units Per Floor</Label>
+                    <Label className="text-xs font-bold text-neutral-600">{t.lbl_units_per_floor}</Label>
                     <Input type="number" placeholder="e.g. 2" value={designData.unitsPerFloor} onChange={(e) => setDesignData({ ...designData, unitsPerFloor: e.target.value })} className="bg-neutral-50 h-11" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-xs font-bold text-neutral-600">Bedrooms Per Unit</Label>
+                    <Label className="text-xs font-bold text-neutral-600">{t.lbl_bedrooms_per_unit}</Label>
                     <Input type="number" placeholder="e.g. 3" value={designData.bedroomsPerUnit} onChange={(e) => setDesignData({ ...designData, bedroomsPerUnit: e.target.value })} className="bg-neutral-50 h-11" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-xs font-bold text-neutral-600">Bathrooms Per Unit</Label>
+                    <Label className="text-xs font-bold text-neutral-600">{t.lbl_bathrooms_per_unit}</Label>
                     <Input type="number" placeholder="e.g. 2" value={designData.bathroomsPerUnit} onChange={(e) => setDesignData({ ...designData, bathroomsPerUnit: e.target.value })} className="bg-neutral-50 h-11" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-xs font-bold text-neutral-600">Drawing Room Per Unit</Label>
+                    <Label className="text-xs font-bold text-neutral-600">{t.lbl_drawing_per_unit}</Label>
                     <Input type="number" placeholder="e.g. 1" value={designData.drawingRoomPerUnit} onChange={(e) => setDesignData({ ...designData, drawingRoomPerUnit: e.target.value })} className="bg-neutral-50 h-11" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-xs font-bold text-neutral-600">Kitchen Per Unit</Label>
+                    <Label className="text-xs font-bold text-neutral-600">{t.lbl_kitchen_per_unit}</Label>
                     <Input type="number" placeholder="e.g. 1" value={designData.kitchenPerUnit} onChange={(e) => setDesignData({ ...designData, kitchenPerUnit: e.target.value })} className="bg-neutral-50 h-11" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-xs font-bold text-neutral-600">Balcony Per Unit</Label>
+                    <Label className="text-xs font-bold text-neutral-600">{t.lbl_balcony_per_unit}</Label>
                     <Input type="number" placeholder="e.g. 2" value={designData.balconyPerUnit} onChange={(e) => setDesignData({ ...designData, balconyPerUnit: e.target.value })} className="bg-neutral-50 h-11" />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                    <Label className="text-xs font-bold text-neutral-600">Other Rooms (e.g. Dining, Family living)</Label>
+                    <Label className="text-xs font-bold text-neutral-600">{t.lbl_other_rooms}</Label>
                     <Input type="text" placeholder="e.g. Dining, Family living" value={designData.othersPerUnit} onChange={(e) => setDesignData({ ...designData, othersPerUnit: e.target.value })} className="bg-neutral-50 h-11" />
                 </div>
             </div>
@@ -138,43 +140,56 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
     const renderDesignStep2 = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 max-h-[60vh] overflow-y-auto pr-2">
             <div className="space-y-3">
-                <Label className="text-sm font-bold text-neutral-800">Plot Orientation (Facing)</Label>
+                <Label className="text-sm font-bold text-neutral-800">{t.lbl_plot_orientation}</Label>
                 <div className="grid grid-cols-2 gap-3">
-                    {(['North', 'South', 'East', 'West'] as const).map(opt => (
-                        <div key={opt} className={`border rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-all ${designData.plotOrientation.includes(opt) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('plotOrientation', opt)}>
-                            <Checkbox checked={designData.plotOrientation.includes(opt)} className="mt-0.5" />
-                            <span className="text-sm font-bold">{opt}</span>
+                    {[
+                        { id: 'North', label: t.opt_north },
+                        { id: 'South', label: t.opt_south },
+                        { id: 'East', label: t.opt_east },
+                        { id: 'West', label: t.opt_west }
+                    ].map(opt => (
+                        <div key={opt.id} className={`border rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-all ${designData.plotOrientation.includes(opt.id) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('plotOrientation', opt.id)}>
+                            <Checkbox checked={designData.plotOrientation.includes(opt.id)} className="mt-0.5" />
+                            <span className="text-sm font-bold">{opt.label}</span>
                         </div>
                     ))}
                 </div>
             </div>
             <div className="space-y-3">
-                <Label className="text-sm font-bold text-neutral-800">Special Zones Required</Label>
+                <Label className="text-sm font-bold text-neutral-800">{t.lbl_special_zones}</Label>
                 <div className="grid grid-cols-2 gap-3">
-                    {(['Prayer room', 'Home Office', 'Maid\'s room', 'Parking'] as const).map(opt => (
-                        <div key={opt} className={`border rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-all ${designData.specialZones.includes(opt) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('specialZones', opt)}>
-                            <Checkbox checked={designData.specialZones.includes(opt)} className="mt-0.5" />
-                            <span className="text-sm font-bold">{opt}</span>
+                    {[
+                        { id: 'Prayer room', label: t.opt_prayer },
+                        { id: 'Home Office', label: t.opt_office },
+                        { id: 'Maid\'s room', label: t.opt_maid },
+                        { id: 'Parking', label: t.opt_parking }
+                    ].map(opt => (
+                        <div key={opt.id} className={`border rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-all ${designData.specialZones.includes(opt.id) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('specialZones', opt.id)}>
+                            <Checkbox checked={designData.specialZones.includes(opt.id)} className="mt-0.5" />
+                            <span className="text-sm font-bold">{opt.label}</span>
                         </div>
                     ))}
                 </div>
             </div>
             <div className="space-y-3">
-                <Label className="text-sm font-bold text-neutral-800">Roof Features</Label>
+                <Label className="text-sm font-bold text-neutral-800">{t.lbl_roof_features}</Label>
                 <div className="grid grid-cols-2 gap-3">
-                    {(['Roof garden', 'Swimming pool'] as const).map(opt => (
-                        <div key={opt} className={`border rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-all ${designData.roofFeatures.includes(opt) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('roofFeatures', opt)}>
-                            <Checkbox checked={designData.roofFeatures.includes(opt)} className="mt-0.5" />
-                            <span className="text-sm font-bold">{opt}</span>
+                    {[
+                        { id: 'Roof garden', label: t.opt_roof_garden },
+                        { id: 'Swimming pool', label: t.opt_pool }
+                    ].map(opt => (
+                        <div key={opt.id} className={`border rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-all ${designData.roofFeatures.includes(opt.id) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('roofFeatures', opt.id)}>
+                            <Checkbox checked={designData.roofFeatures.includes(opt.id)} className="mt-0.5" />
+                            <span className="text-sm font-bold">{opt.label}</span>
                         </div>
                     ))}
                 </div>
             </div>
             <div className="space-y-3">
-                <Label className="text-sm font-bold text-neutral-800">Soil Test Completed?</Label>
+                <Label className="text-sm font-bold text-neutral-800">{t.lbl_soil_test}</Label>
                 <div className="flex gap-3">
-                    <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${designData.soilTest === 'Yes' ? 'bg-primary-600 text-white border-primary-600 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => setDesignData({ ...designData, soilTest: 'Yes' })}>Yes</div>
-                    <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${designData.soilTest === 'No' ? 'bg-primary-600 text-white border-primary-600 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => setDesignData({ ...designData, soilTest: 'No' })}>No</div>
+                    <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${designData.soilTest === 'Yes' ? 'bg-primary-600 text-white border-primary-600 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => setDesignData({ ...designData, soilTest: 'Yes' })}>{t.opt_yes}</div>
+                    <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${designData.soilTest === 'No' ? 'bg-primary-600 text-white border-primary-600 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => setDesignData({ ...designData, soilTest: 'No' })}>{t.opt_no}</div>
                 </div>
             </div>
         </div>
@@ -182,13 +197,13 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
 
     const renderDesignStep3 = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 max-h-[60vh] overflow-y-auto pr-2">
-            <Label className="text-sm font-bold text-neutral-800">Aesthetics & Layout Preferences</Label>
+            <Label className="text-sm font-bold text-neutral-800">{t.lbl_aesthetics}</Label>
             <RadioCardGroup
                 options={[
-                    { id: 'Modern', label: 'Modern / Minimalist', image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=400&fit=crop' },
-                    { id: 'Traditional', label: 'Traditional / Brick', image: 'https://images.unsplash.com/photo-1592595896551-12b371d546d5?w=400&h=400&fit=crop' },
-                    { id: 'Luxury', label: 'Duplex Luxury', image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=400&fit=crop' },
-                    { id: 'Eco', label: 'Green / Eco-Friendly', image: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?w=400&h=400&fit=crop' }
+                    { id: 'Modern', label: t.opt_modern, image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=400&fit=crop' },
+                    { id: 'Traditional', label: t.opt_traditional, image: 'https://images.unsplash.com/photo-1592595896551-12b371d546d5?w=400&h=400&fit=crop' },
+                    { id: 'Luxury', label: t.opt_luxury, image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=400&fit=crop' },
+                    { id: 'Eco', label: t.opt_eco, image: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?w=400&h=400&fit=crop' }
                 ]}
                 selected={designData.structuralVibe}
                 onChange={(id) => setDesignData({ ...designData, structuralVibe: id })}
@@ -200,9 +215,9 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 max-h-[60vh] overflow-y-auto pr-2">
             <RadioCardGroup
                 options={[
-                    { id: 'Full house', label: 'Full house', description: "Complete interior for multi-storied or duplex." },
-                    { id: 'Full Apartment', label: 'Full Apartment', description: "Complete interior for a single apartment." },
-                    { id: 'Specific Area', label: 'Specific Area', description: "Kitchen, Living, Bedrooms, etc." },
+                    { id: 'Full house', label: t.opt_full_house, description: language === 'BN' ? "মাল্টি-স্টোরিড বা ডুপ্লেক্সের জন্য সম্পূর্ণ ইন্টেরিয়র।" : "Complete interior for multi-storied or duplex." },
+                    { id: 'Full Apartment', label: t.opt_full_apartment, description: language === 'BN' ? "একটি একক অ্যাপারটমেন্টের জন্য সম্পূর্ণ ইন্টেরিয়র।" : "Complete interior for a single apartment." },
+                    { id: 'Specific Area', label: t.opt_specific_area, description: language === 'BN' ? "রান্নাঘর, লিভিং, বেডরুম ইত্যাদি।" : "Kitchen, Living, Bedrooms, etc." },
                 ]}
                 selected={interiorData.propertyType}
                 onChange={(id) => setInteriorData({ ...interiorData, propertyType: id })}
@@ -211,11 +226,11 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
             {interiorData.propertyType === 'Full Apartment' && (
                 <div className="mt-6 grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold text-neutral-600">Apartment Size (sqft)</Label>
+                        <Label className="text-xs font-bold text-neutral-600">{t.lbl_apt_size}</Label>
                         <Input type="number" placeholder="e.g. 1500" value={interiorData.aptSize} onChange={(e) => setInteriorData({ ...interiorData, aptSize: e.target.value })} className="bg-neutral-50 h-11" />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold text-neutral-600">Number of Rooms</Label>
+                        <Label className="text-xs font-bold text-neutral-600">{t.lbl_num_rooms}</Label>
                         <Input type="number" placeholder="e.g. 3" value={interiorData.aptRooms} onChange={(e) => setInteriorData({ ...interiorData, aptRooms: e.target.value })} className="bg-neutral-50 h-11" />
                     </div>
                 </div>
@@ -224,17 +239,17 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
             {interiorData.propertyType === 'Specific Area' && (
                 <div className="mt-6 space-y-4">
                     <div className="pt-4 border-t border-neutral-100">
-                        <Label className="text-xs font-bold text-neutral-600 mb-3 block">Select Area</Label>
+                        <Label className="text-xs font-bold text-neutral-600 mb-3 block">{t.lbl_select_area}</Label>
                         <RadioCardGroup
                             options={[
-                                { id: 'Living Room', label: 'Living Room' },
-                                { id: 'Drawing Room', label: 'Drawing Room' },
-                                { id: 'Bed Room', label: 'Bed Room' },
-                                { id: 'Bath Room', label: 'Bath Room' },
-                                { id: 'Kitchen', label: 'Kitchen' },
-                                { id: 'Balcony', label: 'Balcony' },
-                                { id: 'Rooftop', label: 'Rooftop' },
-                                { id: 'Entrance', label: 'Entrance' },
+                                { id: 'Living Room', label: t.opt_living },
+                                { id: 'Drawing Room', label: t.opt_drawing },
+                                { id: 'Bed Room', label: t.opt_bedroom },
+                                { id: 'Bath Room', label: t.opt_bathroom },
+                                { id: 'Kitchen', label: t.opt_kitchen },
+                                { id: 'Balcony', label: t.opt_balcony },
+                                { id: 'Rooftop', label: t.opt_rooftop },
+                                { id: 'Entrance', label: t.opt_entrance },
                             ]}
                             selected={interiorData.specificAreaType}
                             onChange={(id) => setInteriorData({ ...interiorData, specificAreaType: id })}
@@ -244,14 +259,14 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
 
                     {interiorData.specificAreaType === 'Bed Room' && (
                         <div className="pt-4 border-t border-neutral-100">
-                            <Label className="text-xs font-bold text-neutral-600 mb-3 block">Bedroom Type</Label>
+                            <Label className="text-xs font-bold text-neutral-600 mb-3 block">{t.lbl_bedroom_type}</Label>
                             <RadioCardGroup
                                 options={[
-                                    { id: 'Master Bedroom', label: 'Master Bedroom' },
-                                    { id: 'General Bedroom', label: 'General Bedroom' },
-                                    { id: 'Welcome Newborn', label: 'Welcome Newborn' },
-                                    { id: 'Teenagers Special', label: 'Teenagers Special' },
-                                    { id: 'Children Bedroom', label: 'Children Bedroom' },
+                                    { id: 'Master Bedroom', label: t.opt_master_bed },
+                                    { id: 'General Bedroom', label: t.opt_general_bed },
+                                    { id: 'Welcome Newborn', label: t.opt_newborn },
+                                    { id: 'Teenagers Special', label: t.opt_teenager },
+                                    { id: 'Children Bedroom', label: t.opt_children },
                                 ]}
                                 selected={interiorData.bedRoomType}
                                 onChange={(id) => setInteriorData({ ...interiorData, bedRoomType: id })}
@@ -263,11 +278,11 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
                     {(interiorData.specificAreaType && (interiorData.specificAreaType !== 'Bed Room' || interiorData.bedRoomType)) && (
                         <>
                             <div className="pt-4 border-t border-neutral-100">
-                                <Label className="text-xs font-bold text-neutral-600 mb-3 block">Design Scope</Label>
+                                <Label className="text-xs font-bold text-neutral-600 mb-3 block">{t.lbl_design_scope}</Label>
                                 <RadioCardGroup
                                     options={[
-                                        { id: 'Entire New Design', label: 'Entire New Design' },
-                                        { id: 'Specific Renovation', label: 'Specific Renovation' },
+                                        { id: 'Entire New Design', label: t.opt_entire_new },
+                                        { id: 'Specific Renovation', label: t.opt_renovation },
                                     ]}
                                     selected={interiorData.designScope}
                                     onChange={(id) => setInteriorData({ ...interiorData, designScope: id })}
@@ -276,14 +291,14 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-xs font-bold text-neutral-600">Room Size (sqft)</Label>
+                                <Label className="text-xs font-bold text-neutral-600">{t.lbl_room_size}</Label>
                                 <Input type="number" placeholder="e.g. 150" value={interiorData.roomSize} onChange={(e) => setInteriorData({ ...interiorData, roomSize: e.target.value })} className="bg-neutral-50 h-11" />
                             </div>
                         </>
                     )}
 
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold text-neutral-600">Specific Instructions (Optional)</Label>
+                        <Label className="text-xs font-bold text-neutral-600">{t.lbl_instructions}</Label>
                         <Input type="text" placeholder="e.g. Needs modern lighting" value={interiorData.specificInstruction} onChange={(e) => setInteriorData({ ...interiorData, specificInstruction: e.target.value })} className="bg-neutral-50 h-11" />
                     </div>
                 </div>
@@ -294,7 +309,7 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
     const renderScheduleStep = () => (
         <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
             <div>
-                <Label className="text-xs font-bold text-neutral-600 block mb-1.5">Preferred Date</Label>
+                <Label className="text-xs font-bold text-neutral-600 block mb-1.5">{t.lbl_pref_date}</Label>
                 <Input
                     type="date"
                     min={new Date().toISOString().split('T')[0]}
@@ -304,7 +319,7 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
                 />
             </div>
             <div>
-                <Label className="text-xs font-bold text-neutral-600 block mb-2">Preferred Time Slot</Label>
+                <Label className="text-xs font-bold text-neutral-600 block mb-2">{t.lbl_pref_time}</Label>
                 <div className="grid grid-cols-3 gap-2 max-h-[220px] overflow-y-auto p-1 pr-2 scrollbar-thin">
                     {timeSlots.map((time) => (
                         <button
@@ -328,8 +343,8 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
 
     if (journeyTypes.includes('interior')) {
         steps.push({
-            title: "Interior Scope Details",
-            desc: "What type of interior space are we refining?",
+            title: t.booking_interior_s1_title,
+            desc: t.booking_interior_s1_desc,
             render: renderInteriorStep1,
             canNext: !!interiorData.propertyType &&
                 (interiorData.propertyType !== 'Specific Area' ||
@@ -342,20 +357,20 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
 
     if (journeyTypes.includes('design')) {
         steps.push({
-            title: "Space and Layout",
-            desc: "Let's capture the foundational scope of your building unit.",
+            title: t.booking_design_s1_title,
+            desc: t.booking_design_s1_desc,
             render: renderDesignStep1,
             canNext: !!(designData.landAreaKatha && designData.initialFloors)
         });
         steps.push({
-            title: "Plot Features",
-            desc: "Any special considerations for your land?",
+            title: t.booking_design_s2_title,
+            desc: t.booking_design_s2_desc,
             render: renderDesignStep2,
             canNext: true
         });
         steps.push({
-            title: "Aesthetics & Style",
-            desc: "Your preferred design influence.",
+            title: t.booking_design_s3_title,
+            desc: t.booking_design_s3_desc,
             render: renderDesignStep3,
             canNext: !!designData.structuralVibe
         });
@@ -369,8 +384,8 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
 
     // Schedule step is always last
     steps.push({
-        title: "Schedule a Consultation",
-        desc: "When should the designer or our admin contact you?",
+        title: t.schedule_title,
+        desc: t.schedule_desc,
         render: renderScheduleStep,
         canNext: !!(scheduleData.date && scheduleData.time)
     });
@@ -383,7 +398,7 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
             <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-white rounded-3xl">
                 <div className="bg-[#f3fbfa] p-6 border-b border-neutral-100 relative">
                     <span className="text-[10px] font-black uppercase tracking-widest text-[#00a651] mb-2 block">
-                        Step {step} of {totalSteps}
+                        {t.booking_step_of.replace('{step}', step.toString()).replace('{total}', totalSteps.toString())}
                     </span>
                     <DialogTitle className="text-xl font-black text-[#0a1b3d]">
                         {currentStepData.title}
@@ -403,7 +418,7 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
                         className="flex-1 h-12 rounded-xl border-neutral-200 font-bold"
                         onClick={step === 1 ? () => setIsOpen(false) : handleBack}
                     >
-                        {step === 1 ? 'Cancel' : 'Back'}
+                        {step === 1 ? t.btn_cancel : t.btn_back}
                     </Button>
 
                     <Button
@@ -414,7 +429,7 @@ export function PreBookingModal({ isOpen, setIsOpen, journeyTypes = [], onSubmit
                         onClick={step === totalSteps ? handleFinalSubmit : handleNext}
                         disabled={loading || !currentStepData.canNext}
                     >
-                        {loading ? 'Booking...' : step === totalSteps ? 'Confirm Request' : 'Next Step'}
+                        {loading ? t.status_booking : step === totalSteps ? t.btn_confirm_request : t.btn_next}
                     </Button>
                 </div>
             </DialogContent>

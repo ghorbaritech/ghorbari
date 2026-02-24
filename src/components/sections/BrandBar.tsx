@@ -2,6 +2,7 @@
 
 import { LayoutGrid } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 
 const BRANDS = [
     { name: "Bosch", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Bosch-logo.svg/512px-Bosch-logo.svg.png" },
@@ -9,12 +10,14 @@ const BRANDS = [
     { name: "DeWalt", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/DeWalt_Logo.svg/512px-DeWalt_Logo.svg.png" },
     { name: "BSRM", logo: "https://www.bsrm.com/wp-content/uploads/2021/08/BSRM-Logo-Final.png" },
     { name: "Berger", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7b/Berger_Paints_India_Logo.svg/1200px-Berger_Paints_India_Logo.svg.png" },
-    { name: "Seven Rings", logo: "https://sevenrings.com.bd/wp-content/uploads/2018/12/logo-1.png" },
+    { name: "Seven Rings", nameBn: "সেভেন রিংস", logo: "https://sevenrings.com.bd/wp-content/uploads/2018/12/logo-1.png" },
     { name: "Grohe", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Grohe_Logo.svg/512px-Grohe_Logo.svg.png" },
     { name: "All Brands", logo: null, isAll: true },
 ];
 
 export function BrandBar() {
+    const { t, language } = useLanguage();
+
     return (
         <section className="py-8 bg-white border-b border-neutral-100 overflow-x-auto no-scrollbar">
             <div className="container mx-auto px-8">
@@ -34,7 +37,7 @@ export function BrandBar() {
                             </div>
                             <div className="text-center">
                                 <h4 className="text-[10px] font-black uppercase tracking-[0.1em] text-neutral-500 group-hover:text-primary-600 transition-colors">
-                                    {brand.name}
+                                    {brand.isAll ? t.brand_all : (brand.nameBn && language === 'BN' ? brand.nameBn : brand.name)}
                                 </h4>
                             </div>
                         </div>

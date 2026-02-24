@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
+import { useLanguage } from '@/context/LanguageContext'
+import { getL } from '@/utils/localization'
 
 interface PromoBannerSectionProps {
     title?: string
@@ -11,25 +13,32 @@ interface PromoBannerSectionProps {
 const DEFAULT_BANNERS = [
     {
         title: "Expert-Selected, fast delivered",
+        title_bn: "বিশেষজ্ঞ দ্বারা নির্বাচিত, দ্রুত ডেলিভারি",
         subtitle: "Quality Guarantee",
+        subtitle_bn: "কালিটি গ্যারান্টি",
         image_url: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600&h=400&fit=crop", // Modern sofa/living room
         link_url: "#"
     },
     {
         title: "The one app for everything",
+        title_bn: "সবকিছুর জন্য একটি অ্যাপ",
         subtitle: "Price alerts and exclusive offers",
+        subtitle_bn: "প্রাইস অ্যালার্ট এবং এক্সক্লুসিভ অফার",
         image_url: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=600&h=400&fit=crop", // Nice modern interior
         link_url: "#"
     },
     {
         title: "The ones you love",
+        title_bn: "আপনার পছন্দের জিনিস",
         subtitle: "Trusted, durable and loved",
+        subtitle_bn: "নির্ভরযোগ্য, টেকসই এবং প্রিয়",
         image_url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&h=400&fit=crop", // Cozy room
         link_url: "#"
     }
 ]
 
-export function PromoBannerSection({ title = 'Current Deals', banners = [] }: PromoBannerSectionProps) {
+export function PromoBannerSection({ title, banners = [] }: PromoBannerSectionProps) {
+    const { language, t } = useLanguage()
     const displayBanners = banners.length > 0 ? banners : DEFAULT_BANNERS
 
     // Ensure we have 3 items for the layout
@@ -42,7 +51,7 @@ export function PromoBannerSection({ title = 'Current Deals', banners = [] }: Pr
     return (
         <section className="py-12 container mx-auto px-4 md:px-8">
             <h2 className="text-2xl font-black tracking-tight text-neutral-900 mb-6">
-                {title}
+                {title || t.offer_title}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {filledBanners.map((banner, index) => (
@@ -55,10 +64,10 @@ export function PromoBannerSection({ title = 'Current Deals', banners = [] }: Pr
                         <div className="relative z-10 p-6 w-[55%] flex flex-col justify-between h-full bg-[#1e2746]">
                             <div>
                                 <h3 className="text-lg md:text-xl font-black text-white leading-tight mb-1">
-                                    {banner.title || "Expert-Selected, fast delivered"}
+                                    {getL(banner.title, banner.title_bn, language)}
                                 </h3>
                                 <p className="text-blue-100/90 text-[10px] font-bold leading-normal uppercase tracking-wide">
-                                    {banner.subtitle || "Quality Guarantee"}
+                                    {getL(banner.subtitle, banner.subtitle_bn, language)}
                                 </p>
                             </div>
 
@@ -66,7 +75,7 @@ export function PromoBannerSection({ title = 'Current Deals', banners = [] }: Pr
                             {index === 0 && (
                                 <div className="inline-block mt-4 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full w-fit">
                                     <span className="text-[10px] font-bold text-white uppercase tracking-wider">
-                                        Mano Choice
+                                        {language === 'BN' ? "গুরবাড়ী পছন্দ" : "Ghorbari Choice"}
                                     </span>
                                 </div>
                             )}

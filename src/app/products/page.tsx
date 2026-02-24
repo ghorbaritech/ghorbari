@@ -1,5 +1,3 @@
-"use client"
-
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -14,9 +12,10 @@ import { PromoBannerSection } from "@/components/sections/PromoBannerSection";
 import { BrandBar } from "@/components/sections/BrandBar";
 
 import { useLanguage } from "@/context/LanguageContext";
+import { getL } from "@/utils/localization";
 
 export default function ProductsPage() {
-    const { language } = useLanguage();
+    const { t, language } = useLanguage();
     const [products, setProducts] = useState<any[]>([]);
     const [subcategories, setSubcategories] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
@@ -89,9 +88,11 @@ export default function ProductsPage() {
                 {/* Header Label - Styled like home page sections */}
                 <div className="mb-10">
                     <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 tracking-tight">
-                        Construction Product Marketplace
+                        {t.products_marketplace_title}
                     </h1>
-                    <p className="text-neutral-500 font-medium mt-1">Quality materials for every project</p>
+                    <p className="text-neutral-500 font-medium mt-1">
+                        {t.products_marketplace_subtitle}
+                    </p>
                     <div className="h-1 w-20 bg-primary-600 mt-3 rounded-full" />
                 </div>
 
@@ -100,7 +101,9 @@ export default function ProductsPage() {
                     <aside className="w-full lg:w-72 flex-shrink-0">
                         <div className="hidden lg:block space-y-8 bg-white p-8 rounded-[32px] border border-neutral-100 shadow-sm sticky top-24">
                             <div>
-                                <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">Supply Categories</h3>
+                                <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">
+                                    {t.products_supply_categories}
+                                </h3>
                                 <div className="space-y-3">
                                     {subcategories.length > 0 ? (
                                         subcategories.map(sub => (
@@ -117,7 +120,7 @@ export default function ProductsPage() {
                                         ))
                                     ) : (
                                         <p className="text-[10px] text-neutral-300 font-bold uppercase tracking-widest italic">
-                                            No subcategories yet — add them when uploading products.
+                                            {t.products_no_subs}
                                         </p>
                                     )}
                                 </div>
@@ -126,7 +129,9 @@ export default function ProductsPage() {
                             <div className="h-px bg-neutral-50"></div>
 
                             <div>
-                                <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">Price Thresholds (৳)</h3>
+                                <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">
+                                    {t.products_price_thresholds}
+                                </h3>
                                 <div className="flex items-center gap-3">
                                     <Input
                                         placeholder="Min"
@@ -158,14 +163,16 @@ export default function ProductsPage() {
                     <div className="flex-1">
                         <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-6 rounded-[32px] border border-neutral-100 shadow-sm">
                             <div className="text-xs text-neutral-400 font-black uppercase tracking-widest">
-                                Found <span className="text-neutral-900">{products.length}</span> verified supplies
+                                {t.products_found.replace('{count}', products.length.toString())}
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="text-xs text-neutral-400 font-bold uppercase tracking-widest">Optimized By:</span>
+                                <span className="text-xs text-neutral-400 font-bold uppercase tracking-widest">
+                                    {t.products_optimized_by}
+                                </span>
                                 <select className="text-[10px] border-none bg-neutral-50 rounded-xl px-4 py-2 font-black uppercase tracking-widest text-neutral-800 focus:ring-0 cursor-pointer">
-                                    <option>Newest First</option>
-                                    <option>Price: Low-High</option>
-                                    <option>Price: High-Low</option>
+                                    <option>{t.services_newest}</option>
+                                    <option>{t.services_price_low}</option>
+                                    <option>{t.services_price_high}</option>
                                 </select>
                             </div>
                         </div>
@@ -174,7 +181,9 @@ export default function ProductsPage() {
                             <div className="h-96 flex items-center justify-center bg-white rounded-[40px] border-2 border-dashed border-neutral-100">
                                 <div className="flex flex-col items-center gap-6 text-neutral-300">
                                     <Loader2 className="w-10 h-10 animate-spin" />
-                                    <p className="text-[10px] font-black uppercase tracking-[0.4em]">Querying Hardware Index...</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.4em]">
+                                        {t.products_loading}
+                                    </p>
                                 </div>
                             </div>
                         ) : products.length > 0 ? (
@@ -183,24 +192,27 @@ export default function ProductsPage() {
                                     <ProductCard
                                         key={product.id}
                                         id={product.id}
-                                        name={product.title}
+                                        name={getL(product.title, product.title_bn, language)}
                                         price={product.base_price.toLocaleString()}
                                         image={product.images?.[0] || ""}
                                         rating={product.rating || 0}
-                                        category={product.category?.name}
+                                        category={getL(product.category?.name, product.category?.name_bn, language)}
                                         categoryBn={product.category?.name_bn}
                                         categoryId={product.category_id}
                                         subcategory={product.sub_category || undefined}
                                         sellerId={product.seller_id}
-                                        sellerName={product.seller?.business_name}
-                                        tag={product.brand}
+                                        sellerName={getL(product.seller?.business_name, product.seller?.business_name_bn, language)}
+                                        tag={getL(product.brand, product.brand_bn, language)}
                                     />
                                 ))}
                             </div>
                         ) : (
                             <div className="col-span-full py-32 text-center bg-white rounded-[40px] border border-dashed border-neutral-100">
-                                <p className="text-neutral-300 font-black uppercase tracking-[0.3em] text-xs underline decoration-primary-600 decoration-4 underline-offset-8 italic">Warehouse Empty</p>
-                                <p className="mt-6 text-neutral-400 text-[10px] font-bold uppercase tracking-widest leading-loose">We couldn't find any materials matching your filters.<br />Try broadening your price range or category.</p>
+                                <p className="text-neutral-300 font-black uppercase tracking-[0.3em] text-xs underline decoration-primary-600 decoration-4 underline-offset-8 italic">
+                                    {t.products_no_found_title}
+                                </p>
+                                <p className="mt-6 text-neutral-400 text-[10px] font-bold uppercase tracking-widest leading-loose" dangerouslySetInnerHTML={{ __html: t.products_no_found_desc }}>
+                                </p>
                             </div>
                         )}
                     </div>

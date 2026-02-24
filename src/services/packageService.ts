@@ -40,6 +40,18 @@ export async function getServicePackages(providerId: string) {
     return data as ServicePackage[];
 }
 
+export async function getAllServicePackages() {
+    const supabase = createClient();
+    const { data, error } = await supabase
+        .from('service_packages')
+        .select('*, category:product_categories(name, name_bn)')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+}
+
 export async function createServicePackage(pkg: Partial<ServicePackage>) {
     const supabase = createClient();
     const { data, error } = await supabase
@@ -83,6 +95,18 @@ export async function getDesignPackages(designerId: string) {
 
     if (error) throw error;
     return data as DesignPackage[];
+}
+
+export async function getAllDesignPackages() {
+    const supabase = createClient();
+    const { data, error } = await supabase
+        .from('design_packages')
+        .select('*, designer:designers(company_name, company_name_bn), category:product_categories(name, name_bn)')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
 }
 
 export async function createDesignPackage(pkg: Partial<DesignPackage>) {

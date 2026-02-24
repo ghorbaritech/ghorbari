@@ -11,14 +11,14 @@ interface IconCategoriesProps {
 }
 
 const DEFAULT_CATEGORIES = [
-    { name: "Building Materials", icon: "BrickWall" },
-    { name: "Steel & Rods", icon: "Hammer" },
-    { name: "Paints & Finishes", icon: "PaintBucket" },
-    { name: "Tools & Hardware", icon: "Wrench" },
-    { name: "Electrical", icon: "Lightbulb" },
-    { name: "Plumbing", icon: "Droplets" },
-    { name: "Safety Gear", icon: "HardHat" },
-    { name: "View All", icon: "LayoutGrid" },
+    { name: "Building Materials", nameBn: "নির্মাণ সামগ্রী", icon: "BrickWall" },
+    { name: "Steel & Rods", nameBn: "স্টিল ও রড", icon: "Hammer" },
+    { name: "Paints & Finishes", nameBn: "পেইন্ট ও ফিনিশ", icon: "PaintBucket" },
+    { name: "Tools & Hardware", nameBn: "সরঞ্জাম ও হার্ডওয়্যার", icon: "Wrench" },
+    { name: "Electrical", nameBn: "বৈদ্যুতিক", icon: "Lightbulb" },
+    { name: "Plumbing", nameBn: "প্লাম্বিং", icon: "Droplets" },
+    { name: "Safety Gear", nameBn: "নিরাপত্তা সরঞ্জাম", icon: "HardHat" },
+    { name: "View All", nameBn: "সব দেখুন", icon: "LayoutGrid" },
 ];
 
 import { useLanguage } from '@/context/LanguageContext';

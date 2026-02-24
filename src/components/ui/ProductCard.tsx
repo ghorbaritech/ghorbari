@@ -5,10 +5,15 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { useCompare } from "@/context/CompareContext";
+import { GitCompare } from "lucide-react";
+import { getL } from "@/utils/localization";
 
 interface ProductCardProps {
     id: string;
     name: string;
+    nameBn?: string | null;
     price: string;
     oldPrice?: string | null;
     image: string;
@@ -18,20 +23,20 @@ interface ProductCardProps {
     categoryId?: string;
     subcategory?: string;
     tag?: string;
+    tagBn?: string | null;
     discount?: string;
     compact?: boolean;
     sellerId?: string;
     sellerName?: string;
+    sellerNameBn?: string | null;
     href?: string;
 }
 
-import { useLanguage } from "@/context/LanguageContext";
-import { useCompare } from "@/context/CompareContext";
-import { GitCompare } from "lucide-react";
 
 export function ProductCard({
     id,
     name,
+    nameBn,
     price,
     oldPrice,
     image,
@@ -41,31 +46,36 @@ export function ProductCard({
     categoryId,
     subcategory,
     tag,
+    tagBn,
     discount,
     sellerId,
     sellerName,
+    sellerNameBn,
     href,
     compact
 }: ProductCardProps) {
     const { addItem } = useCart();
-    const { language } = useLanguage();
+    const { language, t } = useLanguage();
     const { addToCompare, removeFromCompare, isInCompare } = useCompare();
     const productLink = href || `/products/${id}`;
+
+    const displayName = getL(name, nameBn, language);
+    const displaySeller = getL(sellerName, sellerNameBn, language);
+    const displayCategory = getL(category, categoryBn, language) || t.nav_all_categories;
+    const displayTag = getL(tag, tagBn, language);
 
     const handleAddToCart = () => {
         addItem({
             id,
-            name,
+            name: displayName,
             price: parseFloat(price.replace(/,/g, '')),
             image,
             sellerId: sellerId || "",
-            sellerName: sellerName || "",
-            category,
+            sellerName: displaySeller || "",
+            category: displayCategory,
             categoryId
         });
     };
-
-    const displayCategory = (language === 'BN' && categoryBn) ? categoryBn : (category || "Uncategorized");
 
     return (
 
@@ -73,7 +83,7 @@ export function ProductCard({
             <Link href={productLink} className="block relative aspect-[4/3] overflow-hidden bg-neutral-50 cursor-pointer">
                 <Image
                     src={image}
-                    alt={name}
+                    alt={displayName}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
@@ -85,9 +95,9 @@ export function ProductCard({
                             {discount}
                         </span>
                     )}
-                    {tag && (
+                    {displayTag && (
                         <span className="bg-white/90 backdrop-blur-sm text-neutral-900 text-[9px] font-bold px-2.5 py-1 rounded-full border border-neutral-100 shadow-sm uppercase tracking-tighter">
-                            {tag}
+                            {displayTag}
                         </span>
                     )}
                 </div>
@@ -98,17 +108,17 @@ export function ProductCard({
                 {/* Header: Seller Name (top tag) + Rating */}
                 <div className="flex items-center justify-between">
                     {/* Top tag = Seller name, clickable */}
-                    {sellerName && sellerId ? (
+                    {displaySeller && sellerId ? (
                         <Link
                             href={`/partner/${sellerId}`}
                             className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest truncate max-w-[70%] hover:text-primary-600 transition-colors"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            {sellerName}
+                            {displaySeller}
                         </Link>
                     ) : (
                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest truncate max-w-[70%]">
-                            {sellerName || displayCategory}
+                            {displaySeller || displayCategory}
                         </span>
                     )}
                     <div className="flex items-center gap-1 text-amber-500 text-[10px] font-bold">
@@ -120,7 +130,7 @@ export function ProductCard({
                 {/* Title — links to product detail page */}
                 <Link href={productLink} className="block">
                     <h4 className="font-bold text-neutral-900 leading-tight text-sm group-hover:text-primary-600 group-hover:underline transition-colors line-clamp-2 mb-1 cursor-pointer">
-                        {name}
+                        {displayName}
                     </h4>
                 </Link>
 
@@ -138,7 +148,7 @@ export function ProductCard({
                             <span className="text-[10px] text-neutral-400 line-through font-medium">৳{oldPrice}</span>
                         )}
                         {/* "Starting from" text for compact mode similar to design card? User didn't ask explicitly but it's in screenshot. Keeping simple price for products. */}
-                        {compact && <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-wide">Price</span>}
+                        {compact && <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-wide">{t.lbl_price}</span>}
                         <span className={`${compact ? 'text-base' : 'text-lg'} font-bold text-neutral-900`}>৳{price}</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -152,7 +162,7 @@ export function ProductCard({
                                     if (isInCompare(id)) {
                                         removeFromCompare(id);
                                     } else {
-                                        addToCompare({ id, name, price: parseFloat(price.replace(/,/g, '')), image });
+                                        addToCompare({ id, name: displayName, price: parseFloat(price.replace(/,/g, '')), image });
                                     }
                                 }}
                                 className={`h-8 w-8 p-0 rounded-lg border-neutral-200 hover:border-primary-600 hover:text-primary-600 ${isInCompare(id) ? 'bg-primary-50 border-primary-600 text-primary-600' : ''}`}
@@ -166,7 +176,7 @@ export function ProductCard({
                             className={`bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg font-bold shadow-sm ${compact ? 'h-8 px-4 text-[10px] uppercase' : 'px-4 text-xs'}`}
                         >
                             {!compact && <ShoppingCart className="w-3 h-3 mr-1" />}
-                            Buy Now
+                            {t.btn_buy_now}
                         </Button>
                     </div>
                 </div>

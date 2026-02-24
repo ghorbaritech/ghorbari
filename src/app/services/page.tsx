@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -7,22 +7,48 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { ProductCard } from "@/components/ui/ProductCard";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PromoBannerSection } from "@/components/sections/PromoBannerSection";
-import { dummyServices, dummyServiceCategories } from "@/data/dummyServices";
+import { useLanguage } from "@/context/LanguageContext";
+import { getL } from "@/utils/localization";
+import { getAllServicePackages } from "@/services/packageService";
+import { getCategories } from "@/services/productService";
 
 export default function ServicesPage() {
+    const { t, language } = useLanguage();
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [minPrice, setMinPrice] = useState<string>("");
     const [maxPrice, setMaxPrice] = useState<string>("");
+    const [packages, setPackages] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            setLoading(true);
+            try {
+                const [pkgData, catData] = await Promise.all([
+                    getAllServicePackages(),
+                    getCategories('service')
+                ]);
+                setPackages(pkgData);
+                setCategories(catData);
+            } catch (error) {
+                console.error("Error fetching service data:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
 
     // Filter services based on state
-    const filteredServices = dummyServices.filter(service => {
+    const filteredServices = packages.filter(service => {
         // Category Filter
         if (selectedCategory && service.category_id !== selectedCategory) return false;
 
         // Price Filter
-        const price = service.base_price;
+        const price = service.price;
         if (minPrice && price < parseInt(minPrice)) return false;
         if (maxPrice && price > parseInt(maxPrice)) return false;
 
@@ -44,9 +70,11 @@ export default function ServicesPage() {
                 {/* Header Label */}
                 <div className="mb-10">
                     <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 tracking-tight">
-                        Professional Service Marketplace
+                        {t.services_marketplace_title}
                     </h1>
-                    <p className="text-neutral-500 font-medium mt-1">Hire top-rated experts for your dream home</p>
+                    <p className="text-neutral-500 font-medium mt-1">
+                        {t.services_marketplace_subtitle}
+                    </p>
                     <div className="h-1 w-20 bg-primary-600 mt-3 rounded-full" />
                 </div>
 
@@ -55,9 +83,11 @@ export default function ServicesPage() {
                     <aside className="w-full lg:w-72 flex-shrink-0">
                         <div className="hidden lg:block space-y-8 bg-white p-8 rounded-[32px] border border-neutral-100 shadow-sm sticky top-24">
                             <div>
-                                <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">Service Categories</h3>
+                                <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">
+                                    {t.services_categories_sidebar}
+                                </h3>
                                 <div className="space-y-4">
-                                    {dummyServiceCategories.map(c => (
+                                    {categories.map(c => (
                                         <div key={c.id} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleCategoryToggle(c.id)}>
                                             <Checkbox
                                                 id={c.id}
@@ -65,7 +95,7 @@ export default function ServicesPage() {
                                                 onCheckedChange={() => handleCategoryToggle(c.id)}
                                             />
                                             <label htmlFor={c.id} className="text-xs font-black uppercase tracking-widest text-neutral-500 group-hover:text-primary-600 cursor-pointer transition-colors">
-                                                {c.name}
+                                                {language === 'BN' ? c.name_bn || c.name : c.name}
                                             </label>
                                         </div>
                                     ))}
@@ -75,7 +105,9 @@ export default function ServicesPage() {
                             <div className="h-px bg-neutral-50"></div>
 
                             <div>
-                                <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">Budget Range (৳)</h3>
+                                <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">
+                                    {t.services_budget_range}
+                                </h3>
                                 <div className="flex items-center gap-3">
                                     <Input
                                         placeholder="Min"
@@ -99,41 +131,54 @@ export default function ServicesPage() {
                     <div className="flex-1">
                         <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-6 rounded-[32px] border border-neutral-100 shadow-sm">
                             <div className="text-xs text-neutral-400 font-black uppercase tracking-widest">
-                                Found <span className="text-neutral-900">{filteredServices.length}</span> professional services
+                                {t.services_found.replace('{count}', filteredServices.length.toString())}
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="text-xs text-neutral-400 font-bold uppercase tracking-widest">Sort By:</span>
+                                <span className="text-xs text-neutral-400 font-bold uppercase tracking-widest">
+                                    {t.services_sort_by}
+                                </span>
                                 <select className="text-[10px] border-none bg-neutral-50 rounded-xl px-4 py-2 font-black uppercase tracking-widest text-neutral-800 focus:ring-0 cursor-pointer">
-                                    <option>Newest First</option>
-                                    <option>Price: Low-High</option>
-                                    <option>Price: High-Low</option>
+                                    <option>{t.services_newest}</option>
+                                    <option>{t.services_price_low}</option>
+                                    <option>{t.services_price_high}</option>
                                 </select>
                             </div>
                         </div>
 
-                        {filteredServices.length > 0 ? (
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[40px] border border-neutral-100 shadow-sm">
+                                <Loader2 className="w-10 h-10 text-primary-600 animate-spin mb-4" />
+                                <p className="text-neutral-500 font-bold">{t.products_loading}</p>
+                            </div>
+                        ) : filteredServices.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {filteredServices.map((service) => (
+                                {filteredServices.map((service: any) => (
                                     <ProductCard
                                         key={service.id}
                                         id={service.id}
                                         name={service.title}
-                                        price={service.base_price?.toLocaleString() || "0"}
+                                        nameBn={service.title_bn}
+                                        price={service.price?.toLocaleString() || "0"}
                                         image={service.images?.[0] || ""}
-                                        rating={service.rating || 0}
-                                        category={service.category?.name || "Services"}
+                                        rating={service.rating || 4.5}
+                                        category={service.category?.name}
+                                        categoryBn={service.category?.name_bn}
                                         categoryId={service.category_id}
-                                        sellerId={service.seller_id}
-                                        sellerName={service.seller?.business_name}
-                                        tag={service.brand || "Verified"}
+                                        sellerId={service.provider_id}
+                                        sellerName={service.provider?.business_name}
+                                        sellerNameBn={service.provider?.business_name_bn}
+                                        tag={service.unit}
                                         href={`/services/${service.id}`}
                                     />
                                 ))}
                             </div>
                         ) : (
                             <div className="col-span-full py-32 text-center bg-white rounded-[40px] border border-dashed border-neutral-100">
-                                <p className="text-neutral-300 font-black uppercase tracking-[0.3em] text-xs underline decoration-primary-600 decoration-4 underline-offset-8 italic">No Services Found</p>
-                                <p className="mt-6 text-neutral-400 text-[10px] font-bold uppercase tracking-widest leading-loose">We couldn't find any services matching your criteria.<br />Try adjusting your filters.</p>
+                                <p className="text-neutral-300 font-black uppercase tracking-[0.3em] text-xs underline decoration-primary-600 decoration-4 underline-offset-8 italic">
+                                    {t.services_no_found_title}
+                                </p>
+                                <p className="mt-6 text-neutral-400 text-[10px] font-bold uppercase tracking-widest leading-loose" dangerouslySetInnerHTML={{ __html: t.services_no_found_desc }}>
+                                </p>
                             </div>
                         )}
                     </div>

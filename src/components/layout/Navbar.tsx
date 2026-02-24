@@ -130,11 +130,11 @@ export function Navbar() {
                                 </>
                             ) : (
                                 <>
-                                    <span className="text-white/80">HI, {profile?.full_name?.split(' ')[0]}</span>
+                                    <span className="text-white/80">{t.nav_hi}, {profile?.full_name?.split(' ')[0]}</span>
                                     <span className="w-px h-3 bg-white/30"></span>
                                     <Link href="/dashboard" className="hover:text-white/80 transition-colors flex items-center gap-2">
                                         <LayoutDashboard className="w-3 h-3" />
-                                        DASHBOARD
+                                        {t.nav_dashboard}
                                     </Link>
                                     <Button
                                         variant="ghost"
