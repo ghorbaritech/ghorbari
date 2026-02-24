@@ -19,61 +19,81 @@ import { getL } from "@/utils/localization";
 export default function ProductsPage() {
     const { t, language } = useLanguage();
     const [products, setProducts] = useState<any[]>([]);
-    const [subcategories, setSubcategories] = useState<string[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+    const [selectedRootId, setSelectedRootId] = useState<string | null>(null);
+    const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
     const [minPrice, setMinPrice] = useState<string>("");
     const [maxPrice, setMaxPrice] = useState<string>("");
-    const supabase = createClient();
 
     useEffect(() => {
-        async function fetchInitialData() {
+        async function fetchData() {
             setLoading(true);
-            // Fetch all products and derive distinct subcategories from them
-            const prodData = await getProducts();
-            setProducts(prodData);
-
-            // Collect distinct sub_category values from products
-            const subs = Array.from(
-                new Set(
-                    prodData
-                        .map((p: any) => p.sub_category)
-                        .filter(Boolean)
-                )
-            ) as string[];
-            setSubcategories(subs.sort());
-            setLoading(false);
+            try {
+                const [prodData, catData] = await Promise.all([
+                    getProducts(),
+                    getCategories('product')
+                ]);
+                setProducts(prodData);
+                setCategories(catData);
+            } catch (error) {
+                console.error("Error fetching product data:", error);
+            } finally {
+                setLoading(false);
+            }
         }
-        fetchInitialData();
+        fetchData();
     }, []);
 
+    // Filter products based on state
+    const filteredProducts = products.filter(product => {
+        const pkgCat = product.category;
 
-    const handleFilterPrice = async () => {
-        setLoading(true);
-        const all = await getProducts({
-            minPrice: minPrice ? parseInt(minPrice) : undefined,
-            maxPrice: maxPrice ? parseInt(maxPrice) : undefined
-        });
-        const filtered = selectedSubcategory
-            ? all.filter((p: any) => p.sub_category === selectedSubcategory)
-            : all;
-        setProducts(filtered);
-        setLoading(false);
+        // Category Hierarchy Filter
+        if (selectedSubId) {
+            // Show products in this subcategory (L1) or its items (L2)
+            const isDirectMatch = product.category_id === selectedSubId;
+            const isChildMatch = pkgCat?.parent_id === selectedSubId;
+            if (!isDirectMatch && !isChildMatch) return false;
+        } else if (selectedRootId) {
+            // Show products under this root (L0)
+            const isDirectMatch = product.category_id === selectedRootId;
+            const isChildMatch = pkgCat?.parent_id === selectedRootId;
+            // Or grandchild match (L2 item -> L1 sub -> L0 root)
+            const subCat = categories.find(c => c.id === pkgCat?.parent_id);
+            const isGrandchildMatch = subCat?.parent_id === selectedRootId;
+
+            if (!isDirectMatch && !isChildMatch && !isGrandchildMatch) return false;
+        }
+
+        // Price Filter
+        const price = product.base_price;
+        if (minPrice && price < parseInt(minPrice)) return false;
+        if (maxPrice && price > parseInt(maxPrice)) return false;
+
+        return true;
+    });
+
+    const rootCategories = categories.filter(c => c.level === 0 || !c.parent_id);
+    const subCategories = selectedRootId ? categories.filter(c => c.parent_id === selectedRootId) : [];
+
+    const handleRootClick = (id: string) => {
+        setSelectedRootId(prev => prev === id ? null : id);
+        setSelectedSubId(null);
     };
 
-    const handleSubcategoryToggle = async (sub: string) => {
-        const newSub = selectedSubcategory === sub ? null : sub;
-        setSelectedSubcategory(newSub);
-        setLoading(true);
-        const all = await getProducts({
-            minPrice: minPrice ? parseInt(minPrice) : undefined,
-            maxPrice: maxPrice ? parseInt(maxPrice) : undefined
-        });
-        const filtered = newSub
-            ? all.filter((p: any) => p.sub_category === newSub)
-            : all;
-        setProducts(filtered);
-        setLoading(false);
+    const handleSubClick = (id: string) => {
+        setSelectedSubId(prev => prev === id ? null : id);
+    };
+
+    const resetFilters = () => {
+        setSelectedRootId(null);
+        setSelectedSubId(null);
+    };
+
+    const handleFilterPrice = () => {
+        // Local filtering is handled by filteredProducts. 
+        // We could manually trigger a refresh or leave as is if reactive.
     };
 
     return (
@@ -87,7 +107,7 @@ export default function ProductsPage() {
             <BrandBar />
 
             <div className="container mx-auto px-8 pt-12">
-                {/* Header Label - Styled like home page sections */}
+                {/* Header Label */}
                 <div className="mb-10">
                     <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 tracking-tight">
                         {t.products_marketplace_title}
@@ -103,24 +123,55 @@ export default function ProductsPage() {
                     <aside className="w-full lg:w-72 flex-shrink-0">
                         <div className="hidden lg:block space-y-8 bg-white p-8 rounded-[32px] border border-neutral-100 shadow-sm sticky top-24">
                             <div>
-                                <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">
-                                    {t.products_supply_categories}
-                                </h3>
-                                <div className="space-y-3">
-                                    {subcategories.length > 0 ? (
-                                        subcategories.map(sub => (
-                                            <div key={sub} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleSubcategoryToggle(sub)}>
-                                                <Checkbox
-                                                    id={sub}
-                                                    checked={selectedSubcategory === sub}
-                                                    onCheckedChange={() => handleSubcategoryToggle(sub)}
-                                                />
-                                                <label htmlFor={sub} className="text-xs font-black uppercase tracking-widest text-neutral-500 group-hover:text-primary-600 cursor-pointer transition-colors">
-                                                    {sub}
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="font-bold text-neutral-900 uppercase tracking-tighter text-sm italic">
+                                        {t.products_supply_categories}
+                                    </h3>
+                                    {(selectedRootId || selectedSubId) && (
+                                        <button
+                                            onClick={resetFilters}
+                                            className="text-[10px] font-black uppercase tracking-widest text-primary-600 hover:text-primary-700 underline"
+                                        >
+                                            {language === 'BN' ? 'সব দেখুন' : 'View All'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="space-y-4">
+                                    {rootCategories.map(root => (
+                                        <div key={root.id} className="space-y-3">
+                                            {/* Root Category Label */}
+                                            <div
+                                                className={`flex items-center space-x-3 group cursor-pointer p-2 rounded-xl transition-all ${selectedRootId === root.id ? 'bg-primary-50' : 'hover:bg-neutral-50'}`}
+                                                onClick={() => handleRootClick(root.id)}
+                                            >
+                                                <div className={`w-1.5 h-1.5 rounded-full transition-colors ${selectedRootId === root.id ? 'bg-primary-600' : 'bg-neutral-200 group-hover:bg-primary-600'}`} />
+                                                <label className={`text-xs font-black uppercase tracking-widest cursor-pointer transition-colors ${selectedRootId === root.id ? 'text-primary-600' : 'text-neutral-500 group-hover:text-primary-600'}`}>
+                                                    {language === 'BN' ? root.name_bn || root.name : root.name}
                                                 </label>
                                             </div>
-                                        ))
-                                    ) : (
+
+                                            {/* Nested Subcategories (Accordion Content) */}
+                                            {selectedRootId === root.id && subCategories.length > 0 && (
+                                                <div className="ml-6 space-y-4 pt-1 border-l-2 border-primary-100 pl-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                    {subCategories.map(sub => (
+                                                        <div key={sub.id} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleSubClick(sub.id)}>
+                                                            <Checkbox
+                                                                id={sub.id}
+                                                                checked={selectedSubId === sub.id}
+                                                                onCheckedChange={() => handleSubClick(sub.id)}
+                                                                className="border-neutral-300 data-[state=checked]:bg-primary-600 data-[state=checked]:border-primary-600"
+                                                            />
+                                                            <label htmlFor={sub.id} className={`text-[10px] font-bold uppercase tracking-widest cursor-pointer transition-colors ${selectedSubId === sub.id ? 'text-primary-600' : 'text-neutral-400 group-hover:text-primary-500'}`}>
+                                                                {language === 'BN' ? sub.name_bn || sub.name : sub.name}
+                                                            </label>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {rootCategories.length === 0 && !loading && (
                                         <p className="text-[10px] text-neutral-300 font-bold uppercase tracking-widest italic">
                                             {t.products_no_subs}
                                         </p>
@@ -165,7 +216,7 @@ export default function ProductsPage() {
                     <div className="flex-1">
                         <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-6 rounded-[32px] border border-neutral-100 shadow-sm">
                             <div className="text-xs text-neutral-400 font-black uppercase tracking-widest">
-                                {t.products_found.replace('{count}', products.length.toString())}
+                                {t.products_found.replace('{count}', filteredProducts.length.toString())}
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="text-xs text-neutral-400 font-bold uppercase tracking-widest">
@@ -188,9 +239,9 @@ export default function ProductsPage() {
                                     </p>
                                 </div>
                             </div>
-                        ) : products.length > 0 ? (
+                        ) : filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {products.map((product) => (
+                                {filteredProducts.map((product) => (
                                     <ProductCard
                                         key={product.id}
                                         id={product.id}

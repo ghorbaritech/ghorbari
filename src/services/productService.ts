@@ -11,7 +11,7 @@ export async function getProducts(options: {
     const supabase = createClient()
 
     // Use !inner if filtering by category name to ensure we only get products with that category
-    const categoryJoin = options.categoryName ? 'category:product_categories!inner(name)' : 'category:product_categories(name)'
+    const categoryJoin = options.categoryName ? 'category:product_categories!inner(id, name, name_bn, parent_id, level)' : 'category:product_categories(id, name, name_bn, parent_id, level)'
 
     let q = supabase.from('products').select(`
     *,
