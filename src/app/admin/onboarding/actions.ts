@@ -345,3 +345,177 @@ export async function generateDemoPartners() {
 
     return results
 }
+export async function getUsers() {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error('Error fetching users:', error)
+        return []
+    }
+    return data
+}
+
+export async function getPartners() {
+    const supabase = await createClient()
+
+    // Fetch from all partner-related tables
+    const [sellers, designers, serviceProviders] = await Promise.all([
+        supabase.from('sellers').select('*, profile:profiles(*)'),
+        supabase.from('designers').select('*, profile:profiles(*)'),
+        supabase.from('service_providers').select('*, profile:profiles(*)')
+    ])
+
+    // Combine and deduplicate by user_id
+    const partnersMap = new Map()
+
+    sellers.data?.forEach(s => {
+        partnersMap.set(s.user_id, {
+            id: s.user_id,
+            email: s.profile?.email,
+            businessName: s.business_name,
+            role: s.profile?.role,
+            roles: { seller: true },
+            seller_data: s,
+            profile: s.profile
+        })
+    })
+
+    designers.data?.forEach(d => {
+        const existing = partnersMap.get(d.user_id) || { id: d.user_id, email: d.profile?.email, businessName: d.company_name, role: d.profile?.role, roles: {}, profile: d.profile }
+        partnersMap.set(d.user_id, {
+            ...existing,
+            roles: { ...existing.roles, designer: true },
+            designer_data: d
+        })
+    })
+
+    serviceProviders.data?.forEach(sp => {
+        const existing = partnersMap.get(sp.user_id) || { id: sp.user_id, email: sp.profile?.email, businessName: sp.business_name, role: sp.profile?.role, roles: {}, profile: sp.profile }
+        partnersMap.set(sp.user_id, {
+            ...existing,
+            roles: { ...existing.roles, service_provider: true },
+            service_data: sp
+        })
+    })
+
+    return Array.from(partnersMap.values())
+}
+
+export async function updatePartner(userId: string, data: any) {
+    console.log("updatePartner action started", { userId, roles: data.roles });
+    try {
+        const supabase = await createClient()
+        const adminClient = createAdminClient()
+
+        // 1. Update Profile Entry
+        const { error: profileError } = await adminClient
+            .from('profiles')
+            .update({
+                full_name: data.businessName,
+                role: 'retailer',
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', userId)
+
+        if (profileError) {
+            console.error("updatePartner: Profile update failed", profileError);
+            return { error: profileError.message }
+        }
+
+        // 2. Update respective tables
+        const errors = []
+
+        // SELLER
+        if (data.roles.seller && data.seller_data) {
+            const { error } = await adminClient
+                .from('sellers')
+                .upsert({
+                    user_id: userId,
+                    business_name: data.businessName,
+                    primary_categories: data.seller_data.primaryCategories,
+                    commission_rate: Number(data.seller_data.commissionRate || 10),
+                    business_type: data.seller_data.businessType,
+                    updated_at: new Date().toISOString()
+                })
+            if (error) errors.push(`Seller update failed: ${error.message}`)
+        } else {
+            // Role removed or not present: Delete entry if it exists
+            const { error } = await adminClient.from('sellers').delete().eq('user_id', userId)
+            if (error) console.error("Error removing seller role:", error)
+        }
+
+        // DESIGNER
+        if (data.roles.designer && data.designer_data) {
+            const { error } = await adminClient
+                .from('designers')
+                .upsert({
+                    user_id: userId,
+                    company_name: data.businessName,
+                    specializations: data.designer_data.specializations,
+                    portfolio_url: data.designer_data.portfolioUrl,
+                    experience_years: Number(data.designer_data.experienceYears || 0),
+                    updated_at: new Date().toISOString()
+                })
+            if (error) errors.push(`Designer update failed: ${error.message}`)
+        } else {
+            // Role removed or not present: Delete entry
+            const { error } = await adminClient.from('designers').delete().eq('user_id', userId)
+            if (error) console.error("Error removing designer role:", error)
+        }
+
+        // SERVICE PROVIDER
+        if (data.roles.service_provider && data.service_data) {
+            const { error } = await adminClient
+                .from('service_providers')
+                .upsert({
+                    user_id: userId,
+                    business_name: data.businessName,
+                    service_types: data.service_data.serviceTypes,
+                    experience_years: Number(data.service_data.experienceYears || 0),
+                    updated_at: new Date().toISOString()
+                })
+            if (error) errors.push(`Service Provider update failed: ${error.message}`)
+        } else {
+            // Role removed or not present: Delete entry
+            const { error } = await adminClient.from('service_providers').delete().eq('user_id', userId)
+            if (error) console.error("Error removing service provider role:", error)
+        }
+
+        if (errors.length > 0) return { error: errors.join(', ') }
+
+        return { success: true }
+    } catch (e: any) {
+        console.error("updatePartner: Critical Exception", e);
+        return { error: e.message || "Internal Server Error" }
+    }
+}
+
+export async function updateUserProfile(userId: string, data: any) {
+    console.log("updateUserProfile action started", { userId });
+    try {
+        const adminClient = createAdminClient()
+        const { error } = await adminClient
+            .from('profiles')
+            .update({
+                full_name: data.fullName,
+                phone: data.phone,
+                address: data.address,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', userId)
+
+        if (error) {
+            console.error("updateUserProfile failed", error);
+            return { error: error.message }
+        }
+
+        return { success: true }
+    } catch (e: any) {
+        console.error("updateUserProfile exception", e);
+        return { error: e.message || "Internal Server Error" }
+    }
+}

@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { createPartner } from '@/app/admin/onboarding/actions'
+import { createPartner, updatePartner } from '@/app/admin/onboarding/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { useEffect } from 'react'
 
 const PRODUCT_CATEGORIES = [
     'Cement & Concrete', 'Steel & Metal', 'Tiles & Flooring',
@@ -27,9 +28,17 @@ const SERVICE_TYPES = [
 
 interface PartnerOnboardingFormProps {
     availableCategories?: { id: string, name: string }[]
+    initialData?: any
+    userId?: string
+    onCancel?: () => void
 }
 
-export default function PartnerOnboardingForm({ availableCategories = [] }: PartnerOnboardingFormProps) {
+export default function PartnerOnboardingForm({
+    availableCategories = [],
+    initialData,
+    userId,
+    onCancel
+}: PartnerOnboardingFormProps) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
@@ -43,6 +52,26 @@ export default function PartnerOnboardingForm({ availableCategories = [] }: Part
     const [selectedCategories, setSelectedCategories] = useState<string[]>([])
     const [selectedSpecializations, setSelectedSpecializations] = useState<string[]>([])
     const [selectedServices, setSelectedServices] = useState<string[]>([])
+
+    // Populate from initialData - ONLY depend on initialData
+    useEffect(() => {
+        if (initialData) {
+            setIsSeller(!!initialData.roles?.seller)
+            setIsDesigner(!!initialData.roles?.designer)
+            setIsServiceProvider(!!initialData.roles?.service_provider)
+            setSelectedCategories(initialData.seller_data?.primary_categories || [])
+            setSelectedSpecializations(initialData.designer_data?.specializations || [])
+            setSelectedServices(initialData.service_data?.service_types || [])
+        } else {
+            // Reset for new
+            setIsSeller(false)
+            setIsDesigner(false)
+            setIsServiceProvider(false)
+            setSelectedCategories([])
+            setSelectedSpecializations([])
+            setSelectedServices([])
+        }
+    }, [initialData])
 
     async function handleSubmit(formData: FormData) {
         setLoading(true)
@@ -76,15 +105,18 @@ export default function PartnerOnboardingForm({ availableCategories = [] }: Part
         }
 
         try {
-            const result = await createPartner(data)
+            const result = userId
+                ? await updatePartner(userId, data)
+                : await createPartner(data)
+
             if (result?.error) {
                 setError(result.error)
             } else {
                 setSuccess(true)
             }
         } catch (e: any) {
-            console.error("Partner Creation Error (Client):", e);
-            setError(`Failed to create partner account: ${e.message || JSON.stringify(e)}`)
+            console.error("Partner Action Error:", e);
+            setError(`Failed: ${e.message || JSON.stringify(e)}`)
         } finally {
             setLoading(false)
         }
@@ -92,25 +124,15 @@ export default function PartnerOnboardingForm({ availableCategories = [] }: Part
 
     if (success) {
         return (
-            <div className="p-8 text-center bg-green-50 rounded-xl border border-green-100">
-                <h3 className="text-xl font-bold text-green-800">Partner Account Created!</h3>
-                <p className="text-green-600 mt-2">The partner can now log in with the provided credentials.</p>
-                <div className="mt-4 flex justify-center gap-2">
-                    <span className="text-xs font-bold uppercase px-2 py-1 bg-white rounded border border-green-200 text-green-700">
-                        {isSeller && 'Seller'}
-                    </span>
-                    <span className="text-xs font-bold uppercase px-2 py-1 bg-white rounded border border-green-200 text-green-700">
-                        {isDesigner && 'Designer'}
-                    </span>
-                    <span className="text-xs font-bold uppercase px-2 py-1 bg-white rounded border border-green-200 text-green-700">
-                        {isServiceProvider && 'Service Provider'}
-                    </span>
-                </div>
+            <div className="p-8 text-center bg-green-50 rounded-xl border border-green-100 italic transition-all animate-in zoom-in duration-300">
+                <h3 className="text-xl font-bold text-green-800">
+                    {userId ? 'Partner Account Updated!' : 'Partner Account Created!'}
+                </h3>
+                <p className="text-green-600 mt-2">The partner information has been successfully {userId ? 'updated' : 'provisioned'}.</p>
                 <Button onClick={() => {
                     setSuccess(false);
-                    // Reset form
-                    setIsSeller(false); setIsDesigner(false); setIsServiceProvider(false);
-                }} className="mt-6">Add Another Partner</Button>
+                    if (onCancel) onCancel();
+                }} className="mt-6 font-bold uppercase tracking-widest text-[10px]">Close</Button>
             </div>
         )
     }
@@ -135,19 +157,19 @@ export default function PartnerOnboardingForm({ availableCategories = [] }: Part
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label>Business Name</Label>
-                            <Input name="businessName" required placeholder="BuildMaterials Ltd." />
+                            <Input name="businessName" required defaultValue={initialData?.businessName || ''} placeholder="BuildMaterials Ltd." />
                         </div>
                         <div className="space-y-2">
                             <Label>Business Email (Login)</Label>
-                            <Input name="email" type="email" required placeholder="partner@ghorbari.com" />
+                            <Input name="email" type="email" required disabled={!!userId} defaultValue={initialData?.email || ''} placeholder="partner@ghorbari.com" />
                         </div>
                         <div className="space-y-2">
                             <Label>Temporary Password</Label>
-                            <Input name="temporaryPassword" type="text" required />
+                            <Input name="temporaryPassword" type="text" required={!userId} disabled={!!userId} placeholder={userId ? "********" : ""} />
                         </div>
                         <div className="space-y-2">
                             <Label>Phone Number</Label>
-                            <Input name="phoneNumber" type="tel" required />
+                            <Input name="phoneNumber" type="tel" required defaultValue={initialData?.profile?.phone || ''} placeholder="+8801XXXXXXXXX" />
                         </div>
                     </div>
                 </CardContent>
@@ -235,7 +257,11 @@ export default function PartnerOnboardingForm({ availableCategories = [] }: Part
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label>Business Type</Label>
-                                <select name="businessType" className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                                <select
+                                    name="businessType"
+                                    defaultValue={initialData?.seller_data?.business_type || 'manufacturer'}
+                                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                >
                                     <option value="manufacturer">Manufacturer</option>
                                     <option value="distributor">Distributor</option>
                                     <option value="retailer">Retailer</option>
@@ -243,11 +269,15 @@ export default function PartnerOnboardingForm({ availableCategories = [] }: Part
                             </div>
                             <div className="space-y-2">
                                 <Label>Commission Rate (%)</Label>
-                                <Input name="commissionRate" type="number" step="0.5" defaultValue="10" />
+                                <Input name="commissionRate" type="number" step="0.5" defaultValue={initialData?.seller_data?.commission_rate || "10"} />
                             </div>
                             <div className="space-y-2">
                                 <Label>Payment Terms</Label>
-                                <select name="paymentTerms" className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                                <select
+                                    name="paymentTerms"
+                                    defaultValue={initialData?.seller_data?.payment_terms || 'net7'}
+                                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                >
                                     <option value="net7">Net 7 Days</option>
                                     <option value="net15">Net 15 Days</option>
                                     <option value="net30">Net 30 Days</option>
@@ -282,11 +312,11 @@ export default function PartnerOnboardingForm({ availableCategories = [] }: Part
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label>Experience (Years)</Label>
-                                <Input name="designExperience" type="number" defaultValue="0" />
+                                <Input name="designExperience" type="number" defaultValue={initialData?.designer_data?.experience_years || "0"} />
                             </div>
                             <div className="space-y-2">
                                 <Label>Portfolio URL</Label>
-                                <Input name="portfolioUrl" placeholder="https://behance.net/..." />
+                                <Input name="portfolioUrl" defaultValue={initialData?.designer_data?.portfolio_url || ""} placeholder="https://behance.net/..." />
                             </div>
                         </div>
                     </CardContent>
@@ -317,7 +347,7 @@ export default function PartnerOnboardingForm({ availableCategories = [] }: Part
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label>Experience (Years)</Label>
-                                <Input name="serviceExperience" type="number" defaultValue="0" />
+                                <Input name="serviceExperience" type="number" defaultValue={initialData?.service_data?.experience_years || "0"} />
                             </div>
                         </div>
                     </CardContent>
@@ -327,9 +357,9 @@ export default function PartnerOnboardingForm({ availableCategories = [] }: Part
             {error && <div className="p-4 bg-red-50 text-red-600 text-sm font-bold rounded-xl border border-red-100">{error}</div>}
 
             <div className="flex justify-end space-x-4 pt-6 border-t">
-                <Button variant="ghost" type="reset">Reset Form</Button>
+                <Button variant="ghost" type="button" onClick={onCancel}>Cancel</Button>
                 <Button type="submit" disabled={loading || (!isSeller && !isDesigner && !isServiceProvider)} size="lg" className="px-8 font-bold">
-                    {loading ? 'Creating...' : 'Create Partner Account'}
+                    {loading ? (userId ? 'Updating...' : 'Creating...') : (userId ? 'Update Partner' : 'Create Partner Account')}
                 </Button>
             </div>
         </form>

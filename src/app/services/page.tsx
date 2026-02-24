@@ -5,34 +5,42 @@ import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowRight, Loader2 } from "lucide-react";
-import { ProductCard } from "@/components/ui/ProductCard";
+import { ServiceCard } from "@/components/ui/ServiceCard";
+import { Filter, Search, CheckCircle2, ShoppingBag, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { PromoBannerSection } from "@/components/sections/PromoBannerSection";
 import { useLanguage } from "@/context/LanguageContext";
 import { getL } from "@/utils/localization";
-import { getAllServicePackages } from "@/services/packageService";
+import { getServiceItems, ServiceItem } from "@/services/serviceItemService";
+import { ServiceCartSidebar } from "@/components/sections/ServiceCartSidebar";
 import { getCategories } from "@/services/productService";
+import { useServiceCart } from "@/context/ServiceCartContext";
+import { toast } from "sonner";
+import Link from "next/link";
 
 export default function ServicesPage() {
     const { t, language } = useLanguage();
+    const { addService, items: selectedItems, itemCount, removeService } = useServiceCart();
+
     const [selectedRootId, setSelectedRootId] = useState<string | null>(null);
     const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
     const [minPrice, setMinPrice] = useState<string>("");
     const [maxPrice, setMaxPrice] = useState<string>("");
-    const [packages, setPackages] = useState<any[]>([]);
+    const [serviceItems, setServiceItems] = useState<ServiceItem[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
 
     useEffect(() => {
         async function fetchData() {
             setLoading(true);
             try {
-                const [pkgData, catData] = await Promise.all([
-                    getAllServicePackages(),
+                const [itemData, catData] = await Promise.all([
+                    getServiceItems(),
                     getCategories('service')
                 ]);
-                setPackages(pkgData);
+                setServiceItems(itemData);
                 setCategories(catData);
             } catch (error) {
                 console.error("Error fetching service data:", error);
@@ -44,20 +52,17 @@ export default function ServicesPage() {
     }, []);
 
     // Filter services based on state
-    const filteredServices = packages.filter(service => {
+    const filteredServices = serviceItems.filter(service => {
         const pkgCat = service.category;
 
         // Category Hierarchy Filter
         if (selectedSubId) {
-            // Show packages in this subcategory (L1) or its items (L2)
             const isDirectMatch = service.category_id === selectedSubId;
             const isChildMatch = pkgCat?.parent_id === selectedSubId;
             if (!isDirectMatch && !isChildMatch) return false;
         } else if (selectedRootId) {
-            // Show packages under this root (L0)
             const isDirectMatch = service.category_id === selectedRootId;
             const isChildMatch = pkgCat?.parent_id === selectedRootId;
-            // Or grandchild match (L2 item -> L1 sub -> L0 root)
             const subCat = categories.find(c => c.id === pkgCat?.parent_id);
             const isGrandchildMatch = subCat?.parent_id === selectedRootId;
 
@@ -65,7 +70,7 @@ export default function ServicesPage() {
         }
 
         // Price Filter
-        const price = service.price;
+        const price = service.unit_price;
         if (minPrice && price < parseInt(minPrice)) return false;
         if (maxPrice && price > parseInt(maxPrice)) return false;
 
@@ -93,24 +98,25 @@ export default function ServicesPage() {
         <main className="min-h-screen flex flex-col font-sans bg-neutral-50/50">
             <Navbar />
 
-            {/* 1. Offers Section */}
+            {/* 1. Offers Section (Restored) */}
             <PromoBannerSection />
 
-            <div className="container mx-auto px-8 pt-12">
-                {/* Header Label */}
+            <div className="container mx-auto px-8 py-12">
+                {/* Header Label (Restored style) */}
                 <div className="mb-10">
-                    <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 tracking-tight">
+                    <h1 className="text-3xl md:text-4xl font-black text-neutral-900 tracking-tighter italic uppercase">
                         {t.services_marketplace_title}
                     </h1>
-                    <p className="text-neutral-500 font-medium mt-1">
+                    <p className="text-neutral-500 font-bold uppercase tracking-widest text-xs mt-2">
                         {t.services_marketplace_subtitle}
                     </p>
-                    <div className="h-1 w-20 bg-primary-600 mt-3 rounded-full" />
+                    <div className="h-1.5 w-24 bg-primary-600 mt-4 rounded-full" />
                 </div>
 
-                <div className="flex flex-col lg:flex-row gap-10">
-                    {/* Filters Sidebar */}
-                    <aside className="w-full lg:w-72 flex-shrink-0">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-10 items-start">
+
+                    {/* Filters Sidebar (Left) */}
+                    <aside className="w-full xl:col-span-3 lg:col-span-4">
                         <div className="hidden lg:block space-y-8 bg-white p-8 rounded-[32px] border border-neutral-100 shadow-sm sticky top-24">
                             <div>
                                 <div className="flex justify-between items-center mb-6">
@@ -193,63 +199,112 @@ export default function ServicesPage() {
                         </div>
                     </aside>
 
-                    {/* Service Grid */}
-                    <div className="flex-1">
-                        <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-6 rounded-[32px] border border-neutral-100 shadow-sm">
-                            <div className="text-xs text-neutral-400 font-black uppercase tracking-widest">
-                                {t.services_found.replace('{count}', filteredServices.length.toString())}
+                    {/* Main Content (Center) */}
+                    <div className="xl:col-span-6 lg:col-span-8 space-y-8">
+                        {/* Filters & Search Row */}
+                        <div className="bg-white rounded-[32px] p-4 border border-neutral-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+                            <div className="relative flex-grow w-full">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search services (e.g. Painting, Tiles...)"
+                                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-neutral-50 border-none focus:ring-2 focus:ring-primary-500/20 font-bold text-sm"
+                                />
                             </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs text-neutral-400 font-bold uppercase tracking-widest">
-                                    {t.services_sort_by}
-                                </span>
-                                <select className="text-[10px] border-none bg-neutral-50 rounded-xl px-4 py-2 font-black uppercase tracking-widest text-neutral-800 focus:ring-0 cursor-pointer">
-                                    <option>{t.services_newest}</option>
-                                    <option>{t.services_price_low}</option>
-                                    <option>{t.services_price_high}</option>
-                                </select>
+                            <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                                <button className="px-6 py-4 rounded-2xl bg-neutral-900 text-white font-black text-[11px] uppercase tracking-widest flex items-center gap-2 flex-shrink-0">
+                                    <Filter className="w-3.5 h-3.5" />
+                                    Filter
+                                </button>
+                                {categories.map(cat => (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
+                                        className={`px-6 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all whitespace-nowrap ${selectedCategory === cat.id ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' : 'bg-white border border-neutral-100 text-neutral-400 hover:border-neutral-200'}`}
+                                    >
+                                        {language === 'BN' ? cat.name_bn : cat.name}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
+                        {/* Services Grid */}
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[40px] border border-neutral-100 shadow-sm">
-                                <Loader2 className="w-10 h-10 text-primary-600 animate-spin mb-4" />
-                                <p className="text-neutral-500 font-bold">{t.products_loading}</p>
-                            </div>
-                        ) : filteredServices.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {filteredServices.map((service: any) => (
-                                    <ProductCard
-                                        key={service.id}
-                                        id={service.id}
-                                        name={service.title}
-                                        nameBn={service.title_bn}
-                                        price={service.price?.toLocaleString() || "0"}
-                                        image={service.images?.[0] || ""}
-                                        rating={service.rating || 4.5}
-                                        category={service.category?.name}
-                                        categoryBn={service.category?.name_bn}
-                                        categoryId={service.category_id}
-                                        sellerId={service.provider_id}
-                                        sellerName={service.provider?.business_name}
-                                        sellerNameBn={service.provider?.business_name_bn}
-                                        tag={service.unit}
-                                        href={`/services/${service.id}`}
-                                    />
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {[1, 2, 3, 4, 5, 6].map(n => (
+                                    <div key={n} className="h-[300px] rounded-[24px] bg-neutral-100 animate-pulse" />
                                 ))}
                             </div>
+                        ) : filteredServices.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredServices.map((service) => {
+                                    const isSelected = selectedItems.some(i => i.id === service.id);
+                                    return (
+                                        <ServiceCard
+                                            key={service.id}
+                                            id={service.id}
+                                            name={service.name}
+                                            nameBn={service.name_bn}
+                                            price={service.unit_price?.toLocaleString() || "0"}
+                                            image={service.image_url || ""}
+                                            rating={4.8}
+                                            category={service.category?.name}
+                                            unitType={service.unit_type}
+                                            isSelected={isSelected}
+                                            onToggle={() => {
+                                                if (isSelected) {
+                                                    removeService(service.id);
+                                                    toast.info(`${service.name} removed from booking`);
+                                                } else {
+                                                    addService(service);
+                                                    toast.success(`${service.name} added to booking`);
+                                                }
+                                            }}
+                                        />
+                                    );
+                                })}
+                            </div>
                         ) : (
-                            <div className="col-span-full py-32 text-center bg-white rounded-[40px] border border-dashed border-neutral-100">
-                                <p className="text-neutral-300 font-black uppercase tracking-[0.3em] text-xs underline decoration-primary-600 decoration-4 underline-offset-8 italic">
-                                    {t.services_no_found_title}
-                                </p>
-                                <p className="mt-6 text-neutral-400 text-[10px] font-bold uppercase tracking-widest leading-loose" dangerouslySetInnerHTML={{ __html: t.services_no_found_desc }}>
-                                </p>
+                            <div className="bg-white border border-neutral-100 rounded-[32px] p-20 text-center">
+                                <div className="w-20 h-20 bg-neutral-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <ShoppingBag className="w-10 h-10 text-neutral-200" />
+                                </div>
+                                <h3 className="text-2xl font-black text-neutral-900 mb-2">No Services Found</h3>
+                                <p className="text-neutral-400 font-bold uppercase tracking-widest text-xs">Try selecting a different category or search term</p>
                             </div>
                         )}
                     </div>
+
+                    {/* Sidebar Cart (Right) */}
+                    <div className="xl:col-span-3 space-y-4">
+                        <ServiceCartSidebar />
+                    </div>
                 </div>
             </div>
+
+            {/* Float Floating Checkout Bar */}
+            {/* Mobile Floating Cart Trigger */}
+            {itemCount > 0 && (
+                <div className="xl:hidden fixed bottom-6 right-6 z-50">
+                    <button
+                        onClick={() => {
+                            const cartEl = document.getElementById('sidebar-cart');
+                            cartEl?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="bg-neutral-900 text-white p-5 rounded-full shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-500 group active:scale-95 transition-transform"
+                    >
+                        <div className="relative">
+                            <ShoppingBag className="w-6 h-6" />
+                            <span className="absolute -top-2 -right-2 bg-primary-600 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-neutral-900">
+                                {itemCount}
+                            </span>
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest pr-2 border-l border-white/20 pl-3">
+                            View Cart
+                        </span>
+                    </button>
+                </div>
+            )}
 
             <Footer />
         </main>

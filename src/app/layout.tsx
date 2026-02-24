@@ -23,6 +23,7 @@ export const metadata: Metadata = {
 };
 
 import { CartProvider } from "@/context/CartContext";
+import { ServiceCartProvider } from "@/context/ServiceCartContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 import { CompareProvider } from "@/context/CompareContext";
@@ -42,12 +43,14 @@ export default function RootLayout({
       >
         <LanguageProvider>
           <CartProvider>
-            <CompareProvider>
-              {children}
-              <Toaster />
-              <CompareStickyBar />
-              <SonnerToaster />
-            </CompareProvider>
+            <ServiceCartProvider>
+              <CompareProvider>
+                {children}
+                <Toaster />
+                <CompareStickyBar />
+                <SonnerToaster />
+              </CompareProvider>
+            </ServiceCartProvider>
           </CartProvider>
         </LanguageProvider>
       </body>
