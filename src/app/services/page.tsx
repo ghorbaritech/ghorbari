@@ -16,7 +16,8 @@ import { getCategories } from "@/services/productService";
 
 export default function ServicesPage() {
     const { t, language } = useLanguage();
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [selectedRootId, setSelectedRootId] = useState<string | null>(null);
+    const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
     const [minPrice, setMinPrice] = useState<string>("");
     const [maxPrice, setMaxPrice] = useState<string>("");
     const [packages, setPackages] = useState<any[]>([]);
@@ -44,8 +45,24 @@ export default function ServicesPage() {
 
     // Filter services based on state
     const filteredServices = packages.filter(service => {
-        // Category Filter
-        if (selectedCategory && service.category_id !== selectedCategory) return false;
+        const pkgCat = service.category;
+
+        // Category Hierarchy Filter
+        if (selectedSubId) {
+            // Show packages in this subcategory (L1) or its items (L2)
+            const isDirectMatch = service.category_id === selectedSubId;
+            const isChildMatch = pkgCat?.parent_id === selectedSubId;
+            if (!isDirectMatch && !isChildMatch) return false;
+        } else if (selectedRootId) {
+            // Show packages under this root (L0)
+            const isDirectMatch = service.category_id === selectedRootId;
+            const isChildMatch = pkgCat?.parent_id === selectedRootId;
+            // Or grandchild match (L2 item -> L1 sub -> L0 root)
+            const subCat = categories.find(c => c.id === pkgCat?.parent_id);
+            const isGrandchildMatch = subCat?.parent_id === selectedRootId;
+
+            if (!isDirectMatch && !isChildMatch && !isGrandchildMatch) return false;
+        }
 
         // Price Filter
         const price = service.price;
@@ -55,8 +72,21 @@ export default function ServicesPage() {
         return true;
     });
 
-    const handleCategoryToggle = (id: string) => {
-        setSelectedCategory(prev => prev === id ? null : id);
+    const rootCategories = categories.filter(c => c.level === 0 || !c.parent_id);
+    const subCategories = selectedRootId ? categories.filter(c => c.parent_id === selectedRootId) : [];
+
+    const handleRootClick = (id: string) => {
+        setSelectedRootId(id);
+        setSelectedSubId(null);
+    };
+
+    const handleSubClick = (id: string) => {
+        setSelectedSubId(prev => prev === id ? null : id);
+    };
+
+    const resetFilters = () => {
+        setSelectedRootId(null);
+        setSelectedSubId(null);
     };
 
     return (
@@ -83,22 +113,59 @@ export default function ServicesPage() {
                     <aside className="w-full lg:w-72 flex-shrink-0">
                         <div className="hidden lg:block space-y-8 bg-white p-8 rounded-[32px] border border-neutral-100 shadow-sm sticky top-24">
                             <div>
-                                <h3 className="font-bold mb-6 text-neutral-900 uppercase tracking-tighter text-sm italic">
-                                    {t.services_categories_sidebar}
-                                </h3>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="font-bold text-neutral-900 uppercase tracking-tighter text-sm italic">
+                                        {selectedRootId ? (
+                                            categories.find(c => c.id === selectedRootId)?.name
+                                        ) : (
+                                            t.services_categories_sidebar
+                                        )}
+                                    </h3>
+                                    {(selectedRootId || selectedSubId) && (
+                                        <button
+                                            onClick={resetFilters}
+                                            className="text-[10px] font-black uppercase tracking-widest text-primary-600 hover:text-primary-700 underline"
+                                        >
+                                            {language === 'BN' ? 'সব দেখুন' : 'View All'}
+                                        </button>
+                                    )}
+                                </div>
+
                                 <div className="space-y-4">
-                                    {categories.map(c => (
-                                        <div key={c.id} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleCategoryToggle(c.id)}>
-                                            <Checkbox
-                                                id={c.id}
-                                                checked={selectedCategory === c.id}
-                                                onCheckedChange={() => handleCategoryToggle(c.id)}
-                                            />
-                                            <label htmlFor={c.id} className="text-xs font-black uppercase tracking-widest text-neutral-500 group-hover:text-primary-600 cursor-pointer transition-colors">
-                                                {language === 'BN' ? c.name_bn || c.name : c.name}
-                                            </label>
+                                    {!selectedRootId ? (
+                                        // Show Root Categories
+                                        rootCategories.map(c => (
+                                            <div key={c.id} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleRootClick(c.id)}>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-neutral-200 group-hover:bg-primary-600 transition-colors" />
+                                                <label className="text-xs font-black uppercase tracking-widest text-neutral-500 group-hover:text-primary-600 cursor-pointer transition-colors">
+                                                    {language === 'BN' ? c.name_bn || c.name : c.name}
+                                                </label>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        // Show Sub Categories
+                                        <div className="space-y-4">
+                                            <button
+                                                onClick={() => setSelectedRootId(null)}
+                                                className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 hover:text-neutral-600 mb-4"
+                                            >
+                                                <ArrowRight className="w-3 h-3 rotate-180" />
+                                                {language === 'BN' ? 'পেছনে ফিরুন' : 'Go Back'}
+                                            </button>
+                                            {subCategories.map(c => (
+                                                <div key={c.id} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleSubClick(c.id)}>
+                                                    <Checkbox
+                                                        id={c.id}
+                                                        checked={selectedSubId === c.id}
+                                                        onCheckedChange={() => handleSubClick(c.id)}
+                                                    />
+                                                    <label htmlFor={c.id} className="text-xs font-black uppercase tracking-widest text-neutral-500 group-hover:text-primary-600 cursor-pointer transition-colors">
+                                                        {language === 'BN' ? c.name_bn || c.name : c.name}
+                                                    </label>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             </div>
 

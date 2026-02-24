@@ -44,7 +44,7 @@ export async function getAllServicePackages() {
     const supabase = createClient();
     const { data, error } = await supabase
         .from('service_packages')
-        .select('*, provider:service_providers!provider_id(business_name, business_name_bn), category:product_categories(name, name_bn)')
+        .select('*, provider:service_providers!provider_id(business_name, business_name_bn), category:product_categories(id, name, name_bn, parent_id)')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
