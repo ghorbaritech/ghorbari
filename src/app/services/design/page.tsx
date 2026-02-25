@@ -4,9 +4,10 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star, Quote, Building2, Ruler, Sofa, Loader2 } from "lucide-react";
+import { ArrowRight, Star, Quote, Building2, Ruler, Sofa, Loader2, Filter } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
 import { featuredProjects, clientReviews } from "@/data/dummyDesignData";
 import { useLanguage } from "@/context/LanguageContext";
 import { getL } from "@/utils/localization";
@@ -34,7 +35,8 @@ const topBanners = [
 
 export default function DesignServicesPage() {
     const { t, language } = useLanguage();
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [selectedRootId, setSelectedRootId] = useState<string | null>(null);
+    const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
     const [packages, setPackages] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -58,9 +60,42 @@ export default function DesignServicesPage() {
         fetchData();
     }, []);
 
-    const filteredServices = selectedCategory
-        ? packages.filter(s => s.category_id === selectedCategory)
-        : packages;
+    const filteredServices = packages.filter(service => {
+        const pkgCat = service.category;
+
+        // Category Hierarchy Filter
+        if (selectedSubId) {
+            const isDirectMatch = service.category_id === selectedSubId;
+            const isChildMatch = pkgCat?.parent_id === selectedSubId;
+            if (!isDirectMatch && !isChildMatch) return false;
+        } else if (selectedRootId) {
+            const isDirectMatch = service.category_id === selectedRootId;
+            const isChildMatch = pkgCat?.parent_id === selectedRootId;
+            const subCat = categories.find(c => c.id === pkgCat?.parent_id);
+            const isGrandchildMatch = subCat?.parent_id === selectedRootId;
+
+            if (!isDirectMatch && !isChildMatch && !isGrandchildMatch) return false;
+        }
+
+        return true;
+    });
+
+    const rootCategories = categories.filter(c => c.level === 0 || !c.parent_id);
+    const subCategories = selectedRootId ? categories.filter(c => c.parent_id === selectedRootId) : [];
+
+    const handleRootClick = (id: string) => {
+        setSelectedRootId(prev => prev === id ? null : id);
+        setSelectedSubId(null);
+    };
+
+    const handleSubClick = (id: string) => {
+        setSelectedSubId(prev => prev === id ? null : id);
+    };
+
+    const resetFilters = () => {
+        setSelectedRootId(null);
+        setSelectedSubId(null);
+    };
 
     return (
         <main className="min-h-screen flex flex-col font-sans bg-neutral-50/50">
@@ -113,32 +148,73 @@ export default function DesignServicesPage() {
                     <div className="flex flex-col lg:flex-row gap-12">
                         {/* Sidebar */}
                         <aside className="w-full lg:w-72 flex-shrink-0">
-                            <div className="sticky top-24">
-                                <h3 className="text-xl font-bold mb-8 text-neutral-900 tracking-tight">
-                                    {t.design_categories_title}
-                                </h3>
-                                <div className="space-y-2">
-                                    <button
-                                        onClick={() => setSelectedCategory(null)}
-                                        className={`w-full text-left px-6 py-4 rounded-2xl text-sm font-bold transition-all duration-300 ${!selectedCategory
-                                            ? 'bg-neutral-900 text-white shadow-lg scale-105'
-                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900'
-                                            }`}
-                                    >
-                                        {t.design_all_services}
-                                    </button>
-                                    {categories.map(cat => (
+                            <div className="sticky top-24 space-y-8 bg-white p-8 rounded-[32px] border border-neutral-100 shadow-sm">
+                                <div>
+                                    <div className="flex justify-between items-center mb-8">
+                                        <h3 className="text-xl font-bold text-neutral-900 tracking-tight italic">
+                                            {t.design_categories_title}
+                                        </h3>
+                                        {(selectedRootId || selectedSubId) && (
+                                            <button
+                                                onClick={resetFilters}
+                                                className="text-[10px] font-black uppercase tracking-widest text-primary-600 hover:text-primary-700 underline"
+                                            >
+                                                {language === 'BN' ? 'সব দেখুন' : 'View All'}
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-4">
                                         <button
-                                            key={cat.id}
-                                            onClick={() => setSelectedCategory(cat.id)}
-                                            className={`w-full text-left px-6 py-4 rounded-2xl text-sm font-bold transition-all duration-300 ${selectedCategory === cat.id
+                                            onClick={resetFilters}
+                                            className={`w-full text-left px-6 py-4 rounded-2xl text-sm font-bold transition-all duration-300 ${!selectedRootId && !selectedSubId
                                                 ? 'bg-neutral-900 text-white shadow-lg scale-105'
                                                 : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900'
                                                 }`}
                                         >
-                                            {language === 'BN' ? cat.name_bn || cat.name : cat.name}
+                                            {t.design_all_services}
                                         </button>
-                                    ))}
+
+                                        {rootCategories.map(root => (
+                                            <div key={root.id} className="space-y-3">
+                                                {/* Root Category Label */}
+                                                <div
+                                                    className={`flex items-center space-x-3 group cursor-pointer p-4 rounded-2xl transition-all ${selectedRootId === root.id ? 'bg-primary-50' : 'hover:bg-neutral-50'}`}
+                                                    onClick={() => handleRootClick(root.id)}
+                                                >
+                                                    <div className={`w-1.5 h-1.5 rounded-full transition-colors ${selectedRootId === root.id ? 'bg-primary-600' : 'bg-neutral-200 group-hover:bg-primary-600'}`} />
+                                                    <label className={`text-sm font-bold tracking-tight cursor-pointer transition-colors ${selectedRootId === root.id ? 'text-primary-600' : 'text-neutral-500 group-hover:text-primary-600'}`}>
+                                                        {language === 'BN' ? root.name_bn || root.name : root.name}
+                                                    </label>
+                                                </div>
+
+                                                {/* Nested Subcategories */}
+                                                {selectedRootId === root.id && subCategories.length > 0 && (
+                                                    <div className="ml-6 space-y-4 pt-1 border-l-2 border-primary-100 pl-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                        {subCategories.map(sub => (
+                                                            <div key={sub.id} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleSubClick(sub.id)}>
+                                                                <Checkbox
+                                                                    id={sub.id}
+                                                                    checked={selectedSubId === sub.id}
+                                                                    onCheckedChange={() => handleSubClick(sub.id)}
+                                                                    className="border-neutral-300 data-[state=checked]:bg-primary-600 data-[state=checked]:border-primary-600"
+                                                                />
+                                                                <label htmlFor={sub.id} className={`text-xs font-bold tracking-tight cursor-pointer transition-colors ${selectedSubId === sub.id ? 'text-primary-600' : 'text-neutral-400 group-hover:text-primary-500'}`}>
+                                                                    {language === 'BN' ? sub.name_bn || sub.name : sub.name}
+                                                                </label>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+
+                                        {rootCategories.length === 0 && !loading && (
+                                            <p className="text-[10px] text-neutral-300 font-bold uppercase tracking-widest italic">
+                                                {t.products_no_subs}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </aside>
