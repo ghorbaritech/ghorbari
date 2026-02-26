@@ -19,8 +19,9 @@ export default async function Home() {
   const designServices = contentMap['design_services'] || {};
 
   const productSections = contentMap['product_sections'] || [];
+  const serviceSections = contentMap['service_sections'] || [];
   const promoBanners = contentMap['promo_banners'] || [];
-  const serviceShowcase = contentMap['service_showcase'] || {};
+  const serviceShowcaseFallback = contentMap['service_showcase'] || {};
 
   console.log('HOME PAGE DEBUG:', {
     hasFeatured: !!rawFeatured,
@@ -66,11 +67,22 @@ export default async function Home() {
           banners={Array.isArray(contentMap['promo_banners']) ? contentMap['promo_banners'] : contentMap['promo_banners']?.items}
         />
 
-        {/* 6. Service Section */}
-        <ServiceShowcase
-          title={serviceShowcase.title}
-          items={serviceShowcase.items}
-        />
+        {/* 6. Service Sections (Dynamic) */}
+        {serviceSections.length > 0 ? (
+          serviceSections.map((section: any) => (
+            <ServiceShowcase
+              key={section.id}
+              title={section.title}
+              category={section.category_id}
+              bgClass={section.bg_style}
+            />
+          ))
+        ) : (
+          <ServiceShowcase
+            title={serviceShowcaseFallback.title}
+            items={serviceShowcaseFallback.items}
+          />
+        )}
       </div>
 
       <Footer />

@@ -12,6 +12,8 @@ import Link from 'next/link'
 interface ServiceShowcaseProps {
     title?: string
     items?: any[]
+    category?: string
+    bgClass?: string
 }
 
 const DEFAULT_SERVICES = [
@@ -21,37 +23,36 @@ const DEFAULT_SERVICES = [
     { title: 'Sanitary Installation', titleBn: 'স্যানিটারি ইন্সটলেশন', image: 'https://images.unsplash.com/photo-1584622050111-993a426fbf0a?w=600&h=400&fit=crop', price: 1800 },
 ]
 
-export function ServiceShowcase({ title, items = [] }: ServiceShowcaseProps) {
+export function ServiceShowcase({ title, items = [], category, bgClass = "bg-blue-50" }: ServiceShowcaseProps) {
     const { t, language } = useLanguage();
     const scrollContainerRef = useRef<HTMLDivElement>(null)
     const [fetchedItems, setFetchedItems] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
-        // Only fetch if no items provided by prop AND we haven't fetched already
-        if (items.length === 0 && fetchedItems.length === 0 && !loading) {
+        // Fetch if category is provided OR if no items provided by prop
+        if (category || (items.length === 0 && fetchedItems.length === 0)) {
             setLoading(true)
 
-            // Safety timeout: 5 seconds
-            const timer = setTimeout(() => {
-                if (loading) {
-                    console.warn("Service fetch timed out, falling back to defaults");
-                    setLoading(false);
-                }
-            }, 5000);
+            // Determine if category is UUID or Name
+            const isUUID = category ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category) : false;
 
-            getServiceItems().then(data => {
-                clearTimeout(timer);
-                setFetchedItems(data)
+            getServiceItems(isUUID ? category : undefined).then(data => {
+                let filtered = data;
+                if (category && !isUUID) {
+                    // Filter by name if not UUID
+                    filtered = data.filter(item =>
+                        item.category?.name === category ||
+                        item.category?.name_bn === category
+                    );
+                }
+                setFetchedItems(filtered)
                 setLoading(false)
             }).catch(() => {
-                clearTimeout(timer);
                 setLoading(false)
             })
-
-            return () => clearTimeout(timer);
         }
-    }, [items, fetchedItems.length, loading])
+    }, [category, items, fetchedItems.length])
 
     const displayItems = items.length > 0 ? items : (fetchedItems.length > 0 ? fetchedItems : DEFAULT_SERVICES)
     const visibleItems = displayItems.slice(0, 10) // Show up to 10 in slider
@@ -69,7 +70,7 @@ export function ServiceShowcase({ title, items = [] }: ServiceShowcaseProps) {
     const displayTitle = title || t.service_booking_title;
 
     return (
-        <section className="py-12 bg-blue-50 relative">
+        <section className={`py-12 ${bgClass} relative`}>
             <div className="container mx-auto px-8">
                 <div className="flex justify-between items-end mb-8">
                     <div className="space-y-1">

@@ -607,58 +607,120 @@ export default function CMSPage() {
                 <TabsContent value="services" className="space-y-6">
                     <Card className="p-8 rounded-[2.5rem] border-none shadow-xl bg-white">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-black uppercase text-neutral-900">Service Section Config</h2>
-                            <Button
-                                onClick={() => handleSave('service_showcase', content['service_showcase'])}
-                                disabled={saving}
-                                className="bg-black text-white rounded-xl font-bold uppercase text-xs"
-                            >
-                                {saving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Save Changes'}
-                            </Button>
+                            <h2 className="text-xl font-black uppercase text-neutral-900">Service Showcases</h2>
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => {
+                                        const currentSections = content['service_sections'] || []
+                                        setContent({ ...content, service_sections: [...currentSections, { id: Date.now(), title: '', category_id: '', bg_style: 'bg-blue-50' }] })
+                                    }}
+                                    variant="outline"
+                                    className="rounded-xl font-bold uppercase text-xs"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" /> Add Section
+                                </Button>
+                                <Button
+                                    onClick={() => handleSave('service_sections', content['service_sections'])}
+                                    disabled={saving}
+                                    className="bg-black text-white rounded-xl font-bold uppercase text-xs"
+                                >
+                                    {saving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Save Changes'}
+                                </Button>
+                            </div>
                         </div>
 
-                        <div className="mb-8 max-w-md space-y-2">
-                            <label className="text-xs font-bold uppercase text-neutral-500">Section Title</label>
-                            <Input
-                                value={content['service_showcase']?.title || 'Our Services'}
-                                onChange={(e) => setContent({ ...content, service_showcase: { ...content['service_showcase'], title: e.target.value } })}
-                                className="font-bold border-neutral-200"
-                            />
-                        </div>
+                        <div className="space-y-6">
+                            {(content['service_sections'] || []).map((section: any, index: number) => (
+                                <div key={section.id} className="p-6 border-2 border-dashed border-neutral-200 rounded-2xl space-y-4 relative group hover:border-blue-200 transition-all">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-4 right-4 text-neutral-300 hover:text-red-500 hover:bg-red-50"
+                                        onClick={async () => {
+                                            const newSections = content['service_sections'].filter((s: any) => s.id !== section.id)
+                                            setContent({ ...content, service_sections: newSections })
+                                            await handleSave('service_sections', newSections)
+                                        }}
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </Button>
 
-                        <h3 className="text-sm font-black uppercase text-neutral-400 mb-4">Select Services to Display</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 h-96 overflow-y-auto pr-2">
-                            {dependencies.servicePackages.map((pkg: any) => {
-                                const isSelected = content['service_showcase']?.items?.some((i: any) => i.id === pkg.id)
-                                return (
-                                    <label key={pkg.id} className={`p-4 border-2 rounded-2xl cursor-pointer transition-all ${isSelected ? 'border-emerald-500 bg-emerald-50' : 'border-neutral-100 hover:border-neutral-200'}`}>
-                                        <div className="flex flex-col gap-3">
-                                            <div className="flex items-start justify-between">
-                                                <Checkbox
-                                                    checked={isSelected}
-                                                    onCheckedChange={(checked) => {
-                                                        const currentItems = content['service_showcase']?.items || []
-                                                        let newItems
-                                                        if (checked) {
-                                                            newItems = [...currentItems, { id: pkg.id, title: pkg.title, image: pkg.images?.[0] }]
-                                                        } else {
-                                                            newItems = currentItems.filter((i: any) => i.id !== pkg.id)
-                                                        }
-                                                        setContent({
-                                                            ...content,
-                                                            service_showcase: { ...content['service_showcase'], items: newItems }
-                                                        })
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-xs">
+                                            {index + 1}
+                                        </div>
+                                        <span className="font-black text-neutral-300 uppercase tracking-widest text-xs">Service Showcase</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase text-neutral-500">Section Title</label>
+                                            <Input
+                                                value={section.title}
+                                                onChange={(e) => {
+                                                    const newSections = content['service_sections'].map((s: any, i: number) =>
+                                                        i === index ? { ...s, title: e.target.value } : s
+                                                    )
+                                                    setContent({ ...content, service_sections: newSections })
+                                                }}
+                                                className="font-bold"
+                                                placeholder="e.g. Repair Services"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase text-neutral-500">Category Source</label>
+                                            <select
+                                                value={section.category_id}
+                                                onChange={(e) => {
+                                                    const newSections = content['service_sections'].map((s: any, i: number) =>
+                                                        i === index ? { ...s, category_id: e.target.value } : s
+                                                    )
+                                                    setContent({ ...content, service_sections: newSections })
+                                                }}
+                                                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm font-bold focus:outline-none focus:ring-2 focus:ring-ring"
+                                            >
+                                                <option value="">Select Category...</option>
+                                                {dependencies.categories.filter((c: any) => c.type === 'service').map((c: any) => (
+                                                    <option key={c.id} value={c.name}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase text-neutral-500">Background Style</label>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        const newSections = content['service_sections'].map((s: any, i: number) =>
+                                                            i === index ? { ...s, bg_style: 'bg-white' } : s
+                                                        )
+                                                        setContent({ ...content, service_sections: newSections })
                                                     }}
-                                                />
-                                                {isSelected && <span className="w-2 h-2 rounded-full bg-emerald-500" />}
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-xs line-clamp-2">{pkg.title}</p>
+                                                    className={`flex-1 h-10 rounded-lg border-2 font-bold text-xs uppercase ${section.bg_style === 'bg-white' ? 'border-neutral-900 bg-neutral-50' : 'border-neutral-100'}`}
+                                                >
+                                                    White
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const newSections = content['service_sections'].map((s: any, i: number) =>
+                                                            i === index ? { ...s, bg_style: 'bg-blue-50' } : s
+                                                        )
+                                                        setContent({ ...content, service_sections: newSections })
+                                                    }}
+                                                    className={`flex-1 h-10 rounded-lg border-2 font-bold text-xs uppercase ${section.bg_style === 'bg-blue-50' ? 'border-neutral-900 bg-blue-100' : 'border-neutral-100'}`}
+                                                >
+                                                    Blue
+                                                </button>
                                             </div>
                                         </div>
-                                    </label>
-                                )
-                            })}
+                                    </div>
+                                </div>
+                            ))}
+
+                            {(!content['service_sections'] || content['service_sections'].length === 0) && (
+                                <div className="text-center py-10 text-neutral-400 font-medium bg-neutral-50 rounded-2xl">
+                                    No service showcases added. Click "Add Section" to begin.
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </TabsContent>
