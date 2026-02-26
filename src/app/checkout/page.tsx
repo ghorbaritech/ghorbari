@@ -286,58 +286,61 @@ export default function CheckoutPage() {
                     {/* Right: Summary */}
                     <div className="w-full lg:w-[450px] flex-shrink-0">
                         <div className="sticky top-24 space-y-6">
-                            <div className="bg-neutral-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
-                                {/* Decorative elements */}
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary-600/20 blur-3xl -mr-16 -mt-16" />
-
-                                <h3 className="text-2xl font-black uppercase tracking-tight italic mb-8 border-b border-white/10 pb-4">Invoice Summary</h3>
-
-                                <div className="space-y-4 mb-8">
-                                    <div className="flex justify-between items-center text-sm font-medium">
-                                        <span className="text-neutral-400">Order Subtotal</span>
-                                        <span className="font-bold">৳{totalAmount.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm font-medium">
-                                        <span className="text-neutral-400">Platform Charges</span>
-                                        <span className="font-bold text-primary-400">৳{platformCharges.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm font-medium">
-                                        <span className="text-neutral-400">VAT (Categorized)</span>
-                                        <span className="font-bold text-primary-400">৳{vatAmount.toLocaleString()}</span>
-                                    </div>
-                                    <div className="h-px bg-white/10 my-6" />
-                                    <div className="flex justify-between items-end">
-                                        <div className="space-y-1">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-primary-500">Total Bill</p>
-                                            <p className="text-3xl font-black italic tracking-tighter">৳{grandTotal.toLocaleString()}</p>
-                                        </div>
-                                    </div>
+                            <div className="bg-white rounded-[2.5rem] text-neutral-900 shadow-xl border border-neutral-100 relative overflow-hidden">
+                                {/* Header Section inspired by reference */}
+                                <div className="bg-[#f0f9fa] p-8 pb-6">
+                                    <h3 className="text-3xl font-black uppercase tracking-tight italic text-neutral-900">Invoice Summary</h3>
+                                    <div className="h-1 w-20 bg-primary-600 mt-2 rounded-full" />
                                 </div>
 
-                                <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm font-bold text-neutral-300 italic uppercase">Advance Required (10%)</span>
-                                        <span className="text-xl font-black text-primary-500">৳{advancePayment.toLocaleString()}</span>
-                                    </div>
-                                    <p className="text-[10px] text-neutral-400 leading-relaxed font-medium">
-                                        Payment instructions will be provided after the confirmation call from our admin.
-                                    </p>
-                                </div>
-
-                                <Button
-                                    onClick={handleConfirmOrder}
-                                    disabled={loading}
-                                    className="w-full h-16 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-black uppercase tracking-widest mt-8 shadow-xl shadow-primary-600/20 active:scale-95 transition-all text-sm"
-                                >
-                                    {loading ? (
-                                        <div className="flex items-center gap-2">
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                            Processing Request...
+                                <div className="p-8 pt-6">
+                                    <div className="space-y-4 mb-8">
+                                        <div className="flex justify-between items-center text-sm font-bold">
+                                            <span className="text-neutral-500 uppercase tracking-widest text-[10px]">Order Subtotal</span>
+                                            <span className="text-neutral-900">৳{totalAmount.toLocaleString()}</span>
                                         </div>
-                                    ) : (
-                                        "Confirm Order Request"
-                                    )}
-                                </Button>
+                                        <div className="flex justify-between items-center text-sm font-bold">
+                                            <span className="text-neutral-500 uppercase tracking-widest text-[10px]">Platform Charges</span>
+                                            <span className="text-primary-600">৳{platformCharges.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm font-bold">
+                                            <span className="text-neutral-500 uppercase tracking-widest text-[10px]">VAT (Categorized)</span>
+                                            <span className="text-primary-600">৳{vatAmount.toLocaleString()}</span>
+                                        </div>
+
+                                        <div className="h-px bg-neutral-100 my-6" />
+
+                                        <div className="flex justify-between items-center py-2">
+                                            <p className="text-sm font-black uppercase tracking-widest text-primary-600">Total Bill</p>
+                                            <p className="text-2xl font-black italic tracking-tighter text-neutral-900">৳{grandTotal.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-neutral-50 rounded-2xl p-6 border border-neutral-100 space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-black text-neutral-900 italic uppercase">Advance</span>
+                                            <span className="text-2xl font-black text-primary-600">৳{advancePayment.toLocaleString()}</span>
+                                        </div>
+                                        <p className="text-[10px] text-neutral-500 leading-relaxed font-bold">
+                                            Payment instructions will be provided after the confirmation call from our admin.
+                                        </p>
+                                    </div>
+
+                                    <Button
+                                        onClick={handleConfirmOrder}
+                                        disabled={loading}
+                                        className="w-full h-16 bg-neutral-900 hover:bg-neutral-800 text-white rounded-2xl font-black uppercase tracking-widest mt-8 shadow-xl shadow-neutral-900/10 active:scale-95 transition-all text-sm"
+                                    >
+                                        {loading ? (
+                                            <div className="flex items-center gap-2">
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                Processing Request...
+                                            </div>
+                                        ) : (
+                                            "Confirm Order Request"
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="bg-white rounded-3xl p-6 border border-neutral-100 flex items-start gap-4">

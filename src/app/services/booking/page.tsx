@@ -99,6 +99,9 @@ function ServiceScheduler({ value, onChange }: { value: any, onChange: (v: any) 
 export default function BookingWizardPage() {
     const { items, totalAmount, clearCart } = useServiceCart();
     const { t, language } = useLanguage();
+    const lang = (language?.toLowerCase() || 'en') as 'en' | 'bn';
+    const dt = designTranslations[lang] || designTranslations.en;
+
     const [step, setStep] = useState(1);
     const [assignmentType, setAssignmentType] = useState<'ghorbari_assign' | 'user_choose'>('ghorbari_assign');
     const [selectedProvider, setSelectedProvider] = useState<any>(null);
@@ -108,8 +111,58 @@ export default function BookingWizardPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
+    // Project Details State
+    const [formData, setFormData] = useState({
+        // Structural
+        landAreaKatha: '',
+        initialFloors: '',
+        unitsPerFloor: '',
+        bedroomsPerUnit: '',
+        bathroomsPerUnit: '',
+        kitchenPerUnit: '',
+        balconyPerUnit: '',
+
+        // Interior
+        propertyType: '', // 'Full Building' | 'Full Apartment' | 'Specific Area'
+        aptSize: '',
+        aptRooms: '',
+        specificAreaType: '',
+        roomSize: '',
+        specificInstruction: '',
+    });
+
+    const updateFormData = (key: string, value: any) => {
+        setFormData(prev => ({ ...prev, [key]: value }));
+    };
+
+    const getJourneyType = () => {
+        let hasInterior = false;
+        let hasStructural = false;
+
+        items.forEach(item => {
+            const catName = (item.category?.name || '').toLowerCase();
+            const rootName = (item.category?.parent?.name || '').toLowerCase();
+
+            if (catName.includes('interior') || catName.includes('paint') || catName.includes('carpentry') ||
+                rootName.includes('interior') || rootName.includes('paint') || rootName.includes('carpentry')) {
+                hasInterior = true;
+            }
+            if (catName.includes('structural') || catName.includes('construction') || catName.includes('architecture') ||
+                rootName.includes('structural') || rootName.includes('construction') || rootName.includes('architecture')) {
+                hasStructural = true;
+            }
+        });
+
+        if (hasInterior && hasStructural) return 'both';
+        if (hasInterior) return 'interior';
+        if (hasStructural) return 'structural';
+        return 'general';
+    };
+
+    const journeyType = getJourneyType();
+
     useEffect(() => {
-        if (items.length === 0 && step < 5) {
+        if (items.length === 0 && step < 6) {
             router.push('/services');
         }
     }, [items, router, step]);
@@ -144,8 +197,12 @@ export default function BookingWizardPage() {
                 toast.error("Please select a preferred schedule");
                 return;
             }
-            setStep(4);
+            // If it's a general journey with no questions, skip Step 4
+            if (journeyType === 'general') setStep(5);
+            else setStep(4);
         } else if (step === 4) {
+            setStep(5);
+        } else if (step === 5) {
             handlePlaceRequest();
         }
     };
@@ -158,7 +215,8 @@ export default function BookingWizardPage() {
                 assignmentType,
                 providerId: selectedProvider?.id,
                 schedule,
-                totalAmount
+                totalAmount,
+                requirements: formData // Pass the collected details
             });
 
             if (res.error) {
@@ -167,7 +225,7 @@ export default function BookingWizardPage() {
                 return;
             }
 
-            setStep(5);
+            setStep(6);
             setRequestNumber(res.requestNumber || "");
             clearCart();
             toast.success("Service request placed successfully!");
@@ -186,22 +244,30 @@ export default function BookingWizardPage() {
                 <div className="max-w-4xl mx-auto">
                     {/* Stepper Header */}
                     <div className="flex justify-between items-center mb-12 px-4">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className={`flex items-center gap-3 ${step === i ? 'opacity-100' : 'opacity-40'}`}>
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${step >= i ? 'bg-primary-600 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
-                                    {i === 1 && <User className="w-4 h-4" />}
-                                    {i === 2 && <UserCheck className="w-4 h-4" />}
-                                    {i === 3 && <CalendarDays className="w-4 h-4" />}
-                                    {i === 4 && <CheckCircle2 className="w-4 h-4" />}
+                        {[1, 2, 3, 4, 5].map(i => {
+                            // If general journey, hide Step 4 from stepper visualization if you want, 
+                            // but for simplicity keep it showing or adjust indices.
+                            // Let's just adjust the step indicator logic.
+                            const isActive = step === i || (i === 4 && journeyType === 'general' && step > 3);
+                            return (
+                                <div key={i} className={`flex items-center gap-3 ${step === i ? 'opacity-100' : 'opacity-40'}`}>
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${step >= i ? 'bg-primary-600 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
+                                        {i === 1 && <User className="w-4 h-4" />}
+                                        {i === 2 && <UserCheck className="w-4 h-4" />}
+                                        {i === 3 && <CalendarDays className="w-4 h-4" />}
+                                        {i === 4 && <FileText className="w-4 h-4" />}
+                                        {i === 5 && <CheckCircle2 className="w-4 h-4" />}
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">
+                                        {i === 1 && "Assignment"}
+                                        {i === 2 && "Selection"}
+                                        {i === 3 && "Schedule"}
+                                        {i === 4 && "Details"}
+                                        {i === 5 && "Review"}
+                                    </span>
                                 </div>
-                                <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">
-                                    {i === 1 && "Assignment"}
-                                    {i === 2 && "Selection"}
-                                    {i === 3 && "Schedule"}
-                                    {i === 4 && "Review"}
-                                </span>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {step === 1 && (
@@ -297,6 +363,134 @@ export default function BookingWizardPage() {
                     {step === 4 && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                             <div className="text-center space-y-3">
+                                <h1 className="text-3xl font-black tracking-tighter text-neutral-900 italic uppercase">
+                                    {journeyType === 'interior' ? 'Interior Details' : (journeyType === 'structural' ? 'Structural Details' : 'Project Details')}
+                                </h1>
+                                <p className="text-neutral-500 font-medium">Tell us more about your space so we can prepare a better estimate.</p>
+                            </div>
+
+                            <Card className="rounded-[32px] border border-neutral-100 p-8 shadow-sm">
+                                <div className="space-y-8">
+                                    {/* Interior Questions */}
+                                    {(journeyType === 'interior' || journeyType === 'both') && (
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.propertyType}</Label>
+                                                    <RadioCardGroup
+                                                        options={[
+                                                            { id: 'Full Building', label: dt.fullBuilding },
+                                                            { id: 'Full Apartment', label: dt.fullApt },
+                                                            { id: 'Specific Area', label: dt.specificArea }
+                                                        ]}
+                                                        selected={formData.propertyType}
+                                                        onChange={(v) => updateFormData('propertyType', v)}
+                                                        columns={3}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {formData.propertyType === 'Full Apartment' && (
+                                                <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-300">
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.aptSize}</Label>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="e.g. 1200"
+                                                            value={formData.aptSize}
+                                                            onChange={(e) => updateFormData('aptSize', e.target.value)}
+                                                            className="h-12 rounded-xl bg-neutral-50 border-none font-bold"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.noOfRoom}</Label>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="e.g. 3"
+                                                            value={formData.aptRooms}
+                                                            onChange={(e) => updateFormData('aptRooms', e.target.value)}
+                                                            className="h-12 rounded-xl bg-neutral-50 border-none font-bold"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {formData.propertyType === 'Specific Area' && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">Area Type</Label>
+                                                        <RadioCardGroup
+                                                            options={[
+                                                                { id: 'Living Room', label: dt.livingRoom },
+                                                                { id: 'Bed Room', label: dt.bedRoom },
+                                                                { id: 'Kitchen', label: dt.kitchen },
+                                                                { id: 'Bath Room', label: dt.bathRoom }
+                                                            ]}
+                                                            selected={formData.specificAreaType}
+                                                            onChange={(v) => updateFormData('specificAreaType', v)}
+                                                            columns={2}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.roomSize}</Label>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="e.g. 150"
+                                                            value={formData.roomSize}
+                                                            onChange={(e) => updateFormData('roomSize', e.target.value)}
+                                                            className="h-12 rounded-xl bg-neutral-50 border-none font-bold"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Structural Questions */}
+                                    {(journeyType === 'structural' || journeyType === 'both') && (
+                                        <div className="space-y-6 pt-6 border-t border-neutral-100">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.landAreaQ}</Label>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="e.g. 3.5"
+                                                        value={formData.landAreaKatha}
+                                                        onChange={(e) => updateFormData('landAreaKatha', e.target.value)}
+                                                        className="h-12 rounded-xl bg-neutral-50 border-none font-bold"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.floorsQ}</Label>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="e.g. 6"
+                                                        value={formData.initialFloors}
+                                                        onChange={(e) => updateFormData('initialFloors', e.target.value)}
+                                                        className="h-12 rounded-xl bg-neutral-50 border-none font-bold"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.anyInstruction}</Label>
+                                        <textarea
+                                            placeholder="Tell us any more details..."
+                                            value={formData.specificInstruction}
+                                            onChange={(e) => updateFormData('specificInstruction', e.target.value)}
+                                            className="w-full h-32 p-4 rounded-xl bg-neutral-50 border-none font-bold text-sm focus:ring-2 focus:ring-primary-100"
+                                        />
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+                    )}
+
+                    {step === 5 && (
+                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                            <div className="text-center space-y-3">
                                 <h1 className="text-2xl font-black tracking-tighter text-neutral-900 uppercase italic">Review & Confirm Booking</h1>
                                 <p className="text-neutral-500 text-sm font-medium">Please review your details. The price shown is tentative and awaits admin verification.</p>
                             </div>
@@ -316,16 +510,51 @@ export default function BookingWizardPage() {
                                 </div>
                                 <CardContent className="p-8 space-y-8">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-1">
-                                            <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Service Items</div>
-                                            <div className="space-y-2 mt-2">
-                                                {items.map(item => (
-                                                    <div key={item.id} className="text-sm font-bold flex justify-between">
-                                                        <span>{language === 'BN' ? item.name_bn : item.name}</span>
-                                                        <span className="text-neutral-400">৳{item.unit_price.toLocaleString()}</span>
-                                                    </div>
-                                                ))}
+                                        <div className="space-y-6">
+                                            <div className="space-y-1">
+                                                <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Service Items</div>
+                                                <div className="space-y-2 mt-2">
+                                                    {items.map(item => (
+                                                        <div key={item.id} className="text-sm font-bold flex justify-between">
+                                                            <span>{language === 'BN' ? item.name_bn : item.name}</span>
+                                                            <span className="text-neutral-400">৳{item.unit_price.toLocaleString()}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
+
+                                            {/* Project Requirements Display */}
+                                            {journeyType !== 'general' && (
+                                                <div className="space-y-3 pt-4 border-t border-neutral-100">
+                                                    <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Project Requirements</div>
+                                                    <div className="grid grid-cols-2 gap-y-2">
+                                                        {formData.propertyType && (
+                                                            <>
+                                                                <span className="text-xs text-neutral-400 font-bold uppercase">Property</span>
+                                                                <span className="text-xs font-black text-neutral-900">{formData.propertyType}</span>
+                                                            </>
+                                                        )}
+                                                        {formData.aptSize && (
+                                                            <>
+                                                                <span className="text-xs text-neutral-400 font-bold uppercase">Apt Size</span>
+                                                                <span className="text-xs font-black text-neutral-900">{formData.aptSize} sqft</span>
+                                                            </>
+                                                        )}
+                                                        {formData.landAreaKatha && (
+                                                            <>
+                                                                <span className="text-xs text-neutral-400 font-bold uppercase">Land Area</span>
+                                                                <span className="text-xs font-black text-neutral-900">{formData.landAreaKatha} Katha</span>
+                                                            </>
+                                                        )}
+                                                        {formData.initialFloors && (
+                                                            <>
+                                                                <span className="text-xs text-neutral-400 font-bold uppercase">Floors</span>
+                                                                <span className="text-xs font-black text-neutral-900">{formData.initialFloors}</span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="space-y-6">
                                             <div className="space-y-1">
@@ -356,7 +585,7 @@ export default function BookingWizardPage() {
                         </div>
                     )}
 
-                    {step === 5 && (
+                    {step === 6 && (
                         <div className="max-w-2xl mx-auto text-center py-20 space-y-10 animate-in zoom-in slide-in-from-bottom-8 duration-700">
                             <div className="relative inline-block">
                                 <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
@@ -398,19 +627,24 @@ export default function BookingWizardPage() {
                         </div>
                     )}
 
-                    {step < 5 && (
+                    {step < 6 && (
                         <div className="mt-16 flex justify-between items-center bg-white p-6 rounded-[32px] border border-neutral-100 shadow-xl">
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Total Estimate</span>
                                 <span className="text-xl font-black">৳{totalAmount.toLocaleString()}</span>
                             </div>
                             <div className="flex gap-4">
-                                <Button variant="ghost" className="rounded-xl px-6 font-bold text-neutral-400" onClick={() => step > 1 && setStep(step === 3 && assignmentType === 'ghorbari_assign' ? 1 : step - 1)}>
+                                <Button variant="ghost" className="rounded-xl px-6 font-bold text-neutral-400" onClick={() => {
+                                    if (step === 1) return;
+                                    if (step === 3 && assignmentType === 'ghorbari_assign') setStep(1);
+                                    else if (step === 5 && journeyType === 'general') setStep(3);
+                                    else setStep(step - 1);
+                                }}>
                                     <ArrowLeft className="mr-2 w-4 h-4" />
                                     Back
                                 </Button>
                                 <Button onClick={handleNext} disabled={loading} className="rounded-2xl bg-neutral-900 text-white px-10 font-black uppercase tracking-widest text-[10px] h-14 group shadow-lg">
-                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (step === 4 ? 'Complete Booking' : 'Continue')}
+                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (step === 5 ? 'Complete Booking' : 'Continue')}
                                     {!loading && <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />}
                                 </Button>
                             </div>

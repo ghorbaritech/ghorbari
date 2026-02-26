@@ -13,7 +13,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { getL } from "@/utils/localization";
 import { getServiceItems, ServiceItem } from "@/services/serviceItemService";
 import { ServiceCartSidebar } from "@/components/sections/ServiceCartSidebar";
-import { getCategories } from "@/services/productService";
+import { getCategories } from "@/services/categoryService";
 import { useServiceCart } from "@/context/ServiceCartContext";
 import { toast } from "sonner";
 import Link from "next/link";

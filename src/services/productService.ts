@@ -1,5 +1,28 @@
 import { createClient } from '@/utils/supabase/client'
 
+export interface Product {
+    id: string;
+    title: string;
+    description?: string;
+    base_price: number;
+    discount_price?: number;
+    sku: string;
+    stock_quantity: number;
+    images: string[];
+    category_id: string;
+    seller_id: string;
+    status: 'active' | 'inactive';
+    created_at: string;
+    category?: {
+        id: string;
+        name: string;
+        name_bn?: string;
+    };
+    seller?: {
+        business_name: string;
+    };
+}
+
 export async function getProducts(options: {
     query?: string,
     categoryId?: string,
@@ -56,25 +79,7 @@ export async function getProducts(options: {
     return data
 }
 
-export async function getCategories(type?: 'product' | 'service' | 'design') {
-    const supabase = createClient()
-    let q = supabase
-        .from('product_categories')
-        .select('*')
-
-    if (type) {
-        q = q.eq('type', type)
-    }
-
-    const { data, error } = await q.order('name')
-
-    if (error) {
-        console.error('Error fetching categories:', error)
-        return []
-    }
-
-    return data
-}
+// Redundant getCategories removed.
 
 export async function getProductBySku(sku: string) {
     const supabase = createClient()
@@ -145,7 +150,7 @@ export async function getFlashDeals(limit: number = 5) {
     return data
 }
 
-export async function createProduct(productData: any) {
+export async function createProduct(productData: Partial<Product>) {
     const supabase = createClient()
     const { data, error } = await supabase
         .from('products')

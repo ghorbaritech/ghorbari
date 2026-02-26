@@ -9,6 +9,7 @@ export async function placeServiceRequest(data: {
     providerId?: string;
     schedule: any;
     totalAmount: number;
+    requirements?: any;
 }) {
     const supabase = await createClient();
 
@@ -30,6 +31,7 @@ export async function placeServiceRequest(data: {
                 customer_id: user.id,
                 service_type: data.items[0]?.category?.name || 'Home Service', // Simplified
                 requirements: {
+                    ...data.requirements,
                     notes: "Service booking from marketplace",
                     itemsCount: data.items.length
                 },

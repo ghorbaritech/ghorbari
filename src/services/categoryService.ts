@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/client';
+import { fetchCategories } from '@/utils/databaseUtils';
 
 export type CategoryType = 'product' | 'service' | 'design';
 
@@ -27,47 +28,8 @@ export interface Category {
 }
 
 export async function getCategories(type?: CategoryType) {
-    const supabase = createClient();
-    let q = supabase
-        .from('product_categories')
-        .select(`
-            *,
-            parent:product_categories!product_categories_parent_id_fkey(id, name, level)
-        `);
-
-    if (type) {
-        q = q.eq('type', type);
-    }
-
-    const { data, error } = await q.order('name');
-
-    if (error) {
-        // Log primitives to ensure they appear in console
-        console.warn('Initial fetch failed. Code:', error.code, 'Message:', error.message);
-        console.warn('Hint:', error.hint, 'Details:', error.details);
-
-        // Fallback: Try simple fetch without parent embedding
-        console.log('Attempting fallback fetch (no parent data)...');
-        const fallbackQ = supabase
-            .from('product_categories')
-            .select('*');
-
-        if (type) {
-            fallbackQ.eq('type', type);
-        }
-
-        const { data: fallbackData, error: fallbackError } = await fallbackQ.order('name');
-
-        if (fallbackError) {
-            console.error('Fallback fetch also failed:', fallbackError);
-            throw fallbackError;
-        }
-
-        console.log('Fallback fetch succeeded.');
-        return fallbackData as Category[];
-    }
-
-    return data as Category[];
+    const data = await fetchCategories(type);
+    return (data || []) as Category[];
 }
 
 export async function createCategory(category: Partial<Category>) {

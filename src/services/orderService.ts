@@ -42,7 +42,33 @@ export async function updatePlatformConfig(configId: string, updates: Partial<Pl
     return data
 }
 
-export async function createOrder(orderData: any, customerDetails: any, isGuest: boolean = false) {
+export interface Order {
+    id: string;
+    order_number: string;
+    customer_id: string | null;
+    seller_id: string;
+    total_amount: number;
+    advance_amount: number;
+    remaining_amount: number;
+    vat_amount: number;
+    platform_fee: number;
+    status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+    items: any[];
+    shipping_address: string;
+    customer_name: string;
+    customer_email: string;
+    customer_phone: string;
+    created_at: string;
+}
+
+export interface CustomerDetails {
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+}
+
+export async function createOrder(orderData: Partial<Order>, customerDetails: CustomerDetails, isGuest: boolean = false) {
     const supabase = createClient()
 
     // 1. If guest, trigger account creation

@@ -1,0 +1,56 @@
+﻿
+> ghorbari-platform@0.1.0 dev
+> next dev
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.68.102:3000
+- Environments: .env.local
+
+Γ£ô Starting...
+Γ£ô Ready in 1366ms
+--- getHomeContent START ---
+Fetched sections: [
+  'design_services',
+  'promo_banners',
+  'product_sections',
+  'hero_section',
+  'featured_categories'
+]
+Raw featured items count: 11
+HOME PAGE DEBUG: {
+  hasFeatured: true,
+  isArray: false,
+  itemsCount: 11,
+  keys: [
+    'design_services',
+    'promo_banners',
+    'product_sections',
+    'hero_section',
+    'featured_categories'
+  ]
+}
+ GET / 200 in 4.3s (compile: 1431ms, render: 2.9s)
+ GET /services 200 in 224ms (compile: 83ms, render: 141ms)
+--- getHomeContent START ---
+Fetched sections: [
+  'design_services',
+  'promo_banners',
+  'product_sections',
+  'hero_section',
+  'featured_categories'
+]
+Raw featured items count: 11
+HOME PAGE DEBUG: {
+  hasFeatured: true,
+  isArray: false,
+  itemsCount: 11,
+  keys: [
+    'design_services',
+    'promo_banners',
+    'product_sections',
+    'hero_section',
+    'featured_categories'
+  ]
+}
+ GET / 200 in 833ms (compile: 116ms, render: 717ms)

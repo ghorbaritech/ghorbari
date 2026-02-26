@@ -71,7 +71,7 @@ export async function getSellerProfile(sellerId: string) {
             .from('design_packages')
             .select(`
                 *,
-                category:product_categories!left(
+                category:category_id(
                     name,
                     parent:parent_id(
                         name,

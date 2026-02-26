@@ -12,7 +12,7 @@ import { featuredProjects, clientReviews } from "@/data/dummyDesignData";
 import { useLanguage } from "@/context/LanguageContext";
 import { getL } from "@/utils/localization";
 import { getAllDesignPackages } from "@/services/packageService";
-import { getCategories } from "@/services/productService";
+import { getCategories } from "@/services/categoryService";
 
 const topBanners = [
     {

@@ -107,7 +107,7 @@ export const designTranslations = {
         "Swimming pool": "Swimming pool",
 
         // Interior Design New Flow
-        fullHouse: "Full house",
+        fullBuilding: "Full Building",
         fullApt: "Full Apartment",
         specificArea: "Specific Area",
         typeOfHouse: "Type of House",
@@ -249,7 +249,7 @@ export const designTranslations = {
         "Swimming pool": "সুইমিং পুল",
 
         // Interior Design New Flow
-        fullHouse: "ফুল হাউজ",
+        fullBuilding: "ফুল বিল্ডিং",
         fullApt: "ফুল এপার্টমেন্ট",
         specificArea: "নির্দিষ্ট এরিয়া",
         typeOfHouse: "বাড়ির ধরন",

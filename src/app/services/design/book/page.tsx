@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { WizardStep } from '@/components/design/WizardStep';
-import { RadioCardGroup, Option } from '@/components/design/WizardFormComponents';
+import { RadioCardGroup, CheckboxCardGroup, Option } from '@/components/design/WizardFormComponents';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,7 @@ import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Car, Trees, Waves
 import { createClient } from '@/utils/supabase/client';
 import { designTranslations } from '@/utils/designTranslations';
 import { useLanguage } from '@/context/LanguageContext';
+import Link from 'next/link';
 
 // Service Types
 type ServiceType = 'structural-architectural' | 'interior';
@@ -46,10 +47,10 @@ function DesignBookingWizard() {
         : urlService as ServiceType | null;
 
     const { language } = useLanguage();
-    const lang = language.toLowerCase() as 'en' | 'bn';
-    const t = designTranslations[lang];
+    const lang = (language?.toLowerCase() || 'en') as 'en' | 'bn';
+    const t = designTranslations[lang] || designTranslations.en;
 
-    const [step, setStep] = useState(initialService ? 1 : 0);
+    const [step, setStep] = useState(initialService === 'interior' ? 8 : (initialService ? 1 : 0));
     const [serviceType, setServiceType] = useState<ServiceType | null>(initialService);
     const [loading, setLoading] = useState(false);
 
@@ -57,11 +58,21 @@ function DesignBookingWizard() {
     const [designers, setDesigners] = useState<any[]>([]);
 
     useEffect(() => {
-        // Fetch eligible designers
         async function fetchDesigners() {
-            // Fetching active designers directly
-            const { data } = await supabase.from('designers').select('*, profile:profiles(*)');
-            if (data) setDesigners(data);
+            try {
+                const { data } = await supabase.from('designers').select('*, profile:profiles(*)');
+                if (data) {
+                    const processed = data.map(d => ({
+                        ...d,
+                        specializations: Array.isArray(d.specializations)
+                            ? d.specializations.map((s: any) => typeof s === 'string' ? s : JSON.stringify(s))
+                            : []
+                    }));
+                    setDesigners(processed);
+                }
+            } catch (err) {
+                console.error("Error fetching designers:", err);
+            }
         }
         fetchDesigners();
     }, []);
@@ -123,6 +134,10 @@ function DesignBookingWizard() {
         preferredTime: '',
     });
 
+    const [serviceTypes, setServiceTypes] = useState<ServiceType[]>(
+        initialService ? [initialService] : []
+    );
+
     const updateData = (key: string, value: any) => {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
@@ -138,8 +153,10 @@ function DesignBookingWizard() {
         });
     };
 
-    const nextStep = () => setStep(prev => prev + 1);
-    const prevStep = () => setStep(prev => prev - 1);
+    const showsDesignQ = formData.designerOption === 'design' || formData.designerOption === 'both';
+    const skippableListStep = formData.designerSelectionType === 'ghorbari';
+
+
 
     const handleSubmit = async () => {
         setLoading(true);
@@ -154,16 +171,17 @@ function DesignBookingWizard() {
 
             // Calculate tentative pricing (basic placeholder logic based on rules)
             let tentativePrice = 0;
-            if (serviceType === 'structural-architectural') {
+            if (serviceTypes.includes('structural-architectural')) {
                 if (formData.designerSelectionType === 'ghorbari') {
                     if (formData.designerOption === 'both') tentativePrice = 80000;
                     else if (formData.designerOption === 'design') tentativePrice = 50000;
                     else tentativePrice = 30000;
                 } else {
-                    tentativePrice = 60000; // Flat baseline for third-party profiles for now
+                    tentativePrice = 60000;
                 }
-            } else if (serviceType === 'interior') {
-                tentativePrice = 20000;
+            }
+            if (serviceTypes.includes('interior')) {
+                tentativePrice += 20000;
             }
 
             const uploadFile = async (file: File | null) => {
@@ -207,8 +225,8 @@ function DesignBookingWizard() {
 
             const { error } = await supabase.from('design_bookings').insert({
                 user_id: user.id,
-                service_type: serviceType === 'structural-architectural' ? 'architectural' : serviceType,
-                status: 'pending', // Waiting for admin verification
+                service_type: serviceTypes.includes('structural-architectural') ? 'architectural' : 'interior',
+                status: 'pending',
                 details: payloadDetails
             });
 
@@ -221,6 +239,127 @@ function DesignBookingWizard() {
             setLoading(false);
         }
     };
+
+    const nextStep = () => {
+        if (step === 0) {
+            if (serviceTypes.includes('structural-architectural')) setStep(1);
+            else if (serviceTypes.includes('interior')) setStep(8);
+            else setStep(12);
+        } else if (step >= 1 && step <= 7) {
+            // End of Structural logic
+
+            if (step === 1) setStep(2);
+            else if (step === 2) {
+                if (showsDesignQ) setStep(3);
+                else setStep(6);
+            }
+            else if (step === 3) setStep(4);
+            else if (step === 4) setStep(5);
+            else if (step === 5) setStep(6);
+            else if (step === 6) {
+                if (skippableListStep) {
+                    if (serviceTypes.includes('interior')) setStep(8);
+                    else setStep(12);
+                }
+                else setStep(7);
+            }
+            else if (step === 7) {
+                if (serviceTypes.includes('interior')) setStep(8);
+                else setStep(12);
+            }
+        } else if (step >= 8 && step <= 11) {
+            // End of Interior logic
+            if (step === 8) setStep(9);
+            else if (step === 9) setStep(10);
+            else if (step === 10) setStep(11);
+            else if (step === 11) setStep(12);
+        } else if (step === 12) {
+            setStep(13);
+        }
+    };
+
+    const prevStep = () => {
+        if (step === 1) setStep(0);
+        else if (step > 1 && step <= 7) {
+
+            if (step === 6 && !showsDesignQ) setStep(2);
+            else if (step === 7) setStep(6);
+            else setStep(step - 1);
+        } else if (step === 8) {
+            if (serviceTypes.includes('structural-architectural')) {
+                let skippableListStep = formData.designerSelectionType === 'ghorbari';
+                if (skippableListStep) setStep(6);
+                else setStep(7);
+            } else {
+                setStep(0);
+            }
+        } else if (step > 8 && step <= 11) {
+            setStep(step - 1);
+        } else if (step === 12) {
+            if (serviceTypes.includes('interior')) setStep(11);
+            else if (serviceTypes.includes('structural-architectural')) {
+                let skippableListStep = formData.designerSelectionType === 'ghorbari';
+                if (skippableListStep) setStep(6);
+                else setStep(7);
+            } else {
+                setStep(0);
+            }
+        } else if (step === 13) {
+            setStep(12);
+        }
+    };
+
+    const getDynamicTotalSteps = () => {
+        let total = 1; // Start with Selection
+        if (serviceTypes.includes('structural-architectural')) {
+            let structuralTotal = 6;
+            if (!showsDesignQ) structuralTotal -= 3;
+            if (skippableListStep) structuralTotal -= 1;
+            total += structuralTotal;
+        }
+        if (serviceTypes.includes('interior')) {
+            total += 3; // Property, Req, Schedule
+        }
+        total += 2; // Extra 1 for booking schedule vs review
+        return total;
+    };
+
+    const getVisualStep = () => {
+        let visual = 0;
+        if (step === 0) return 1;
+
+        visual = 2; // Step 0 is step 1
+        if (step >= 1 && step <= 7) {
+
+            let structuralVisual = step;
+            if (!showsDesignQ && step > 2) structuralVisual -= 3;
+            if (skippableListStep && step > 6) structuralVisual -= 1;
+            return visual + structuralVisual - 1;
+        }
+
+        if (serviceTypes.includes('structural-architectural')) {
+            let structuralSteps = 6;
+            if (!showsDesignQ) structuralSteps -= 3;
+            if (skippableListStep) structuralSteps -= 1;
+            visual += structuralSteps;
+        }
+
+        if (step >= 8 && step <= 11) {
+            return visual + (step - 8);
+        }
+
+        if (serviceTypes.includes('interior')) {
+            visual += 3;
+        }
+
+        if (step === 12) return visual;
+        if (step === 13) return visual + 1;
+
+        return visual;
+    };
+
+    const visualStep = getVisualStep();
+    const totalSteps = getDynamicTotalSteps();
 
     const timeSlots = [
         "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
@@ -283,20 +422,21 @@ function DesignBookingWizard() {
                     lang={lang}
                     title={t.startJourneyTitle}
                     description={t.startJourneyDesc}
-                    currentStep={0}
-                    totalSteps={serviceType === 'structural-architectural' ? 5 : 4}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
                     onNext={nextStep}
                     onBack={() => { }}
                     isFirstStep
-                    canNext={!!serviceType}
+                    canNext={serviceTypes.length > 0}
                 >
-                    <RadioCardGroup
+                    <CheckboxCardGroup
                         options={[
                             { id: 'structural-architectural', label: t.structuralService, icon: Building2, description: t.structuralServiceDesc },
                             { id: 'interior', label: t.interiorService, icon: PaintBucket, description: t.interiorServiceDesc },
                         ]}
-                        selected={serviceType}
-                        onChange={(id) => setServiceType(id as ServiceType)}
+                        selected={serviceTypes}
+                        onChange={(ids: string[]) => setServiceTypes(ids as ServiceType[])}
+                        columns={2}
                     />
                 </WizardStep>
             </MainLayout>
@@ -304,17 +444,8 @@ function DesignBookingWizard() {
     }
 
     // --- STRUCTURAL & ARCHITECTURAL ---
-    if (serviceType === 'structural-architectural') {
+    if (step >= 1 && step <= 7) {
         let showsApprovalQ = formData.designerOption === 'approval' || formData.designerOption === 'both';
-        let showsDesignQ = formData.designerOption === 'design' || formData.designerOption === 'both';
-        let skippableListStep = formData.designerSelectionType === 'ghorbari';
-
-        const getDynamicTotalSteps = () => {
-            let total = 9; // Added 1 for schedule
-            if (!showsDesignQ) total -= 3;
-            if (skippableListStep) total -= 1;
-            return total;
-        };
 
         let visualStep = step;
         if (!showsDesignQ && step > 2) visualStep -= 3;
@@ -328,10 +459,10 @@ function DesignBookingWizard() {
                     <WizardStep
                         key={`step1-${lang}`}
                         lang={lang}
-                        title={t.findDesignerTitle}
-                        description={t.findDesignerDesc}
-                        currentStep={visualStep}
-                        totalSteps={getDynamicTotalSteps()}
+                        title={typeof t.findDesignerTitle === 'string' ? t.findDesignerTitle : "Find a Designer"}
+                        description={typeof t.findDesignerDesc === 'string' ? t.findDesignerDesc : "Pick how you'd like to find your structural expert."}
+                        currentStep={visualStep - 1}
+                        totalSteps={totalSteps}
                         onNext={nextStep}
                         onBack={prevStep}
                         canNext={!!formData.designerOption}
@@ -356,14 +487,11 @@ function DesignBookingWizard() {
                     <WizardStep
                         key={`step2-${lang}`}
                         lang={lang}
-                        title={t.docChecklistTitle}
-                        description={t.docChecklistDesc}
-                        currentStep={visualStep}
-                        totalSteps={getDynamicTotalSteps()}
-                        onNext={() => {
-                            if (showsDesignQ) setStep(3);
-                            else setStep(6);
-                        }}
+                        title={typeof t.docChecklistTitle === 'string' ? t.docChecklistTitle : "Documents"}
+                        description={typeof t.docChecklistDesc === 'string' ? t.docChecklistDesc : "Help us understand your project better."}
+                        currentStep={visualStep - 1}
+                        totalSteps={totalSteps}
+                        onNext={nextStep}
                         onBack={prevStep}
                         canNext={true}
                     >
@@ -444,12 +572,12 @@ function DesignBookingWizard() {
                     <WizardStep
                         key={`step3-${lang}`}
                         lang={lang}
-                        title={t.spaceLayoutTitle}
-                        description={t.spaceLayoutDesc}
-                        currentStep={visualStep}
-                        totalSteps={getDynamicTotalSteps()}
-                        onNext={() => setStep(4)}
-                        onBack={() => setStep(2)}
+                        title={typeof t.spaceLayoutTitle === 'string' ? t.spaceLayoutTitle : "Layout"}
+                        description={typeof t.spaceLayoutDesc === 'string' ? t.spaceLayoutDesc : "Space and layout details."}
+                        currentStep={visualStep - 1}
+                        totalSteps={totalSteps}
+                        onNext={nextStep}
+                        onBack={prevStep}
                         canNext={!!formData.landAreaKatha && !!formData.initialFloors}
                     >
                         <div className="max-w-2xl mx-auto space-y-8">
@@ -509,12 +637,12 @@ function DesignBookingWizard() {
                     <WizardStep
                         key={`step4-${lang}`}
                         lang={lang}
-                        title={t.plotFeaturesTitle}
-                        description={t.plotFeaturesDesc}
-                        currentStep={visualStep}
-                        totalSteps={getDynamicTotalSteps()}
-                        onNext={() => setStep(5)}
-                        onBack={() => setStep(3)}
+                        title={typeof t.plotFeaturesTitle === 'string' ? t.plotFeaturesTitle : "Plot Features"}
+                        description={typeof t.plotFeaturesDesc === 'string' ? t.plotFeaturesDesc : "Tell us about your land."}
+                        currentStep={visualStep - 1}
+                        totalSteps={totalSteps}
+                        onNext={nextStep}
+                        onBack={prevStep}
                         canNext={true}
                     >
                         <div className="max-w-3xl mx-auto space-y-10">
@@ -578,12 +706,12 @@ function DesignBookingWizard() {
                     <WizardStep
                         key={`step5-${lang}`}
                         lang={lang}
-                        title={t.aestheticsTitle}
-                        description={t.aestheticsDesc}
-                        currentStep={visualStep}
-                        totalSteps={getDynamicTotalSteps()}
-                        onNext={() => setStep(6)}
-                        onBack={() => setStep(4)}
+                        title={typeof t.aestheticsTitle === 'string' ? t.aestheticsTitle : "Design Aesthetics"}
+                        description={typeof t.aestheticsDesc === 'string' ? t.aestheticsDesc : "Choose the visual vibe for your building design."}
+                        currentStep={visualStep - 1}
+                        totalSteps={totalSteps}
+                        onNext={nextStep}
+                        onBack={prevStep}
                         canNext={!!formData.structuralVibe}
                     >
                         <div className="space-y-4">
@@ -608,18 +736,12 @@ function DesignBookingWizard() {
                     <WizardStep
                         key={`step6-${lang}`}
                         lang={lang}
-                        title={t.chooseRouteTitle}
-                        description={t.chooseRouteDesc}
-                        currentStep={visualStep}
-                        totalSteps={getDynamicTotalSteps()}
-                        onNext={() => {
-                            if (formData.designerSelectionType === 'ghorbari') setStep(8);
-                            else setStep(7);
-                        }}
-                        onBack={() => {
-                            if (showsDesignQ) setStep(5);
-                            else setStep(2);
-                        }}
+                        title={typeof t.chooseRouteTitle === 'string' ? t.chooseRouteTitle : "Choose Designer Route"}
+                        description={typeof t.chooseRouteDesc === 'string' ? t.chooseRouteDesc : "How would you like to proceed with your designer?"}
+                        currentStep={visualStep - 1}
+                        totalSteps={totalSteps}
+                        onNext={nextStep}
+                        onBack={prevStep}
                         canNext={!!formData.designerSelectionType}
                     >
                         <RadioCardGroup
@@ -641,8 +763,8 @@ function DesignBookingWizard() {
                     <WizardStep
                         key={`step7-${lang}`}
                         lang={lang}
-                        title={t.selectDesignerTitle}
-                        description={t.selectDesignerDesc}
+                        title={typeof t.selectDesignerTitle === 'string' ? t.selectDesignerTitle : "Select Designer"}
+                        description={typeof t.selectDesignerDesc === 'string' ? t.selectDesignerDesc : "Pick a professional for your project."}
                         currentStep={visualStep}
                         totalSteps={getDynamicTotalSteps()}
                         onNext={() => setStep(8)}
@@ -673,8 +795,8 @@ function DesignBookingWizard() {
                                                     />
                                                     <div className="absolute top-4 left-4 flex flex-wrap gap-2 pr-4">
                                                         {(designer.specializations || []).slice(0, 2).map((tag: string) => (
-                                                            <span key={tag} className="bg-white text-neutral-900 text-[10px] font-black px-3 py-1.5 rounded-md uppercase tracking-wide shadow-sm">
-                                                                {tag}
+                                                            <span key={String(tag)} className="bg-white text-neutral-900 text-[10px] font-black px-3 py-1.5 rounded-md uppercase tracking-wide shadow-sm">
+                                                                {String(tag)}
                                                             </span>
                                                         ))}
                                                     </div>
@@ -683,15 +805,29 @@ function DesignBookingWizard() {
                                                     <div className="flex justify-between items-start mb-2 gap-3">
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 mb-1.5">
-                                                                <div className="w-5 h-5 rounded-full bg-neutral-200 overflow-hidden relative shrink-0">
-                                                                    {designer.profile?.avatar_url ? (
-                                                                        <img src={designer.profile.avatar_url} alt={designer.profile.full_name} className="object-cover w-full h-full" />
-                                                                    ) : (
-                                                                        <UserCircle className="w-3 h-3 text-neutral-400 absolute inset-0 m-auto" />
-                                                                    )}
-                                                                </div>
+                                                                <Link
+                                                                    href={`/partner/${designer.user_id}`}
+                                                                    target="_blank"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="shrink-0"
+                                                                >
+                                                                    <div className="w-5 h-5 rounded-full bg-neutral-200 overflow-hidden relative shrink-0">
+                                                                        {designer.profile?.avatar_url ? (
+                                                                            <img src={designer.profile.avatar_url} alt={designer.profile.full_name} className="object-cover w-full h-full" />
+                                                                        ) : (
+                                                                            <UserCircle className="w-3 h-3 text-neutral-400 absolute inset-0 m-auto" />
+                                                                        )}
+                                                                    </div>
+                                                                </Link>
                                                                 <h3 className="text-[16px] md:text-lg font-black text-neutral-900 uppercase tracking-tight truncate">
-                                                                    {designer.company_name || designer.contact_person_name}
+                                                                    <Link
+                                                                        href={`/partner/${designer.user_id}`}
+                                                                        target="_blank"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        className="hover:text-primary-600 transition-colors"
+                                                                    >
+                                                                        {designer.company_name || designer.contact_person_name}
+                                                                    </Link>
                                                                 </h3>
                                                             </div>
                                                             <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest pl-7">
@@ -741,22 +877,23 @@ function DesignBookingWizard() {
             );
         }
 
-        if (step === 8) {
+        if (step === 12) {
             return (
                 <MainLayout>
-                    {renderScheduleStep(visualStep, getDynamicTotalSteps(), () => setStep(9), () => {
-                        if (formData.designerSelectionType === 'ghorbari') setStep(6);
-                        else setStep(7);
-                    })}
+                    {renderScheduleStep(visualStep - 1, totalSteps, nextStep, prevStep)}
                 </MainLayout>
             );
         }
 
-        if (step === 9) {
+        if (step === 13) {
             let price = 0;
             if (formData.designerOption === 'both') price = 80000;
             else if (formData.designerOption === 'design') price = 50000;
-            else price = 30000;
+            else if (formData.designerOption === 'approval') price = 30000;
+
+            if (serviceTypes.includes('interior')) {
+                price += 20000;
+            }
 
             const selectedDesigner = designers.find((d: any) => d.id === formData.selectedDesignerId);
             const providerName = formData.designerSelectionType === 'ghorbari' ? 'Ghorbari Assigned Expert' : (selectedDesigner?.company_name || selectedDesigner?.contact_person_name || 'Selected Designer');
@@ -764,14 +901,14 @@ function DesignBookingWizard() {
             return (
                 <MainLayout>
                     <WizardStep
-                        key={`step8-${lang}`}
+                        key={`step-review-${lang}`}
                         lang={lang}
                         title={t.reviewTitle}
                         description={t.reviewDesc}
-                        currentStep={visualStep}
-                        totalSteps={getDynamicTotalSteps()}
+                        currentStep={visualStep - 1}
+                        totalSteps={totalSteps}
                         onNext={handleSubmit}
-                        onBack={() => setStep(8)}
+                        onBack={prevStep}
                         isLastStep
                         canNext={true}
                         nextLabel={loading ? t.generatingReq : t.completeBooking}
@@ -801,18 +938,28 @@ function DesignBookingWizard() {
                                     <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
                                         <span className="text-[16px] font-bold text-neutral-700">{t.serviceArea}</span>
                                         <span className="text-[16px] font-black text-neutral-900 capitalize">
-                                            {formData.designerOption === 'both' ? 'Both' : formData.designerOption}
+                                            {serviceTypes.map(s => s === 'structural-architectural' ? 'Structural' : 'Interior').join(', ')}
                                         </span>
                                     </div>
 
                                     <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
                                         <span className="text-[16px] font-bold text-neutral-700">{t.assignedProvider}</span>
-                                        <span className="text-[16px] font-black text-neutral-900">{providerName}</span>
+                                        {selectedDesigner ? (
+                                            <Link
+                                                href={`/partners/${selectedDesigner.id}`}
+                                                target="_blank"
+                                                className="text-[16px] font-black text-primary-600 hover:underline"
+                                            >
+                                                {providerName}
+                                            </Link>
+                                        ) : (
+                                            <span className="text-[16px] font-black text-neutral-900">{providerName}</span>
+                                        )}
                                     </div>
 
                                     <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
                                         <span className="text-[16px] font-bold text-neutral-700">{t.prefDateLabel} & {t.prefTimeLabel}</span>
-                                        <span className="text-[16px] font-black text-neutral-900">{formData.preferredDate} | {formData.preferredTime}</span>
+                                        <span className="text-[16px] font-black text-neutral-900">{String(formData.preferredDate)} | {String(formData.preferredTime)}</span>
                                     </div>
                                 </div>
 
@@ -834,46 +981,69 @@ function DesignBookingWizard() {
                                     </div>
                                 </div>
 
-                                {/* Design Requirements Block */}
+                                {/* Structural Requirements Block */}
                                 {showsDesignQ && (
                                     <div className="pt-6 border-t border-neutral-200/70 mt-6">
                                         <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">{t.projectReqs}</h4>
                                         <div className="grid grid-cols-2 gap-y-5 gap-x-6">
                                             <div>
                                                 <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.landArea}</p>
-                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">{formData.landAreaKatha || '-'} {t.katha}</p>
+                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">{String(formData.landAreaKatha || '-')} {t.katha}</p>
                                             </div>
                                             <div>
                                                 <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.initialFloors}</p>
-                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">{formData.initialFloors || '-'}</p>
+                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">{String(formData.initialFloors || '-')}</p>
                                             </div>
                                             <div className="col-span-2 mt-4 pt-4 border-t border-neutral-100">
                                                 <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide mb-3">{t.layoutPerUnit}</p>
                                                 <div className="flex flex-wrap gap-2 text-[13px] font-bold text-neutral-800">
-                                                    {formData.unitsPerFloor && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.unitsPerFloor} {t.unit}/floor</span>}
-                                                    {formData.bedroomsPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.bedroomsPerUnit} {t.bed}</span>}
-                                                    {formData.bathroomsPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.bathroomsPerUnit} {t.bath}</span>}
-                                                    {formData.drawingRoomPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.drawingRoomPerUnit} {t.drawing}</span>}
-                                                    {formData.kitchenPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.kitchenPerUnit} {t.kitchen}</span>}
-                                                    {formData.balconyPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.balconyPerUnit} {t.balcony}</span>}
-                                                    {formData.othersPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{formData.othersPerUnit}</span>}
+                                                    {formData.unitsPerFloor && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.unitsPerFloor)} {t.unit}/floor</span>}
+                                                    {formData.bedroomsPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.bedroomsPerUnit)} {t.bed}</span>}
+                                                    {formData.bathroomsPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.bathroomsPerUnit)} {t.bath}</span>}
+                                                    {formData.drawingRoomPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.drawingRoomPerUnit)} {t.drawing}</span>}
+                                                    {formData.kitchenPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.kitchenPerUnit)} {t.kitchen}</span>}
+                                                    {formData.balconyPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.balconyPerUnit)} {t.balcony}</span>}
+                                                    {formData.othersPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.othersPerUnit)}</span>}
                                                 </div>
                                             </div>
                                             <div>
                                                 <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.soilTest}</p>
-                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">{t[(formData.soilTest || '') as keyof typeof t] || formData.soilTest || '-'}</p>
+                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">
+                                                    {typeof t[(formData.soilTest || '') as keyof typeof t] === 'string' ? t[(formData.soilTest || '') as keyof typeof t] : (formData.soilTest || '-')}
+                                                </p>
                                             </div>
                                             {(formData.plotOrientation.length > 0 || formData.specialZones.length > 0 || formData.roofFeatures.length > 0) && (
                                                 <div className="col-span-2">
                                                     <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.featuresZones}</p>
                                                     <div className="flex flex-wrap gap-2 mt-1.5">
                                                         {[...formData.plotOrientation, ...formData.specialZones, ...formData.roofFeatures].map(tag => (
-                                                            <span key={tag} className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded-md font-bold text-[11px] uppercase tracking-wide">
-                                                                {t[tag as keyof typeof t] || tag}
+                                                            <span key={String(tag)} className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded-md font-bold text-[11px] uppercase tracking-wide">
+                                                                {typeof t[tag as keyof typeof t] === 'string' ? t[tag as keyof typeof t] : String(tag)}
                                                             </span>
                                                         ))}
                                                     </div>
                                                 </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Interior Specific Requirements */}
+                                {serviceTypes.includes('interior') && (
+                                    <div className="pt-6 border-t border-neutral-200/70 mt-6">
+                                        <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">{t.interiorService} Details</h4>
+                                        <div className="grid grid-cols-1 gap-y-4">
+                                            {formData.propertyType === 'Full building' && (
+                                                <p className="text-sm font-bold text-neutral-800">{String(formData.houseType)} house, {String(formData.intFloors)} floors, {String(formData.intUnitsPerFloor)} units each.</p>
+                                            )}
+                                            {formData.propertyType === 'Full Apartment' && (
+                                                <p className="text-sm font-bold text-neutral-800">{String(formData.aptSize)} sqft Apartment, {String(formData.aptRooms)} rooms.</p>
+                                            )}
+                                            {formData.propertyType === 'Specific Area' && (
+                                                <p className="text-sm font-bold text-neutral-800">{String(formData.specificAreaType)} ({String(formData.bedRoomType) || 'N/A'}), {String(formData.roomSize)} sqft - {String(formData.designScope)}.</p>
+                                            )}
+                                            {formData.specificInstruction && (
+                                                <p className="text-xs text-neutral-600 mt-2 italic">Instruction: {String(formData.specificInstruction)}</p>
                                             )}
                                         </div>
                                     </div>
@@ -887,17 +1057,17 @@ function DesignBookingWizard() {
     }
 
     // --- INTERIOR DESIGN ---
-    if (serviceType === 'interior') {
-        if (step === 1) {
+    if (step >= 8 && step <= 11) {
+        if (step === 8) {
             return (
                 <MainLayout>
                     <WizardStep
-                        key={`step1-int-${lang}`}
+                        key={`step8-int-${lang}`}
                         lang={lang}
-                        title={t.startJourneyTitle || "Start Your Design Journey"}
-                        description={t.startJourneyDesc || "Select the type of design service you need to get started."}
-                        currentStep={1}
-                        totalSteps={4}
+                        title={typeof t.startJourneyTitle === 'string' ? t.startJourneyTitle : "Start Your Design Journey"}
+                        description={typeof t.startJourneyDesc === 'string' ? t.startJourneyDesc : "Select the type of design service you need to get started."}
+                        currentStep={visualStep - 1}
+                        totalSteps={totalSteps}
                         onNext={nextStep}
                         onBack={prevStep}
                         canNext={!!formData.propertyType}
@@ -907,7 +1077,7 @@ function DesignBookingWizard() {
                                 <Label className="text-base font-bold mb-4 block text-neutral-800">What are we designing?</Label>
                                 <RadioCardGroup
                                     options={[
-                                        { id: 'Full house', label: t.fullHouse || 'Full house', icon: Building2 },
+                                        { id: 'Full building', label: t.fullBuilding || 'Full Building', icon: Building2 },
                                         { id: 'Full Apartment', label: t.fullApt || 'Full Apartment', icon: Home },
                                         { id: 'Specific Area', label: t.specificArea || 'Specific Area', icon: BedDouble },
                                     ]}
@@ -922,26 +1092,26 @@ function DesignBookingWizard() {
             );
         }
 
-        if (step === 2) {
+        if (step === 9) {
             return (
                 <MainLayout>
                     <WizardStep
-                        key={`step2-int-${lang}`}
+                        key={`step9-int-${lang}`}
                         lang={lang}
-                        title={t.projectReqs || "Project Requirements"}
-                        description={t.spaceLayoutDesc || "Tell us about the space and requirements."}
-                        currentStep={2}
-                        totalSteps={4}
-                        onNext={() => setStep(3)}
+                        title={typeof t.projectReqs === 'string' ? t.projectReqs : "Project Requirements"}
+                        description={typeof t.spaceLayoutDesc === 'string' ? t.spaceLayoutDesc : "Tell us about the space and requirements."}
+                        currentStep={visualStep - 1}
+                        totalSteps={totalSteps}
+                        onNext={nextStep}
                         onBack={prevStep}
                         canNext={
-                            (formData.propertyType === 'Full house' && !!formData.houseType && !!formData.intFloors && !!formData.intUnitsPerFloor && !!formData.intAreaPerUnit) ||
+                            (formData.propertyType === 'Full building' && !!formData.houseType && !!formData.intFloors && !!formData.intUnitsPerFloor && !!formData.intAreaPerUnit) ||
                             (formData.propertyType === 'Full Apartment' && !!formData.aptSize && !!formData.aptRooms) ||
                             (formData.propertyType === 'Specific Area' && !!formData.specificAreaType && (formData.specificAreaType !== 'Bed Room' || !!formData.bedRoomType) && !!formData.designScope && !!formData.roomSize)
                         }
                     >
                         <div className="space-y-8">
-                            {formData.propertyType === 'Full house' && (
+                            {formData.propertyType === 'Full building' && (
                                 <>
                                     <div>
                                         <Label className="text-base font-bold mb-4 block text-neutral-800">{t.typeOfHouse || "Type of House"}</Label>
@@ -1055,17 +1225,6 @@ function DesignBookingWizard() {
                                                     <Input type="text" placeholder="e.g. Keep it minimal" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.specificInstruction} onChange={(e) => updateData('specificInstruction', e.target.value)} />
                                                 </div>
                                             </div>
-
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                                <div className="space-y-3">
-                                                    <Label className="font-bold text-neutral-700">{t.inspiration || "Inspiration (attachment image or pdf)"}</Label>
-                                                    <Input type="file" accept="image/*,.pdf" className="h-12 flex items-center bg-neutral-50/50 border-neutral-200 file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-[#effdf5] file:text-[#00a651] hover:file:bg-[#d6f6e5] cursor-pointer" onChange={(e) => updateData('roomInspiration', e.target.files?.[0] || null)} />
-                                                </div>
-                                                <div className="space-y-3">
-                                                    <Label className="font-bold text-neutral-700">{t.imageOfRoom || "Image of the room"}</Label>
-                                                    <Input type="file" accept="image/*" className="h-12 flex items-center bg-neutral-50/50 border-neutral-200 file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-[#effdf5] file:text-[#00a651] hover:file:bg-[#d6f6e5] cursor-pointer" onChange={(e) => updateData('roomImage', e.target.files?.[0] || null)} />
-                                                </div>
-                                            </div>
                                         </div>
                                     )}
                                 </>
@@ -1076,85 +1235,60 @@ function DesignBookingWizard() {
             );
         }
 
-        if (step === 3) {
+        if (step === 10) {
             return (
                 <MainLayout>
-                    {renderScheduleStep(3, 4, () => setStep(4), () => setStep(2))}
+                    <WizardStep
+                        key={`step10-int-${lang}`}
+                        lang={lang}
+                        title={t.aestheticsTitle || "Design Aesthetics"}
+                        description={t.aestheticsDesc || "Choose the visual vibe for your building design."}
+                        currentStep={visualStep - 1}
+                        totalSteps={totalSteps}
+                        onNext={nextStep}
+                        onBack={prevStep}
+                        canNext={!!formData.structuralVibe}
+                    >
+                        <div className="space-y-8">
+                            <div>
+                                <Label className="text-base font-bold mb-4 block text-neutral-800">Choose Style</Label>
+                                <RadioCardGroup
+                                    options={getVibeOptions(lang)}
+                                    selected={formData.structuralVibe}
+                                    onChange={(id) => updateData('structuralVibe', id)}
+                                    columns={2}
+                                />
+                            </div>
+                        </div>
+                    </WizardStep>
                 </MainLayout>
             );
         }
 
-        if (step === 4) {
-            const tentativePrice = 20000;
-            const providerName = 'Ghorbari Assigned Expert';
-
+        if (step === 11) {
             return (
                 <MainLayout>
                     <WizardStep
-                        key={`step4-int-${lang}`}
+                        key={`step11-int-${lang}`}
                         lang={lang}
-                        title={t.reviewTitle}
-                        description={t.reviewDesc}
-                        currentStep={4}
-                        totalSteps={4}
-                        onNext={handleSubmit}
-                        onBack={() => setStep(3)}
-                        isLastStep
-                        canNext={true}
-                        nextLabel={loading ? t.generatingReq : t.completeBooking}
+                        title={typeof t.chooseRouteTitle === 'string' ? t.chooseRouteTitle : "Choose Designer Route"}
+                        description={typeof t.chooseRouteDesc === 'string' ? t.chooseRouteDesc : "How would you like to proceed with your designer?"}
+                        currentStep={visualStep - 1}
+                        totalSteps={totalSteps}
+                        onNext={nextStep}
+                        onBack={prevStep}
+                        canNext={!!formData.designerSelectionType}
                     >
-                        <div className="bg-white rounded-[16px] border border-neutral-300 shadow-sm overflow-hidden text-left mx-auto max-w-2xl mt-4">
-                            <div className="bg-[#f3fbfa] p-8 border-b border-neutral-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                                <div>
-                                    <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">{t.tentativeQuote}</h3>
-                                    <p className="text-[13px] font-medium text-neutral-600 mt-2">{t.statusWait}</p>
-                                </div>
-                                <div className="text-left md:text-right">
-                                    <div className="flex items-center md:justify-end gap-1 font-black text-[32px] text-[#0a1b3d] leading-none">
-                                        <span className="text-[26px]">৳</span> {tentativePrice.toLocaleString()}
-                                    </div>
-                                    <p className="text-[11px] font-black tracking-widest text-[#0a1b3d]/70 uppercase mt-2">{t.startingPrice}</p>
-                                </div>
-                            </div>
-
-                            <div className="p-8 space-y-8 bg-white">
-                                <div className="space-y-1">
-                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">{t.serviceDetails}</h4>
-
-                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
-                                        <span className="text-[16px] font-bold text-neutral-700">{t.serviceArea}</span>
-                                        <span className="text-[16px] font-black text-neutral-900 capitalize">Interior Design ({formData.propertyType})</span>
-                                    </div>
-
-                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
-                                        <span className="text-[16px] font-bold text-neutral-700">{t.assignedProvider}</span>
-                                        <span className="text-[16px] font-black text-neutral-900">{providerName}</span>
-                                    </div>
-
-                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
-                                        <span className="text-[16px] font-bold text-neutral-700">{t.prefDateLabel} & {t.prefTimeLabel}</span>
-                                        <span className="text-[16px] font-black text-neutral-900">{formData.preferredDate} | {formData.preferredTime}</span>
-                                    </div>
-                                </div>
-
-                                <div className="pt-6 border-t border-neutral-200/70 mt-6">
-                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">{t.projectReqs}</h4>
-                                    <div className="grid grid-cols-1 gap-y-4">
-                                        {formData.propertyType === 'Full house' && (
-                                            <p className="text-sm font-bold text-neutral-800">{formData.houseType} house, {formData.intFloors} floors, {formData.intUnitsPerFloor} units each.</p>
-                                        )}
-                                        {formData.propertyType === 'Full Apartment' && (
-                                            <p className="text-sm font-bold text-neutral-800">{formData.aptSize} sqft Apartment, {formData.aptRooms} rooms.</p>
-                                        )}
-                                        {formData.propertyType === 'Specific Area' && (
-                                            <p className="text-sm font-bold text-neutral-800">{formData.specificAreaType} ({formData.bedRoomType || 'N/A'}), {formData.roomSize} sqft - {formData.designScope}.</p>
-                                        )}
-                                        {formData.specificInstruction && (
-                                            <p className="text-xs text-neutral-600 mt-2 italic">Instruction: {formData.specificInstruction}</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="space-y-8">
+                            <RadioCardGroup
+                                options={[
+                                    { id: 'ghorbari', label: t.suggestedOption, description: t.suggestedOptionDesc, icon: UserCircle },
+                                    { id: 'list', label: t.listOption, description: t.listOptionDesc, icon: Star },
+                                ]}
+                                selected={formData.designerSelectionType}
+                                onChange={(id) => updateData('designerSelectionType', id)}
+                                columns={2}
+                            />
                         </div>
                     </WizardStep>
                 </MainLayout>
