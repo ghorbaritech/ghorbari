@@ -10,7 +10,7 @@ export const PARENT_CATEGORY_JOIN = 'parent:parent_id(id, name, level)';
  * Robust database query wrapper with logging
  */
 export async function safeQuery<T>(
-    queryPromise: Promise<{ data: T | null; error: any }>,
+    queryPromise: PromiseLike<{ data: T | null; error: any }>,
     context: string
 ): Promise<T | null> {
     const { data, error } = await queryPromise;
@@ -25,7 +25,7 @@ export async function safeQuery<T>(
         return null;
     }
 
-    return data;
+    return data as T;
 }
 
 /**
@@ -41,7 +41,7 @@ export async function fetchCategories(type?: 'product' | 'service' | 'design') {
         `);
 
     if (type) {
-        query = query.eq('type', type);
+        query = (query as any).eq('type', type);
     }
 
     return safeQuery(query.order('name'), 'fetchCategories');

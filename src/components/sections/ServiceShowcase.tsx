@@ -28,31 +28,58 @@ export function ServiceShowcase({ title, items = [], category, bgClass = "bg-blu
     const scrollContainerRef = useRef<HTMLDivElement>(null)
     const [fetchedItems, setFetchedItems] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
+    const processedCategory = useRef<string | symbol>(Symbol('init'))
 
     useEffect(() => {
-        // Fetch if category is provided OR if no items provided by prop
-        if (category || (items.length === 0 && fetchedItems.length === 0)) {
-            setLoading(true)
+        // Guard: If we already have items from props, stop.
+        if (items && items.length > 0) {
+            setLoading(false);
+            return;
+        }
 
-            // Determine if category is UUID or Name
-            const isUUID = category ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category) : false;
+        // Use a ref to ensure this only runs once per category
+        if (processedCategory.current === (category ?? 'NULL_CAT')) {
+            return;
+        }
 
-            getServiceItems(isUUID ? category : undefined).then(data => {
-                let filtered = data;
+        console.log(`[ServiceShowcase] FETCH START for: ${category}`);
+        setLoading(true);
+        processedCategory.current = category ?? 'NULL_CAT';
+
+        // Unconditional safety timeout
+        const timer = setTimeout(() => {
+            console.warn(`[ServiceShowcase] TIMEOUT for: ${category}`);
+            setLoading(false);
+        }, 12000);
+
+        const isUUID = category ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category) : false;
+
+        async function doFetch() {
+            try {
+                const data = await getServiceItems(isUUID ? category : undefined);
+                console.log(`[ServiceShowcase] SUCCESS for: ${category} (Found ${data.length})`);
+
+                let results = data;
                 if (category && !isUUID) {
-                    // Filter by name if not UUID
-                    filtered = data.filter(item =>
+                    results = data.filter(item =>
                         item.category?.name === category ||
                         item.category?.name_bn === category
                     );
+                    console.log(`[ServiceShowcase] FILTER result for ${category}: ${results.length}`);
                 }
-                setFetchedItems(filtered)
-                setLoading(false)
-            }).catch(() => {
-                setLoading(false)
-            })
+
+                setFetchedItems(results);
+            } catch (err) {
+                console.error(`[ServiceShowcase] ERROR for: ${category}`, err);
+            } finally {
+                clearTimeout(timer);
+                setLoading(false);
+                console.log(`[ServiceShowcase] LOADING SET TO FALSE for: ${category}`);
+            }
         }
-    }, [category, items, fetchedItems.length])
+
+        doFetch();
+    }, [category, items])
 
     const displayItems = items.length > 0 ? items : (fetchedItems.length > 0 ? fetchedItems : DEFAULT_SERVICES)
     const visibleItems = displayItems.slice(0, 10) // Show up to 10 in slider

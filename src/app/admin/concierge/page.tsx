@@ -142,7 +142,7 @@ export default function ConciergeOrderPage() {
                     advance_amount: sellerTotal * 0.1,
                     remaining_amount: sellerTotal * 0.9,
                     customer_id: customer.id,
-                    status: 'pending'
+                    status: 'pending' as any
                 }
 
                 await createOrder(orderData, {

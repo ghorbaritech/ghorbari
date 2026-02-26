@@ -55,15 +55,15 @@ export function ProductFactory() {
         setError(null)
 
         const formData = new FormData(e.currentTarget)
-        const productData = {
-            title: formData.get('title'),
-            sku: formData.get('sku'),
+        const productData: any = {
+            title: formData.get('title') as string,
+            sku: formData.get('sku') as string,
             base_price: parseFloat(formData.get('price') as string),
             stock_quantity: parseInt(formData.get('stock') as string),
-            category_id: formData.get('categoryId'),
-            seller_id: formData.get('sellerId'),
-            description: formData.get('description'),
-            images: [formData.get('imageUrl')], // Simple URL input for now
+            category_id: formData.get('categoryId') as string,
+            seller_id: formData.get('sellerId') as string,
+            description: formData.get('description') as string,
+            images: [formData.get('imageUrl') as string],
             status: 'active'
         }
 

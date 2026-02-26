@@ -1,5 +1,4 @@
 import { createBrowserClient } from '@supabase/ssr'
-import { createMockClient } from './mock-client'
 
 export function createClient() {
     // Hardcoded credentials to bypass environment variable issues

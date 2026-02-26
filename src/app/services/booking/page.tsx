@@ -8,12 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useServiceCart } from "@/context/ServiceCartContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2, User, UserCheck, CalendarDays, Loader2, ShieldCheck, Calendar } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, User, UserCheck, CalendarDays, Loader2, ShieldCheck, Calendar, FileText } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { placeServiceRequest } from "./actions";
+import { designTranslations } from "@/utils/designTranslations";
+import { Label } from "@/components/ui/label";
+import { RadioCardGroup } from "@/components/design/WizardFormComponents";
 
 // Custom Scheduler with Date Picker and 3-Column Time Slots
 function ServiceScheduler({ value, onChange }: { value: any, onChange: (v: any) => void }) {
@@ -141,7 +144,7 @@ export default function BookingWizardPage() {
 
         items.forEach(item => {
             const catName = (item.category?.name || '').toLowerCase();
-            const rootName = (item.category?.parent?.name || '').toLowerCase();
+            const rootName = ((item.category as any)?.parent?.name || '').toLowerCase();
 
             if (catName.includes('interior') || catName.includes('paint') || catName.includes('carpentry') ||
                 rootName.includes('interior') || rootName.includes('paint') || rootName.includes('carpentry')) {
@@ -384,7 +387,7 @@ export default function BookingWizardPage() {
                                                             { id: 'Specific Area', label: dt.specificArea }
                                                         ]}
                                                         selected={formData.propertyType}
-                                                        onChange={(v) => updateFormData('propertyType', v)}
+                                                        onChange={(v: string) => updateFormData('propertyType', v)}
                                                         columns={3}
                                                     />
                                                 </div>
@@ -427,7 +430,7 @@ export default function BookingWizardPage() {
                                                                 { id: 'Bath Room', label: dt.bathRoom }
                                                             ]}
                                                             selected={formData.specificAreaType}
-                                                            onChange={(v) => updateFormData('specificAreaType', v)}
+                                                            onChange={(v: string) => updateFormData('specificAreaType', v)}
                                                             columns={2}
                                                         />
                                                     </div>

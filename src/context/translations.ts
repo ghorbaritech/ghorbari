@@ -162,6 +162,8 @@ export const translations = {
         promo_health_title: "Free Strategic Health Check",
         promo_health_desc: "Book a full home structural design service and get a free health check consultation.",
         promo_health_cta: "Book Now",
+        promo_bulk_title: "Bulk Material Discount",
+        promo_bulk_desc: "Contractors get up to 15% off on bulk cement and steel orders.",
         promo_bulk_cta: "Shop Materials",
 
         // Design Page
@@ -220,6 +222,8 @@ export const translations = {
         nav_marketplace: "পণ্যের মার্কেটপ্লেস",
         nav_renovation: "সেবা সমূহ",
         nav_create_account: "অ্যাকাউন্ট তৈরি করুন",
+        nav_hi: "হ্যালো",
+        nav_dashboard: "ড্যাশবোর্ড",
 
         // Hero / General
         hero_title: "আপনার স্বপ্নের বাড়ি তৈরি করুন",

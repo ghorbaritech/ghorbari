@@ -2,7 +2,6 @@
 
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { createMockClient } from './mock-client'
 
 export async function createClient() {
     // Hardcoded credentials to bypass environment variable issues

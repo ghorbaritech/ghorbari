@@ -61,6 +61,7 @@ export default function ServiceProviderPackagesPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
             const { data: provider } = await supabase.from('service_providers').select('id').eq('user_id', user.id).single();
+            if (!provider) return;
 
             if (editingPackage) {
                 await updateServicePackage(editingPackage.id, formData);

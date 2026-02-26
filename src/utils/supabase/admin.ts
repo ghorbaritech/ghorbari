@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { createMockClient } from './mock-client'
 
 export function createAdminClient() {
     // Hardcoded credentials to bypass environment variable issues

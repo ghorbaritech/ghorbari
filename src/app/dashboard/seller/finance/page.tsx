@@ -54,7 +54,9 @@ export default function SellerFinancePage() {
             // In a real app, this would create a 'withdrawal_request' record.
             // For now, we simulate a "Payment Cleared" entry to zero out the balance.
             const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
             const { data: seller } = await supabase.from('sellers').select('id').eq('user_id', user.id).single();
+            if (!seller) return;
 
             await processMockPayment(seller.id, balance); // This service function clears the due amount
             await fetchData();

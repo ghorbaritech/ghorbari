@@ -55,6 +55,7 @@ export default function SellerCampaignsPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
             const { data: seller } = await supabase.from('sellers').select('id').eq('user_id', user.id).single();
+            if (!seller) return;
 
             await createCampaign({
                 ...formData,

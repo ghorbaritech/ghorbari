@@ -79,7 +79,21 @@ export async function getProducts(options: {
     return data
 }
 
-// Redundant getCategories removed.
+export async function getCategories(type: 'product' | 'service' | 'design' = 'product') {
+    const supabase = createClient()
+    const { data, error } = await supabase
+        .from('product_categories')
+        .select('*, parent:parent_id(id, name, level)')
+        .eq('type', type)
+        .order('name')
+
+    if (error) {
+        console.error('Error fetching categories:', error)
+        return []
+    }
+
+    return data
+}
 
 export async function getProductBySku(sku: string) {
     const supabase = createClient()

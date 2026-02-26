@@ -45,6 +45,11 @@ export default async function ProductDetailPage({ params }: Params) {
         .eq('target_type', 'product')
         .order('created_at', { ascending: false });
 
+    const formattedReviews = reviews?.map((r: any) => ({
+        ...r,
+        reviewer: Array.isArray(r.reviewer) ? r.reviewer[0] : r.reviewer
+    })) || [];
+
     if (!product) {
         return (
             <main className="min-h-screen flex flex-col font-sans bg-neutral-50/50">
@@ -174,7 +179,7 @@ export default async function ProductDetailPage({ params }: Params) {
 
                                 {/* Reviews */}
                                 {/* Reviews */}
-                                <ReviewsSection productId={product.id} initialReviews={reviews || []} />
+                                <ReviewsSection productId={product.id} initialReviews={formattedReviews} />
                             </div>
                         </div>
                     </div>

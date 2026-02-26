@@ -60,7 +60,7 @@ export function AssignPartnerDialog({ onAssign }: { onAssign: (id: string) => vo
                         <Input
                             placeholder="Search by name..."
                             value={search}
-                            onChange={(e) => { setSearch(e.target.value); fetchPartners(); }}
+                            onChange={(e) => { setSearch(e.target.value); }}
                             className="pl-10 h-12 rounded-xl bg-neutral-50 border-none font-bold"
                         />
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
