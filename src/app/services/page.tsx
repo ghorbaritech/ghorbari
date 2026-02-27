@@ -104,7 +104,7 @@ export default function ServicesPage() {
             <div className="container mx-auto px-8 py-12">
                 {/* Header Label (Restored style) */}
                 <div className="mb-10">
-                    <h1 className="text-3xl md:text-4xl font-black text-neutral-900 tracking-tighter italic uppercase">
+                    <h1 className="text-xl md:text-2xl font-bold text-neutral-900">
                         {t.services_marketplace_title}
                     </h1>
                     <p className="text-neutral-500 font-bold uppercase tracking-widest text-xs mt-2">
@@ -117,7 +117,7 @@ export default function ServicesPage() {
 
                     {/* Filters Sidebar (Left) */}
                     <aside className="w-full xl:col-span-3 lg:col-span-4">
-                        <div className="hidden lg:block space-y-8 bg-white p-8 rounded-[32px] border border-neutral-100 shadow-sm sticky top-24">
+                        <div className="hidden lg:block space-y-6 bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm sticky top-24">
                             <div>
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="font-bold text-neutral-900 uppercase tracking-tighter text-sm italic">
@@ -202,7 +202,7 @@ export default function ServicesPage() {
                     {/* Main Content (Center) */}
                     <div className="xl:col-span-6 lg:col-span-8 space-y-8">
                         {/* Filters & Search Row */}
-                        <div className="bg-white rounded-[32px] p-4 border border-neutral-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+                        <div className="bg-white rounded-xl p-3 border border-neutral-200 flex flex-col md:flex-row gap-3 items-center">
                             <div className="relative flex-grow w-full">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                                 <input
@@ -232,7 +232,7 @@ export default function ServicesPage() {
                         {loading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {[1, 2, 3, 4, 5, 6].map(n => (
-                                    <div key={n} className="h-[300px] rounded-[24px] bg-neutral-100 animate-pulse" />
+                                    <div key={n} className="h-[280px] rounded-2xl bg-neutral-100 animate-pulse" />
                                 ))}
                             </div>
                         ) : filteredServices.length > 0 ? (
@@ -265,7 +265,7 @@ export default function ServicesPage() {
                                 })}
                             </div>
                         ) : (
-                            <div className="bg-white border border-neutral-100 rounded-[32px] p-20 text-center">
+                            <div className="bg-white border border-neutral-200 rounded-2xl p-10 text-center">
                                 <div className="w-20 h-20 bg-neutral-50 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <ShoppingBag className="w-10 h-10 text-neutral-200" />
                                 </div>

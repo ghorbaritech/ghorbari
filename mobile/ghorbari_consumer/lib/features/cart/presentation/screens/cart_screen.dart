@@ -129,11 +129,11 @@ class CartScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.between,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Total Amount', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
                 Text('৳${state.totalAmount.toStringAsFixed(0)}', 
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.black, color: Color(0xFF0F172A))),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
               ],
             ),
             const SizedBox(height: 24),

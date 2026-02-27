@@ -6,20 +6,23 @@ import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/client';
 import { Label } from '@/components/ui/label';
 import { useDesignCart } from './DesignCartProvider';
-import { X } from 'lucide-react';
+import { X, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { PreBookingModal } from './PreBookingModal';
+import { useCart } from '@/context/CartContext';
 
 interface ProfileCheckoutCartProps {
     designerId: string;
     providerName: string;
     packages?: any[];
+    showDocuments?: boolean;
 }
 
-export function ProfileCheckoutCart({ designerId, providerName, packages = [] }: ProfileCheckoutCartProps) {
+export function ProfileCheckoutCart({ designerId, providerName, packages = [], showDocuments = true }: ProfileCheckoutCartProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createClient();
-    const { selectedPackageIds, removePackage, clearCart } = useDesignCart();
+    const { selectedPackages, removePackage, updateQuantity, clearCart } = useDesignCart();
+    const { addItem } = useCart();
 
     const [loading, setLoading] = useState(false);
 
@@ -29,8 +32,13 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
     const isJourneyFlow = searchParams.get('flow') === 'journey';
 
     // Compute derived state
-    const selectedPackages = packages.filter(p => selectedPackageIds.includes(p.id));
-    let price = selectedPackages.reduce((sum, pkg) => sum + pkg.price, 0);
+    const selectedItems = selectedPackages.map(sp => {
+        const pkg = packages.find(p => p.id === sp.id);
+        if (!pkg) return null;
+        return { ...pkg, quantity: sp.quantity };
+    }).filter(Boolean) as any[];
+
+    const price = selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     // Apply bundle logic specific to Ghorbari if needed
     // Note: developerOption is not defined in the provided context, assuming it's meant to be passed or derived.
@@ -55,7 +63,7 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
         let hasApproval = false;
         let hasInterior = false;
 
-        selectedPackages.forEach(pkg => {
+        selectedItems.forEach(pkg => {
             const cat = pkg.category;
             // Check taxonomy tree first
             if (checkCategory(cat, 'interior')) hasInterior = true;
@@ -92,16 +100,10 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
         setDocs(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    // Dynamic price calculation
-    if (packages.length > 0) {
-        price = selectedPackages.reduce((sum, pkg) => sum + pkg.price, 0);
-    } else {
-        // Fallback pricing
-        price = 80000;
-    }
+
 
     const handleInitialCheckoutClick = () => {
-        if (selectedPackageIds.length === 0) {
+        if (selectedPackages.length === 0) {
             alert("Please select at least one package to continue.");
             return;
         }
@@ -130,13 +132,14 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
 
             const journeyTypes = getJourneyTypes();
             const payloadDetails = {
-                designerOption: selectedPackageIds.length > 0 ? selectedPackageIds.join(',') : 'legacy',
-                packageIds: selectedPackageIds,
-                packagesInfo: selectedPackages.map(p => ({
+                designerOption: selectedPackages.length > 0 ? selectedPackages.map(p => p.id).join(',') : 'legacy',
+                packageIds: selectedPackages.map(p => p.id),
+                packagesInfo: selectedItems.map(p => ({
                     id: p.id,
                     title: p.title,
                     unit: p.unit,
-                    price: p.price
+                    price: p.price,
+                    quantity: p.quantity
                 })),
                 ...docs,
                 designerSelectionType: 'list',
@@ -144,7 +147,7 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
                 tentativePrice: price,
                 projectScope: isJourneyFlow ? 'Provided in Journey' : projectData,
                 preferredSchedule: scheduleData,
-                journeyTypes // Include the types in metadata
+                journeyTypes
             };
 
             const serviceType = journeyTypes.includes('interior') ? 'interior' : 'architectural';
@@ -193,22 +196,46 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
                         <div>
                             <Label className="text-[12px] font-bold text-neutral-600 mb-1.5 block">Selected Packages</Label>
 
-                            {selectedPackages.length > 0 ? (
+                            {selectedItems.length > 0 ? (
                                 <div className="space-y-2">
-                                    {selectedPackages.map(pkg => (
-                                        <div key={pkg.id} className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3">
-                                            <div className="flex-1 min-w-0 pr-2">
-                                                <p className="text-[13px] font-bold text-neutral-900 truncate">{pkg.title}</p>
-                                                <p className="text-[11px] font-bold text-primary-600">৳{pkg.price.toLocaleString()}</p>
+                                    {selectedItems.map(item => (
+                                        <div key={item.id} className="bg-neutral-50 border border-neutral-200 rounded-xl p-4">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex-1 min-w-0 pr-2">
+                                                    <p className="text-[13px] font-bold text-neutral-900 truncate">{item.title}</p>
+                                                    <p className="text-[11px] font-bold text-primary-600">
+                                                        ৳{item.price.toLocaleString()}
+                                                        <span className="text-neutral-400 font-medium"> / {item.unit || 'unit'}</span>
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => removePackage(item.id)}
+                                                    className="w-6 h-6 flex items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors flex-shrink-0"
+                                                    type="button"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
                                             </div>
-                                            <button
-                                                onClick={() => removePackage(pkg.id)}
-                                                className="w-6 h-6 flex items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors flex-shrink-0"
-                                                type="button"
-                                                title="Remove package"
-                                            >
-                                                <X className="w-3.5 h-3.5" />
-                                            </button>
+
+                                            {/* Quantity Controls */}
+                                            <div className="flex items-center justify-between pt-3 border-t border-neutral-200/50">
+                                                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Quantity</span>
+                                                <div className="flex items-center bg-white border border-neutral-200 rounded-lg px-1">
+                                                    <button
+                                                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                                        className="w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-primary-600 transition-colors"
+                                                    >
+                                                        <Minus className="w-3 h-3" />
+                                                    </button>
+                                                    <span className="w-8 text-center text-[12px] font-bold text-neutral-900">{item.quantity}</span>
+                                                    <button
+                                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                        className="w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-primary-600 transition-colors"
+                                                    >
+                                                        <Plus className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -233,50 +260,75 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [] }:
                 </div>
 
                 {/* Documents Ready Block */}
-                <div>
-                    <h4 className="text-[11px] font-black text-neutral-400 uppercase tracking-widest mb-3">Documents Ready</h4>
+                {showDocuments && (
+                    <div>
+                        <h4 className="text-[11px] font-black text-neutral-400 uppercase tracking-widest mb-3">Documents Ready</h4>
 
-                    <div className="flex flex-wrap gap-2">
-                        {Object.entries(docs).map(([key, value]) => {
-                            const labelMap: Record<string, string> = {
-                                hasDeed: 'Deed',
-                                hasSurveyMap: 'Survey Map',
-                                hasMutation: 'Mutation',
-                                hasTax: 'Tax',
-                                hasNID: 'NID',
-                                hasLandPermit: 'Land Permit',
-                                hasBuildingApproval: 'Approval',
-                            };
-                            return (
-                                <button
-                                    key={key}
-                                    onClick={() => toggleDoc(key as keyof typeof docs)}
-                                    className={`px-3 py-1.5 rounded-full font-bold text-[11px] transition-all cursor-pointer select-none ${value
-                                        ? 'bg-[#effdf5] text-[#00a651] border border-[#d6f6e5]'
-                                        : 'bg-white text-neutral-500 border border-neutral-200 hover:bg-neutral-50 hover:text-neutral-700'
-                                        }`}
-                                >
-                                    {labelMap[key]}
-                                </button>
-                            );
-                        })}
+                        <div className="flex flex-wrap gap-2">
+                            {Object.entries(docs).map(([key, value]) => {
+                                const labelMap: Record<string, string> = {
+                                    hasDeed: 'Deed',
+                                    hasSurveyMap: 'Survey Map',
+                                    hasMutation: 'Mutation',
+                                    hasTax: 'Tax',
+                                    hasNID: 'NID',
+                                    hasLandPermit: 'Land Permit',
+                                    hasBuildingApproval: 'Approval',
+                                };
+                                return (
+                                    <button
+                                        key={key}
+                                        onClick={() => toggleDoc(key as keyof typeof docs)}
+                                        className={`px-3 py-1.5 rounded-full font-bold text-[11px] transition-all cursor-pointer select-none ${value
+                                            ? 'bg-[#effdf5] text-[#00a651] border border-[#d6f6e5]'
+                                            : 'bg-white text-neutral-500 border border-neutral-200 hover:bg-neutral-50 hover:text-neutral-700'
+                                            }`}
+                                    >
+                                        {labelMap[key]}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Modified Action Area */}
-            <div className="p-6 pt-0 mt-auto bg-white border-t border-neutral-100/50">
+            <div className="p-6 pt-0 mt-auto bg-white border-t border-neutral-100/50 space-y-3">
+                <Button
+                    onClick={() => {
+                        selectedItems.forEach(item => {
+                            addItem({
+                                id: item.id,
+                                name: item.title,
+                                price: item.price,
+                                image: item.images?.[0] || '',
+                                sellerId: designerId,
+                                sellerName: providerName,
+                                categoryId: item.category_id,
+                                category: item.category?.name
+                            });
+                        });
+                    }}
+                    disabled={selectedPackages.length === 0}
+                    variant="outline"
+                    className="w-full mt-4 h-14 font-black uppercase text-[12px] tracking-widest border-neutral-200 hover:bg-neutral-50 rounded-xl"
+                >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Add to Cart
+                </Button>
+
                 <Button
                     onClick={handleInitialCheckoutClick}
-                    disabled={loading || selectedPackageIds.length === 0}
-                    className="w-full mt-4 bg-[#1e3a8a] py-6 rounded-xl hover:bg-[#1e3a8a]/90 text-white shadow-lg shadow-[#1e3a8a]/20 font-black text-[15px] relative overflow-hidden group"
+                    disabled={loading || selectedPackages.length === 0}
+                    className="w-full bg-[#1e3a8a] h-14 rounded-xl hover:bg-[#1e3a8a]/90 text-white shadow-lg shadow-[#1e3a8a]/20 font-black text-[13px] tracking-widest relative overflow-hidden group uppercase"
                 >
                     <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                     <span className="relative z-10">
-                        {loading ? 'Processing...' : 'Continue to Checkout'}
+                        {loading ? 'Processing...' : 'Direct Checkout'}
                     </span>
                 </Button>
-                <p className="text-center text-[10px] text-neutral-400 mt-3 font-bold tracking-wide uppercase">No upfront payment required</p>
+                <p className="text-center text-[9px] text-neutral-400 font-bold tracking-wide uppercase">No upfront payment required</p>
             </div>
 
             <PreBookingModal

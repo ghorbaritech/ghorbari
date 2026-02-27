@@ -15,25 +15,37 @@ const DEFAULT_BANNERS = [
         title: "Expert-Selected, fast delivered",
         title_bn: "বিশেষজ্ঞ দ্বারা নির্বাচিত, দ্রুত ডেলিভারি",
         subtitle: "Quality Guarantee",
-        subtitle_bn: "কালিটি গ্যারান্টি",
-        image_url: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600&h=400&fit=crop", // Modern sofa/living room
-        link_url: "#"
+        subtitle_bn: "মানের নিশ্চয়তা",
+        badge: "Top Picks",
+        image_url: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600&h=400&fit=crop",
+        link_url: "/products",
+        // deep navy blue
+        bg: "bg-[#0f172a]",
+        accent: "bg-white/10",
     },
     {
         title: "The one app for everything",
         title_bn: "সবকিছুর জন্য একটি অ্যাপ",
         subtitle: "Price alerts and exclusive offers",
-        subtitle_bn: "প্রাইস অ্যালার্ট এবং এক্সক্লুসিভ অফার",
-        image_url: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=600&h=400&fit=crop", // Nice modern interior
-        link_url: "#"
+        subtitle_bn: "প্রাইস অ্যালার্ট ও বিশেষ অফার",
+        badge: "New",
+        image_url: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&h=400&fit=crop",
+        link_url: "/services",
+        // deep burnt orange
+        bg: "bg-[#c2410c]",
+        accent: "bg-white/10",
     },
     {
         title: "The ones you love",
         title_bn: "আপনার পছন্দের জিনিস",
         subtitle: "Trusted, durable and loved",
-        subtitle_bn: "নির্ভরযোগ্য, টেকসই এবং প্রিয়",
-        image_url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&h=400&fit=crop", // Cozy room
-        link_url: "#"
+        subtitle_bn: "নির্ভরযোগ্য, টেকসই ও প্রিয়",
+        badge: "Best Value",
+        image_url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&h=400&fit=crop",
+        link_url: "/products",
+        // dark forest green
+        bg: "bg-[#14532d]",
+        accent: "bg-white/10",
     }
 ]
 
@@ -41,60 +53,73 @@ export function PromoBannerSection({ title, banners = [] }: PromoBannerSectionPr
     const { language, t } = useLanguage()
     const displayBanners = banners.length > 0 ? banners : DEFAULT_BANNERS
 
-    // Ensure we have 3 items for the layout
     const filledBanners = [
-        displayBanners[0] || DEFAULT_BANNERS[0],
-        displayBanners[1] || DEFAULT_BANNERS[1],
-        displayBanners[2] || DEFAULT_BANNERS[2],
+        { ...DEFAULT_BANNERS[0], ...displayBanners[0] },
+        { ...DEFAULT_BANNERS[1], ...displayBanners[1] },
+        { ...DEFAULT_BANNERS[2], ...displayBanners[2] },
     ]
 
     return (
-        <section className="py-12 container mx-auto px-4 md:px-8">
-            <h2 className="text-2xl font-black tracking-tight text-neutral-900 mb-6">
-                {title || t.offer_title}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {filledBanners.map((banner, index) => (
-                    <Link
-                        href={banner.link_url || '#'}
-                        key={index}
-                        className="group relative overflow-hidden rounded-[24px] bg-[#1e2746] h-[180px] flex transition-all hover:translate-y-[-4px] hover:shadow-xl"
-                    >
-                        {/* Left Side: Content */}
-                        <div className="relative z-10 p-6 w-[55%] flex flex-col justify-between h-full bg-[#1e2746]">
-                            <div>
-                                <h3 className="text-lg md:text-xl font-black text-white leading-tight mb-1">
-                                    {getL(banner.title, banner.title_bn, language)}
-                                </h3>
-                                <p className="text-blue-100/90 text-[10px] font-bold leading-normal uppercase tracking-wide">
-                                    {getL(banner.subtitle, banner.subtitle_bn, language)}
-                                </p>
-                            </div>
+        <section className="py-5 bg-white">
+            <div className="section-container">
+                {/* Section Header */}
+                <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">
+                        {title || t.offer_title || "Our current deals"}
+                    </p>
+                    <Link href="/offers" className="hidden md:flex items-center gap-1.5 text-primary-600 hover:text-primary-700 transition-colors text-xs font-bold">
+                        View all <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                </div>
 
-                            {/* Optional Badge for first item or specific condition */}
-                            {index === 0 && (
-                                <div className="inline-block mt-4 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full w-fit">
-                                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">
-                                        {language === 'BN' ? "গুরবাড়ী পছন্দ" : "Ghorbari Choice"}
-                                    </span>
+                {/* Banner Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {filledBanners.map((banner, index) => (
+                        <Link
+                            href={banner.link_url || '#'}
+                            key={index}
+                            className={`group relative h-[200px] rounded-2xl overflow-hidden flex transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${banner.bg || 'bg-[#0f172a]'}`}
+                        >
+                            {/* Background image (right side, faded) */}
+                            {banner.image_url && (
+                                <div className="absolute right-0 top-0 bottom-0 w-[55%] overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent z-10" />
+                                    <img
+                                        src={banner.image_url}
+                                        alt={banner.title || "Promo"}
+                                        className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
+                                    />
                                 </div>
                             )}
-                        </div>
 
-                        {/* Right Side: Image */}
-                        <div className="absolute right-0 top-0 bottom-0 w-[45%] bg-neutral-100 overflow-hidden">
-                            {banner.image_url ? (
-                                <img
-                                    src={banner.image_url}
-                                    alt={banner.title || "Promo"}
-                                    className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
-                                />
-                            ) : (
-                                <div className="w-full h-full bg-neutral-200" />
-                            )}
-                        </div>
-                    </Link>
-                ))}
+                            {/* Content */}
+                            <div className="relative z-20 p-6 flex flex-col justify-between h-full w-[65%]">
+                                <div className="space-y-2">
+                                    {/* Badge */}
+                                    <div className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white font-bold text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-full">
+                                        {banner.badge || "Offer"}
+                                    </div>
+                                    {/* Title */}
+                                    <h3 className="text-xl font-black text-white leading-tight">
+                                        {getL(banner.title, banner.title_bn, language)}
+                                    </h3>
+                                    {/* Subtitle */}
+                                    <p className="text-white/70 text-[11px] font-medium leading-snug">
+                                        {getL(banner.subtitle, banner.subtitle_bn, language)}
+                                    </p>
+                                </div>
+
+                                {/* CTA */}
+                                <div className="flex items-center gap-1.5 text-white group-hover:gap-3 transition-all duration-300">
+                                    <span className="text-[11px] font-black uppercase tracking-wider">
+                                        {language === 'BN' ? 'দেখুন' : 'Explore'}
+                                    </span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </div>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
             </div>
         </section>
     )

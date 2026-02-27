@@ -3,99 +3,92 @@
 import { useServiceCart } from "@/context/ServiceCartContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { X, ShoppingBag, ArrowRight } from "lucide-react";
+import { X, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
 export function ServiceCartSidebar() {
     const { items, removeService, totalAmount, itemCount } = useServiceCart();
-    const { t, language } = useLanguage();
+    const { language, t } = useLanguage();
 
     if (itemCount === 0) {
         return (
-            <div className="bg-white rounded-[32px] p-8 border border-neutral-200 shadow-sm text-center sticky top-24">
-                <div className="w-16 h-16 bg-neutral-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <ShoppingBag className="w-8 h-8 text-neutral-200" />
+            <div className="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-neutral-200 overflow-hidden sticky top-24">
+                <div className="bg-[#f3fbfa] p-6 border-b border-neutral-200">
+                    <h3 className="text-[18px] font-black text-neutral-900 tracking-tight leading-none mb-1">{t.cart_your_selection}</h3>
+                    <p className="text-[11px] font-medium text-neutral-500">{t.cart_no_services}</p>
                 </div>
-                <h3 className="text-lg font-black text-neutral-900 mb-2">Cart is Empty</h3>
-                <p className="text-sm text-neutral-400 font-bold uppercase tracking-widest leading-relaxed">
-                    Select services from the list to start your booking
-                </p>
+                <div className="p-8 flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 bg-neutral-50 rounded-full flex items-center justify-center border border-neutral-200">
+                        <ShoppingBag className="w-5 h-5 text-neutral-300" />
+                    </div>
+                    <p className="text-sm font-medium text-neutral-500 leading-relaxed">
+                        {t.cart_select_prompt}
+                    </p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div id="sidebar-cart" className="bg-white rounded-[32px] border border-neutral-200 shadow-xl overflow-hidden sticky top-24 flex flex-col max-h-[calc(100vh-120px)]">
+        <div className="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-neutral-200 overflow-hidden flex flex-col sticky top-24 max-h-[calc(100vh-120px)]">
+
             {/* Header */}
-            <div className="bg-neutral-900 p-6 text-white">
-                <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-lg font-black tracking-tight">Your Selection</h3>
-                    <span className="bg-primary-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
-                        {itemCount} {itemCount === 1 ? 'Service' : 'Services'}
-                    </span>
-                </div>
-                <p className="text-neutral-400 text-[10px] font-bold uppercase tracking-widest">
-                    Tentative Quote
+            <div className="bg-[#f3fbfa] p-6 border-b border-neutral-200">
+                <h3 className="text-[18px] font-black text-neutral-900 tracking-tight leading-none mb-1">{t.cart_your_selection}</h3>
+                <p className="text-[11px] font-medium text-neutral-600 mb-4">
+                    {t.cart_tentative_quote}
                 </p>
+                <div className="text-left mt-2">
+                    <div className="flex items-center gap-1 font-black text-[28px] text-[#0a1b3d] leading-none">
+                        <span className="text-[22px]">৳</span>{totalAmount.toLocaleString()}
+                    </div>
+                    <p className="text-[10px] font-black tracking-widest text-[#0a1b3d]/70 uppercase mt-1">{t.cart_starting_price}</p>
+                </div>
             </div>
 
-            {/* Items List */}
-            <div className="flex-grow overflow-y-auto p-4 space-y-3">
-                {items.map((item) => (
-                    <div
-                        key={item.id}
-                        className="group bg-neutral-50 border border-neutral-100 rounded-2xl p-4 flex items-start gap-3 relative transition-all hover:bg-white hover:shadow-md hover:border-neutral-200"
-                    >
-                        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-200">
-                            <img
-                                src={item.image_url || 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=100'}
-                                alt={item.name}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div className="flex-grow min-w-0">
-                            <h4 className="text-sm font-black text-neutral-900 truncate pr-6">
-                                {language === 'BN' ? item.name_bn : item.name}
-                            </h4>
-                            <div className="flex items-center gap-1 mt-1">
-                                <span className="text-xs font-black text-primary-600">
-                                    ৳{item.unit_price.toLocaleString()}
-                                </span>
-                                <span className="text-[10px] font-bold text-neutral-400 uppercase">
-                                    / {item.unit_type}
-                                </span>
+            {/* Body */}
+            <div className="flex-grow overflow-y-auto p-6 space-y-5 bg-white">
+                <h4 className="text-[11px] font-black text-neutral-400 uppercase tracking-widest">{t.cart_service_details}</h4>
+                <div>
+                    <p className="text-[12px] font-bold text-neutral-600 mb-2">{t.cart_selected_services}</p>
+                    <div className="space-y-2">
+                        {items.map((item) => (
+                            <div
+                                key={item.id}
+                                className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3"
+                            >
+                                <div className="flex-1 min-w-0 pr-2">
+                                    <p className="text-[13px] font-bold text-neutral-900 truncate">
+                                        {language === 'BN' ? item.name_bn : item.name}
+                                    </p>
+                                    <p className="text-[11px] font-bold text-primary-600">
+                                        ৳{item.unit_price.toLocaleString()}
+                                        <span className="text-neutral-400 font-medium"> / {item.unit_type}</span>
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => removeService(item.id)}
+                                    className="w-6 h-6 flex items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors flex-shrink-0"
+                                    title="Remove"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
                             </div>
-                        </div>
-                        <button
-                            onClick={() => removeService(item.id)}
-                            className="absolute top-3 right-3 p-1 rounded-lg text-neutral-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
+                        ))}
                     </div>
-                ))}
+                </div>
             </div>
 
             {/* Footer */}
-            <div className="p-6 bg-neutral-50 border-t border-neutral-100 mt-auto">
-                <div className="flex items-end justify-between mb-6">
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">Total Estimate</span>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-black text-neutral-900">৳{totalAmount.toLocaleString()}</span>
-                            <span className="text-[10px] font-bold text-neutral-400 uppercase">*Starting</span>
-                        </div>
-                    </div>
-                </div>
-
+            <div className="p-6 pt-0 mt-auto bg-white border-t border-neutral-100/50">
                 <Link href="/services/booking">
-                    <Button className="w-full h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs group shadow-lg shadow-primary-600/20">
-                        Proceed to Booking
-                        <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    <Button className="w-full mt-4 bg-[#1e3a8a] py-6 rounded-xl hover:bg-[#1e3a8a]/90 text-white shadow-lg shadow-[#1e3a8a]/20 font-black text-[15px] relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                        <span className="relative z-10">{t.cart_continue_booking}</span>
                     </Button>
                 </Link>
-                <p className="text-center text-[9px] font-bold text-neutral-400 uppercase tracking-tighter mt-4">
-                    Admin will verify scope before final pricing
+                <p className="text-center text-[10px] text-neutral-400 mt-3 font-bold tracking-wide uppercase">
+                    {t.cart_no_upfront}
                 </p>
             </div>
         </div>

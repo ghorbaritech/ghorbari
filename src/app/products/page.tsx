@@ -110,7 +110,7 @@ export default function ProductsPage() {
             <div className="container mx-auto px-8 pt-12">
                 {/* Header Label */}
                 <div className="mb-10">
-                    <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 tracking-tight">
+                    <h1 className="text-xl md:text-2xl font-bold text-neutral-900">
                         {t.products_marketplace_title}
                     </h1>
                     <p className="text-neutral-500 font-medium mt-1">
@@ -122,7 +122,7 @@ export default function ProductsPage() {
                 <div className="flex flex-col lg:flex-row gap-10">
                     {/* Filters Sidebar */}
                     <aside className="w-full lg:w-72 flex-shrink-0">
-                        <div className="hidden lg:block space-y-8 bg-white p-8 rounded-[32px] border border-neutral-100 shadow-sm sticky top-24">
+                        <div className="hidden lg:block space-y-6 bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm sticky top-24">
                             <div>
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="font-bold text-neutral-900 uppercase tracking-tighter text-sm italic">
@@ -215,7 +215,7 @@ export default function ProductsPage() {
 
                     {/* Product Grid */}
                     <div className="flex-1">
-                        <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-6 rounded-[32px] border border-neutral-100 shadow-sm">
+                        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-neutral-200">
                             <div className="text-xs text-neutral-400 font-black uppercase tracking-widest">
                                 {t.products_found.replace('{count}', filteredProducts.length.toString())}
                             </div>
@@ -232,7 +232,7 @@ export default function ProductsPage() {
                         </div>
 
                         {loading ? (
-                            <div className="h-96 flex items-center justify-center bg-white rounded-[40px] border-2 border-dashed border-neutral-100">
+                            <div className="h-96 flex items-center justify-center bg-white rounded-xl border border-dashed border-neutral-200">
                                 <div className="flex flex-col items-center gap-6 text-neutral-300">
                                     <Loader2 className="w-10 h-10 animate-spin" />
                                     <p className="text-[10px] font-black uppercase tracking-[0.4em]">
@@ -261,7 +261,7 @@ export default function ProductsPage() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="col-span-full py-32 text-center bg-white rounded-[40px] border border-dashed border-neutral-100">
+                            <div className="col-span-full py-24 text-center bg-white rounded-xl border border-dashed border-neutral-200">
                                 <p className="text-neutral-300 font-black uppercase tracking-[0.3em] text-xs underline decoration-primary-600 decoration-4 underline-offset-8 italic">
                                     {t.products_no_found_title}
                                 </p>

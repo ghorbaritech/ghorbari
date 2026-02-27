@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowRight, ShoppingBag, PencilRuler, Wrench } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -10,141 +10,105 @@ interface HeroSectionProps {
 
 export function HeroSection({ heroData }: HeroSectionProps) {
     const { t } = useLanguage();
-    const items = heroData?.items || [];
-
-    // Helper to get item by ID or fallback
-    const getItem = (id: string) => items.find((i: any) => i.id === id) || {};
-
-    const mainItem = getItem('main');
-    const topRightItem = getItem('top_right');
-    const bottomRightItem = getItem('bottom_right');
-
-    const mainBanner = {
-        title: mainItem.title || t.hero_banner_main_title,
-        subtitle: mainItem.subtitle || t.hero_banner_main_subtitle,
-        desc: mainItem.desc || t.hero_banner_main_desc,
-        icon: ShoppingBag,
-        // Dynamic Overlay: Convert hex to rgb/rgba or use style directly
-        overlayColor: mainItem.overlay_color || '#8b3012',
-        overlayOpacity: mainItem.overlay_opacity ? mainItem.overlay_opacity / 100 : 0.75,
-        href: mainItem.href || "/products",
-        image: mainItem.image || "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1000&auto=format&fit=crop"
-    };
-
-    const sideBanners = [
-        {
-            title: topRightItem.title || t.hero_banner_design_title,
-            subtitle: topRightItem.subtitle || t.hero_banner_design_subtitle,
-            desc: topRightItem.desc || t.hero_banner_design_desc,
-            icon: PencilRuler,
-            overlayColor: topRightItem.overlay_color || '#166534',
-            overlayOpacity: topRightItem.overlay_opacity ? topRightItem.overlay_opacity / 100 : 0.75,
-            href: topRightItem.href || "/services/design",
-            image: topRightItem.image || "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=800&auto=format&fit=crop"
-        },
-        {
-            title: bottomRightItem.title || t.hero_banner_service_title,
-            subtitle: bottomRightItem.subtitle || t.hero_banner_service_subtitle,
-            desc: bottomRightItem.desc || t.hero_banner_service_desc,
-            icon: Wrench,
-            overlayColor: bottomRightItem.overlay_color || '#1d2d5c',
-            overlayOpacity: bottomRightItem.overlay_opacity ? bottomRightItem.overlay_opacity / 100 : 0.75,
-            href: bottomRightItem.href || "/services",
-            image: bottomRightItem.image || "https://images.unsplash.com/photo-1505798577917-a65157d3320a?q=80&w=800&auto=format&fit=crop"
-        }
-    ];
 
     return (
-        <section className="bg-white pt-8 pb-2">
-            <div className="container mx-auto px-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Large Featured Card - Left Side */}
+        <section className="bg-white pt-4 pb-2">
+            <div className="section-container">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:h-[400px]">
+
+                    {/* ── Main card: Construction Marketplace (Orange) ── */}
                     <Link
-                        href={mainBanner.href}
-                        className="group relative flex flex-col justify-between lg:col-span-2 h-72 lg:h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+                        href="/products"
+                        className="group relative lg:col-span-8 rounded-2xl overflow-hidden flex items-center bg-[#EB6841] transition-all duration-300 hover:brightness-105 hover:-translate-y-0.5 hover:shadow-xl"
                     >
-                        {/* Background Image */}
-                        <div
-                            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                            style={{ backgroundImage: `url(${mainBanner.image})` }}
-                        />
-
-                        {/* Color Overlay */}
-                        <div
-                            className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-95"
-                            style={{ backgroundColor: mainBanner.overlayColor, opacity: mainBanner.overlayOpacity }}
-                        />
-
-                        {/* Content */}
-                        <div className="relative z-10 p-8 flex flex-col h-full justify-between">
-                            <div className="flex justify-between items-start">
-                                <div className="space-y-2">
-                                    <span className="inline-block bg-white/20 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
-                                        {mainBanner.subtitle}
-                                    </span>
-                                    <h2 className="text-3xl md:text-4xl font-black text-white leading-tight tracking-tight whitespace-pre-line">
-                                        {mainBanner.title}
-                                    </h2>
-                                </div>
-                                <div className="p-4 bg-white/20 backdrop-blur-md rounded-full">
-                                    <mainBanner.icon className="w-8 h-8 text-white" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <p className="text-sm font-bold text-white/90">{mainBanner.desc}</p>
-                                <div className="flex items-center gap-2 text-white">
-                                    <span className="text-xs font-bold uppercase tracking-widest">{t.offer_shop_now}</span>
+                        {/* Text content — left side */}
+                        <div className="relative z-10 flex flex-col justify-center h-full px-8 py-8 max-w-[55%] space-y-4">
+                            <span className="inline-flex items-center self-start bg-black/20 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-sm">
+                                {t.hero_badge_marketplace}
+                            </span>
+                            <h1 className="text-3xl md:text-4xl font-black text-white leading-[1.1] tracking-tight whitespace-pre-line">
+                                {t.hero_title_marketplace}
+                            </h1>
+                            <p className="text-white/80 text-sm font-medium leading-relaxed">
+                                {t.hero_desc_marketplace}
+                            </p>
+                            <div className="flex items-center gap-4 pt-1">
+                                <span className="bg-white text-[#EB6841] font-black text-xs uppercase tracking-widest px-5 h-10 rounded-full flex items-center justify-center group-hover:bg-black/10 group-hover:text-white transition-all">
+                                    {t.hero_btn_shop_now}
+                                </span>
+                                <div className="flex items-center gap-2 text-white/70 group-hover:text-white transition-colors">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">{t.hero_btn_explore}</span>
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </div>
                             </div>
                         </div>
+
+                        {/* Product image — right side, floating effect */}
+                        <div className="absolute right-0 top-0 bottom-0 w-[50%] flex items-end justify-center overflow-hidden">
+                            <img
+                                src="/hero-materials.png"
+                                alt="Construction Materials"
+                                className="h-[115%] object-contain object-bottom drop-shadow-2xl group-hover:scale-105 transition-transform duration-700"
+                            />
+                        </div>
                     </Link>
 
-                    {/* Smaller Cards - Right Side Stacked */}
-                    <div className="flex flex-col gap-6">
-                        {sideBanners.map((item, idx) => (
-                            <Link
-                                key={idx}
-                                href={item.href}
-                                className="group relative flex flex-col justify-between h-32 lg:h-[calc(50%-0.75rem)] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
-                            >
-                                {/* Background Image */}
-                                <div
-                                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                                    style={{ backgroundImage: `url(${item.image})` }}
-                                />
+                    {/* ── Right column: 2 stacked cards ── */}
+                    <div className="lg:col-span-4 flex flex-col gap-3 h-full">
 
-                                {/* Color Overlay */}
-                                <div
-                                    className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-90"
-                                    style={{ backgroundColor: item.overlayColor, opacity: item.overlayOpacity }}
-                                />
-
-                                {/* Content */}
-                                <div className="relative z-10 p-5 flex flex-col h-full justify-between">
-                                    <div className="flex justify-between items-start">
-                                        <div className="space-y-1">
-                                            <span className="inline-block text-white/70 text-[9px] font-bold uppercase tracking-widest">
-                                                {item.subtitle}
-                                            </span>
-                                            <h3 className="text-lg font-black text-white leading-tight tracking-tight">
-                                                {item.title}
-                                            </h3>
-                                        </div>
-                                        <div className="p-2 bg-white/20 backdrop-blur-md rounded-full">
-                                            <item.icon className="w-4 h-4 text-white" />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex justify-between items-center text-xs font-bold text-white/90">
-                                        <span className="text-[10px]">{item.desc}</span>
-                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                    </div>
+                        {/* Design & Planning (Green) */}
+                        <Link
+                            href="/services/design"
+                            className="group relative flex-1 rounded-2xl overflow-hidden flex items-center bg-[#15803d] transition-all duration-300 hover:brightness-105 hover:-translate-y-0.5 hover:shadow-xl"
+                        >
+                            <div className="relative z-10 flex flex-col justify-center h-full px-5 py-5 max-w-[60%] space-y-2">
+                                <span className="inline-flex items-center self-start bg-black/20 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+                                    {t.hero_badge_design}
+                                </span>
+                                <h3 className="text-lg font-black text-white leading-tight tracking-tight">
+                                    {t.hero_title_design}
+                                </h3>
+                                <div className="flex items-center gap-1.5 text-white/70 group-hover:text-white transition-colors pt-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">{t.hero_btn_learn_more}</span>
+                                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                                 </div>
-                            </Link>
-                        ))}
+                            </div>
+                            <div className="absolute right-0 top-0 bottom-0 w-[45%] flex items-end justify-center overflow-hidden">
+                                <img
+                                    src="/hero-design.png"
+                                    alt="Design Services"
+                                    className="h-[120%] object-contain object-bottom drop-shadow-xl group-hover:scale-105 transition-transform duration-700"
+                                />
+                            </div>
+                        </Link>
+
+                        {/* Services (Blue) */}
+                        <Link
+                            href="/services"
+                            className="group relative flex-1 rounded-2xl overflow-hidden flex items-center bg-[#00356B] transition-all duration-300 hover:brightness-105 hover:-translate-y-0.5 hover:shadow-xl"
+                        >
+                            <div className="relative z-10 flex flex-col justify-center h-full px-5 py-5 max-w-[60%] space-y-2">
+                                <span className="inline-flex items-center self-start bg-black/20 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+                                    {t.hero_badge_services}
+                                </span>
+                                <h3 className="text-lg font-black text-white leading-tight tracking-tight">
+                                    {t.hero_title_services}
+                                </h3>
+                                <div className="flex items-center gap-1.5 text-white/70 group-hover:text-white transition-colors pt-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">{t.hero_btn_learn_more}</span>
+                                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            </div>
+                            <div className="absolute right-0 top-0 bottom-0 w-[45%] flex items-end justify-center overflow-hidden">
+                                <img
+                                    src="/hero-services.png"
+                                    alt="Construction Services"
+                                    className="h-[120%] object-contain object-bottom drop-shadow-xl group-hover:scale-105 transition-transform duration-700"
+                                />
+                            </div>
+                        </Link>
                     </div>
+
                 </div>
             </div>
         </section>

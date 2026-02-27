@@ -25,16 +25,15 @@ function SearchContent() {
 
     return (
         <div className="flex-1 container mx-auto px-4 py-12">
-            <div className="flex flex-col gap-2 mb-12">
-                <p className="text-primary-600 font-bold uppercase tracking-[0.2em] text-[10px]">Search Intelligence</p>
-                <h1 className="text-4xl font-extrabold text-neutral-900 uppercase tracking-tight italic">
-                    Results for: <span className="text-primary-600">"{query || "All Products"}"</span>
+            <div className="flex flex-col gap-1 mb-8">
+                <h1 className="text-xl md:text-2xl font-bold text-neutral-900">
+                    Results for: <span className="text-primary-600">&ldquo;{query || "All Products"}&rdquo;</span>
                 </h1>
-                <p className="text-neutral-400 text-xs font-bold uppercase tracking-widest">{results.length} items found</p>
+                <p className="text-[10px] font-medium text-neutral-400 uppercase tracking-widest">{results.length} results found</p>
             </div>
 
             {loading ? (
-                <div className="h-96 flex items-center justify-center bg-white rounded-[40px] border-2 border-dashed border-neutral-100 italic transition-all">
+                <div className="h-96 flex items-center justify-center bg-white rounded-xl border border-dashed border-neutral-200 transition-all">
                     <div className="flex flex-col items-center gap-6">
                         <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
                         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-300">Scanning Database...</p>
@@ -56,7 +55,7 @@ function SearchContent() {
                     ))}
                 </div>
             ) : (
-                <div className="h-96 flex flex-col items-center justify-center bg-neutral-50 rounded-[40px] border border-neutral-100 italic">
+                <div className="h-96 flex flex-col items-center justify-center bg-neutral-50 rounded-xl border border-neutral-200">
                     <p className="text-neutral-400 font-black uppercase tracking-[0.3em] text-xs">No matches found for your query</p>
                     <p className="mt-4 text-neutral-300 text-[10px] font-bold uppercase tracking-widest">Try adjusting your filters or checking your spelling</p>
                 </div>

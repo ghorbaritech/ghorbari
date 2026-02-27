@@ -4,11 +4,11 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useServiceCart } from "@/context/ServiceCartContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2, User, UserCheck, CalendarDays, Loader2, ShieldCheck, Calendar, FileText } from "lucide-react";
+import { CheckCircle2, UserCheck, Loader2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -17,10 +17,10 @@ import { placeServiceRequest } from "./actions";
 import { designTranslations } from "@/utils/designTranslations";
 import { Label } from "@/components/ui/label";
 import { RadioCardGroup } from "@/components/design/WizardFormComponents";
+import { WizardStep } from "@/components/design/WizardStep";
 
 // Custom Scheduler with Date Picker and 3-Column Time Slots
 function ServiceScheduler({ value, onChange }: { value: any, onChange: (v: any) => void }) {
-    // Generate 1-hour slots from 9am to 11pm
     const slots = [
         "09:00 AM", "10:00 AM", "11:00 AM",
         "12:00 PM", "01:00 PM", "02:00 PM",
@@ -29,64 +29,36 @@ function ServiceScheduler({ value, onChange }: { value: any, onChange: (v: any) 
         "09:00 PM", "10:00 PM", "11:00 PM"
     ];
 
-    const formatDate = (isoStr: string) => {
-        if (!isoStr) return "";
-        const d = new Date(isoStr);
-        return d.toLocaleDateString('en-US', {
-            month: '2-digit',
-            day: '2-digit',
-            year: 'numeric'
-        });
-    };
-
     return (
-        <div className="max-w-xl mx-auto space-y-12">
-            <div className="text-center space-y-4">
-                <h2 className="text-4xl md:text-5xl font-black text-neutral-900 tracking-tight">
-                    Schedule a Consultation
-                </h2>
-                <p className="text-neutral-500 font-bold text-lg">
-                    When should the designer or our admin contact you?
-                </p>
+        <div className="space-y-8">
+            <div className="space-y-3">
+                <label className="text-sm font-semibold text-neutral-700 block">Preferred Date</label>
+                <Input
+                    type="date"
+                    className="h-12 px-5 rounded-xl bg-neutral-50 border-neutral-200 font-medium text-base"
+                    value={value.date ? new Date(value.date).toLocaleDateString('en-CA') : ''}
+                    onChange={(e) => {
+                        if (e.target.value) {
+                            const [y, m, d] = e.target.value.split('-').map(Number);
+                            onChange({ ...value, date: new Date(y, m - 1, d).toISOString() });
+                        }
+                    }}
+                    min={new Date().toLocaleDateString('en-CA')}
+                />
             </div>
 
-            {/* Date Selection */}
-            <div className="space-y-4">
-                <label className="text-lg font-black text-neutral-900 block">
-                    Preferred Date
-                </label>
-                <div className="relative">
-                    <Input
-                        type="date"
-                        className="h-16 px-6 rounded-2xl bg-white border-neutral-100 font-bold text-lg shadow-sm focus:ring-primary-100"
-                        value={value.date ? new Date(value.date).toLocaleDateString('en-CA') : ''}
-                        onChange={(e) => {
-                            if (e.target.value) {
-                                const [y, m, d] = e.target.value.split('-').map(Number);
-                                const date = new Date(y, m - 1, d);
-                                onChange({ ...value, date: date.toISOString() });
-                            }
-                        }}
-                        min={new Date().toLocaleDateString('en-CA')}
-                    />
-                </div>
-            </div>
-
-            {/* Time Slot Selection */}
-            <div className="space-y-4">
-                <label className="text-lg font-black text-neutral-900 block">
-                    Preferred Time Slot
-                </label>
-                <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-3">
+                <label className="text-sm font-semibold text-neutral-700 block">Preferred Time Slot</label>
+                <div className="grid grid-cols-3 gap-3">
                     {slots.map((slot) => {
                         const isSelected = value.slot === slot;
                         return (
                             <button
                                 key={slot}
-                                onClick={() => onChange({ ...value, slot: slot })}
-                                className={`h-14 rounded-2xl border font-bold text-sm transition-all shadow-sm ${isSelected
-                                    ? 'bg-[#1e3a8a] border-[#1e3a8a] text-white shadow-lg scale-[1.02]'
-                                    : 'bg-white border-neutral-100 text-neutral-900 hover:border-primary-200'
+                                onClick={() => onChange({ ...value, slot })}
+                                className={`h-12 rounded-xl border font-medium text-sm transition-all ${isSelected
+                                    ? 'bg-primary-600 border-primary-600 text-white shadow-sm'
+                                    : 'bg-white border-neutral-200 text-neutral-700 hover:border-primary-300'
                                     }`}
                             >
                                 {slot}
@@ -105,7 +77,7 @@ export default function BookingWizardPage() {
     const lang = (language?.toLowerCase() || 'en') as 'en' | 'bn';
     const dt = designTranslations[lang] || designTranslations.en;
 
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(0); // 0-indexed to match WizardStep
     const [assignmentType, setAssignmentType] = useState<'ghorbari_assign' | 'user_choose'>('ghorbari_assign');
     const [selectedProvider, setSelectedProvider] = useState<any>(null);
     const [schedule, setSchedule] = useState({ date: '', slot: '' });
@@ -114,24 +86,11 @@ export default function BookingWizardPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    // Project Details State
     const [formData, setFormData] = useState({
-        // Structural
-        landAreaKatha: '',
-        initialFloors: '',
-        unitsPerFloor: '',
-        bedroomsPerUnit: '',
-        bathroomsPerUnit: '',
-        kitchenPerUnit: '',
-        balconyPerUnit: '',
-
-        // Interior
-        propertyType: '', // 'Full Building' | 'Full Apartment' | 'Specific Area'
-        aptSize: '',
-        aptRooms: '',
-        specificAreaType: '',
-        roomSize: '',
-        specificInstruction: '',
+        landAreaKatha: '', initialFloors: '', unitsPerFloor: '',
+        bedroomsPerUnit: '', bathroomsPerUnit: '', kitchenPerUnit: '', balconyPerUnit: '',
+        propertyType: '', aptSize: '', aptRooms: '',
+        specificAreaType: '', roomSize: '', specificInstruction: '',
     });
 
     const updateFormData = (key: string, value: any) => {
@@ -141,11 +100,9 @@ export default function BookingWizardPage() {
     const getJourneyType = () => {
         let hasInterior = false;
         let hasStructural = false;
-
         items.forEach(item => {
             const catName = (item.category?.name || '').toLowerCase();
             const rootName = ((item.category as any)?.parent?.name || '').toLowerCase();
-
             if (catName.includes('interior') || catName.includes('paint') || catName.includes('carpentry') ||
                 rootName.includes('interior') || rootName.includes('paint') || rootName.includes('carpentry')) {
                 hasInterior = true;
@@ -155,7 +112,6 @@ export default function BookingWizardPage() {
                 hasStructural = true;
             }
         });
-
         if (hasInterior && hasStructural) return 'both';
         if (hasInterior) return 'interior';
         if (hasStructural) return 'structural';
@@ -164,11 +120,33 @@ export default function BookingWizardPage() {
 
     const journeyType = getJourneyType();
 
+    // Steps: 0=Assignment, 1=Provider (optional), 2=Schedule, 3=Details (optional), 4=Review
+    // For 0-indexed WizardStep, figure out dynamic steps:
+    const steps = (() => {
+        const s = [
+            { label: "Assign", title: "Choose Provider Route", description: "How would you like to proceed with your service?" },
+        ];
+        if (assignmentType === 'user_choose') {
+            s.push({ label: "Select", title: "Select a Provider", description: "Choose from our verified experts" });
+        }
+        s.push({ label: "Schedule", title: "Schedule a Consultation", description: "When should we contact you?" });
+        if (journeyType !== 'general') {
+            s.push({ label: "Details", title: journeyType === 'interior' ? "Interior Details" : (journeyType === 'structural' ? "Structural Details" : "Project Details"), description: "Tell us more about your space" });
+        }
+        s.push({ label: "Review", title: "Review & Confirm", description: "Please review your details before submitting" });
+        return s;
+    })();
+
+    const totalSteps = steps.length;
+    const currentStepData = steps[step] || steps[steps.length - 1];
+
+    const isSuccess = step >= totalSteps;
+
     useEffect(() => {
-        if (items.length === 0 && step < 6) {
+        if (items.length === 0 && !isSuccess) {
             router.push('/services');
         }
-    }, [items, router, step]);
+    }, [items, router, isSuccess]);
 
     useEffect(() => {
         if (assignmentType === 'user_choose' && providers.length === 0) {
@@ -185,477 +163,313 @@ export default function BookingWizardPage() {
         }
     }, [assignmentType, providers.length]);
 
-    const handleNext = () => {
-        if (step === 1) {
-            if (assignmentType === 'ghorbari_assign') setStep(3);
-            else setStep(2);
-        } else if (step === 2) {
+    const handleNext = async () => {
+        const currentTitle = currentStepData?.title || '';
+        if (currentTitle.includes("Route")) {
+            // Assignment step — no validation needed
+        } else if (currentTitle.includes("Provider")) {
             if (!selectedProvider) {
                 toast.error("Please select a provider or switch to Ghorbari Assign");
                 return;
             }
-            setStep(3);
-        } else if (step === 3) {
+        } else if (currentTitle.includes("Schedule")) {
             if (!schedule.date || !schedule.slot) {
                 toast.error("Please select a preferred schedule");
                 return;
             }
-            // If it's a general journey with no questions, skip Step 4
-            if (journeyType === 'general') setStep(5);
-            else setStep(4);
-        } else if (step === 4) {
-            setStep(5);
-        } else if (step === 5) {
-            handlePlaceRequest();
-        }
-    };
-
-    const handlePlaceRequest = async () => {
-        setLoading(true);
-        try {
-            const res = await placeServiceRequest({
-                items,
-                assignmentType,
-                providerId: selectedProvider?.id,
-                schedule,
-                totalAmount,
-                requirements: formData // Pass the collected details
-            });
-
-            if (res.error) {
-                toast.error(res.error);
+        } else if (currentTitle.includes("Confirm")) {
+            // Final step — submit
+            setLoading(true);
+            try {
+                const res = await placeServiceRequest({
+                    items, assignmentType, providerId: selectedProvider?.id,
+                    schedule, totalAmount, requirements: formData
+                });
+                if (res.error) {
+                    toast.error(res.error);
+                    setLoading(false);
+                    return;
+                }
+                setRequestNumber(res.requestNumber || "");
+                clearCart();
+                toast.success("Service request placed successfully!");
+                setStep(totalSteps); // success screen
+            } catch {
+                toast.error("An unexpected error occurred");
+            } finally {
                 setLoading(false);
-                return;
             }
-
-            setStep(6);
-            setRequestNumber(res.requestNumber || "");
-            clearCart();
-            toast.success("Service request placed successfully!");
-        } catch (e) {
-            toast.error("An unexpected error occurred");
-        } finally {
-            setLoading(false);
+            return;
         }
+        setStep(s => s + 1);
     };
+
+    const handleBack = () => {
+        if (step === 0) return;
+        setStep(s => s - 1);
+    };
+
+    if (isSuccess) {
+        return (
+            <main className="min-h-screen bg-neutral-50 flex flex-col">
+                <Navbar />
+                <div className="flex-1 container mx-auto px-4 py-20 flex items-center justify-center">
+                    <div className="max-w-md text-center space-y-8">
+                        <div className="relative inline-block">
+                            <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
+                            <div className="relative w-24 h-24 rounded-2xl bg-white border border-green-100 flex items-center justify-center mx-auto shadow-sm">
+                                <CheckCircle2 className="w-12 h-12 text-green-500" />
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="inline-block px-4 py-1.5 bg-green-50 rounded-full border border-green-100">
+                                <span className="text-xs font-semibold text-green-700">Booking Confirmed</span>
+                            </div>
+                            <h1 className="text-2xl font-bold text-neutral-900">Request Placed!</h1>
+                            <div className="p-5 bg-white rounded-2xl border border-neutral-200 shadow-sm">
+                                <p className="text-xs font-medium text-neutral-400 uppercase tracking-widest mb-1">Your Request Number</p>
+                                <p className="text-lg font-bold text-neutral-900 font-mono">{requestNumber || "SRV-PENDING"}</p>
+                            </div>
+                            <p className="text-neutral-500 font-medium">Your service booking is under admin verification. We will notify you once approved.</p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row justify-center gap-3">
+                            <Link href="/services">
+                                <Button variant="outline" className="rounded-xl px-8 h-11 font-medium border-neutral-200">
+                                    More Services
+                                </Button>
+                            </Link>
+                            <Link href="/customer/profile">
+                                <Button className="rounded-xl px-8 h-11 font-medium bg-neutral-900 text-white">
+                                    Track Progress
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+                <Footer />
+            </main>
+        );
+    }
 
     return (
-        <main className="min-h-screen bg-neutral-50/50 flex flex-col">
+        <main className="min-h-screen bg-neutral-50 flex flex-col">
             <Navbar />
-
-            <div className="flex-1 container mx-auto px-8 py-16">
-                <div className="max-w-4xl mx-auto">
-                    {/* Stepper Header */}
-                    <div className="flex justify-between items-center mb-12 px-4">
-                        {[1, 2, 3, 4, 5].map(i => {
-                            // If general journey, hide Step 4 from stepper visualization if you want, 
-                            // but for simplicity keep it showing or adjust indices.
-                            // Let's just adjust the step indicator logic.
-                            const isActive = step === i || (i === 4 && journeyType === 'general' && step > 3);
-                            return (
-                                <div key={i} className={`flex items-center gap-3 ${step === i ? 'opacity-100' : 'opacity-40'}`}>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${step >= i ? 'bg-primary-600 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
-                                        {i === 1 && <User className="w-4 h-4" />}
-                                        {i === 2 && <UserCheck className="w-4 h-4" />}
-                                        {i === 3 && <CalendarDays className="w-4 h-4" />}
-                                        {i === 4 && <FileText className="w-4 h-4" />}
-                                        {i === 5 && <CheckCircle2 className="w-4 h-4" />}
+            <div className="flex-1 flex items-start justify-center py-8">
+                <WizardStep
+                    title={currentStepData.title}
+                    description={currentStepData.description}
+                    currentStep={step}
+                    totalSteps={totalSteps}
+                    onNext={handleNext}
+                    onBack={handleBack}
+                    isFirstStep={step === 0}
+                    isLastStep={step === totalSteps - 1}
+                    canNext={!loading}
+                    nextLabel={step === totalSteps - 1 ? (loading ? "Submitting..." : "Complete Booking") : undefined}
+                    lang={lang}
+                >
+                    {/* Step 0: Assignment Type */}
+                    {currentStepData.title.includes("Route") && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <Card
+                                className={`cursor-pointer transition-all rounded-2xl overflow-hidden border-2 ${assignmentType === 'ghorbari_assign' ? 'border-primary-600 bg-white ring-4 ring-primary-50' : 'border-neutral-200 hover:border-primary-200'}`}
+                                onClick={() => setAssignmentType('ghorbari_assign')}
+                            >
+                                <CardContent className="p-6 space-y-4 text-center">
+                                    <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto">
+                                        <ShieldCheck className="w-6 h-6 text-neutral-500" />
                                     </div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">
-                                        {i === 1 && "Assignment"}
-                                        {i === 2 && "Selection"}
-                                        {i === 3 && "Schedule"}
-                                        {i === 4 && "Details"}
-                                        {i === 5 && "Review"}
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {step === 1 && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="text-center space-y-3">
-                                <h1 className="text-3xl font-black tracking-tighter text-neutral-900 italic uppercase">Service Assignment</h1>
-                                <p className="text-neutral-500 font-medium">How would you like to assign this service?</p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Card
-                                    className={`cursor-pointer transition-all rounded-[32px] overflow-hidden border-2 ${assignmentType === 'ghorbari_assign' ? 'border-primary-600 bg-white ring-8 ring-primary-50' : 'border-neutral-100 hover:border-primary-200'}`}
-                                    onClick={() => setAssignmentType('ghorbari_assign')}
-                                >
-                                    <CardContent className="p-8 space-y-6">
-                                        <div className="w-16 h-16 rounded-[24px] bg-primary-100 flex items-center justify-center">
-                                            <ShieldCheck className="w-8 h-8 text-primary-600" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <h3 className="text-xl font-bold">Ghorbari Assigns</h3>
-                                            <p className="text-sm text-neutral-500 leading-relaxed">Let Ghorbari experts find the best verified professional for your specific needs. Fast & secure.</p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                <Card
-                                    className={`cursor-pointer transition-all rounded-[32px] overflow-hidden border-2 ${assignmentType === 'user_choose' ? 'border-primary-600 bg-white ring-8 ring-primary-50' : 'border-neutral-100 hover:border-primary-200'}`}
-                                    onClick={() => setAssignmentType('user_choose')}
-                                >
-                                    <CardContent className="p-8 space-y-6">
-                                        <div className="w-16 h-16 rounded-[24px] bg-blue-100 flex items-center justify-center">
-                                            <UserCheck className="w-8 h-8 text-blue-600" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <h3 className="text-xl font-bold">I will Choose</h3>
-                                            <p className="text-sm text-neutral-500 leading-relaxed">Browse through our directory of top-rated service providers and pick one yourself based on reviews.</p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 2 && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                            <div className="flex justify-between items-end">
-                                <div>
-                                    <h1 className="text-2xl font-black tracking-tighter text-neutral-900 uppercase italic">Select Provider</h1>
-                                    <p className="text-neutral-500 text-sm font-medium">Choose from our verified experts</p>
-                                </div>
-                                <Button variant="ghost" onClick={() => { setAssignmentType('ghorbari_assign'); setStep(3); }} className="text-[10px] font-black uppercase tracking-widest text-primary-600 underline">Switch to Ghorbari Assign</Button>
-                            </div>
-
-                            {loading ? (
-                                <div className="py-20 flex flex-col items-center">
-                                    <Loader2 className="w-10 h-10 text-primary-600 animate-spin mb-4" />
-                                    <p className="text-neutral-500 font-bold uppercase tracking-widest text-[10px]">Fetching Experts...</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {providers.map(p => (
-                                        <Card
-                                            key={p.id}
-                                            className={`cursor-pointer transition-all rounded-2xl border ${selectedProvider?.id === p.id ? 'border-primary-600 bg-primary-50' : 'hover:border-primary-200'}`}
-                                            onClick={() => setSelectedProvider(p)}
-                                        >
-                                            <CardContent className="p-4 flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-xl bg-neutral-200 overflow-hidden">
-                                                    <img src={p.profile?.avatar_url || `https://ui-avatars.com/api/?name=${p.business_name}`} alt={p.business_name} className="w-full h-full object-cover" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h4 className="font-bold text-sm">{p.business_name}</h4>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-[9px] font-black uppercase tracking-tighter bg-yellow-400 px-1.5 py-0.5 rounded text-black">TOP RATED</span>
-                                                        <span className="text-[10px] text-neutral-400 font-medium">★ 4.9 (120+ reviews)</span>
-                                                    </div>
-                                                </div>
-                                                {selectedProvider?.id === p.id && <CheckCircle2 className="w-5 h-5 text-primary-600" />}
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {step === 3 && (
-                        <div className="w-full space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                            <ServiceScheduler value={schedule} onChange={setSchedule} />
-                        </div>
-                    )}
-
-                    {step === 4 && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                            <div className="text-center space-y-3">
-                                <h1 className="text-3xl font-black tracking-tighter text-neutral-900 italic uppercase">
-                                    {journeyType === 'interior' ? 'Interior Details' : (journeyType === 'structural' ? 'Structural Details' : 'Project Details')}
-                                </h1>
-                                <p className="text-neutral-500 font-medium">Tell us more about your space so we can prepare a better estimate.</p>
-                            </div>
-
-                            <Card className="rounded-[32px] border border-neutral-100 p-8 shadow-sm">
-                                <div className="space-y-8">
-                                    {/* Interior Questions */}
-                                    {(journeyType === 'interior' || journeyType === 'both') && (
-                                        <div className="space-y-6">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.propertyType}</Label>
-                                                    <RadioCardGroup
-                                                        options={[
-                                                            { id: 'Full Building', label: dt.fullBuilding },
-                                                            { id: 'Full Apartment', label: dt.fullApt },
-                                                            { id: 'Specific Area', label: dt.specificArea }
-                                                        ]}
-                                                        selected={formData.propertyType}
-                                                        onChange={(v: string) => updateFormData('propertyType', v)}
-                                                        columns={3}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {formData.propertyType === 'Full Apartment' && (
-                                                <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-300">
-                                                    <div className="space-y-2">
-                                                        <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.aptSize}</Label>
-                                                        <Input
-                                                            type="number"
-                                                            placeholder="e.g. 1200"
-                                                            value={formData.aptSize}
-                                                            onChange={(e) => updateFormData('aptSize', e.target.value)}
-                                                            className="h-12 rounded-xl bg-neutral-50 border-none font-bold"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.noOfRoom}</Label>
-                                                        <Input
-                                                            type="number"
-                                                            placeholder="e.g. 3"
-                                                            value={formData.aptRooms}
-                                                            onChange={(e) => updateFormData('aptRooms', e.target.value)}
-                                                            className="h-12 rounded-xl bg-neutral-50 border-none font-bold"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {formData.propertyType === 'Specific Area' && (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
-                                                    <div className="space-y-2">
-                                                        <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">Area Type</Label>
-                                                        <RadioCardGroup
-                                                            options={[
-                                                                { id: 'Living Room', label: dt.livingRoom },
-                                                                { id: 'Bed Room', label: dt.bedRoom },
-                                                                { id: 'Kitchen', label: dt.kitchen },
-                                                                { id: 'Bath Room', label: dt.bathRoom }
-                                                            ]}
-                                                            selected={formData.specificAreaType}
-                                                            onChange={(v: string) => updateFormData('specificAreaType', v)}
-                                                            columns={2}
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.roomSize}</Label>
-                                                        <Input
-                                                            type="number"
-                                                            placeholder="e.g. 150"
-                                                            value={formData.roomSize}
-                                                            onChange={(e) => updateFormData('roomSize', e.target.value)}
-                                                            className="h-12 rounded-xl bg-neutral-50 border-none font-bold"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Structural Questions */}
-                                    {(journeyType === 'structural' || journeyType === 'both') && (
-                                        <div className="space-y-6 pt-6 border-t border-neutral-100">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.landAreaQ}</Label>
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="e.g. 3.5"
-                                                        value={formData.landAreaKatha}
-                                                        onChange={(e) => updateFormData('landAreaKatha', e.target.value)}
-                                                        className="h-12 rounded-xl bg-neutral-50 border-none font-bold"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.floorsQ}</Label>
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="e.g. 6"
-                                                        value={formData.initialFloors}
-                                                        onChange={(e) => updateFormData('initialFloors', e.target.value)}
-                                                        className="h-12 rounded-xl bg-neutral-50 border-none font-bold"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="space-y-2">
-                                        <Label className="text-xs font-black uppercase tracking-widest text-neutral-400">{dt.anyInstruction}</Label>
-                                        <textarea
-                                            placeholder="Tell us any more details..."
-                                            value={formData.specificInstruction}
-                                            onChange={(e) => updateFormData('specificInstruction', e.target.value)}
-                                            className="w-full h-32 p-4 rounded-xl bg-neutral-50 border-none font-bold text-sm focus:ring-2 focus:ring-primary-100"
-                                        />
+                                    <div className="space-y-1">
+                                        <h3 className="text-base font-bold text-neutral-900">Suggested by Ghorbari</h3>
+                                        <p className="text-sm text-neutral-500">We will assign the best verified expert for your needs automatically.</p>
                                     </div>
-                                </div>
+                                </CardContent>
                             </Card>
-                        </div>
-                    )}
 
-                    {step === 5 && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                            <div className="text-center space-y-3">
-                                <h1 className="text-2xl font-black tracking-tighter text-neutral-900 uppercase italic">Review & Confirm Booking</h1>
-                                <p className="text-neutral-500 text-sm font-medium">Please review your details. The price shown is tentative and awaits admin verification.</p>
-                            </div>
-
-                            <Card className="rounded-[40px] border border-neutral-100 overflow-hidden shadow-sm">
-                                <div className="bg-[#f3fbfa] p-8 border-b border-neutral-100">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h3 className="text-2xl font-black text-neutral-900">Tentative Quotation</h3>
-                                            <p className="text-neutral-500 text-xs font-bold uppercase tracking-widest mt-1">Status: Waiting for Admin Verification upon submission</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-4xl font-black text-neutral-900">৳{totalAmount.toLocaleString()}</div>
-                                            <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Starting Price</div>
-                                        </div>
+                            <Card
+                                className={`cursor-pointer transition-all rounded-2xl overflow-hidden border-2 ${assignmentType === 'user_choose' ? 'border-primary-600 bg-white ring-4 ring-primary-50' : 'border-neutral-200 hover:border-primary-200'}`}
+                                onClick={() => setAssignmentType('user_choose')}
+                            >
+                                <CardContent className="p-6 space-y-4 text-center">
+                                    <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto">
+                                        <UserCheck className="w-6 h-6 text-neutral-500" />
                                     </div>
-                                </div>
-                                <CardContent className="p-8 space-y-8">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-6">
-                                            <div className="space-y-1">
-                                                <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Service Items</div>
-                                                <div className="space-y-2 mt-2">
-                                                    {items.map(item => (
-                                                        <div key={item.id} className="text-sm font-bold flex justify-between">
-                                                            <span>{language === 'BN' ? item.name_bn : item.name}</span>
-                                                            <span className="text-neutral-400">৳{item.unit_price.toLocaleString()}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            {/* Project Requirements Display */}
-                                            {journeyType !== 'general' && (
-                                                <div className="space-y-3 pt-4 border-t border-neutral-100">
-                                                    <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Project Requirements</div>
-                                                    <div className="grid grid-cols-2 gap-y-2">
-                                                        {formData.propertyType && (
-                                                            <>
-                                                                <span className="text-xs text-neutral-400 font-bold uppercase">Property</span>
-                                                                <span className="text-xs font-black text-neutral-900">{formData.propertyType}</span>
-                                                            </>
-                                                        )}
-                                                        {formData.aptSize && (
-                                                            <>
-                                                                <span className="text-xs text-neutral-400 font-bold uppercase">Apt Size</span>
-                                                                <span className="text-xs font-black text-neutral-900">{formData.aptSize} sqft</span>
-                                                            </>
-                                                        )}
-                                                        {formData.landAreaKatha && (
-                                                            <>
-                                                                <span className="text-xs text-neutral-400 font-bold uppercase">Land Area</span>
-                                                                <span className="text-xs font-black text-neutral-900">{formData.landAreaKatha} Katha</span>
-                                                            </>
-                                                        )}
-                                                        {formData.initialFloors && (
-                                                            <>
-                                                                <span className="text-xs text-neutral-400 font-bold uppercase">Floors</span>
-                                                                <span className="text-xs font-black text-neutral-900">{formData.initialFloors}</span>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="space-y-6">
-                                            <div className="space-y-1">
-                                                <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Assigned Provider</div>
-                                                <div className="text-sm font-black text-neutral-900">
-                                                    {assignmentType === 'ghorbari_assign' ? 'Ghorbari Assigned Expert' : (selectedProvider?.business_name || 'Not Selected')}
-                                                </div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Preferred Schedule</div>
-                                                <div className="text-sm font-black text-neutral-900">
-                                                    {new Date(schedule.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} | {schedule.slot}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-8 border-t border-neutral-100">
-                                        <div className="bg-yellow-50 p-4 rounded-2xl border border-yellow-100 flex gap-4">
-                                            <ShieldCheck className="w-5 h-5 text-yellow-600 flex-shrink-0" />
-                                            <p className="text-xs text-yellow-800 leading-relaxed font-medium">
-                                                <strong>Note:</strong> Final cost may vary based on actual measurements and scope defined during site visit by our professional. No upfront payment required to place this request.
-                                            </p>
-                                        </div>
+                                    <div className="space-y-1">
+                                        <h3 className="text-base font-bold text-neutral-900">Choose from Profiles</h3>
+                                        <p className="text-sm text-neutral-500">Browse eligible service provider profiles and select one yourself.</p>
                                     </div>
                                 </CardContent>
                             </Card>
                         </div>
                     )}
 
-                    {step === 6 && (
-                        <div className="max-w-2xl mx-auto text-center py-20 space-y-10 animate-in zoom-in slide-in-from-bottom-8 duration-700">
-                            <div className="relative inline-block">
-                                <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                                <div className="relative w-28 h-28 rounded-[38px] bg-white border-2 border-green-500/10 flex items-center justify-center mx-auto shadow-2xl shadow-green-500/10 rotate-3 transition-transform hover:rotate-0">
-                                    <div className="w-20 h-20 rounded-[30px] bg-green-500 flex items-center justify-center">
-                                        <CheckCircle2 className="w-10 h-10 text-white" />
+                    {/* Step: Provider Selection */}
+                    {currentStepData.title.includes("Provider") && (
+                        <div className="space-y-4">
+                            {loading ? (
+                                <div className="py-16 flex flex-col items-center gap-4">
+                                    <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+                                    <p className="text-sm text-neutral-500 font-medium">Fetching experts...</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {providers.map(p => (
+                                        <Card
+                                            key={p.id}
+                                            className={`cursor-pointer transition-all rounded-2xl border ${selectedProvider?.id === p.id ? 'border-primary-600 bg-primary-50' : 'border-neutral-200 hover:border-primary-200'}`}
+                                            onClick={() => setSelectedProvider(p)}
+                                        >
+                                            <CardContent className="p-4 flex items-center gap-4">
+                                                <div className="w-11 h-11 rounded-xl bg-neutral-100 overflow-hidden flex-shrink-0">
+                                                    <img src={p.profile?.avatar_url || `https://ui-avatars.com/api/?name=${p.business_name}`} alt={p.business_name} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h4 className="font-semibold text-sm text-neutral-900">{p.business_name}</h4>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-[9px] font-bold uppercase bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">Top Rated</span>
+                                                        <span className="text-xs text-neutral-400">★ 4.9 (120+ reviews)</span>
+                                                    </div>
+                                                </div>
+                                                {selectedProvider?.id === p.id && <CheckCircle2 className="w-5 h-5 text-primary-600 flex-shrink-0" />}
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                            <Button variant="ghost" onClick={() => { setAssignmentType('ghorbari_assign'); setStep(0); }} className="text-xs text-primary-600 font-medium underline underline-offset-4 hover:no-underline">
+                                Switch to Ghorbari Assign instead
+                            </Button>
+                        </div>
+                    )}
+
+                    {/* Step: Schedule */}
+                    {currentStepData.title.includes("Schedule") && (
+                        <ServiceScheduler value={schedule} onChange={setSchedule} />
+                    )}
+
+                    {/* Step: Details */}
+                    {(currentStepData.title.includes("Interior") || currentStepData.title.includes("Structural") || currentStepData.title.includes("Project Details")) && (
+                        <div className="space-y-6">
+                            {(journeyType === 'interior' || journeyType === 'both') && (
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{dt.propertyType}</Label>
+                                        <RadioCardGroup
+                                            options={[
+                                                { id: 'Full Building', label: dt.fullBuilding },
+                                                { id: 'Full Apartment', label: dt.fullApt },
+                                                { id: 'Specific Area', label: dt.specificArea }
+                                            ]}
+                                            selected={formData.propertyType}
+                                            onChange={(v: string) => updateFormData('propertyType', v)}
+                                            columns={3}
+                                        />
+                                    </div>
+                                    {formData.propertyType === 'Full Apartment' && (
+                                        <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-300">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{dt.aptSize}</Label>
+                                                <Input type="number" placeholder="e.g. 1200" value={formData.aptSize} onChange={(e) => updateFormData('aptSize', e.target.value)} className="h-11 rounded-xl bg-neutral-50 border-neutral-200" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{dt.noOfRoom}</Label>
+                                                <Input type="number" placeholder="e.g. 3" value={formData.aptRooms} onChange={(e) => updateFormData('aptRooms', e.target.value)} className="h-11 rounded-xl bg-neutral-50 border-neutral-200" />
+                                            </div>
+                                        </div>
+                                    )}
+                                    {formData.propertyType === 'Specific Area' && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Area Type</Label>
+                                                <RadioCardGroup
+                                                    options={[
+                                                        { id: 'Living Room', label: dt.livingRoom },
+                                                        { id: 'Bed Room', label: dt.bedRoom },
+                                                        { id: 'Kitchen', label: dt.kitchen },
+                                                        { id: 'Bath Room', label: dt.bathRoom }
+                                                    ]}
+                                                    selected={formData.specificAreaType}
+                                                    onChange={(v: string) => updateFormData('specificAreaType', v)}
+                                                    columns={2}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{dt.roomSize}</Label>
+                                                <Input type="number" placeholder="e.g. 150" value={formData.roomSize} onChange={(e) => updateFormData('roomSize', e.target.value)} className="h-11 rounded-xl bg-neutral-50 border-neutral-200" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {(journeyType === 'structural' || journeyType === 'both') && (
+                                <div className={`space-y-4 ${journeyType === 'both' ? 'pt-6 border-t border-neutral-100' : ''}`}>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{dt.landAreaQ}</Label>
+                                            <Input type="number" placeholder="e.g. 3.5" value={formData.landAreaKatha} onChange={(e) => updateFormData('landAreaKatha', e.target.value)} className="h-11 rounded-xl bg-neutral-50 border-neutral-200" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{dt.floorsQ}</Label>
+                                            <Input type="number" placeholder="e.g. 6" value={formData.initialFloors} onChange={(e) => updateFormData('initialFloors', e.target.value)} className="h-11 rounded-xl bg-neutral-50 border-neutral-200" />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="space-y-2">
+                                <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{dt.anyInstruction}</Label>
+                                <textarea
+                                    placeholder="Tell us any more details..."
+                                    value={formData.specificInstruction}
+                                    onChange={(e) => updateFormData('specificInstruction', e.target.value)}
+                                    className="w-full h-28 p-3 rounded-xl bg-neutral-50 border border-neutral-200 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-100"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step: Review */}
+                    {currentStepData.title.includes("Confirm") && (
+                        <div className="space-y-6">
+                            <div className="bg-neutral-50 rounded-2xl border border-neutral-200 p-5 space-y-5">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Services</p>
+                                        <div className="space-y-1">
+                                            {items.map(item => (
+                                                <div key={item.id} className="text-sm font-semibold flex justify-between gap-4">
+                                                    <span>{language === 'BN' ? item.name_bn : item.name}</span>
+                                                    <span className="text-neutral-500">৳{item.unit_price.toLocaleString()}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Estimate</p>
+                                        <p className="text-2xl font-bold text-neutral-900">৳{totalAmount.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                                <div className="border-t border-neutral-200 pt-4 grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Provider</p>
+                                        <p className="text-sm font-semibold text-neutral-900">
+                                            {assignmentType === 'ghorbari_assign' ? 'Ghorbari Assigned Expert' : (selectedProvider?.business_name || 'Not Selected')}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Schedule</p>
+                                        <p className="text-sm font-semibold text-neutral-900">
+                                            {schedule.date ? new Date(schedule.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }) : '–'} | {schedule.slot || '–'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="space-y-6">
-                                <div className="inline-block px-4 py-1.5 bg-green-50 rounded-full border border-green-100 mb-2">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-green-600">Booking Confirmed</span>
-                                </div>
-                                <h1 className="text-5xl font-black tracking-tighter text-neutral-900 uppercase italic">
-                                    Request Placed!
-                                </h1>
-                                <div className="max-w-sm mx-auto p-6 bg-white rounded-[32px] border border-neutral-100 shadow-sm space-y-2">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Your Request Number</p>
-                                    <p className="text-xl font-black tracking-tighter text-neutral-900 font-mono">{requestNumber || "SRV-PENDING"}</p>
-                                </div>
-                                <p className="text-neutral-500 max-w-sm mx-auto font-bold text-lg leading-relaxed">
-                                    Your service booking request is now under admin verification. We will notify you once approved.
-                                </p>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-10">
-                                <Link href="/services">
-                                    <Button variant="outline" className="rounded-2xl px-12 font-black uppercase tracking-widest text-[11px] h-14 border-neutral-200 hover:bg-neutral-50 transition-all">
-                                        More Services
-                                    </Button>
-                                </Link>
-                                <Link href="/customer/profile">
-                                    <Button className="rounded-2xl px-12 font-black uppercase tracking-widest text-[11px] h-14 bg-neutral-900 text-white shadow-xl shadow-neutral-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                                        Track Progress
-                                    </Button>
-                                </Link>
+                            <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100 text-xs text-yellow-800 leading-relaxed">
+                                <strong>Note:</strong> Final cost may vary based on actual measurements and scope defined during site visit. No upfront payment required.
                             </div>
                         </div>
                     )}
-
-                    {step < 6 && (
-                        <div className="mt-16 flex justify-between items-center bg-white p-6 rounded-[32px] border border-neutral-100 shadow-xl">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Total Estimate</span>
-                                <span className="text-xl font-black">৳{totalAmount.toLocaleString()}</span>
-                            </div>
-                            <div className="flex gap-4">
-                                <Button variant="ghost" className="rounded-xl px-6 font-bold text-neutral-400" onClick={() => {
-                                    if (step === 1) return;
-                                    if (step === 3 && assignmentType === 'ghorbari_assign') setStep(1);
-                                    else if (step === 5 && journeyType === 'general') setStep(3);
-                                    else setStep(step - 1);
-                                }}>
-                                    <ArrowLeft className="mr-2 w-4 h-4" />
-                                    Back
-                                </Button>
-                                <Button onClick={handleNext} disabled={loading} className="rounded-2xl bg-neutral-900 text-white px-10 font-black uppercase tracking-widest text-[10px] h-14 group shadow-lg">
-                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (step === 5 ? 'Complete Booking' : 'Continue')}
-                                    {!loading && <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />}
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                </WizardStep>
             </div>
-
             <Footer />
         </main>
     );

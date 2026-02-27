@@ -31,12 +31,12 @@ export default function RegisterPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">
-            <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-2xl border border-gray-100">
+            <div className="max-w-md w-full space-y-6 bg-white p-8 rounded-2xl shadow-sm border border-neutral-200">
                 <div className="text-center">
                     <div className="bg-primary-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
                         <User className="w-8 h-8 text-primary-600" />
                     </div>
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight uppercase">
+                    <h2 className="text-2xl font-bold text-neutral-900">
                         Create Account
                     </h2>
                     <p className="mt-2 text-sm text-gray-500 font-medium">
@@ -139,7 +139,7 @@ export default function RegisterPage() {
 
                     <Button
                         type="submit"
-                        className="w-full h-14 bg-primary-600 hover:bg-primary-700 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary-200 transition-all active:scale-95"
+                        className="w-full h-11 bg-neutral-900 hover:bg-black text-white font-bold rounded-xl transition-all active:scale-95"
                         disabled={loading}
                     >
                         {loading ? 'Creating Account...' : 'Create Account'}

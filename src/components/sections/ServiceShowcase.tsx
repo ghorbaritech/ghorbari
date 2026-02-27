@@ -8,6 +8,7 @@ import { useLanguage } from "@/context/LanguageContext"
 import { getL } from "@/utils/localization"
 import { getServiceItems, ServiceItem } from "@/services/serviceItemService"
 import Link from 'next/link'
+import { ServiceCard } from '@/components/ui/ServiceCard'
 
 interface ServiceShowcaseProps {
     title?: string
@@ -97,84 +98,59 @@ export function ServiceShowcase({ title, items = [], category, bgClass = "bg-blu
     const displayTitle = title || t.service_booking_title;
 
     return (
-        <section className={`py-12 ${bgClass} relative`}>
-            <div className="container mx-auto px-8">
-                <div className="flex justify-between items-end mb-8">
-                    <div className="space-y-1">
-                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest">
-                            <Wrench className="w-3 h-3" />
-                            {t.service_verified_pros}
-                        </span>
-                        <h2 className="text-3xl font-bold tracking-tight text-neutral-900 mt-2">
+        <section className={`py-8 ${bgClass}`}>
+            <div className="section-container">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4">
+                    <div>
+                        <h2 className="text-xl md:text-2xl font-semibold text-primary-950">
                             {displayTitle}
                         </h2>
                     </div>
 
-                    <div className="flex gap-2 lg:hidden">
-                        <Button onClick={() => scroll('left')} variant="outline" size="icon" className="rounded-full border-neutral-200 hover:bg-neutral-100 hover:text-black">
-                            <ChevronLeft className="h-5 w-5" />
-                        </Button>
-                        <Button onClick={() => scroll('right')} variant="outline" size="icon" className="rounded-full border-neutral-200 hover:bg-neutral-100 hover:text-black">
-                            <ChevronRight className="h-5 w-5" />
-                        </Button>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={() => scroll('left')}
+                            className="w-12 h-12 rounded-full border border-neutral-100 bg-white shadow-sm flex items-center justify-center text-neutral-400 hover:text-primary-950 hover:border-primary-950 hover:shadow-xl transition-all"
+                        >
+                            <ChevronLeft className="h-6 w-6" />
+                        </button>
+                        <button
+                            onClick={() => scroll('right')}
+                            className="w-12 h-12 rounded-full border border-neutral-100 bg-white shadow-sm flex items-center justify-center text-neutral-400 hover:text-primary-950 hover:border-primary-950 hover:shadow-xl transition-all"
+                        >
+                            <ChevronRight className="h-6 w-6" />
+                        </button>
                     </div>
                 </div>
 
                 <div
                     ref={scrollContainerRef}
-                    className="flex lg:grid lg:grid-cols-5 gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    className="flex lg:grid lg:grid-cols-5 gap-6 overflow-x-auto pb-8 snap-x snap-mandatory no-scrollbar"
                 >
                     {loading ? (
-                        <div className="col-span-full py-20 flex flex-col items-center justify-center bg-white/50 rounded-3xl">
-                            <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-4" />
-                            <p className="text-blue-900/60 font-bold uppercase tracking-widest text-[10px]">{t.services_loading}</p>
+                        <div className="col-span-full py-24 flex flex-col items-center justify-center bg-white rounded-2xl border border-neutral-200">
+                            <Loader2 className="w-12 h-12 text-primary-600 animate-spin mb-6" />
+                            <p className="text-primary-950/60 font-black uppercase tracking-[0.2em] text-xs">{t.services_loading}</p>
                         </div>
                     ) : visibleItems.map((item, idx) => {
                         const itemName = item.name_bn && language === 'BN' ? item.name_bn : (item.name || item.title);
-                        const itemDescription = item.description_bn && language === 'BN' ? item.description_bn : (item.description || t.service_expert_desc.replace('{service}', itemName.toLowerCase()));
                         const itemImage = item.image_url || item.image || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&h=400&fit=crop';
                         const itemPrice = item.unit_price || item.price || 2500;
                         const itemUnit = item.unit_type || item.unit || 'sqft';
 
                         return (
-                            <div key={idx} className="min-w-[260px] lg:min-w-0 snap-center h-full">
-                                <Card className="border border-neutral-100 bg-white rounded-xl overflow-hidden h-full hover:shadow-lg transition-all duration-300 group flex flex-col">
-                                    <div className="aspect-[4/3] relative overflow-hidden bg-neutral-100">
-                                        <img
-                                            src={itemImage}
-                                            alt={itemName}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                        />
-                                        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur rounded px-2 py-1 flex items-center gap-1 text-[10px] font-bold shadow-sm">
-                                            <ShieldCheck className="w-3 h-3 text-blue-600 fill-current" />
-                                            {t.service_verified_label}
-                                        </div>
-                                    </div>
-                                    <div className="p-3 flex flex-col flex-grow">
-                                        <h3 className="text-sm font-bold text-neutral-900 leading-tight mb-1 line-clamp-1">
-                                            {itemName}
-                                        </h3>
-                                        <p className="text-neutral-500 text-[10px] font-medium mb-2 line-clamp-2 min-h-[2.5em]">
-                                            {itemDescription}
-                                        </p>
-
-                                        <div className="mt-auto pt-3 border-t border-neutral-50 flex items-end justify-between">
-                                            <div className="flex flex-col">
-                                                <span className="text-neutral-400 text-[9px] font-bold uppercase tracking-wide">{t.lbl_starting_from}</span>
-                                                <div className="flex items-baseline gap-1">
-                                                    <span className="text-sm font-black text-neutral-900">৳{itemPrice.toLocaleString()}</span>
-                                                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-tighter">/ {itemUnit}</span>
-                                                </div>
-                                            </div>
-                                            <Link href="/services">
-                                                <Button size="sm" className="rounded-lg font-bold text-[10px] uppercase bg-neutral-900 hover:bg-neutral-800 text-white h-8 px-4 shadow-sm">
-                                                    {t.service_book_now}
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </Card>
+                            <div key={idx} className="min-w-[240px] lg:min-w-0 snap-center h-full">
+                                <ServiceCard
+                                    id={item.id}
+                                    name={item.name || item.title}
+                                    nameBn={item.name_bn}
+                                    price={itemPrice}
+                                    image={itemImage}
+                                    rating={item.rating || 4.8}
+                                    category={item.category?.name || "Service"}
+                                    unitType={itemUnit}
+                                    onToggle={() => { }} // Placeholder for now
+                                />
                             </div>
                         );
                     })}

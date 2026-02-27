@@ -139,3 +139,25 @@ export async function deleteDesignPackage(id: string) {
     const { error } = await supabase.from('design_packages').delete().eq('id', id);
     if (error) throw error;
 }
+export async function getDesignPackageById(id: string, supabaseClient?: any) {
+    // Basic UUID validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) return null;
+
+    const supabase = supabaseClient || createClient();
+    const { data, error } = await supabase
+        .from('design_packages')
+        .select(`
+            *,
+            designer:designer_id(id, company_name, company_name_bn, user_id),
+            category:category_id(id, name, name_bn, parent_id, level)
+        `)
+        .eq('id', id)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Error fetching design package detail:', JSON.stringify(error, null, 2));
+        return null;
+    }
+    return data;
+}

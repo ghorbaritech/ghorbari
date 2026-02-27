@@ -1,188 +1,253 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Star, CheckCircle, Clock } from "lucide-react";
+import { Star, CheckCircle, Clock, ChevronRight, MapPin, ShieldCheck, Info } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { getDesignPackageById } from "@/services/packageService";
+import { getSellerProfile } from "@/services/sellerService";
+import { DesignCartProvider } from "@/components/design/DesignCartProvider";
+import { ProfileCheckoutCart } from "@/components/design/ProfileCheckoutCart";
+import { BookNowButton } from "@/components/design/BookNowButton";
+import { createClient } from "@/utils/supabase/server";
+import { getServiceItemById } from "@/services/serviceItemService";
 
-// Placeholder data generation based on ID
-// In a real app, this would be fetched
 interface Params {
     params: Promise<{ id: string }>;
 }
 
 export default async function ServiceDetailPage({ params }: Params) {
-    // Awaiting params in Next.js 15+ 
     const { id } = await params;
 
-    // Clean up ID for display title
-    const title = id.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    const supabase = await createClient();
+    
+    // 1. Try fetching as a Design Package first
+    let pkg = await getDesignPackageById(id, supabase);
+    let item: any = null;
+    let seller: any = null;
+
+    if (pkg) {
+        seller = await getSellerProfile(pkg.designer_id);
+    } else {
+        // 2. Try fetching as a Service Item if Design Package fails
+        item = await getServiceItemById(id, supabase);
+    }
+    
+    // Final fallback: Not found
+    if (!pkg && !item) {
+        return (
+            <main className="min-h-screen flex flex-col font-sans bg-neutral-50/50">
+                <Navbar />
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                        <h1 className="text-2xl font-bold text-neutral-900">Service Not Found</h1>
+                        <p className="text-neutral-500 mt-2">The requested service ID could not be identified.</p>
+                        <Link href="/services">
+                            <Button className="mt-4">Back to Services</Button>
+                        </Link>
+                    </div>
+                </div>
+                <Footer />
+            </main>
+        );
+    }
+
+    // Unify the data for display
+    const displayTitle = pkg?.title || item?.name;
+    const displayImage = pkg?.images?.[0] || item?.image_url;
+    const displayCategory = pkg?.category?.name || item?.category?.name;
+    const displayDescription = pkg?.description || item?.description;
+    const displayPrice = pkg?.price || item?.unit_price;
 
     return (
-        <main className="min-h-screen flex flex-col font-sans bg-white">
-            <Navbar />
+        <DesignCartProvider initialPackageIds={pkg ? [pkg.id] : []}>
+            <main className="min-h-screen flex flex-col font-sans bg-neutral-50/50">
+                <Navbar />
 
-            <div className="container mx-auto px-4 py-8">
-                {/* Breadcrumb / Back Navigation can go here */}
-
-                <div className="flex flex-col lg:flex-row gap-12">
-                    {/* Main Content */}
-                    <div className="flex-1">
-                        <div className="relative aspect-video w-full rounded-2xl overflow-hidden mb-8 bg-neutral-100">
-                            <Image
-                                src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2053&auto=format&fit=crop"
-                                alt="Service Cover"
-                                fill
-                                className="object-cover"
-                            />
-                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-bold text-neural-900">
-                                Top Rated
-                            </div>
-                        </div>
-
-                        <h1 className="heading-2 mb-4 text-neutral-900">{title} Services</h1>
-                        <div className="flex items-center gap-4 text-neutral-500 mb-8 pb-8 border-b border-neutral-100">
-                            <div className="flex items-center gap-1 text-yellow-500 font-bold">
-                                <Star className="w-5 h-5 fill-current" /> 4.9 (120 Reviews)
-                            </div>
-                            <span className="w-1 h-1 bg-neutral-300 rounded-full"></span>
-                            <div className="flex items-center gap-1">
-                                <CheckCircle className="w-5 h-5 text-green-500" /> Verified Professionals
-                            </div>
-                            <span className="w-1 h-1 bg-neutral-300 rounded-full"></span>
-                            <div className="flex items-center gap-1">
-                                <Clock className="w-5 h-5" /> Takes 2-4 Weeks
-                            </div>
-                        </div>
-
-                        <div className="prose prose-neutral max-w-none mb-12">
-                            <h3 className="text-xl font-bold mb-4">About this Service</h3>
-                            <p className="mb-4 text-neutral-600 leading-relaxed">
-                                Get professional {title.toLowerCase()} solutions tailored to your specific needs.
-                                Our vetted experts ensure high-quality delivery, adherence to safety standards, and innovative designs
-                                that maximize your space's potential.
-                            </p>
-                            <h3 className="text-xl font-bold mb-4">What's Included</h3>
-                            <ul className="space-y-2 mb-8">
-                                {["Initial consultation and site visit", "Concept development and 2D layouts", "3D visualization and rendering", "Material selection guide", "Final construction drawings"].map(item => (
-                                    <li key={item} className="flex items-start gap-3">
-                                        <CheckCircle className="w-5 h-5 text-primary-500 mt-0.5" />
-                                        <span className="text-neutral-700">{item}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* Terms & Conditions */}
-                        <div className="mb-12">
-                            <h3 className="text-xl font-bold mb-6">Service Terms & Conditions</h3>
-                            <div className="space-y-4">
-                                <div className="flex gap-4 p-4 border border-neutral-100 rounded-xl bg-neutral-50">
-                                    <div className="font-bold text-sm min-w-[120px]">Payment Terms</div>
-                                    <div className="text-sm text-neutral-600">50% advance payment required to start work. Remaining 50% upon completion.</div>
-                                </div>
-                                <div className="flex gap-4 p-4 border border-neutral-100 rounded-xl bg-neutral-50">
-                                    <div className="font-bold text-sm min-w-[120px]">Timeline</div>
-                                    <div className="text-sm text-neutral-600">Project timeline may vary based on material availability and site conditions. Delays due to external factors are not penalized.</div>
-                                </div>
-                                <div className="flex gap-4 p-4 border border-neutral-100 rounded-xl bg-neutral-50">
-                                    <div className="font-bold text-sm min-w-[120px]">Warranty</div>
-                                    <div className="text-sm text-neutral-600">We provide a 6-month service warranty on all installations. Material warranty depends on the manufacturer.</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Reviews Section */}
-                        <div className="bg-neutral-50 rounded-xl p-8 mb-12">
-                            <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-xl font-bold">Customer Reviews</h3>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-2xl font-bold">4.9</span>
-                                    <div className="flex text-amber-500">
-                                        <Star className="w-5 h-5 fill-current" />
-                                        <Star className="w-5 h-5 fill-current" />
-                                        <Star className="w-5 h-5 fill-current" />
-                                        <Star className="w-5 h-5 fill-current" />
-                                        <Star className="w-5 h-5 fill-current" />
-                                    </div>
-                                    <span className="text-neutral-500 text-sm">(120 Reviews)</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6">
-                                {[
-                                    { name: "Rahim Ahmed", rating: 5, date: "2 days ago", comment: "Excellent service provided by the team. The designs were modern and functional." },
-                                    { name: "Sumaia Khan", rating: 5, date: "1 week ago", comment: "Very professional behavior. They completed the work on time and cleaned up afterwards." },
-                                    { name: "Tanvir Hasan", rating: 4, date: "3 weeks ago", comment: "Good quality work but slightly expensive compared to market rate. Worth it for the hassle-free experience though." }
-                                ].map((review, idx) => (
-                                    <div key={idx} className="pb-6 border-b border-neutral-200 last:border-0 last:pb-0">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="font-bold">{review.name}</span>
-                                            <span className="text-xs text-neutral-400">{review.date}</span>
-                                        </div>
-                                        <div className="flex text-amber-500 text-sm mb-2">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'fill-current' : 'text-neutral-200 fill-neutral-200'}`} />
-                                            ))}
-                                        </div>
-                                        <p className="text-neutral-600 text-sm">"{review.comment}"</p>
-                                    </div>
-                                ))}
-                            </div>
-                            <Button variant="outline" className="w-full mt-6 bg-white hover:bg-neutral-100">View All Reviews</Button>
-                        </div>
+                <div className="container mx-auto px-4 py-8 md:py-12">
+                    {/* Breadcrumb */}
+                    <div className="flex items-center gap-2 text-xs text-neutral-500 mb-8 font-medium">
+                        <Link href="/" className="hover:text-primary-600">Home</Link>
+                        <ChevronRight className="w-3 h-3" />
+                        <Link href="/services" className="hover:text-primary-600">Services</Link>
+                        <ChevronRight className="w-3 h-3" />
+                        <span className="text-neutral-900 font-bold">{displayTitle}</span>
                     </div>
 
-                    {/* Booking Sidebar */}
-                    <aside className="w-full lg:w-96 flex-shrink-0">
-                        <div className="sticky top-24">
-                            <Card className="shadow-lg border-neutral-200 overflow-hidden">
-                                <div className="bg-neutral-900 p-6 text-white">
-                                    <div className="text-sm opacity-80 mb-1">Starting price</div>
-                                    <div className="text-3xl font-bold">৳ 5,000 <span className="text-base font-normal opacity-70">/ unit</span></div>
+                    <div className="flex flex-col lg:flex-row gap-10">
+                        {/* Main Content (Left) */}
+                        <div className="flex-1 min-w-0">
+                            <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-5 md:p-6 mb-8">
+                                {/* Gallery / Cover */}
+                                <div className="relative aspect-video md:aspect-[21/9] bg-neutral-100 rounded-2xl overflow-hidden border border-neutral-200 mb-8">
+                                    <Image
+                                        src={displayImage || "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2053&auto=format&fit=crop"}
+                                        alt={displayTitle}
+                                        fill
+                                        className="object-cover"
+                                    />
+                                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-4 py-1.5 rounded-full text-xs font-black text-neutral-900 uppercase tracking-widest shadow-sm">
+                                        Verified Service
+                                    </div>
                                 </div>
-                                <CardContent className="p-6 space-y-6">
-                                    <div className="space-y-4">
-                                        <h4 className="font-bold text-neutral-900">Request a Quote</h4>
-                                        <div className="space-y-3">
-                                            <div>
-                                                <label className="text-sm font-medium mb-1 block">Project Type</label>
-                                                <select className="w-full h-10 rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none">
-                                                    <option>Residential</option>
-                                                    <option>Commercial</option>
-                                                    <option>Renovation</option>
-                                                </select>
+
+                                {/* Header */}
+                                <div className="mb-8 pb-8 border-b border-neutral-100">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="px-3 py-1 bg-primary-50 text-primary-600 text-[10px] font-black uppercase tracking-widest rounded-full">
+                                            {displayCategory || "Expert Solution"}
+                                        </span>
+                                    </div>
+                                    <h1 className="text-2xl md:text-4xl font-black text-neutral-900 mb-4 leading-tight">{displayTitle}</h1>
+                                    
+                                    <div className="flex flex-wrap items-center gap-6">
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex text-amber-400">
+                                                <Star className="w-4 h-4 fill-current" />
                                             </div>
-                                            <div>
-                                                <label className="text-sm font-medium mb-1 block">Location</label>
-                                                <Input placeholder="e.g. Dhaka, Gulshan" />
+                                            <span className="text-neutral-900 text-sm font-bold">4.9</span>
+                                            <span className="text-neutral-400 text-xs font-medium">(120 Reviews)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-neutral-500">
+                                            <Clock className="w-4 h-4" />
+                                            <span className="text-xs font-bold uppercase tracking-widest">Takes {pkg?.duration || '2-4 weeks'}</span>
+                                        </div>
+                                        {seller && (
+                                            <div className="flex items-center gap-2 text-neutral-500">
+                                                <MapPin className="w-4 h-4" />
+                                                <span className="text-xs font-bold uppercase tracking-widest">{seller?.location || 'Dhaka'}</span>
                                             </div>
-                                            <div>
-                                                <label className="text-sm font-medium mb-1 block">Approx. Area (sqft)</label>
-                                                <Input type="number" placeholder="e.g. 1500" />
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Description */}
+                                <div className="prose prose-neutral max-w-none mb-10">
+                                    <h3 className="text-lg font-black text-neutral-900 uppercase tracking-widest mb-4">About this Service</h3>
+                                    <p className="text-neutral-600 leading-relaxed">
+                                        {displayDescription || "Get professional solutions tailored to your specific needs. Our vetted experts ensure high-quality delivery, adherence to safety standards, and innovative designs that maximize your space's potential."}
+                                    </p>
+                                </div>
+
+                                {/* Features / What's Included */}
+                                <div className="mb-10">
+                                    <h3 className="text-lg font-black text-neutral-900 uppercase tracking-widest mb-6">What's Included</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {(pkg?.features || [
+                                            "Initial consultation and site visit",
+                                            "Concept development and 2D layouts",
+                                            "3D visualization and rendering",
+                                            "Material selection guide",
+                                            "Final construction drawings",
+                                            "Site supervision (Optional)"
+                                        ]).map((item: string, i: number) => (
+                                            <div key={i} className="flex items-start gap-3 p-4 bg-neutral-50 rounded-xl border border-neutral-100">
+                                                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                                <span className="text-sm font-bold text-neutral-700">{item}</span>
                                             </div>
-                                            <div>
-                                                <label className="text-sm font-medium mb-1 block">Contact Number</label>
-                                                <Input type="tel" placeholder="+8801..." />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Provider Info (Only if Design Package) */}
+                                {seller && (
+                                    <div className="bg-neutral-900 rounded-2xl p-6 md:p-8 text-white relative overflow-hidden mb-10">
+                                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-600/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                                        <div className="relative z-10">
+                                            <div className="flex items-center gap-4 mb-6">
+                                                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                                                    <Image 
+                                                        src={seller?.shopPhotoUrl || "https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=2073&auto=format&fit=crop"} 
+                                                        alt={seller?.businessName}
+                                                        width={64}
+                                                        height={64}
+                                                        className="rounded-full object-cover"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary-400 mb-1">Service Provider</p>
+                                                    <h4 className="text-xl font-bold">{seller?.businessName}</h4>
+                                                </div>
                                             </div>
+                                            <p className="text-neutral-400 text-sm leading-relaxed mb-6 line-clamp-2 italic">
+                                                "{seller?.bio || 'Verified partner on Ghorbari platform providing professional services.'}"
+                                            </p>
+                                            <Link href={`/partner/${pkg.designer_id}`}>
+                                                <Button variant="outline" className="border-white/20 text-white hover:bg-white hover:text-neutral-900 font-black text-xs uppercase tracking-widest rounded-xl">
+                                                    View Partner Profile
+                                                </Button>
+                                            </Link>
                                         </div>
                                     </div>
+                                )}
 
-                                    <Button className="w-full h-12 text-base font-bold shadow-lg bg-primary-600 hover:bg-primary-700">
-                                        Submit Request
-                                    </Button>
-                                    <p className="text-xs text-center text-neutral-500">
-                                        We will connect you with top rated professionals within 24 hours.
-                                    </p>
-                                </CardContent>
-                            </Card>
+                                {/* Terms */}
+                                <div>
+                                    <h3 className="text-lg font-black text-neutral-900 uppercase tracking-widest mb-6">Service Terms</h3>
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col md:flex-row md:items-center gap-4 p-5 border border-neutral-100 rounded-2xl bg-neutral-50">
+                                            <div className="flex items-center gap-2 min-w-[150px]">
+                                                <ShieldCheck className="w-4 h-4 text-primary-600" />
+                                                <span className="font-black text-[11px] uppercase tracking-widest text-neutral-900">Payment</span>
+                                            </div>
+                                            <p className="text-xs font-bold text-neutral-500">50% advance required to start work. Remaining 50% upon completion.</p>
+                                        </div>
+                                        <div className="flex flex-col md:flex-row md:items-center gap-4 p-5 border border-neutral-100 rounded-2xl bg-neutral-50">
+                                            <div className="flex items-center gap-2 min-w-[150px]">
+                                                <Info className="w-4 h-4 text-primary-600" />
+                                                <span className="font-black text-[11px] uppercase tracking-widest text-neutral-900">Warranty</span>
+                                            </div>
+                                            <p className="text-xs font-bold text-neutral-500">We provide a 6-month service warranty on all installations.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </aside>
-                </div>
-            </div>
 
-            <Footer />
-        </main>
+                        {/* Right Sidebar */}
+                        <div className="w-full lg:w-[380px] flex-shrink-0">
+                            <div className="sticky top-24 space-y-6">
+                                {/* Direct Checkout Cart (Only for Design Packages) or Basic CTA for General Items */}
+                                {pkg ? (
+                                    <ProfileCheckoutCart
+                                        designerId={pkg.designer_id}
+                                        providerName={seller?.businessName || 'Verified Partner'}
+                                        packages={seller?.designPackages || [pkg]}
+                                    />
+                                ) : (
+                                    <div className="bg-white p-6 rounded-[24px] border border-neutral-200 shadow-sm">
+                                        <div className="mb-6 pb-6 border-b border-neutral-100">
+                                            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2">Service Fee</p>
+                                            <div className="flex items-end gap-2 text-[#0a1b3d]">
+                                                <span className="text-3xl font-black">৳{displayPrice?.toLocaleString()}</span>
+                                                <span className="text-[10px] font-bold uppercase tracking-widest mb-1.5 opacity-60">/{item?.unit_type || 'service'}</span>
+                                            </div>
+                                        </div>
+                                        <Link href="/services">
+                                            <Button className="w-full bg-[#1e3a8a] py-6 rounded-xl hover:bg-[#1e3a8a]/90 text-white font-black text-xs uppercase tracking-widest">
+                                                Add to Service Cart
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                )}
+
+                                {/* Support Card */}
+                                <div className="bg-white p-6 rounded-[24px] border border-neutral-200 shadow-sm text-center">
+                                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2">Need Expert Advice?</p>
+                                    <p className="text-xl font-black text-neutral-900 mb-6">Talk to our Consultants</p>
+                                    <Button className="w-full bg-neutral-900 hover:bg-neutral-800 text-white font-black text-xs uppercase tracking-widest py-6 rounded-xl">
+                                        Schedule a Call
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <Footer />
+            </main>
+        </DesignCartProvider>
     );
 }
+
+

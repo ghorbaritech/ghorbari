@@ -1,4 +1,4 @@
-export const translations = {
+﻿﻿export const translations = {
     EN: {
         // Navbar
         nav_search_placeholder: "Search for products, services, or designs...",
@@ -14,6 +14,8 @@ export const translations = {
         nav_create_account: "Create Account",
         nav_hi: "HI",
         nav_dashboard: "DASHBOARD",
+        search: "Search",
+        cart: "Cart",
 
         // Hero Banners
         hero_banner_main_title: "Quality Construction Materials",
@@ -25,6 +27,18 @@ export const translations = {
         hero_banner_service_title: "Verified Construction Pros",
         hero_banner_service_subtitle: "Renovations",
         hero_banner_service_desc: "Reliable experts for Every Project.",
+
+        // Hero section labels
+        hero_badge_marketplace: "Marketplace",
+        hero_title_marketplace: "Construction\nMarketplace",
+        hero_desc_marketplace: "Get premium supplies delivered to your site.",
+        hero_btn_shop_now: "Shop Now",
+        hero_btn_explore: "Explore",
+        hero_badge_design: "Design Studio",
+        hero_title_design: "Architectural & Building Design",
+        hero_badge_services: "Renovations",
+        hero_title_services: "Verified Construction Pros",
+        hero_btn_learn_more: "Learn More",
 
         // Marketplace Section
         market_label: "Construction Marketplace",
@@ -208,6 +222,17 @@ export const translations = {
         brand_all: "All Brands",
         schedule_title: "Schedule a Consultation",
         schedule_desc: "When should the designer or our admin contact you?",
+
+        // Cart
+        cart_your_selection: "Your Selection",
+        cart_no_services: "No services selected yet",
+        cart_select_prompt: "Select services from the list to start your booking",
+        cart_tentative_quote: "Tentative quote · Admin verifies before final pricing",
+        cart_starting_price: "Starting Price",
+        cart_service_details: "Service Details",
+        cart_selected_services: "Selected Services",
+        cart_continue_booking: "Continue to Booking",
+        cart_no_upfront: "No upfront payment required",
     },
     BN: {
         // Navbar
@@ -224,30 +249,12 @@ export const translations = {
         nav_create_account: "অ্যাকাউন্ট তৈরি করুন",
         nav_hi: "হ্যালো",
         nav_dashboard: "ড্যাশবোর্ড",
+        search: "খুঁজুন",
+        cart: "কার্ট",
 
         // Hero / General
         hero_title: "আপনার স্বপ্নের বাড়ি তৈরি করুন",
         hero_subtitle: "আপনার সব নির্মাণ প্রয়োজনের জন্য এক-স্টপ সমাধান",
-
-        // Offer Section
-        offer_title: "সীমিত সময়ের অফার",
-        offer_flash_sale: "ফ্ল্যাশ সেল",
-        offer_bundle_deal: "বান্ডেল ডিল",
-        offer_shop_now: "এখনই কিনুন",
-        offer_view_bundle: "বান্ডেল দেখুন",
-        offer_steel_title: "স্টিল ও রড",
-        offer_paint_title: "পেইন্ট ও ফিনিশ",
-        offer_steel_desc: "এই সপ্তাহে বাল্ক বিএসআরএম অর্ডারে ১৫% পর্যন্ত ছাড়।",
-        offer_paint_desc: "৫ গ্যালন বার্জার পেইন্ট কিনুন এবং একটি রোলার কিট ফ্রি পান।",
-
-        // Category Titles
-        cat_building_materials: "নির্মাণ সামগ্রী",
-        cat_sands_bricks: "বালু ও ইট",
-        cat_steel: "স্টিল",
-        cat_steel_rods: "স্টিল ও রড",
-        cat_finishing: "ফিনিশিং",
-        cat_tiles_sanitary: "টাইলস ও স্যানিটারি",
-        cat_electric_plumbing: "ইলেকট্রিক ও প্লাম্বিং",
 
         // Hero Banners
         hero_banner_main_title: "মানসম্মত নির্মাণ সামগ্রী",
@@ -259,6 +266,18 @@ export const translations = {
         hero_banner_service_title: "যাচাইকৃত প্রোকর্মী",
         hero_banner_service_subtitle: "রেনোভেশন",
         hero_banner_service_desc: "প্রতিটি প্রকল্পের জন্য নির্ভরযোগ্য বিশেষজ্ঞ।",
+
+        // Hero section labels
+        hero_badge_marketplace: "মার্কেটপ্লেস",
+        hero_title_marketplace: "নির্মাণ\nমার্কেটপ্লেস",
+        hero_desc_marketplace: "আপনার সাইটে প্রিমিয়াম সাপ্লাই ডেলিভারি নিন।",
+        hero_btn_shop_now: "এখনই কিনুন",
+        hero_btn_explore: "দেখুন",
+        hero_badge_design: "ডিজাইন স্টুডিও",
+        hero_title_design: "স্থাপত্য ও ভবন ডিজাইন",
+        hero_badge_services: "রেনোভেশন",
+        hero_title_services: "যাচাইকৃত প্রোকর্মী",
+        hero_btn_learn_more: "আরও জানুন",
 
         // Marketplace Section
         market_label: "কনস্ট্রাকশন মার্কেটপ্লেস",
@@ -291,6 +310,26 @@ export const translations = {
         footer_cookies: "কুকিজ",
         footer_security: "নিরাপত্তা",
 
+        // Offer Section
+        offer_title: "সীমিত সময়ের অফার",
+        offer_flash_sale: "ফ্ল্যাশ সেল",
+        offer_bundle_deal: "বান্ডেল ডিল",
+        offer_shop_now: "এখনই কিনুন",
+        offer_view_bundle: "বান্ডেল দেখুন",
+        offer_steel_title: "স্টিল ও রড",
+        offer_paint_title: "পেইন্ট ও ফিনিশ",
+        offer_steel_desc: "এই সপ্তাহে বাল্ক বিএসআরএম অর্ডারে ১৫% পর্যন্ত ছাড়।",
+        offer_paint_desc: "৫ গ্যালন বার্জার পেইন্ট কিনুন এবং একটি রোলার কিট ফ্রি পান।",
+
+        // Category Titles
+        cat_building_materials: "নির্মাণ সামগ্রী",
+        cat_sands_bricks: "বালু ও ইট",
+        cat_steel: "স্টিল",
+        cat_steel_rods: "স্টিল ও রড",
+        cat_finishing: "ফিনিশিং",
+        cat_tiles_sanitary: "টাইলস ও স্যানিটারি",
+        cat_electric_plumbing: "ইলেকট্রিক ও প্লাম্বিং",
+
         // Common Actions
         btn_confirm: "নিশ্চিত করুন",
         btn_cancel: "বাতিল করুন",
@@ -303,7 +342,7 @@ export const translations = {
 
         // Common Labels
         lbl_price: "মূল্য",
-        lbl_starting_from: "শুরু",
+        lbl_starting_from: "শুরু থেকে",
         lbl_category: "বিভাগ",
         lbl_seller: "বিক্রেতা",
 
@@ -333,7 +372,7 @@ export const translations = {
         lbl_plot_orientation: "প্লট ওরিয়েন্টেশন (মুখী)",
         lbl_special_zones: "প্রয়োজনীয় বিশেষ জোন",
         lbl_roof_features: "ছাদের বৈশিষ্ট্য",
-        lbl_soil_test: "সয়েল টেস্ট সম্পন্ন হয়েছে?",
+        lbl_soil_test: "সয়েল টেস্ট সম্পন্ন হয়েছে?",
         lbl_aesthetics: "নান্দনিকতা ও লেআউট পছন্দ",
         lbl_select_area: "এলাকা নির্বাচন করুন",
         lbl_bedroom_type: "বেডরুমের ধরন",
@@ -351,7 +390,7 @@ export const translations = {
         opt_roof_garden: "ছাদ বাগান", opt_pool: "সুইমিং পুল",
         opt_yes: "হ্যাঁ", opt_no: "না",
         opt_modern: "আধুনিক / মিনিমালিস্ট", opt_traditional: "ঐতিহ্যগত / ইট", opt_luxury: "ডুপ্লেক্স লাক্সারি", opt_eco: "পরিবেশ বান্ধব",
-        opt_full_house: "পুরো বাড়ি", opt_full_apartment: "পুরো অ্যাপার্টমেন্ট", opt_specific_area: "নির্দিষ্ট এলাকা",
+        opt_full_house: "পুরো বাড়ি", opt_full_apartment: "পুরো অ্যাপার্টমেন্ট", opt_specific_area: "নির্দিষ্ট এলাকা",
         opt_living: "লিভিং রুম", opt_drawing: "ড্রয়িং রুম", opt_bedroom: "বেড রুম", opt_bathroom: "বাথ রুম", opt_kitchen: "রান্নাঘর", opt_balcony: "বারান্দা", opt_rooftop: "ছাদ", opt_entrance: "প্রবেশদ্বার",
         opt_master_bed: "মাস্টার বেডরুম", opt_general_bed: "সাধারণ বেডরুম", opt_newborn: "নবজাতক স্পেশাল", opt_teenager: "কিশোরদের স্পেশাল", opt_children: "শিশুদের বেডরুম",
         opt_entire_new: "সম্পূর্ণ নতুন ডিজাইন", opt_renovation: "নির্দিষ্ট রেনোভেশন",
@@ -366,7 +405,7 @@ export const translations = {
         service_expert_desc: "আপনার {service} প্রয়োজনে সাহায্য করার জন্য বিশেষজ্ঞ পেশাদাররা প্রস্তুত।",
         service_verified_label: "যাচাইকৃত",
         service_booking_title: "পেশাদার সার্ভিসসমূহ",
-        service_book_now: "এখনই বুক করুন",
+        service_book_now: "বুক করুন",
 
         // Promotional Banners
         promo_limited_offer: "সীমিত সময়ের অফার",
@@ -388,7 +427,7 @@ export const translations = {
         design_all_services: "সব ডিজাইন সার্ভিস",
         design_available_packages: "উপলব্ধ প্যাকেজ",
         design_showing_packages: "{count}টি প্রিমিয়াম ডিজাইন প্যাকেজ দেখানো হচ্ছে",
-        design_no_services: "এই ক্যাটাগরিতে কোনো সার্ভিস পাওয়া যায়নি।",
+        design_no_services: "এই ক্যাটাগরিতে কোনো সার্ভিস পাওয়া যায়নি।",
         design_portfolio_label: "আমাদের পোর্টফোলিও",
         design_portfolio_title: "নির্বাচিত প্রজেক্ট",
         design_view_all_projects: "সব প্রজেক্ট দেখুন",
@@ -396,15 +435,15 @@ export const translations = {
 
         // Services Page
         services_marketplace_title: "প্রফেশনাল সার্ভিস মার্কেটপ্লেস",
-        services_marketplace_subtitle: "আপনার স্বপ্নের বাড়ির জন্য সেরা বিশেষজ্ঞদের নিয়োগ দিন",
+        services_marketplace_subtitle: "আপনার স্বপ্নের বাড়ির জন্য সেরা বিশেষজ্ঞদের নিয়োগ দিন",
         services_categories_sidebar: "সার্ভিস ক্যাটাগরি",
         services_budget_range: "বাজেট রেঞ্জ (৳)",
-        services_found: "{count}টি প্রফেশনাল সার্ভিস পাওয়া গেছে",
+        services_found: "{count}টি প্রফেশনাল সার্ভিস পাওয়া গেছে",
         services_sort_by: "সর্ট করুন:",
         services_newest: "নতুনগুলো আগে",
         services_price_low: "মূল্য: কম থেকে বেশি",
         services_price_high: "মূল্য: বেশি থেকে কম",
-        services_no_found_title: "কোনো সার্ভিস পাওয়া যায়নি",
+        services_no_found_title: "কোনো সার্ভিস পাওয়া যায়নি",
         services_no_found_desc: "আপনার শর্তাবলীর সাথে মেলে এমন কোনো সার্ভিস আমরা খুঁজে পাইনি।<br />অনুগ্রহ করে ফিল্টার পরিবর্তন করে দেখুন।",
 
         // Products Page
@@ -412,16 +451,27 @@ export const translations = {
         products_marketplace_subtitle: "প্রতিটি প্রকল্পের জন্য মানসম্মত উপকরণ",
         products_supply_categories: "সরবরাহ ক্যাটাগরি",
         products_price_thresholds: "মূল্যসীমা (৳)",
-        products_found: "{count}টি যাচাইকৃত উপকরণ পাওয়া গেছে",
+        products_found: "{count}টি যাচাইকৃত উপকরণ পাওয়া গেছে",
         products_optimized_by: "অপ্টিমাইজড:",
         products_loading: "হার্ডওয়্যার ইনডেক্স খোঁজা হচ্ছে...",
         services_loading: "যাচাইকৃত প্রোকর্মী খোঁজা হচ্ছে...",
         products_no_found_title: "গুদাম খালি",
-        products_no_found_desc: "আপনার ফিল্টারের সাথে মেলে এমন কোনো উপকরণ আমরা খুঁজে পাইনি।<br />অনুগ্রহ করে মূল্যের পরিসর বা বিভাগ বাড়িয়ে দেখুন।",
+        products_no_found_desc: "আপনার ফিল্টারের সাথে মেলে এমন কোনো উপকরণ আমরা খুঁজে পাইনি।<br />অনুগ্রহ করে মূল্যের পরিসর বা বিভাগ বাড়িয়ে দেখুন।",
         products_no_subs: "এখনো কোনো সাব-ক্যাটাগরি নেই — পণ্য আপলোড করার সময় সেগুলো যুক্ত করুন।",
         brand_all: "সব ব্র্যান্ড",
-        schedule_title: "পরামর্শের জন্য সময় নির্ধারণ করুন",
+        schedule_title: "পরামর্শের জন্য সময় নির্ধারণ করুন",
         schedule_desc: "ডিজাইনার বা আমাদের অ্যাডমিন কখন আপনার সাথে যোগাযোগ করবেন?",
+
+        // Cart
+        cart_your_selection: "আপনার নির্বাচন",
+        cart_no_services: "এখনো কোনো সেবা বাছাই করা হয়নি",
+        cart_select_prompt: "বুকিং শুরু করতে তালিকা থেকে সেবা বেছে নিন",
+        cart_tentative_quote: "অস্থায়ী মূল্য · চূড়ান্ত মূল্য অ্যাডমিন যাচাই করবেন",
+        cart_starting_price: "শুরুর মূল্য",
+        cart_service_details: "সেবার বিবরণ",
+        cart_selected_services: "নির্বাচিত সেবাসমূহ",
+        cart_continue_booking: "বুকিং চালিয়ে যান",
+        cart_no_upfront: "অগ্রিম পেমেন্টের প্রয়োজন নেই",
     }
 };
 

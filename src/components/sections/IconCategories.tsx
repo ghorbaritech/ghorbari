@@ -24,7 +24,7 @@ const DEFAULT_CATEGORIES = [
 import { useLanguage } from '@/context/LanguageContext';
 
 export function IconCategories({ items = [], title = "Explore Categories" }: IconCategoriesProps) {
-    const { language } = useLanguage();
+    const { language, t } = useLanguage();
     const displayItems = items.length > 0 ? items : DEFAULT_CATEGORIES;
 
     const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -35,37 +35,39 @@ export function IconCategories({ items = [], title = "Explore Categories" }: Ico
     });
 
     return (
-        <section className="pt-8 pb-2 bg-white border-b border-neutral-100">
-            <div className="container mx-auto px-8">
-                <div className="relative group/carousel">
-                    {/* Left Navigation */}
+        <section className="pt-3 pb-6 bg-white border-t border-neutral-100">
+            <div className="section-container">
+                <h2 className="text-lg font-semibold text-primary-950 mb-5 px-2">
+                    {title}
+                </h2>
+
+                {/* Carousel with flanking arrows */}
+                <div className="flex items-center gap-2">
                     <button
                         onClick={() => emblaApi?.scrollPrev()}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-neutral-200 shadow-md flex items-center justify-center text-neutral-700 hover:text-black hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-shrink-0 w-7 h-7 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-400 hover:text-primary-950 hover:border-primary-950 transition-all shadow-sm"
                         aria-label="Scroll left"
                     >
                         <ChevronLeft className="w-4 h-4" />
                     </button>
 
-                    <div className="overflow-hidden cursor-grab active:cursor-grabbing mx-4" ref={emblaRef}>
-                        <div className="flex -ml-4 touch-pan-y py-4">
+                    <div className="overflow-hidden flex-1" ref={emblaRef}>
+                        <div className="flex -ml-3 touch-pan-y py-2">
                             {displayItems.map((cat: any, idx: number) => (
-                                <div key={idx} className="flex-[0_0_22%] min-w-0 pl-4 sm:flex-[0_0_16%] md:flex-[0_0_12.5%] lg:flex-[0_0_10%]">
-                                    <Link href={`/products?category=${cat.name}`} className="flex flex-col items-center gap-3 group">
-                                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-neutral-50 flex items-center justify-center text-neutral-400
-                                            transition-all duration-300 ease-out
-                                            group-hover:bg-white group-hover:text-primary-600 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] group-hover:-translate-y-1
-                                            border border-neutral-100 relative z-0">
-
+                                <div key={idx} className="flex-[0_0_40%] sm:flex-[0_0_25%] md:flex-[0_0_18%] lg:flex-[0_0_14.28%] pl-3">
+                                    <Link
+                                        href={`/products?category=${cat.name}`}
+                                        className="flex flex-col items-center gap-3 group cursor-pointer"
+                                    >
+                                        <div className="w-20 h-20 rounded-full bg-neutral-100 flex items-center justify-center transition-colors duration-300 group-hover:bg-primary-100">
                                             {cat.icon && (typeof cat.icon === 'string' && (cat.icon.startsWith('http') || cat.icon.startsWith('/'))) ? (
-                                                <img src={cat.icon} alt={cat.name} className="w-8 h-8 sm:w-9 sm:h-9 object-contain opacity-60 group-hover:opacity-100 transition-all" />
+                                                <img src={cat.icon} alt={cat.name} className="w-9 h-9 object-contain" />
                                             ) : (
-                                                <DynamicIcon name={cat.icon || "LayoutGrid"} className="w-7 h-7 sm:w-8 sm:h-8 transition-transform duration-300 group-hover:scale-110" />
+                                                <DynamicIcon name={cat.icon || "LayoutGrid"} className="w-9 h-9 text-primary-950" />
                                             )}
-
                                         </div>
-                                        <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 group-hover:text-primary-700 text-center transition-colors line-clamp-2 max-w-[100px] leading-tight">
-                                            {(language === 'BN' && cat.name_bn) ? cat.name_bn : cat.name}
+                                        <span className="text-[12px] font-semibold text-neutral-600 group-hover:text-primary-950 text-center transition-colors max-w-full leading-tight">
+                                            {(language === 'BN' && (cat.nameBn || cat.name_bn)) ? (cat.nameBn || cat.name_bn) : cat.name}
                                         </span>
                                     </Link>
                                 </div>
@@ -73,10 +75,9 @@ export function IconCategories({ items = [], title = "Explore Categories" }: Ico
                         </div>
                     </div>
 
-                    {/* Right Navigation */}
                     <button
                         onClick={() => emblaApi?.scrollNext()}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-neutral-200 shadow-md flex items-center justify-center text-neutral-700 hover:text-black hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-shrink-0 w-7 h-7 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-400 hover:text-primary-950 hover:border-primary-950 transition-all shadow-sm"
                         aria-label="Scroll right"
                     >
                         <ChevronRight className="w-4 h-4" />

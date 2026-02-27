@@ -23,14 +23,14 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA] py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8 bg-white p-12 rounded-[40px] shadow-sm border border-neutral-100">
+            <div className="max-w-md w-full space-y-6 bg-white p-8 rounded-2xl shadow-sm border border-neutral-200">
                 <div className="text-center">
                     <div className="flex justify-center mb-6">
-                        <div className="p-4 bg-orange-50 text-orange-600 rounded-3xl">
-                            <User className="w-10 h-10" />
+                        <div className="p-3 bg-neutral-100 text-neutral-600 rounded-xl">
+                            <User className="w-7 h-7" />
                         </div>
                     </div>
-                    <h2 className="text-4xl font-black text-neutral-900 italic tracking-tighter uppercase">Member Sign In</h2>
+                    <h2 className="text-2xl font-bold text-neutral-900">Sign In</h2>
                     <p className="mt-4 text-xs font-bold text-neutral-400 uppercase tracking-widest pl-1">Access your projects and orders</p>
                 </div>
                 <form className="mt-8 space-y-6" action={handleSubmit}>
@@ -69,7 +69,7 @@ export default function LoginPage() {
 
                     <Button
                         type="submit"
-                        className="w-full h-16 bg-orange-600 hover:bg-orange-700 text-white font-black uppercase tracking-widest rounded-3xl shadow-xl shadow-orange-100 transition-all"
+                        className="w-full h-11 bg-neutral-900 hover:bg-black text-white font-bold rounded-xl transition-all"
                         disabled={loading}
                     >
                         {loading ? 'Entering...' : 'Sign In'}

@@ -48,8 +48,8 @@ export function FlashDeals() {
                             key={product.id}
                             id={product.id}
                             name={product.title}
-                            price={product.base_price.toLocaleString()}
-                            oldPrice={product.discount_price ? product.base_price.toLocaleString() : null}
+                            price={product.discount_price || product.base_price}
+                            oldPrice={product.discount_price ? product.base_price : null}
                             discount={product.discount_price ? `-${Math.round((1 - product.discount_price / product.base_price) * 100)}%` : undefined}
                             image={product.images?.[0] || ""}
                             rating={product.rating || 0}

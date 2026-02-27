@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
 import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_bloc.dart';
 import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_event.dart';
 import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_state.dart';
@@ -34,17 +35,18 @@ class _BookingScreenState extends State<BookingScreen> {
 
   void _submitBooking() {
     final authState = context.read<AuthBloc>().state;
-    if (authState is! dynamic) return; // Should handle properly
+    if (authState is! AuthAuthenticated) return;
     
     final userId = authState.user.id;
     
     final booking = Booking(
       id: '', // Supabase will generate
       userId: userId,
+      type: 'service',
       status: 'pending',
       totalAmount: double.tryParse(_areaController.text) ?? 0 * widget.service.unitPrice,
+      advanceAmount: 0,
       createdAt: DateTime.now(),
-      // Add other fields as needed
     );
 
     context.read<BookingBloc>().add(BookingCreateRequested(booking));

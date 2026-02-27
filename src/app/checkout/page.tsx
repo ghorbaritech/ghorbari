@@ -127,7 +127,7 @@ export default function CheckoutPage() {
                             <CheckCircle2 className="w-12 h-12" />
                         </div>
                         <div className="space-y-4">
-                            <h2 className="text-4xl font-black text-neutral-900 tracking-tight uppercase italic">Order Placed!</h2>
+                            <h2 className="text-2xl font-bold text-neutral-900">Order Placed!</h2>
                             <p className="text-neutral-500 font-medium leading-relaxed">
                                 Your construction materials have been requested. Our admin will call you at <span className="font-bold text-neutral-900">{formData.phone}</span> shortly for confirmation.
                             </p>
@@ -186,12 +186,12 @@ export default function CheckoutPage() {
                     {/* Left: Checkout Form */}
                     <div className="flex-1 space-y-8">
                         <div className="space-y-2">
-                            <h1 className="text-4xl font-black text-neutral-900 tracking-tight uppercase italic underline decoration-primary-600 decoration-8 underline-offset-8">Checkout</h1>
+                            <h1 className="text-xl md:text-2xl font-bold text-neutral-900">Checkout</h1>
                             <p className="text-neutral-500 font-medium">Verify your details and place your order request.</p>
                         </div>
 
                         {/* Customer Information */}
-                        <div className="bg-white rounded-[2rem] border border-neutral-100 shadow-xl shadow-neutral-200/50 overflow-hidden">
+                        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
                             <div className="p-8 border-b border-neutral-50 bg-neutral-50/30 flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-primary-600 text-white flex items-center justify-center font-black">
                                     <User className="w-5 h-5" />
@@ -239,7 +239,7 @@ export default function CheckoutPage() {
                         </div>
 
                         {/* Delivery Address */}
-                        <div className="bg-white rounded-[2rem] border border-neutral-100 shadow-xl shadow-neutral-200/50 overflow-hidden text-[#5a5652]">
+                        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
                             <div className="p-8 border-b border-neutral-50 bg-neutral-50/30 flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-neutral-900 text-white flex items-center justify-center font-black">
                                     <MapPin className="w-5 h-5" />
@@ -286,10 +286,10 @@ export default function CheckoutPage() {
                     {/* Right: Summary */}
                     <div className="w-full lg:w-[450px] flex-shrink-0">
                         <div className="sticky top-24 space-y-6">
-                            <div className="bg-white rounded-[2.5rem] text-neutral-900 shadow-xl border border-neutral-100 relative overflow-hidden">
+                            <div className="bg-white rounded-2xl text-neutral-900 shadow-sm border border-neutral-200 overflow-hidden">
                                 {/* Header Section inspired by reference */}
                                 <div className="bg-[#f0f9fa] p-8 pb-6">
-                                    <h3 className="text-3xl font-black uppercase tracking-tight italic text-neutral-900">Invoice Summary</h3>
+                                    <h3 className="text-base font-bold text-neutral-900">Invoice Summary</h3>
                                     <div className="h-1 w-20 bg-primary-600 mt-2 rounded-full" />
                                 </div>
 

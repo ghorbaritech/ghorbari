@@ -44,7 +44,7 @@ export default function CartPage() {
             <Navbar />
 
             <div className="container mx-auto px-4 py-8">
-                <h1 className="heading-2 mb-8 text-neutral-900 italic font-black uppercase tracking-tight">Shopping Cart ({items.length} items)</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-neutral-900 mb-6">Shopping Cart <span className="text-neutral-400 font-medium text-base">({items.length} items)</span></h1>
 
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Cart Items List */}
@@ -107,9 +107,9 @@ export default function CartPage() {
 
                     {/* Order Summary */}
                     <div className="w-full lg:w-[400px] flex-shrink-0">
-                        <Card className="sticky top-24 border-neutral-200 shadow-xl shadow-neutral-200/50 rounded-[2rem] overflow-hidden">
+                        <Card className="sticky top-24 border-neutral-200 shadow-sm rounded-2xl overflow-hidden">
                             <CardContent className="p-8">
-                                <h3 className="font-black text-2xl mb-8 text-neutral-900 italic uppercase tracking-tight">Order Summary</h3>
+                                <h3 className="font-bold text-lg mb-6 text-neutral-900">Order Summary</h3>
 
                                 <div className="space-y-4 mb-8">
                                     <div className="flex justify-between text-neutral-500 font-medium">
@@ -137,8 +137,8 @@ export default function CartPage() {
 
                                 <div className="space-y-4">
                                     <Link href="/checkout" className="block w-full">
-                                        <Button className="w-full h-14 text-base font-black uppercase tracking-widest bg-primary-600 hover:bg-primary-700 shadow-xl shadow-primary-600/20 rounded-2xl group">
-                                            Checkout Now <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        <Button className="w-full h-11 text-sm font-bold bg-neutral-900 hover:bg-black text-white rounded-xl group">
+                                            Checkout Now <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                                         </Button>
                                     </Link>
                                     <p className="text-[10px] text-center text-neutral-400 font-bold uppercase tracking-widest">

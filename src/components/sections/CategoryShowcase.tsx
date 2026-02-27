@@ -96,52 +96,55 @@ export function CategoryShowcase({ title, category, bgClass = "bg-white", link =
     };
 
     return (
-        <section className={`py-6 ${bgClass} relative`}>
-            <div className="container mx-auto px-8">
-                <div className="flex justify-between items-end mb-8">
-                    <div>
-                        <h2 className="text-2xl font-bold text-neutral-900 capitalize tracking-tight">
+        <section className={`py-10 ${bgClass}`}>
+            <div className="section-container">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                    <div className="space-y-2">
+                        <h2 className="text-xl md:text-2xl font-semibold text-primary-950">
                             {title}
                         </h2>
-                        <div className="h-1 w-20 bg-primary-600 mt-2 rounded-full" />
                     </div>
 
-                    <div className="flex gap-2 items-center">
-                        <div className="flex gap-2 lg:hidden">
-                            <Button onClick={() => scroll('left')} variant="outline" size="icon" className="rounded-full border-neutral-200 hover:bg-neutral-100 hover:text-black">
-                                <ChevronLeft className="h-5 w-5" />
-                            </Button>
-                            <Button onClick={() => scroll('right')} variant="outline" size="icon" className="rounded-full border-neutral-200 hover:bg-neutral-100 hover:text-black">
-                                <ChevronRight className="h-5 w-5" />
-                            </Button>
+                    <div className="flex items-center gap-4">
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => scroll('left')}
+                                className="w-12 h-12 rounded-full border border-neutral-100 bg-white shadow-sm flex items-center justify-center text-neutral-400 hover:text-primary-950 hover:border-primary-950 hover:shadow-xl transition-all"
+                            >
+                                <ChevronLeft className="h-6 w-6" />
+                            </button>
+                            <button
+                                onClick={() => scroll('right')}
+                                className="w-12 h-12 rounded-full border border-neutral-100 bg-white shadow-sm flex items-center justify-center text-neutral-400 hover:text-primary-950 hover:border-primary-950 hover:shadow-xl transition-all"
+                            >
+                                <ChevronRight className="h-6 w-6" />
+                            </button>
                         </div>
 
-                        <Link href={link} className="hidden md:block">
-                            <Button variant="ghost" className="text-neutral-500 hover:text-primary-600 font-bold uppercase tracking-widest text-xs">
-                                {t.market_view_all} <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
+                        <Link href={link} className="hidden md:flex items-center gap-2 text-primary-600 hover:text-primary-950 transition-colors group">
+                            <span className="text-[10px] font-black uppercase tracking-widest">{t.market_view_all}</span>
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </div>
                 </div>
 
                 {loading ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="h-80 bg-neutral-100 rounded-[2rem] animate-pulse" />
+                            <div key={i} className="h-[380px] bg-neutral-100 rounded-2xl animate-pulse" />
                         ))}
                     </div>
                 ) : (
                     <div
                         ref={scrollContainerRef}
-                        className="flex lg:grid lg:grid-cols-5 gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        className="flex lg:grid lg:grid-cols-5 gap-6 overflow-x-auto pb-8 snap-x snap-mandatory no-scrollbar"
                     >
                         {products.map((product) => (
-                            <div key={product.id} className="min-w-[260px] lg:min-w-0 snap-center h-full">
+                            <div key={product.id} className="min-w-[240px] lg:min-w-0 snap-center h-full">
                                 <ProductCard
                                     id={product.id}
                                     name={product.title}
-                                    price={product.base_price.toLocaleString()}
+                                    price={product.base_price}
                                     image={product.images?.[0] || ""}
                                     rating={product.rating || 4.5}
                                     category={product.category?.name || category}
@@ -150,16 +153,16 @@ export function CategoryShowcase({ title, category, bgClass = "bg-white", link =
                                     subcategory={product.sub_category || undefined}
                                     sellerId={product.seller_id}
                                     sellerName={product.seller?.business_name}
-                                    compact={true}
+                                    compact={false}
                                 />
                             </div>
                         ))}
                     </div>
                 )}
 
-                <div className="mt-6 md:hidden text-center">
+                <div className="mt-8 md:hidden text-center">
                     <Link href={link}>
-                        <Button variant="outline" className="w-full rounded-xl font-bold uppercase tracking-widest text-xs">
+                        <Button variant="outline" className="w-full rounded-full h-12 font-black uppercase tracking-widest text-[10px] border-neutral-200">
                             {t.market_view_all}
                         </Button>
                     </Link>

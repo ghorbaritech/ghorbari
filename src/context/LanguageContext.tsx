@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { translations } from './translations';
 
 type Language = 'EN' | 'BN';
@@ -14,7 +14,22 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-    const [language, setLanguage] = useState<Language>('EN');
+    // Default to BN; restore from localStorage if user has previously switched
+    const [language, setLanguageState] = useState<Language>('BN');
+
+    useEffect(() => {
+        const saved = localStorage.getItem('ghorbari_lang') as Language | null;
+        const lang = (saved === 'EN' || saved === 'BN') ? saved : 'BN';
+        setLanguageState(lang);
+        document.documentElement.lang = lang === 'BN' ? 'bn' : 'en';
+    }, []);
+
+    const setLanguage = (lang: Language) => {
+        setLanguageState(lang);
+        localStorage.setItem('ghorbari_lang', lang);
+        // Set html[lang] so CSS font override activates
+        document.documentElement.lang = lang === 'BN' ? 'bn' : 'en';
+    };
 
     const value = {
         language,

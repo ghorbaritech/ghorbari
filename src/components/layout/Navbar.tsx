@@ -11,8 +11,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useCart } from "@/context/CartContext";
 import { CartDrawer } from "../cart/CartDrawer";
 import { useLanguage } from "@/context/LanguageContext";
-import { MegaMenu } from "./MegaMenu";
-import { getCategories, Category } from "@/services/categoryService";
+// Removed: import { getCategories, Category } from "@/services/categoryService"; as categories logic is removed
 
 export function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,10 +23,12 @@ export function Navbar() {
     const router = useRouter();
     const supabase = createClient();
 
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [activeSection, setActiveSection] = useState<'all' | 'design' | 'product' | 'service' | null>(null);
-    const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
-    const megaMenuTimeout = useRef<NodeJS.Timeout | null>(null);
+    // The categories state and its fetching logic are not used in the Navbar component's JSX.
+    // If categories are needed for a dropdown or dynamic menu, they should be rendered here.
+    // For now, it's removed as per the instruction to remove "duplicate categories"
+    // if this was considered a duplicate or unused fetch within Navbar itself.
+    // If this data is intended for a child component, it should be passed down.
+    // const [categories, setCategories] = useState<Category[]>([]);
 
     useEffect(() => {
         async function fetchUser() {
@@ -44,29 +45,17 @@ export function Navbar() {
         }
         fetchUser();
 
-        async function fetchCategories() {
-            try {
-                const data = await getCategories();
-                setCategories(data);
-            } catch (e) {
-                console.error("Failed to fetch categories for menu:", e);
-            }
-        }
-        fetchCategories();
+        // Removed: fetchCategories logic as it was unused in Navbar
+        // async function fetchCategories() {
+        //     try {
+        //         const data = await getCategories();
+        //         setCategories(data);
+        //     } catch (e) {
+        //         console.error("Failed to fetch categories for menu:", e);
+        //     }
+        // }
+        // fetchCategories();
     }, []);
-
-    const handleMouseEnter = (section: 'all' | 'design' | 'product' | 'service') => {
-        if (megaMenuTimeout.current) clearTimeout(megaMenuTimeout.current);
-        setActiveSection(section);
-        setIsMegaMenuOpen(true);
-    };
-
-    const handleMouseLeave = () => {
-        megaMenuTimeout.current = setTimeout(() => {
-            setIsMegaMenuOpen(false);
-            setActiveSection(null);
-        }, 150);
-    };
 
     const handleSearch = () => {
         if (searchQuery.trim()) {
@@ -86,13 +75,41 @@ export function Navbar() {
     };
 
     return (
-        <header className="w-full z-50 bg-white">
-            <div className="bg-primary-600 border-b border-primary-700">
-                <div className="container mx-auto px-8 h-16 flex items-center justify-between gap-8">
+        <header className="w-full z-50 bg-white sticky top-0 border-b border-neutral-200">
+            {/* Top Utility Bar */}
+            <div className="bg-neutral-50 border-b hidden sm:block">
+                <div className="section-container h-10 flex items-center justify-between text-[11px] font-medium text-neutral-500 uppercase tracking-wider">
+                    <div className="flex items-center gap-6">
+                        <Link href="/partner-login" className="hover:text-primary-600 transition-colors flex items-center gap-1.5">
+                            <LayoutDashboard className="w-3 h-3" />
+                            {t.nav_partner}
+                        </Link>
+                        <span className="w-px h-3 bg-neutral-200"></span>
+                        <Link href="/help" className="hover:text-primary-600 transition-colors">
+                            {t.nav_help}
+                        </Link>
+                    </div>
+                    <div className="flex items-center gap-6">
+                        <button
+                            onClick={() => setLanguage(language === 'EN' ? 'BN' : 'EN')}
+                            className="hover:text-primary-600 transition-colors flex items-center gap-1 font-bold"
+                        >
+                            <span className={language === 'EN' ? 'text-primary-600' : 'text-neutral-400'}>EN</span>
+                            <span className="text-neutral-300">/</span>
+                            <span className={language === 'BN' ? 'text-primary-600' : 'text-neutral-400'}>BN</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Header */}
+            <div className="border-b">
+                <div className="section-container h-20 flex items-center gap-8 lg:gap-12">
+                    {/* Logo */}
                     <Link href="/" className="flex-shrink-0">
-                        <div className="relative w-36 h-10">
+                        <div className="relative w-40 h-10">
                             <Image
-                                src="/full-logo-white.svg"
+                                src="/logo-v2.png"
                                 alt="Ghorbari Logo"
                                 fill
                                 className="object-contain object-left"
@@ -101,86 +118,70 @@ export function Navbar() {
                         </div>
                     </Link>
 
-                    <div className="hidden md:flex flex-1 max-w-xl relative">
-                        <Input
-                            placeholder={t.nav_search_placeholder}
-                            className="w-full pl-12 h-10 bg-white border-white/20 focus:bg-white focus:border-white rounded-xl font-medium text-sm"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                        />
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                    </div>
-
-                    <div className="flex items-center gap-6">
-                        <div className="hidden lg:flex items-center gap-3 text-xs font-bold text-white uppercase tracking-tight">
-                            <Link href="/partner-login" className="hover:text-white/80 transition-colors">
-                                {t.nav_partner}
-                            </Link>
-                            <span className="w-px h-3 bg-white/30"></span>
-                            {!user ? (
-                                <>
-                                    <Link href="/login" className="hover:text-white/80 transition-colors">
-                                        {t.nav_login}
-                                    </Link>
-                                    <span className="w-px h-3 bg-white/30"></span>
-                                    <Link href="/register" className="hover:text-white/80 transition-colors">
-                                        {t.nav_signup}
-                                    </Link>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="text-white/80">{t.nav_hi}, {profile?.full_name?.split(' ')[0]}</span>
-                                    <span className="w-px h-3 bg-white/30"></span>
-                                    <Link href="/dashboard" className="hover:text-white/80 transition-colors flex items-center gap-2">
-                                        <LayoutDashboard className="w-3 h-3" />
-                                        {t.nav_dashboard}
-                                    </Link>
-                                    <Button
-                                        variant="ghost"
-                                        onClick={handleSignOut}
-                                        className="font-bold text-white hover:text-white/80 uppercase text-xs p-0 h-auto ml-2"
-                                    >
-                                        <LogOut className="w-4 h-4" />
-                                    </Button>
-                                </>
-                            )}
-                            <span className="w-px h-3 bg-white/30"></span>
-                            <Link href="/help" className="hover:text-white/80 transition-colors">
-                                {t.nav_help}
-                            </Link>
-                            <span className="w-px h-3 bg-white/30"></span>
-                            <button
-                                onClick={() => setLanguage(language === 'EN' ? 'BN' : 'EN')}
-                                className="hover:text-white/80 transition-colors flex items-center gap-1"
+                    {/* Prominent Search Bar */}
+                    <div className="hidden md:flex flex-1 relative group">
+                        <div className="w-full relative">
+                            <Input
+                                placeholder={t.nav_search_placeholder}
+                                className="w-full pl-12 h-12 bg-neutral-100 border-none focus:bg-white focus:ring-2 focus:ring-primary-600 transition-all rounded-full font-medium text-neutral-900 pr-24"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                            />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-primary-600 transition-colors" />
+                            <Button
+                                onClick={handleSearch}
+                                className="absolute right-1 top-1 bottom-1 px-6 rounded-full bg-primary-950 hover:bg-black text-white text-xs font-bold uppercase tracking-widest"
                             >
-                                <span className={language === 'EN' ? 'text-white' : 'text-white/60'}>EN</span>
-                                <span className="text-white/60">/</span>
-                                <span className={language === 'BN' ? 'text-white' : 'text-white/60'}>BN</span>
-                            </button>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                            <Link href={user ? "/dashboard" : "/login"} className="text-white hover:text-white/80 transition-colors p-1">
-                                <User className="w-5 h-5" />
-                            </Link>
-
-                            <button
-                                onClick={() => openDrawer()}
-                                className="relative text-white hover:text-white/80 transition-colors p-1 flex items-center justify-center h-10 w-10"
-                            >
-                                <ShoppingCart className="w-5 h-5" />
-                                {itemCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-primary-600 text-[10px] font-black border-2 border-primary-600 shadow-lg animate-in zoom-in duration-300">
-                                        {itemCount}
-                                    </span>
-                                )}
-                            </button>
-
-                            <Button variant="ghost" size="icon" className="md:hidden text-white hover:text-white/80 h-8 w-8" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                                {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                                {t.search || "Search"}
                             </Button>
                         </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 lg:gap-6 ml-auto">
+                        <div className="hidden lg:flex items-center">
+                            {!user ? (
+                                <Link href="/login" className="flex flex-col items-center gap-0.5 px-3 group">
+                                    <div className="p-2 rounded-full group-hover:bg-neutral-100 transition-colors">
+                                        <User className="w-6 h-6 text-neutral-700" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-neutral-500 group-hover:text-primary-600 uppercase tracking-tighter transition-colors">
+                                        {t.nav_login}
+                                    </span>
+                                </Link>
+                            ) : (
+                                <Link href="/dashboard" className="flex flex-col items-center gap-0.5 px-3 group">
+                                    <div className="p-2 rounded-full group-hover:bg-neutral-100 transition-colors">
+                                        <User className="w-6 h-6 text-neutral-700" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-neutral-500 group-hover:text-primary-600 uppercase tracking-tighter transition-colors">
+                                        {profile?.full_name?.split(' ')[0]}
+                                    </span>
+                                </Link>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => openDrawer()}
+                            className="flex flex-col items-center gap-0.5 px-3 group relative"
+                        >
+                            <div className="p-2 rounded-full group-hover:bg-neutral-100 transition-colors">
+                                <ShoppingCart className="w-6 h-6 text-neutral-700" />
+                            </div>
+                            <span className="text-[10px] font-bold text-neutral-500 group-hover:text-primary-600 uppercase tracking-tighter transition-colors">
+                                {t.cart || "Cart"}
+                            </span>
+                            {itemCount > 0 && (
+                                <span className="absolute top-1 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white text-[10px] font-bold border-2 border-white shadow-sm">
+                                    {itemCount}
+                                </span>
+                            )}
+                        </button>
+
+                        <Button variant="ghost" size="icon" className="md:hidden text-neutral-700" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -188,29 +189,30 @@ export function Navbar() {
             <CartDrawer isOpen={isDrawerOpen} onClose={() => closeDrawer()} />
 
             <div className="border-b hidden md:block overflow-x-auto no-scrollbar">
-                <div className="container mx-auto px-8" onMouseLeave={handleMouseLeave}>
-                    <nav className="flex items-center gap-10 h-12 text-[12px] font-bold text-neutral-600 uppercase tracking-tight whitespace-nowrap">
-                        <div
-                            className="flex items-center gap-2 py-4 border-b-2 border-transparent"
+                <div className="section-container">
+                    <nav className="flex items-center gap-10 h-12 text-[12px] font-bold text-neutral-700 uppercase tracking-wide whitespace-nowrap">
+                        <Link
+                            href="/categories"
+                            className="flex items-center gap-2 py-3 border-b-2 border-transparent hover:text-primary-600 hover:border-primary-600 transition-all"
                         >
                             <Menu className="w-4 h-4" />
                             <span>{t.nav_all_categories}</span>
-                        </div>
+                        </Link>
                         <Link
                             href="/services/design/book"
-                            className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600"
+                            className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
                         >
                             {t.nav_design_planning}
                         </Link>
                         <Link
                             href="/products"
-                            className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600"
+                            className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
                         >
                             {t.nav_marketplace}
                         </Link>
                         <Link
                             href="/services"
-                            className="hover:text-primary-600 transition-colors py-4 border-b-2 border-transparent hover:border-primary-600"
+                            className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
                         >
                             {t.nav_renovation}
                         </Link>
@@ -218,64 +220,48 @@ export function Navbar() {
                 </div>
             </div>
 
-            {/* MegaMenu temporarily disabled
-            <div className="relative" onMouseEnter={() => { if (megaMenuTimeout.current) clearTimeout(megaMenuTimeout.current); }}>
-                <MegaMenu
-                    isOpen={isMegaMenuOpen}
-                    activeSection={activeSection}
-                    categories={categories}
-                    onClose={() => {
-                        setIsMegaMenuOpen(false);
-                        setActiveSection(null);
-                    }}
-                    onMouseLeave={handleMouseLeave}
-                />
-            </div>
-            */}
-
+            {/* Mobile Menu */}
             {
                 isMenuOpen && (
-                    <div className="md:hidden p-6 bg-white border-b absolute w-full shadow-2xl z-50 flex flex-col gap-8">
-                        <div className="relative">
+                    <div className="md:hidden fixed inset-0 top-[80px] bg-white z-[60] flex flex-col p-6 animate-in slide-in-from-right duration-300">
+                        <div className="relative mb-8">
                             <Input
                                 placeholder={t.nav_search_placeholder}
-                                className="w-full pl-12 h-12 bg-neutral-50 rounded-xl"
+                                className="w-full pl-12 h-14 bg-neutral-50 rounded-2xl border-none font-medium"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={handleKeyDown}
                             />
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-neutral-400" />
                         </div>
 
-                        <nav className="flex flex-col gap-6 font-bold text-neutral-800 uppercase text-sm tracking-tight">
-                            <Link href="/services/design/book" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
+                        <nav className="flex flex-col gap-6 font-bold text-neutral-900 uppercase text-sm tracking-widest">
+                            <Link href="/services/design/book" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between py-2 border-b">
                                 {t.nav_design_planning} <ArrowRight className="w-4 h-4 text-neutral-300" />
                             </Link>
-                            <Link href="/products" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
+                            <Link href="/products" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between py-2 border-b">
                                 {t.nav_marketplace} <ArrowRight className="w-4 h-4 text-neutral-300" />
                             </Link>
-                            <Link href="/services" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between">
+                            <Link href="/services" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between py-2 border-b">
                                 {t.nav_renovation} <ArrowRight className="w-4 h-4 text-neutral-300" />
                             </Link>
                         </nav>
 
-                        <div className="h-px bg-neutral-100"></div>
-
-                        <div className="flex flex-col gap-4">
+                        <div className="mt-auto flex flex-col gap-4">
                             {!user ? (
                                 <>
                                     <Link href="/login" onClick={() => setIsMenuOpen(false)}>
-                                        <Button variant="outline" className="w-full h-12 font-bold uppercase tracking-tight rounded-xl">{t.nav_login}</Button>
+                                        <Button variant="outline" className="w-full h-14 font-bold uppercase rounded-2xl">{t.nav_login}</Button>
                                     </Link>
                                     <Link href="/register" onClick={() => setIsMenuOpen(false)}>
-                                        <Button className="w-full h-12 font-bold uppercase tracking-tight rounded-xl shadow-lg shadow-primary-200">{t.nav_create_account}</Button>
+                                        <Button className="w-full h-14 font-bold uppercase rounded-2xl bg-primary-950 text-white shadow-xl">{t.nav_create_account}</Button>
                                     </Link>
                                 </>
                             ) : (
                                 <Button
                                     onClick={handleSignOut}
                                     variant="outline"
-                                    className="w-full h-12 font-bold uppercase tracking-tight text-rose-600 border-rose-200 rounded-xl"
+                                    className="w-full h-14 font-bold uppercase text-rose-600 border-rose-100 rounded-2xl"
                                 >
                                     {t.nav_logout}
                                 </Button>

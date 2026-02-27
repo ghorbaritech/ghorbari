@@ -95,14 +95,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.between,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Booking #${booking.id.substring(0, 8).toUpperCase()}',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, py: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -129,7 +129,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           const Divider(),
           const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.between,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Quotation Status', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
               Text(

@@ -1,21 +1,18 @@
 "use client"
 
-import { Star, ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCompare } from "@/context/CompareContext";
-import { GitCompare } from "lucide-react";
 import { getL } from "@/utils/localization";
 
 interface ProductCardProps {
     id: string;
     name: string;
     nameBn?: string | null;
-    price: string;
-    oldPrice?: string | null;
+    price: string | number;
+    oldPrice?: string | number | null;
     image: string;
     rating: number;
     category?: string;
@@ -31,7 +28,6 @@ interface ProductCardProps {
     sellerNameBn?: string | null;
     href?: string;
 }
-
 
 export function ProductCard({
     id,
@@ -56,19 +52,17 @@ export function ProductCard({
 }: ProductCardProps) {
     const { addItem } = useCart();
     const { language, t } = useLanguage();
-    const { addToCompare, removeFromCompare, isInCompare } = useCompare();
     const productLink = href || `/products/${id}`;
 
     const displayName = getL(name, nameBn, language);
     const displaySeller = getL(sellerName, sellerNameBn, language);
     const displayCategory = getL(category, categoryBn, language) || t.nav_all_categories;
-    const displayTag = getL(tag, tagBn, language);
 
     const handleAddToCart = () => {
         addItem({
             id,
             name: displayName,
-            price: parseFloat(price.replace(/,/g, '')),
+            price: typeof price === 'number' ? price : parseFloat(String(price).replace(/,/g, '')),
             image,
             sellerId: sellerId || "",
             sellerName: displaySeller || "",
@@ -78,110 +72,69 @@ export function ProductCard({
     };
 
     return (
-
-        <div className={`group bg-white rounded-2xl border border-neutral-100 overflow-hidden hover:shadow-xl hover:border-primary-100 transition-all duration-300 flex flex-col h-full ${compact ? '' : ''}`}>
-            <Link href={productLink} className="block relative aspect-[4/3] overflow-hidden bg-neutral-50 cursor-pointer">
+        <div className="group bg-white rounded-2xl border border-neutral-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full overflow-hidden">
+            {/* Image */}
+            <Link href={productLink} className="block relative aspect-[4/3] overflow-hidden bg-neutral-100">
                 <Image
                     src={image}
                     alt={displayName}
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                 />
 
-                {/* Overlay Tags */}
-                <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-                    {discount && (
-                        <span className="bg-error text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter shadow-sm">
-                            {discount}
-                        </span>
-                    )}
-                    {displayTag && (
-                        <span className="bg-white/90 backdrop-blur-sm text-neutral-900 text-[9px] font-bold px-2.5 py-1 rounded-full border border-neutral-100 shadow-sm uppercase tracking-tighter">
-                            {displayTag}
-                        </span>
-                    )}
+                {/* Discount badge – top left */}
+                {discount && (
+                    <span className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow">
+                        {discount}
+                    </span>
+                )}
+
+                {/* Rating badge – top right */}
+                <div className="absolute top-3 right-3">
+                    <span className="bg-white text-neutral-800 text-[11px] font-bold px-2 py-1 rounded-lg shadow flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-orange-400 text-orange-400" />
+                        {rating}
+                    </span>
                 </div>
             </Link>
 
-            {/* Info */}
-            <div className={`flex flex-col flex-1 gap-2 ${compact ? 'p-3' : 'p-5'}`}>
-                {/* Header: Seller Name (top tag) + Rating */}
-                <div className="flex items-center justify-between">
-                    {/* Top tag = Seller name, clickable */}
-                    {displaySeller && sellerId ? (
-                        <Link
-                            href={`/partner/${sellerId}`}
-                            className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest truncate max-w-[70%] hover:text-primary-600 transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            {displaySeller}
-                        </Link>
-                    ) : (
-                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest truncate max-w-[70%]">
-                            {displaySeller || displayCategory}
-                        </span>
-                    )}
-                    <div className="flex items-center gap-1 text-amber-500 text-[10px] font-bold">
-                        <Star className="w-3 h-3 fill-amber-500" />
-                        {rating}
-                    </div>
-                </div>
-
-                {/* Title — links to product detail page */}
-                <Link href={productLink} className="block">
-                    <h4 className="font-bold text-neutral-900 leading-tight text-sm group-hover:text-primary-600 group-hover:underline transition-colors line-clamp-2 mb-1 cursor-pointer">
+            {/* Body */}
+            <div className="p-4 flex flex-col flex-1">
+                {/* Title */}
+                <Link href={productLink}>
+                    <h4 className="font-bold text-neutral-900 leading-snug text-[15px] mb-1 line-clamp-1 group-hover:text-primary-600 transition-colors">
                         {displayName}
                     </h4>
                 </Link>
 
-                {/* Below title = subcategory (e.g. Cement, Sand, Bricks) */}
-                {(subcategory || displayCategory) && (
-                    <div className="text-[10px] text-neutral-500 font-medium mb-1 uppercase tracking-wide">
-                        {subcategory || displayCategory}
-                    </div>
-                )}
+                {/* Seller or category as subtitle */}
+                <p className="text-neutral-500 text-[12px] mb-4 line-clamp-1 leading-snug">
+                    {displaySeller && sellerId ? (
+                        <Link href={`/partner/${sellerId}`} className="hover:text-primary-600 transition-colors">
+                            {displaySeller}
+                        </Link>
+                    ) : (
+                        displayCategory
+                    )}
+                </p>
 
-                {/* Price & Action */}
-                <div className={`mt-auto pt-2 flex items-center justify-between gap-2 ${compact ? 'border-t border-neutral-50' : ''}`}>
+                {/* Footer */}
+                <div className="mt-auto flex items-center justify-between gap-3">
                     <div className="flex flex-col">
                         {oldPrice && (
-                            <span className="text-[10px] text-neutral-400 line-through font-medium">৳{oldPrice}</span>
+                            <span className="text-[10px] text-neutral-400 line-through font-medium">৳{(Number(String(oldPrice).replace(/,/g, '')) || 0).toLocaleString(language === 'BN' ? 'bn-BD' : 'en-BD')}</span>
                         )}
-                        {/* "Starting from" text for compact mode similar to design card? User didn't ask explicitly but it's in screenshot. Keeping simple price for products. */}
-                        {compact && <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-wide">{t.lbl_price}</span>}
-                        <span className={`${compact ? 'text-base' : 'text-lg'} font-bold text-neutral-900`}>৳{price}</span>
+                        <span className="text-xl font-black text-neutral-900 tracking-tight">৳{(Number(String(price).replace(/,/g, '')) || 0).toLocaleString(language === 'BN' ? 'bn-BD' : 'en-BD')}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        {!compact && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (isInCompare(id)) {
-                                        removeFromCompare(id);
-                                    } else {
-                                        addToCompare({ id, name: displayName, price: parseFloat(price.replace(/,/g, '')), image });
-                                    }
-                                }}
-                                className={`h-8 w-8 p-0 rounded-lg border-neutral-200 hover:border-primary-600 hover:text-primary-600 ${isInCompare(id) ? 'bg-primary-50 border-primary-600 text-primary-600' : ''}`}
-                            >
-                                <GitCompare className="w-4 h-4" />
-                            </Button>
-                        )}
-                        <Button
-                            size="sm"
-                            onClick={handleAddToCart}
-                            className={`bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg font-bold shadow-sm ${compact ? 'h-8 px-4 text-[10px] uppercase' : 'px-4 text-xs'}`}
-                        >
-                            {!compact && <ShoppingCart className="w-3 h-3 mr-1" />}
-                            {t.btn_buy_now}
-                        </Button>
-                    </div>
+
+                    <button
+                        onClick={(e) => { e.preventDefault(); handleAddToCart(); }}
+                        className="bg-neutral-900 hover:bg-black text-white font-bold text-[10px] uppercase tracking-widest px-4 h-9 rounded-lg transition-colors"
+                    >
+                        {t.btn_buy_now}
+                    </button>
                 </div>
             </div>
         </div>
     );
 }
-

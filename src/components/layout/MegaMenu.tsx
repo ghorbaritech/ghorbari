@@ -98,7 +98,6 @@ const CategoryTree = ({
 export function MegaMenu({ isOpen, activeSection, categories, onMouseLeave, onClose }: MegaMenuProps) {
     const [activeRootId, setActiveRootId] = useState<string | null>(null);
 
-    // Reset active root category when section changes or menu opens
     useEffect(() => {
         if (!isOpen) {
             setActiveRootId(null);
@@ -107,18 +106,16 @@ export function MegaMenu({ isOpen, activeSection, categories, onMouseLeave, onCl
 
         const roots = categories.filter((c) => c.level === 0 && (activeSection === 'all' || c.type === activeSection));
         if (roots.length > 0) {
-            // Only set first item if nothing active or current active root is not in this section
             if (!activeRootId || !roots.find(r => r.id === activeRootId)) {
                 setActiveRootId(roots[0].id);
             }
         } else {
             setActiveRootId(null);
         }
-    }, [isOpen, activeSection, categories]); // Do not include activeRootId in dependencies to avoid reset on hover
+    }, [isOpen, activeSection, categories]);
 
     if (!isOpen || !activeSection) return null;
 
-    // Filter categories for the current active section
     let currentCategories = categories;
     if (activeSection !== 'all') {
         currentCategories = categories.filter(c => c.type === activeSection);
@@ -127,13 +124,12 @@ export function MegaMenu({ isOpen, activeSection, categories, onMouseLeave, onCl
     const rootCategories = currentCategories.filter(c => c.level === 0);
     const activeRoot = rootCategories.find(c => c.id === activeRootId);
 
-    // Determine target link based on type
     const getLink = (category: Category) => {
         if (category.type === 'product') {
             return `/products?category=${category.slug}`;
         }
         if (category.type === 'service') {
-            return `/services`; // Update if there's a specific route like /services?category=
+            return `/services`;
         }
         if (category.type === 'design') {
             return `/services/design/book`;
@@ -143,58 +139,78 @@ export function MegaMenu({ isOpen, activeSection, categories, onMouseLeave, onCl
 
     return (
         <div
-            className="absolute left-0 top-full w-full bg-white shadow-2xl border-t z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+            className="absolute left-0 top-full w-full bg-white shadow-2xl border-t z-50 animate-in fade-in slide-in-from-top-1 duration-200"
             onMouseLeave={onMouseLeave}
         >
-            <div className="container mx-auto px-8 max-h-[70vh] flex overflow-hidden">
-                {/* Level 0: Root Categories */}
-                <div className="w-1/4 min-w-[250px] bg-neutral-50/50 border-r py-4 overflow-y-auto no-scrollbar max-h-[70vh]">
+            <div className="section-container max-h-[80vh] flex overflow-hidden">
+                {/* Level 0: Sidebar roots */}
+                <div className="w-1/4 min-w-[280px] bg-neutral-50 border-r py-6 overflow-y-auto no-scrollbar">
                     {rootCategories.length === 0 ? (
-                        <div className="px-6 py-4 text-sm text-neutral-500">No categories found.</div>
+                        <div className="px-8 py-4 text-xs font-bold text-neutral-400 uppercase tracking-widest">No categories</div>
                     ) : (
                         rootCategories.map((root) => (
-                            <Link
+                            <div
                                 key={root.id}
-                                href={getLink(root)}
-                                onClick={onClose}
                                 onMouseEnter={() => setActiveRootId(root.id)}
-                                className={`flex items-center justify-between px-6 py-3 text-sm font-semibold transition-colors
-                                    ${activeRootId === root.id ? 'bg-white text-primary-600 border-l-4 border-l-primary-600 shadow-sm' : 'text-neutral-700 hover:bg-white hover:text-primary-600 border-l-4 border-l-transparent'}`
+                                className={`group flex items-center justify-between px-8 py-3.5 cursor-pointer transition-all border-l-4
+                                    ${activeRootId === root.id
+                                        ? 'bg-white text-primary-950 border-l-primary-950 shadow-sm'
+                                        : 'text-neutral-500 hover:bg-white hover:text-primary-950 border-l-transparent'}`
                                 }
                             >
-                                <span>{root.name}</span>
-                                <ChevronRight className={`w-4 h-4 ${activeRootId === root.id ? 'text-primary-600' : 'text-neutral-400'}`} />
-                            </Link>
+                                <Link
+                                    href={getLink(root)}
+                                    onClick={onClose}
+                                    className="text-[13px] font-bold uppercase tracking-wider"
+                                >
+                                    {root.name}
+                                </Link>
+                                <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${activeRootId === root.id ? 'translate-x-1 text-primary-950' : 'text-neutral-300'}`} />
+                            </div>
                         ))
                     )}
                 </div>
 
-                {/* Level 1+: Subcategories and their items mapped recursively */}
-                <div className="w-3/4 p-8 overflow-y-auto no-scrollbar max-h-[70vh]">
+                {/* Main Content Area */}
+                <div className="w-3/4 p-10 overflow-y-auto no-scrollbar bg-white">
                     {activeRoot ? (
-                        <CategoryTree
-                            categories={currentCategories}
-                            parentId={activeRoot.id}
-                            onClose={onClose}
-                            getLink={getLink}
-                        />
+                        <div>
+                            <div className="mb-8 flex items-center justify-between border-b pb-4">
+                                <h3 className="text-xl font-black text-primary-950 flex items-center gap-3">
+                                    <span className="w-2 h-8 bg-primary-950 rounded-full"></span>
+                                    {activeRoot.name}
+                                </h3>
+                                <Link
+                                    href={getLink(activeRoot)}
+                                    onClick={onClose}
+                                    className="text-xs font-bold text-accent-500 hover:text-accent-600 transition-colors uppercase tracking-widest"
+                                >
+                                    Explore All {activeRoot.name}
+                                </Link>
+                            </div>
+                            <CategoryTree
+                                categories={currentCategories}
+                                parentId={activeRoot.id}
+                                onClose={onClose}
+                                getLink={getLink}
+                            />
+                        </div>
                     ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-neutral-400">
-                            {rootCategories.length > 0 ? (
-                                <p>Select a category</p>
-                            ) : (
-                                <p>No categories available</p>
-                            )}
+                        <div className="h-64 flex flex-col items-center justify-center text-neutral-300 gap-4">
+                            <div className="w-12 h-12 rounded-full border-2 border-dashed border-neutral-200 animate-spin"></div>
+                            <p className="text-xs font-bold uppercase tracking-widest">Syncing Categories...</p>
                         </div>
                     )}
                 </div>
             </div>
 
-            <div className="h-px bg-neutral-100" />
-            <div className="bg-neutral-50 p-4 text-center">
-                <Link href="/products" onClick={onClose} className="text-sm font-bold text-primary-600 hover:underline">
-                    BROWSE ALL CATEGORIES
-                </Link>
+            <div className="bg-primary-950 text-white p-4">
+                <div className="section-container flex items-center justify-between">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">Ghorbari Professional Network • 24/7 Verified Support • Secure Transactions</p>
+                    <Link href="/products" onClick={onClose} className="text-xs font-black hover:text-accent-500 transition-colors uppercase tracking-widest flex items-center gap-2">
+                        View All Materials <ChevronRight className="w-3 h-3" />
+                    </Link>
+                </div>
             </div>
         </div>
     );

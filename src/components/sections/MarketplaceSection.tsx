@@ -172,8 +172,8 @@ export function MarketplaceSection() {
                                 key={product.id}
                                 id={product.id}
                                 name={product.title}
-                                price={product.base_price.toLocaleString()}
-                                oldPrice={product.discount_price ? product.base_price.toLocaleString() : null}
+                                price={product.discount_price || product.base_price}
+                                oldPrice={product.discount_price ? product.base_price : null}
                                 image={product.images?.[0] || ""}
                                 rating={product.rating || 0}
                                 category={product.category?.name || "Materials"}

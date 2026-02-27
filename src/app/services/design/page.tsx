@@ -249,10 +249,10 @@ export default function DesignServicesPage() {
                                             category={service.category?.name}
                                             categoryBn={service.category?.name_bn}
                                             categoryId={service.category_id}
-                                            sellerId={service.designer_id}
                                             sellerName={service.designer?.company_name}
                                             sellerNameBn={service.designer?.company_name_bn}
                                             tag={service.unit}
+                                            href={`/services/${service.id}`}
                                         />
                                     ))}
                                 </div>
