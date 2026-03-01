@@ -2,6 +2,10 @@
   command = "next build"
   publish = ".next"
 
+[build.environment]
+  NODE_VERSION = "20"
+  NODE_OPTIONS = "--max-old-space-size=4096"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
   [plugins.inputs]
