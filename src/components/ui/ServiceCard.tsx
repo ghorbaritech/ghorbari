@@ -74,15 +74,17 @@ export function ServiceCard({
                         <span className="text-xl font-black text-neutral-900 tracking-tight">৳{(Number(String(price).replace(/,/g, '')) || 0).toLocaleString(language === 'BN' ? 'bn-BD' : 'en-BD')}</span>
                     </div>
 
-                    {/* Book Now → goes to /services listing */}
-                    <Link href="/services">
-                        <Button
-                            size="sm"
-                            className="rounded-lg h-9 px-4 font-bold uppercase text-[10px] tracking-widest bg-neutral-900 hover:bg-black text-white"
-                        >
-                            {t.service_book_now || 'Book Now'}
-                        </Button>
-                    </Link>
+                    {/* Book Now → toggles selection */}
+                    <Button
+                        size="sm"
+                        className={`rounded-lg h-9 px-4 font-bold uppercase text-[10px] tracking-widest transition-all duration-300 ${isSelected
+                                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-200'
+                                : 'bg-neutral-900 hover:bg-black text-white'
+                            }`}
+                        onClick={onToggle}
+                    >
+                        {isSelected ? (t.service_remove || 'Remove') : (t.service_book_now || 'Book Now')}
+                    </Button>
                 </div>
             </div>
         </div>

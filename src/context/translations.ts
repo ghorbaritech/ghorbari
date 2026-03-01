@@ -167,6 +167,7 @@
         service_verified_label: "Verified",
         service_booking_title: "Professional Services",
         service_book_now: "Book Now",
+        service_remove: "Remove",
 
         // Promotional Banners
         promo_limited_offer: "Limited Time Offer",
@@ -406,6 +407,7 @@
         service_verified_label: "যাচাইকৃত",
         service_booking_title: "পেশাদার সার্ভিসসমূহ",
         service_book_now: "বুক করুন",
+        service_remove: "সরিয়ে ফেলুন",
 
         // Promotional Banners
         promo_limited_offer: "সীমিত সময়ের অফার",
