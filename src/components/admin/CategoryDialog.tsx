@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Category, CategoryType, createCategory, updateCategory } from "@/services/categoryService";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 interface CategoryDialogProps {
     isOpen: boolean;
@@ -99,6 +100,36 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
         }
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setLoading(true);
+        try {
+            const supabase = createClient();
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+            const filePath = `icons/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('category_images')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('category_images')
+                .getPublicUrl(filePath);
+
+            setFormData(prev => ({ ...prev, icon_url: publicUrl }));
+        } catch (error: any) {
+            console.error('Image upload failed:', error);
+            alert('Failed to upload image: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Filter potential parents: must be same type and not self
     const availableParents = allCategories.filter(c =>
         c.type === formData.type &&
@@ -113,7 +144,7 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
     const isItemLevel = parentLevel === 1 || category?.level === 2;
     // Level >= 2 means we're in sub-item territory (unlimited depth)
     const isSubItemLevel = parentLevel >= 2 || (category?.level !== undefined && category.level >= 3);
-    const showMetadata = isSubLevel || isItemLevel || isSubItemLevel;
+    const showMetadata = true; // Always show metadata to allow unit pricing at all levels
 
     // Contextual title
     const getDialogTitle = () => {
@@ -136,14 +167,14 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 border-neutral-200 dark:border-neutral-800 shadow-2xl">
                 <DialogHeader>
                     <DialogTitle>{getDialogTitle()}</DialogTitle>
                     <DialogDescription>
                         {category ? "Modify existing category details." : (
                             <span className="inline-flex items-center gap-1.5">
                                 Creating
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${isItemLevel ? 'bg-neutral-100 text-neutral-600' : isSubLevel ? 'bg-neutral-200 text-neutral-700' : 'bg-neutral-900 text-white'}`}>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${isItemLevel ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400' : isSubLevel ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300' : 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'}`}>
                                     {getLevelLabel()}
                                 </span>
                             </span>
@@ -191,7 +222,7 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <p className="text-[10px] text-neutral-500">
+                            <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
                                 Select a parent to create a Subcategory or Item. Max depth is 3 levels.
                             </p>
                         </div>
@@ -199,10 +230,10 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
 
                     {/* Show pre-filled parent info when using inline add */}
                     {defaultParentId && parentCategory && (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-neutral-50 rounded-lg border border-neutral-100 text-sm">
-                            <span className="text-neutral-500 text-xs font-medium">Parent:</span>
-                            <span className="font-bold text-neutral-900">{parentCategory.name}</span>
-                            <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${parentCategory.level === 0 ? 'bg-neutral-900 text-white' : 'bg-neutral-200 text-neutral-700'}`}>
+                        <div className="flex items-center gap-2 px-3 py-2 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-100 dark:border-neutral-800 text-sm">
+                            <span className="text-neutral-500 dark:text-neutral-400 text-xs font-medium">Parent:</span>
+                            <span className="font-bold text-neutral-900 dark:text-neutral-100">{parentCategory.name}</span>
+                            <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${parentCategory.level === 0 ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300'}`}>
                                 {parentCategory.level === 0 ? 'Root' : 'Sub'}
                             </span>
                         </div>
@@ -230,8 +261,8 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
                     </div>
 
                     {showMetadata && (
-                        <div className="p-4 bg-neutral-50 rounded-lg space-y-3 border border-neutral-100">
-                            <h4 className="text-xs font-bold text-neutral-700 uppercase tracking-wide">
+                        <div className="p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg space-y-3 border border-neutral-100 dark:border-neutral-800">
+                            <h4 className="text-xs font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide">
                                 {isSubItemLevel ? 'Sub-Item Details' : isItemLevel ? 'Item Details' : 'Pricing & Unit'}
                             </h4>
 
@@ -294,13 +325,38 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
                             </p>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="icon">Icon URL (Image)</Label>
-                            <Input
-                                id="icon"
-                                value={formData.icon_url || ""}
-                                onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })}
-                                placeholder="https://..."
-                            />
+                            <Label htmlFor="icon">Icon/Image</Label>
+                            <div className="flex gap-2 items-center">
+                                <div className="flex-1 relative">
+                                    <Input
+                                        id="icon"
+                                        value={formData.icon_url || ""}
+                                        onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })}
+                                        placeholder="Image URL or upload..."
+                                    />
+                                </div>
+                                <div>
+                                    <Input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        id="image-upload"
+                                        onChange={handleImageUpload}
+                                        disabled={loading}
+                                    />
+                                    <Label
+                                        htmlFor="image-upload"
+                                        className="flex items-center justify-center w-10 h-10 border rounded-md cursor-pointer hover:bg-neutral-50"
+                                    >
+                                        <Upload className="w-4 h-4 text-neutral-500" />
+                                    </Label>
+                                </div>
+                            </div>
+                            {formData.icon_url && (
+                                <div className="mt-2 w-16 h-16 rounded border bg-neutral-50 overflow-hidden">
+                                    <img src={formData.icon_url} alt="Icon Preview" className="w-full h-full object-cover" />
+                                </div>
+                            )}
                         </div>
                     </div>
 

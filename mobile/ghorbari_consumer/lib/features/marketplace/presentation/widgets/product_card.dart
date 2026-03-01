@@ -4,6 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ghorbari_consumer/features/cart/presentation/screens/checkout_screen.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -24,7 +26,7 @@ class ProductCard extends StatelessWidget {
         side: BorderSide(color: Colors.grey.shade100),
       ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
+      child: GestureDetector(
         onTap: onTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,36 +35,40 @@ class ProductCard extends StatelessWidget {
               children: [
                 AspectRatio(
                   aspectRatio: 1.1,
-                  child: Hero(
-                    tag: 'product_${product.id}_${product.categoryId}',
-                    child: product.imageUrl != null
-                        ? CachedNetworkImage(
-                            imageUrl: product.imageUrl!,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: Colors.grey.shade100,
-                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              color: Colors.grey.shade100,
-                              child: const Icon(Icons.image_not_supported_outlined),
-                            ),
-                          )
-                        : Container(
+                  child: product.imageUrl != null
+                      ? CachedNetworkImage(
+                          imageUrl: product.imageUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
                             color: Colors.grey.shade100,
-                            child: const Icon(Icons.shopping_bag_outlined),
+                            child: const Center(
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2)),
                           ),
-                  ),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey.shade100,
+                            child:
+                                const Icon(Icons.image_not_supported_outlined),
+                          ),
+                        )
+                      : Container(
+                          color: Colors.grey.shade100,
+                          child: const Icon(Icons.shopping_bag_outlined),
+                        ),
                 ),
                 Positioned(
                   top: 8,
                   right: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(4),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)],
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.1), blurRadius: 4)
+                      ],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -71,54 +77,14 @@ class ProductCard extends StatelessWidget {
                         const SizedBox(width: 2),
                         Text(
                           product.metadata?['rating']?.toString() ?? '4.8',
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              fontSize: 10, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                   ),
                 ),
-                Positioned(
-                  bottom: 8,
-                  right: 8,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                         final isService = product.metadata?['type'] == 'service';
-                        if (isService) {
-                           // Service booking logic could go here
-                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Booking ${product.name}...')),
-                          );
-                        } else {
-                          context.read<CartBloc>().add(CartItemAdded(product));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${product.name} added to cart!'),
-                              duration: const Duration(seconds: 1),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          );
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A),
-                          shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
-                        ),
-                        child: Icon(
-                          product.metadata?['type'] == 'service' ? Icons.calendar_today : Icons.add_shopping_cart, 
-                          color: Colors.white, 
-                          size: 16
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                // Removed circular floating button
               ],
             ),
             Padding(
@@ -138,21 +104,63 @@ class ProductCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      product.metadata?['type'] == 'service' ? 'Service' : (product.metadata?['seller_name'] ?? 'Auspicious'),
+                      product.metadata?['type'] == 'service'
+                          ? 'Service'
+                          : (product.metadata?['seller_name'] ?? 'Auspicious'),
                       style: TextStyle(
                         color: Colors.grey.shade500,
                         fontSize: 11,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '৳${product.price.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      color: Colors.blue,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                    ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          '৳${product.price.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      SizedBox(
+                        height: 28,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            context
+                                .read<CartBloc>()
+                                .add(CartItemAdded(product));
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CheckoutScreen()));
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F172A),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 0),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6)),
+                          ),
+                          child: Text(
+                            product.metadata?['type'] == 'service'
+                                ? 'BOOK'
+                                : 'BUY',
+                            style: const TextStyle(
+                                fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

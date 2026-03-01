@@ -4,6 +4,7 @@ import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_state.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:ghorbari_consumer/features/cart/presentation/screens/checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -141,7 +142,7 @@ class CartScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // TODO: Checkout implementation
+                   Navigator.push(context, MaterialPageRoute(builder: (context) => const CheckoutScreen()));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0F172A),

@@ -3,7 +3,6 @@ import 'package:ghorbari_consumer/features/marketplace/domain/repositories/marke
 import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_event.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_state.dart';
 import 'package:ghorbari_consumer/shared/models/cms_content.dart';
-import 'package:ghorbari_consumer/shared/models/category.dart';
 
 class MarketplaceBloc extends Bloc<MarketplaceEvent, MarketplaceState> {
   final MarketplaceRepository marketplaceRepository;

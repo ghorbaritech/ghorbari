@@ -1,0 +1,542 @@
+[
+  {
+    "id": "5b52a4b4-381e-4104-b2c4-fd2c7843d7aa",
+    "name": "Carpentry",
+    "level": 0,
+    "type": "service",
+    "metadata": {
+      "unit": "",
+      "price": "",
+      "brands": [],
+      "frequency": "Monthly"
+    },
+    "icon_url": ""
+  },
+  {
+    "id": "f401c64d-8927-4a96-b5b3-7e2aec436843",
+    "name": "Interior Paint",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "79b1bc5a-c5e1-4c38-a59a-4f16c02f304c",
+    "name": "Plastic Paint",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "72122efe-3f8c-4530-8ff0-5633870b0a18",
+    "name": "Distemper Paint",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "3bd9c518-a55a-45c3-a80f-1212452e34d0",
+    "name": "Luxury Silk Paint",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "0d5e69aa-925f-4d0f-bd01-49e27623e799",
+    "name": "Breath Easy/Easy Clean",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "75b14f6a-2722-49d4-b4d7-1bcaac137b8f",
+    "name": "Enamel Paint",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "242af768-43b4-470b-b8b1-d5a60e0026d5",
+    "name": "New Surface",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "9f182928-78d7-4ded-a4d4-a8128c8b454b",
+    "name": "Re-Paint Old Surface",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "9d6dee00-5d5c-4cf6-98f4-52813f557d95",
+    "name": "Damp Repair",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "1047c42b-016a-4cab-b361-33b091e1d918",
+    "name": "Damp Wall Repair Permanent",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "bf24679c-2138-4a3a-af68-11bdc5711b67",
+    "name": "Roof Water Leakage Repair",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "c4f3929e-773e-466e-a2d4-85dd6fd3382e",
+    "name": "Damp wall Treatment Temporary",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "bfd18529-97e6-4993-af83-6a6b33383bc8",
+    "name": "Wood & Furniture Paint",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "46447218-1a62-44e3-bd1d-36d297f88117",
+    "name": "Lacquar Varnish",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "6b78ab04-40e8-4c5e-9177-ea5fcb291832",
+    "name": "Hand Polish (Varnish Paint)",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "2f050343-a5fc-4c61-9ef8-499989ded795",
+    "name": "Spray or Deco paint",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "c34ca7e5-1655-4e9a-bc39-87f2dcbbf219",
+    "name": "Furniture Repair & Fixes",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "a9533c5d-1f09-4998-9fed-75d68768a601",
+    "name": "Up to 2 Hour",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "666e3852-0003-440d-bc52-a0134b9e57aa",
+    "name": "3 Hour to 5 Hour",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "e8b9fb8e-75d8-4241-b432-a748689aeaa4",
+    "name": "6 Hour to 8 Hour",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "b2b6916f-f9ac-41fa-b29f-f66b16c8d99c",
+    "name": "New Furniture",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "c762936d-13f9-4258-9495-2d611590216a",
+    "name": "Catalog Design",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "0cd22cdd-80d3-4fae-90e5-659511cd01cd",
+    "name": "Customized Design",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "941e2e1a-d85b-4dce-9fad-d650a2a37244",
+    "name": "Cabinet Design",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "011bc0ab-589f-4c6c-b605-98b3268a0613",
+    "name": "Furniture Assemble & Fitting",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "8218614e-a098-4100-90de-3e697b237193",
+    "name": "Regular Furniture",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "864236bd-2956-412a-a020-3abdc02cdb06",
+    "name": "Fixed and Wall Mounted Furniture",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "f003becb-19ff-4cf3-b614-70b11dde03d1",
+    "name": "Furniture Cover & Foam Repair",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "df83d94c-4bab-48b3-a895-06c956854180",
+    "name": "Fixed Foam/Leather/Velvet Sofa",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "fe889656-98b7-4fb4-94c4-8606b1afb6a1",
+    "name": "Non-Fixed Regular Sofa",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "f918fbba-5a1a-4fa7-a7a9-03b59d26f238",
+    "name": "Chair Cover & Foam",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "a7207a22-e319-405b-a5fe-b8df5b818395",
+    "name": "Thai Glass",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "52b6154a-c14b-4e05-bca4-5149eff5c71f",
+    "name": "Door",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "9801addb-9b3b-4189-bbb3-6e1b469b4c23",
+    "name": "Window",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "f389a1a8-b736-4a60-8be9-d474a05075f9",
+    "name": "Fixed Partition",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "b2d95417-890f-46f8-b9f9-e42fe9cbfc4d",
+    "name": "Installation & Repair",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "8577f961-a9e1-432e-be9b-fa798e17569e",
+    "name": "Aluminium, Glass & Grill",
+    "level": 0,
+    "type": "service",
+    "metadata": {
+      "unit": "",
+      "price": "",
+      "brands": [],
+      "frequency": "Monthly"
+    },
+    "icon_url": ""
+  },
+  {
+    "id": "5f65a0aa-5c07-4fb7-80c0-6a611b86069a",
+    "name": "Paint",
+    "level": 0,
+    "type": "service",
+    "metadata": {
+      "unit": "",
+      "price": "",
+      "brands": [],
+      "frequency": "Monthly"
+    },
+    "icon_url": ""
+  },
+  {
+    "id": "f09aae95-7e6b-48a7-9b3b-7a932399c05b",
+    "name": "Glass Works",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "66d35760-ce6b-47a0-bb69-1996cfca155d",
+    "name": "Tempered Glass (Processed)",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "bae187a3-43d2-45b8-a897-ae934690f5a3",
+    "name": "Non-Tempered Glass (Processed)",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "94cf6219-fac1-44bc-8c2c-279d6416e39d",
+    "name": "Beveled Glass",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "a3d88878-dcca-4a41-8ecd-24e56dd1fe16",
+    "name": "Glass Paper Pasting",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "12c62102-fe4c-44d7-8e8c-b450542be9e0",
+    "name": "Mosquito Net",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "a2d70f51-49e7-41bb-b9a7-5ddd608afd7f",
+    "name": "Fixed Fiber Net",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "b8d483fd-eb57-4cfe-9c6d-7c2733ed14c7",
+    "name": "Sliding Fiber Net",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "32d1e579-7c73-4e42-bb72-a297e951a179",
+    "name": "Fixing and Replacing Net",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "6133e5bb-e6d2-434f-b90c-5907630da6ec",
+    "name": "Thai Lock & wheel Service",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "e511d673-51a1-4da0-b8a3-7b44439e6141",
+    "name": "Lock Installation",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "5586b2f6-fcf3-4f86-b4fc-f0c0c13c55ca",
+    "name": "Lock Repair",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "9a4b51dc-bb71-404f-9fe8-daa1f8d0ca66",
+    "name": "Wheel Installation & Repair",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "43fa0354-890e-4d09-a8e2-90df0e8c8ff1",
+    "name": "Tiles Fitting & Pasting",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "03ce9246-9399-457b-9dcd-9b0a1e650dc0",
+    "name": "Tiles Fitting",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "9697df7b-c86b-45e9-a8fc-c8dbea178e29",
+    "name": "Tiles Re-Fitting",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "2ade0840-1e0e-4520-8154-e26d1f9e32bd",
+    "name": "Construction",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "0dae39fd-abbb-4a5e-9187-eccc16dbb286",
+    "name": "Wall Construction",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "4d1369ef-9ef2-4f4c-8939-6b3eeff33ab6",
+    "name": "Mosaic Cutting",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "015b5f58-f12b-4dac-893c-9ff1c928b1b3",
+    "name": "Plaster Work",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "d95be357-0d65-4698-bd20-3c3d581953df",
+    "name": "Construction Consultancy",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "ef98dc04-5097-42ac-8b5a-bc8dceadd608",
+    "name": "False Ceiling Design",
+    "level": 1,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "bfab6fb1-db8d-4e3d-8e72-5ea047156cab",
+    "name": "White Board Ceiling",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "7cd7a88d-aeff-4fc1-b39c-6d1681b8d467",
+    "name": "Construction and Tile",
+    "level": 0,
+    "type": "service",
+    "metadata": {
+      "unit": "",
+      "price": "",
+      "brands": [],
+      "frequency": "Monthly"
+    },
+    "icon_url": ""
+  },
+  {
+    "id": "2a688bdf-6916-465f-9500-71d25ef00665",
+    "name": "Gypsum Ceiling",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  },
+  {
+    "id": "e465268e-706a-4a30-a48b-a82466e27877",
+    "name": "Panel Design Ceiling",
+    "level": 2,
+    "type": "service",
+    "metadata": {},
+    "icon_url": null
+  }
+]

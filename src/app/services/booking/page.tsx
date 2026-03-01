@@ -152,16 +152,22 @@ export default function BookingWizardPage() {
         if (assignmentType === 'user_choose' && providers.length === 0) {
             setLoading(true);
             const supabase = createClient();
-            supabase.from('partner_profiles')
+            const reqServices = items.map(i => i.category?.name).filter(Boolean) as string[];
+
+            let query = supabase.from('service_providers')
                 .select('*, profile:profiles(avatar_url)')
-                .eq('is_verified', true)
-                .limit(10)
-                .then(({ data }) => {
-                    setProviders(data || []);
-                    setLoading(false);
-                });
+                .eq('is_verified', true);
+
+            if (reqServices.length > 0) {
+                query = query.overlaps('active_service_types', reqServices);
+            }
+
+            query.limit(10).then(({ data }) => {
+                setProviders(data || []);
+                setLoading(false);
+            });
         }
-    }, [assignmentType, providers.length]);
+    }, [assignmentType, providers.length, items]);
 
     const handleNext = async () => {
         const currentTitle = currentStepData?.title || '';

@@ -38,7 +38,9 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final products = state.products.where((p) => p.categoryId == widget.category.id).toList();
+          final products = widget.category.id == 'all' 
+              ? state.products 
+              : state.products.where((p) => p.categoryId == widget.category.id).toList();
 
           if (products.isEmpty) {
             return Center(

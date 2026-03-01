@@ -22,11 +22,26 @@ class BookingScreen extends StatefulWidget {
 class _BookingScreenState extends State<BookingScreen> {
   int _currentStep = 0;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
-  final _areaController = TextEditingController();
-  final _requirementsController = TextEditingController();
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 10, minute: 0);
+
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      _nameController.text = authState.user.fullName ?? authState.user.email;
+      _phoneController.text = authState.user.phone ?? '';
+    }
+  }
 
   void _nextStep() {
-    if (_currentStep < 2) {
+    if (_currentStep == 0) {
+      if (!_formKey.currentState!.validate()) return;
       setState(() => _currentStep++);
     } else {
       _submitBooking();
@@ -35,17 +50,24 @@ class _BookingScreenState extends State<BookingScreen> {
 
   void _submitBooking() {
     final authState = context.read<AuthBloc>().state;
-    if (authState is! AuthAuthenticated) return;
-    
-    final userId = authState.user.id;
+    final userId = authState is AuthAuthenticated ? authState.user.id : 'guest_user';
     
     final booking = Booking(
       id: '', // Supabase will generate
       userId: userId,
       type: 'service',
       status: 'pending',
-      totalAmount: double.tryParse(_areaController.text) ?? 0 * widget.service.unitPrice,
+      totalAmount: widget.service.unitPrice,
       advanceAmount: 0,
+      metadata: {
+        'preferred_date': _selectedDate.toIso8601String(),
+        'preferred_time': '${_selectedTime.hour}:${_selectedTime.minute.toString().padLeft(2, '0')}',
+        'guest_info': {
+          'name': _nameController.text,
+          'phone': _phoneController.text,
+          'address': _addressController.text,
+        },
+      },
       createdAt: DateTime.now(),
     );
 
@@ -100,12 +122,12 @@ class _BookingScreenState extends State<BookingScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       color: Colors.grey.shade50,
       child: Row(
-        children: List.generate(3, (index) {
+        children: List.generate(2, (index) {
           bool isActive = index <= _currentStep;
           return Expanded(
             child: Container(
               height: 4,
-              margin: EdgeInsets.only(right: index == 2 ? 0 : 8),
+              margin: EdgeInsets.only(right: index == 1 ? 0 : 8),
               decoration: BoxDecoration(
                 color: isActive ? GhorbariTheme.primaryBlue : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
@@ -122,8 +144,6 @@ class _BookingScreenState extends State<BookingScreen> {
       case 0:
         return _buildScheduleStep();
       case 1:
-        return _buildRequirementsStep();
-      case 2:
         return _buildReviewStep();
       default:
         return const SizedBox.shrink();
@@ -131,52 +151,72 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildScheduleStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('When should we start?', 
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Text('Select a preferred date for the site visit.', 
-          style: TextStyle(color: Colors.grey.shade500)),
-        const SizedBox(height: 32),
-        CalendarDatePicker(
-          initialDate: _selectedDate,
-          firstDate: DateTime.now(),
-          lastDate: DateTime.now().add(const Duration(days: 90)),
-          onDateChanged: (date) => setState(() => _selectedDate = date),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRequirementsStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Project Details', 
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 32),
-        TextField(
-          controller: _areaController,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: 'Estimated Area (${widget.service.unitType})',
-            hintText: 'e.g. 1200',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('1. User Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _nameController,
+            decoration: InputDecoration(labelText: 'Full Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+            validator: (value) => value == null || value.isEmpty ? 'Please enter your name' : null,
           ),
-        ),
-        const SizedBox(height: 24),
-        TextField(
-          controller: _requirementsController,
-          maxLines: 4,
-          decoration: InputDecoration(
-            labelText: 'Any special requirements?',
-            hintText: 'Mention specific styles, materials, or constraints...',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(labelText: 'Phone Number', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+            validator: (value) => value == null || value.isEmpty ? 'Please enter your phone number' : null,
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _addressController,
+            maxLines: 2,
+            decoration: InputDecoration(labelText: 'Site Address', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+            validator: (value) => value == null || value.isEmpty ? 'Please enter the site address' : null,
+          ),
+          const SizedBox(height: 32),
+          const Text('2. Appointment Date & Time', 
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          CalendarDatePicker(
+            initialDate: _selectedDate,
+            firstDate: DateTime.now(),
+            lastDate: DateTime.now().add(const Duration(days: 90)),
+            onDateChanged: (date) => setState(() => _selectedDate = date),
+          ),
+          const SizedBox(height: 24),
+          const Text('Time', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () async {
+              final time = await showTimePicker(
+                context: context,
+                initialTime: _selectedTime,
+              );
+              if (time != null) {
+                setState(() => _selectedTime = time);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(_selectedTime.format(context), style: const TextStyle(fontSize: 16)),
+                  const Icon(Icons.access_time),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -187,9 +227,13 @@ class _BookingScreenState extends State<BookingScreen> {
         const Text('Confirm Booking', 
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 32),
+        _buildReviewRow('Name', _nameController.text),
+        _buildReviewRow('Phone', _phoneController.text),
+        _buildReviewRow('Address', _addressController.text),
+        const Divider(height: 32),
         _buildReviewRow('Service', widget.service.name),
         _buildReviewRow('Preferred Date', DateFormat('MMM dd, yyyy').format(_selectedDate)),
-        _buildReviewRow('Area', '${_areaController.text} ${widget.service.unitType}'),
+        _buildReviewRow('Preferred Time', _selectedTime.format(context)),
         const Divider(height: 48),
         _buildReviewRow('Base Price', '৳${widget.service.unitPrice.toStringAsFixed(0)} / ${widget.service.unitType}'),
         const SizedBox(height: 16),
@@ -268,7 +312,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   if (state is BookingLoading) {
                     return const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2));
                   }
-                  return Text(_currentStep == 2 ? 'CONFIRM BOOKING' : 'NEXT', 
+                  return Text(_currentStep == 1 ? 'CONFIRM BOOKING' : 'NEXT', 
                     style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1));
                 },
               ),

@@ -35,7 +35,7 @@ export default function SellerDashboardLayout({ children }: { children: React.Re
                         </div>
                         <nav className="p-4 space-y-1 overflow-y-auto custom-scrollbar flex-1">
                             <NavLink href="/dashboard/seller" icon={LayoutDashboard} label="Overview" exact />
-                            <NavLink href="/dashboard/seller/products" icon={Archive} label="Products" />
+                            <NavLink href="/dashboard/seller/products" icon={Archive} label="Inventory" />
                             <NavLink href="/dashboard/seller/orders" icon={ShoppingBag} label="Orders" />
                             <NavLink href="/dashboard/seller/finance" icon={DollarSign} label="Finance" />
                             <NavLink href="/dashboard/seller/campaigns" icon={Tag} label="Campaigns" />

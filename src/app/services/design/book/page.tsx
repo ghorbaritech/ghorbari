@@ -57,26 +57,6 @@ function DesignBookingWizard() {
     // Eligible designers fetched from DB
     const [designers, setDesigners] = useState<any[]>([]);
 
-    useEffect(() => {
-        async function fetchDesigners() {
-            try {
-                const { data } = await supabase.from('designers').select('*, profile:profiles(*)');
-                if (data) {
-                    const processed = data.map(d => ({
-                        ...d,
-                        specializations: Array.isArray(d.specializations)
-                            ? d.specializations.map((s: any) => typeof s === 'string' ? s : JSON.stringify(s))
-                            : []
-                    }));
-                    setDesigners(processed);
-                }
-            } catch (err) {
-                console.error("Error fetching designers:", err);
-            }
-        }
-        fetchDesigners();
-    }, []);
-
     // Form State
     const [formData, setFormData] = useState({
         // Structural/Architectural New Fields
@@ -137,6 +117,37 @@ function DesignBookingWizard() {
     const [serviceTypes, setServiceTypes] = useState<ServiceType[]>(
         initialService ? [initialService] : []
     );
+
+    useEffect(() => {
+        async function fetchDesigners() {
+            try {
+                const reqSpecs: string[] = [];
+                if (serviceTypes.includes('structural-architectural')) reqSpecs.push('Structural & architectural');
+                if (serviceTypes.includes('interior')) reqSpecs.push('Interior design');
+
+                let query = supabase.from('designers').select('*, profile:profiles(*)');
+
+                if (reqSpecs.length > 0) {
+                    query = query.overlaps('active_specializations', reqSpecs);
+                }
+
+                const { data } = await query;
+                if (data) {
+                    const processed = data.map(d => ({
+                        ...d,
+                        specializations: Array.isArray(d.specializations)
+                            ? d.specializations.map((s: any) => typeof s === 'string' ? s : JSON.stringify(s))
+                            : []
+                    }));
+                    setDesigners(processed);
+                }
+            } catch (err) {
+                console.error("Error fetching designers:", err);
+            }
+        }
+        fetchDesigners();
+    }, [serviceTypes]);
+
 
     const updateData = (key: string, value: any) => {
         setFormData(prev => ({ ...prev, [key]: value }));

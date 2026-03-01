@@ -27,7 +27,7 @@ const SERVICE_TYPES = [
 ]
 
 interface PartnerOnboardingFormProps {
-    availableCategories?: { id: string, name: string }[]
+    availableCategories?: { id: string, name: string, type?: string }[]
     initialData?: any
     userId?: string
     onCancel?: () => void
@@ -110,12 +110,13 @@ export default function PartnerOnboardingForm({
                 : await createPartner(data)
 
             if (result?.error) {
+                console.error("Action error result:", result.error);
                 setError(result.error)
             } else {
                 setSuccess(true)
             }
         } catch (e: any) {
-            console.error("Partner Action Error:", e);
+            console.error("Partner Action Caught Error:", e);
             setError(`Failed: ${e.message || JSON.stringify(e)}`)
         } finally {
             setLoading(false)
@@ -138,16 +139,27 @@ export default function PartnerOnboardingForm({
     }
 
     // Categories to display: either passed props (DB) or fallback hardcoded (if fetch failed or empty)
-    const categoriesToDisplay = availableCategories.length > 0
-        ? availableCategories.map(c => c.name)
+    const productCategories = Array.from(new Set(availableCategories.filter(c => !c.type || c.type === 'product').map(c => c.name)));
+    const categoriesToDisplay = productCategories.length > 0
+        ? productCategories
         : [
             'Cement & Concrete', 'Steel & Metal', 'Tiles & Flooring',
             'Paint & Finishes', 'Electrical & Plumbing', 'Doors & Windows',
             'Sanitary & Fixtures', 'Tools & Equipment'
         ];
 
+    const designCategories = Array.from(new Set(availableCategories.filter(c => c.type === 'design').map(c => c.name)));
+    const specializationsToDisplay = designCategories.length > 0
+        ? designCategories
+        : DESIGN_SPECIALIZATIONS;
+
+    const serviceCategories = Array.from(new Set(availableCategories.filter(c => c.type === 'service').map(c => c.name)));
+    const servicesToDisplay = serviceCategories.length > 0
+        ? serviceCategories
+        : SERVICE_TYPES;
+
     return (
-        <form action={handleSubmit} className="space-y-8 max-w-5xl mx-auto">
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(new FormData(e.currentTarget)); }} className="space-y-8 max-w-5xl mx-auto">
             {/* Account & Basic Info */}
             <Card>
                 <CardHeader>
@@ -298,7 +310,7 @@ export default function PartnerOnboardingForm({
                         <div className="space-y-4">
                             <Label>Specializations</Label>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {DESIGN_SPECIALIZATIONS.map(spec => (
+                                {specializationsToDisplay.map(spec => (
                                     <div key={spec} className="flex items-center space-x-2">
                                         <Checkbox id={`spec-${spec}`}
                                             checked={selectedSpecializations.includes(spec)}
@@ -333,7 +345,7 @@ export default function PartnerOnboardingForm({
                         <div className="space-y-4">
                             <Label>Service Offerings</Label>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {SERVICE_TYPES.map(svc => (
+                                {servicesToDisplay.map(svc => (
                                     <div key={svc} className="flex items-center space-x-2">
                                         <Checkbox id={`svc-${svc}`}
                                             checked={selectedServices.includes(svc)}

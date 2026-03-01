@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:ghorbari_consumer/shared/models/service_item.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ghorbari_consumer/shared/widgets/glass_card.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
+import 'package:ghorbari_consumer/features/cart/presentation/screens/checkout_screen.dart';
+import 'package:ghorbari_consumer/shared/models/product.dart';
 class ServiceCard extends StatelessWidget {
   final ServiceItem service;
   final VoidCallback onTap;
@@ -107,15 +111,30 @@ class ServiceCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A),
-                            borderRadius: BorderRadius.circular(10),
+                        ElevatedButton(
+                          onPressed: () {
+                             final product = Product(
+                               id: service.id,
+                               name: service.name,
+                               price: service.unitPrice,
+                               categoryId: service.categoryId,
+                               imageUrl: service.imageUrl,
+                               sellerId: 'ghorbari',
+                               metadata: {'type': 'service', 'rating': service.rating},
+                             );
+                             context.read<CartBloc>().add(CartItemAdded(product));
+                             Navigator.push(context, MaterialPageRoute(builder: (context) => const CheckoutScreen()));
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F172A),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                            minimumSize: const Size(0, 36),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                           child: const Text(
-                            'BOOK',
-                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
+                            'BOOK NOW',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
                           ),
                         ),
                       ],

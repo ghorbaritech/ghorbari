@@ -22,6 +22,8 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from 'sonner' // Assuming sonner is used, or alerts
 import { parseCSV, generateCSVTemplate } from '@/utils/csvParser'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Checkbox } from "@/components/ui/checkbox"
 
 export default function InventoryPage() {
     const [products, setProducts] = useState<any[]>([])
@@ -34,6 +36,14 @@ export default function InventoryPage() {
     // Edit State
     const [editingProduct, setEditingProduct] = useState<any>(null)
 
+    // Roles Data
+    const [designerData, setDesignerData] = useState<any>(null)
+    const [serviceData, setServiceData] = useState<any>(null)
+    const [savingDesign, setSavingDesign] = useState(false)
+    const [savingService, setSavingService] = useState(false)
+    const [localDesignSpecs, setLocalDesignSpecs] = useState<string[]>([])
+    const [localServiceTypes, setLocalServiceTypes] = useState<string[]>([])
+
     const supabase = createClient()
 
     useEffect(() => {
@@ -45,27 +55,40 @@ export default function InventoryPage() {
         const { data: { user } } = await supabase.auth.getUser()
 
         if (user) {
-            // Get Seller ID
-            const { data: seller } = await supabase.from('sellers').select('id').eq('user_id', user.id).single()
+            // Fetch Roles Data
+            const [sellerRes, designerRes, serviceRes] = await Promise.all([
+                supabase.from('sellers').select('id').eq('user_id', user.id).single(),
+                supabase.from('designers').select('*').eq('user_id', user.id).single(),
+                supabase.from('service_providers').select('*').eq('user_id', user.id).single()
+            ])
 
-            if (seller) {
+            if (sellerRes.data) {
                 // Fetch Products
                 const { data: prods } = await supabase
                     .from('products')
                     .select('*')
-                    .eq('seller_id', seller.id)
+                    .eq('seller_id', sellerRes.data.id)
                     .order('created_at', { ascending: false })
                 setProducts(prods || [])
-
-                // Fetch Categories (Top level for now)
-                // In a real app we might want the full taxonomy, but let's start with what we have
-                const { data: cats } = await supabase
-                    .from('product_categories')
-                    .select('id, name')
-                    .is('parent_id', null)
-                    .eq('type', 'product')
-                setCategories(cats || [])
             }
+
+            if (designerRes.data) {
+                setDesignerData(designerRes.data)
+                setLocalDesignSpecs(designerRes.data.active_specializations?.length ? designerRes.data.active_specializations : (designerRes.data.specializations || []))
+            }
+
+            if (serviceRes.data) {
+                setServiceData(serviceRes.data)
+                setLocalServiceTypes(serviceRes.data.active_service_types?.length ? serviceRes.data.active_service_types : (serviceRes.data.service_types || []))
+            }
+
+            // Fetch Categories (Top level for now)
+            const { data: cats } = await supabase
+                .from('product_categories')
+                .select('id, name')
+                .is('parent_id', null)
+                .eq('type', 'product')
+            setCategories(cats || [])
         }
         setLoading(false)
     }
@@ -211,6 +234,38 @@ export default function InventoryPage() {
         }
     }
 
+    const toggleDesignSpec = (spec: string) => {
+        setLocalDesignSpecs(prev => prev.includes(spec) ? prev.filter(s => s !== spec) : [...prev, spec])
+    }
+
+    const toggleServiceType = (type: string) => {
+        setLocalServiceTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])
+    }
+
+    async function handleSaveDesign() {
+        setSavingDesign(true)
+        const { error } = await supabase.from('designers').update({ active_specializations: localDesignSpecs }).eq('id', designerData.id)
+        if (!error) {
+            toast.success('Design coverages updated!')
+            setDesignerData({ ...designerData, active_specializations: localDesignSpecs })
+        } else {
+            toast.error('Error updating: ' + error.message)
+        }
+        setSavingDesign(false)
+    }
+
+    async function handleSaveService() {
+        setSavingService(true)
+        const { error } = await supabase.from('service_providers').update({ active_service_types: localServiceTypes }).eq('id', serviceData.id)
+        if (!error) {
+            toast.success('Service offerings updated!')
+            setServiceData({ ...serviceData, active_service_types: localServiceTypes })
+        } else {
+            toast.error('Error updating: ' + error.message)
+        }
+        setSavingService(false)
+    }
+
     // Filter logic
     const filteredProducts = products.filter(p =>
         p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -224,131 +279,214 @@ export default function InventoryPage() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
                     <div>
                         <h1 className="text-4xl font-black text-neutral-900 tracking-tight italic uppercase">Warehouse Inventory</h1>
-                        <p className="text-neutral-500 font-bold uppercase text-xs tracking-widest mt-2">{products.length} Products Types • Full Catalog Management</p>
-                    </div>
-                    <div className="flex gap-3">
-                        <Button onClick={() => { setEditingProduct(null); setShowAddForm(true) }} className="h-12 px-8 bg-neutral-900 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl hover:bg-black transition-all">
-                            <Plus className="w-4 h-4 mr-2" /> Add New Item
-                        </Button>
+                        <p className="text-neutral-500 font-bold uppercase text-xs tracking-widest mt-2">Manage your catalog and service coverages</p>
                     </div>
                 </div>
 
-                {/* Filters */}
-                <Card className="p-4 mb-8 bg-white rounded-3xl border-none shadow-sm flex flex-col md:flex-row gap-4 items-center">
-                    <div className="relative flex-1 w-full">
-                        <Input
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-12 h-14 bg-neutral-50 border-none rounded-2xl font-bold"
-                            placeholder="Search by SKU or Name..."
-                        />
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
-                    </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" className="h-14 px-6 rounded-2xl border-neutral-200 font-bold text-neutral-600 gap-2">
-                            <Filter className="w-4 h-4" /> Filters
-                        </Button>
-                        <Button variant="outline" className="h-14 px-6 rounded-2xl border-neutral-200 font-bold text-neutral-600 gap-2">
-                            Export CSV
-                        </Button>
-                        <div className="flex gap-2">
-                            <input
-                                type="file"
-                                id="csv-upload"
-                                accept=".csv"
-                                className="hidden"
-                                onChange={handleBulkUpload}
-                            />
-                            <Button variant="outline" onClick={() => document.getElementById('csv-upload')?.click()} className="h-14 px-6 rounded-2xl border-neutral-200 font-bold text-neutral-600 gap-2 hover:bg-neutral-900 hover:text-white transition-colors">
-                                <Upload className="w-4 h-4" /> Import CSV
-                            </Button>
-                            <Button variant="ghost" onClick={handleDownloadTemplate} className="h-14 px-4 rounded-2xl text-neutral-400 hover:text-neutral-900 font-bold text-xs uppercase tracking-widest">
-                                Template
+                <Tabs defaultValue="products" className="w-full">
+                    {/* Only show TabsList if there is more than 1 role */}
+                    {(designerData || serviceData) && (
+                        <TabsList className="mb-8 flex justify-start h-14 bg-white rounded-2xl p-2 gap-2 shadow-sm border border-neutral-100 overflow-x-auto w-max">
+                            <TabsTrigger value="products" className="h-full px-8 rounded-xl font-bold data-[state=active]:bg-neutral-900 data-[state=active]:text-white transition-all text-neutral-500 hover:text-neutral-900">Products</TabsTrigger>
+                            {designerData && <TabsTrigger value="design" className="h-full px-8 rounded-xl font-bold data-[state=active]:bg-neutral-900 data-[state=active]:text-white transition-all text-neutral-500 hover:text-neutral-900">Design Coverages</TabsTrigger>}
+                            {serviceData && <TabsTrigger value="services" className="h-full px-8 rounded-xl font-bold data-[state=active]:bg-neutral-900 data-[state=active]:text-white transition-all text-neutral-500 hover:text-neutral-900">Service Offerings</TabsTrigger>}
+                        </TabsList>
+                    )}
+
+                    <TabsContent value="products" className="mt-0 outline-none">
+                        <div className="flex justify-between items-center mb-6">
+                            <p className="text-neutral-500 font-bold uppercase text-xs tracking-widest leading-none mt-2">{products.length} Products Types</p>
+                            <Button onClick={() => { setEditingProduct(null); setShowAddForm(true) }} className="h-12 px-8 bg-neutral-900 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl hover:bg-black transition-all">
+                                <Plus className="w-4 h-4 mr-2" /> Add New Item
                             </Button>
                         </div>
-                    </div>
-                </Card>
 
-                {/* Table */}
-                <div className="bg-white rounded-[40px] shadow-sm overflow-hidden border border-neutral-100 min-h-[400px]">
-                    <table className="w-full">
-                        <thead className="bg-neutral-50/50">
-                            <tr>
-                                <th className="px-8 py-6 text-left text-[10px] font-black text-neutral-400 uppercase tracking-widest w-20">Image</th>
-                                <th className="px-8 py-6 text-left text-[10px] font-black text-neutral-400 uppercase tracking-widest">Product Details</th>
-                                <th className="px-8 py-6 text-left text-[10px] font-black text-neutral-400 uppercase tracking-widest">Category</th>
-                                <th className="px-8 py-6 text-right text-[10px] font-black text-neutral-400 uppercase tracking-widest">Price (Unit)</th>
-                                <th className="px-8 py-6 text-center text-[10px] font-black text-neutral-400 uppercase tracking-widest">Stock</th>
-                                <th className="px-8 py-6 text-center text-[10px] font-black text-neutral-400 uppercase tracking-widest">Status</th>
-                                <th className="px-8 py-6 text-right text-[10px] font-black text-neutral-400 uppercase tracking-widest">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-neutral-100">
-                            {loading ? (
-                                <tr><td colSpan={7} className="p-20 text-center font-bold text-neutral-400 animate-pulse">Loading Inventory...</td></tr>
-                            ) : filteredProducts.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className="p-20 text-center">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="w-20 h-20 bg-neutral-50 rounded-full flex items-center justify-center text-neutral-300">
-                                                <AlertCircle className="w-10 h-10" />
-                                            </div>
-                                            <p className="font-black text-neutral-900 uppercase">No Products Found</p>
-                                            <p className="text-neutral-500 text-sm font-medium">Get started by adding your first product info.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : filteredProducts.map((product) => (
-                                <tr key={product.id} className="hover:bg-neutral-50/50 transition-colors group">
-                                    <td className="px-8 py-4">
-                                        <div className="w-16 h-16 bg-neutral-100 rounded-2xl overflow-hidden">
-                                            {product.images?.[0] ? (
-                                                <img src={product.images[0]} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-neutral-300 font-black text-xs">NO IMG</div>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-4">
-                                        <div>
-                                            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">{product.sku || 'NO SKU'}</p>
-                                            <p className="font-bold text-neutral-900 text-lg">{product.title}</p>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-4">
-                                        <Badge variant="secondary" className="bg-neutral-100 text-neutral-600 font-bold border-none">
-                                            {categories.find(c => c.id === product.category_id)?.name || 'General'}
-                                        </Badge>
-                                    </td>
-                                    <td className="px-8 py-4 text-right">
-                                        <p className="font-black text-neutral-900">৳{product.base_price}</p>
-                                    </td>
-                                    <td className="px-8 py-4 text-center">
-                                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-black ${product.stock_quantity > 10 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                            {product.stock_quantity}
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-4 text-center">
-                                        <div className="inline-flex items-center gap-1.5">
-                                            <div className={`w-2 h-2 rounded-full ${product.status === 'active' ? 'bg-green-500' : 'bg-neutral-300'}`} />
-                                            <span className="text-xs font-bold uppercase text-neutral-600">{product.status}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-4 text-right">
-                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-neutral-200 rounded-lg" onClick={() => { setEditingProduct(product); setShowAddForm(true) }}>
-                                                <Edit2 className="w-4 h-4 text-neutral-600" />
-                                            </Button>
-                                            <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-red-50 rounded-lg" onClick={() => handleDelete(product.id)}>
-                                                <Trash2 className="w-4 h-4 text-red-500" />
-                                            </Button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                        {/* Filters */}
+                        <Card className="p-4 mb-8 bg-white rounded-3xl border-none shadow-sm flex flex-col md:flex-row gap-4 items-center">
+                            <div className="relative flex-1 w-full">
+                                <Input
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-12 h-14 bg-neutral-50 border-none rounded-2xl font-bold"
+                                    placeholder="Search by SKU or Name..."
+                                />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                            </div>
+                            <div className="flex gap-2">
+                                <Button variant="outline" className="h-14 px-6 rounded-2xl border-neutral-200 font-bold text-neutral-600 gap-2">
+                                    <Filter className="w-4 h-4" /> Filters
+                                </Button>
+                                <Button variant="outline" className="h-14 px-6 rounded-2xl border-neutral-200 font-bold text-neutral-600 gap-2">
+                                    Export CSV
+                                </Button>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="file"
+                                        id="csv-upload"
+                                        accept=".csv"
+                                        className="hidden"
+                                        onChange={handleBulkUpload}
+                                    />
+                                    <Button variant="outline" onClick={() => document.getElementById('csv-upload')?.click()} className="h-14 px-6 rounded-2xl border-neutral-200 font-bold text-neutral-600 gap-2 hover:bg-neutral-900 hover:text-white transition-colors">
+                                        <Upload className="w-4 h-4" /> Import CSV
+                                    </Button>
+                                    <Button variant="ghost" onClick={handleDownloadTemplate} className="h-14 px-4 rounded-2xl text-neutral-400 hover:text-neutral-900 font-bold text-xs uppercase tracking-widest">
+                                        Template
+                                    </Button>
+                                </div>
+                            </div>
+                        </Card>
+
+                        {/* Table */}
+                        <div className="bg-white rounded-[40px] shadow-sm overflow-hidden border border-neutral-100 min-h-[400px]">
+                            <table className="w-full">
+                                <thead className="bg-neutral-50/50">
+                                    <tr>
+                                        <th className="px-8 py-6 text-left text-[10px] font-black text-neutral-400 uppercase tracking-widest w-20">Image</th>
+                                        <th className="px-8 py-6 text-left text-[10px] font-black text-neutral-400 uppercase tracking-widest">Product Details</th>
+                                        <th className="px-8 py-6 text-left text-[10px] font-black text-neutral-400 uppercase tracking-widest">Category</th>
+                                        <th className="px-8 py-6 text-right text-[10px] font-black text-neutral-400 uppercase tracking-widest">Price (Unit)</th>
+                                        <th className="px-8 py-6 text-center text-[10px] font-black text-neutral-400 uppercase tracking-widest">Stock</th>
+                                        <th className="px-8 py-6 text-center text-[10px] font-black text-neutral-400 uppercase tracking-widest">Status</th>
+                                        <th className="px-8 py-6 text-right text-[10px] font-black text-neutral-400 uppercase tracking-widest">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-neutral-100">
+                                    {loading ? (
+                                        <tr><td colSpan={7} className="p-20 text-center font-bold text-neutral-400 animate-pulse">Loading Inventory...</td></tr>
+                                    ) : filteredProducts.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="p-20 text-center">
+                                                <div className="flex flex-col items-center gap-4">
+                                                    <div className="w-20 h-20 bg-neutral-50 rounded-full flex items-center justify-center text-neutral-300">
+                                                        <AlertCircle className="w-10 h-10" />
+                                                    </div>
+                                                    <p className="font-black text-neutral-900 uppercase">No Products Found</p>
+                                                    <p className="text-neutral-500 text-sm font-medium">Get started by adding your first product info.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : filteredProducts.map((product) => (
+                                        <tr key={product.id} className="hover:bg-neutral-50/50 transition-colors group">
+                                            <td className="px-8 py-4">
+                                                <div className="w-16 h-16 bg-neutral-100 rounded-2xl overflow-hidden">
+                                                    {product.images?.[0] ? (
+                                                        <img src={product.images[0]} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-neutral-300 font-black text-xs">NO IMG</div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-4">
+                                                <div>
+                                                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">{product.sku || 'NO SKU'}</p>
+                                                    <p className="font-bold text-neutral-900 text-lg">{product.title}</p>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-4">
+                                                <Badge variant="secondary" className="bg-neutral-100 text-neutral-600 font-bold border-none">
+                                                    {categories.find(c => c.id === product.category_id)?.name || 'General'}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-8 py-4 text-right">
+                                                <p className="font-black text-neutral-900">৳{product.base_price}</p>
+                                            </td>
+                                            <td className="px-8 py-4 text-center">
+                                                <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-black ${product.stock_quantity > 10 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                    {product.stock_quantity}
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-4 text-center">
+                                                <div className="inline-flex items-center gap-1.5">
+                                                    <div className={`w-2 h-2 rounded-full ${product.status === 'active' ? 'bg-green-500' : 'bg-neutral-300'}`} />
+                                                    <span className="text-xs font-bold uppercase text-neutral-600">{product.status}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-4 text-right">
+                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-neutral-200 rounded-lg" onClick={() => { setEditingProduct(product); setShowAddForm(true) }}>
+                                                        <Edit2 className="w-4 h-4 text-neutral-600" />
+                                                    </Button>
+                                                    <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-red-50 rounded-lg" onClick={() => handleDelete(product.id)}>
+                                                        <Trash2 className="w-4 h-4 text-red-500" />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </TabsContent>
+
+                    {designerData && (
+                        <TabsContent value="design" className="mt-0 outline-none">
+                            <Card className="p-8 bg-white rounded-[40px] border border-neutral-100 shadow-sm">
+                                <h2 className="text-2xl font-black text-neutral-900 uppercase italic tracking-tight mb-2">Active Design Coverages</h2>
+                                <p className="text-neutral-500 font-bold text-sm mb-8">Select the design categories you want to offer to customers. Deselected categories will be hidden.</p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                                    {(designerData.specializations || []).map((spec: string) => (
+                                        <label key={spec} className="flex items-start space-x-3 p-4 rounded-2xl bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer border border-transparent hover:border-neutral-200">
+                                            <Checkbox
+                                                id={`design-${spec}`}
+                                                checked={localDesignSpecs.includes(spec)}
+                                                onCheckedChange={() => toggleDesignSpec(spec)}
+                                                className="mt-1 flex-shrink-0"
+                                            />
+                                            <span className="text-sm font-bold text-neutral-800 leading-tight">
+                                                {spec}
+                                            </span>
+                                        </label>
+                                    ))}
+                                    {(designerData.specializations?.length === 0 || !designerData.specializations) && (
+                                        <p className="text-neutral-400 font-medium col-span-full">No design coverages assigned by admin yet.</p>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-end pt-6 border-t border-neutral-100">
+                                    <Button onClick={handleSaveDesign} disabled={savingDesign} className="h-12 px-8 bg-black text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl hover:bg-neutral-800 transition-all">
+                                        {savingDesign ? 'Saving...' : 'Save Design Coverages'}
+                                    </Button>
+                                </div>
+                            </Card>
+                        </TabsContent>
+                    )}
+
+                    {serviceData && (
+                        <TabsContent value="services" className="mt-0 outline-none">
+                            <Card className="p-8 bg-white rounded-[40px] border border-neutral-100 shadow-sm">
+                                <h2 className="text-2xl font-black text-neutral-900 uppercase italic tracking-tight mb-2">Active Service Offerings</h2>
+                                <p className="text-neutral-500 font-bold text-sm mb-8">Select the services you want to offer to customers. Deselected ones will be hidden from consumer searches.</p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                                    {(serviceData.service_types || []).map((type: string) => (
+                                        <label key={type} className="flex items-start space-x-3 p-4 rounded-2xl bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer border border-transparent hover:border-neutral-200">
+                                            <Checkbox
+                                                id={`service-${type}`}
+                                                checked={localServiceTypes.includes(type)}
+                                                onCheckedChange={() => toggleServiceType(type)}
+                                                className="mt-1 flex-shrink-0"
+                                            />
+                                            <span className="text-sm font-bold text-neutral-800 leading-tight">
+                                                {type}
+                                            </span>
+                                        </label>
+                                    ))}
+                                    {(serviceData.service_types?.length === 0 || !serviceData.service_types) && (
+                                        <p className="text-neutral-400 font-medium col-span-full">No service offerings assigned by admin yet.</p>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-end pt-6 border-t border-neutral-100">
+                                    <Button onClick={handleSaveService} disabled={savingService} className="h-12 px-8 bg-black text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl hover:bg-neutral-800 transition-all">
+                                        {savingService ? 'Saving...' : 'Save Service Offerings'}
+                                    </Button>
+                                </div>
+                            </Card>
+                        </TabsContent>
+                    )}
+                </Tabs>
 
                 {/* Add/Edit Modal */}
                 {showAddForm && (
@@ -365,7 +503,7 @@ export default function InventoryPage() {
                             </div>
 
                             <div className="overflow-y-auto p-8 pt-4">
-                                <form action={handleSaveProduct} id="product-form" className="space-y-8">
+                                <form action={handleSaveProduct as unknown as string} id="product-form" className="space-y-8">
                                     {/* Image Upload Placeholder */}
                                     <div className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-neutral-200 rounded-3xl bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer group">
                                         <Upload className="w-10 h-10 text-neutral-300 group-hover:text-neutral-500 mb-2" />

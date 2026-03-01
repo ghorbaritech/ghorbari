@@ -405,6 +405,21 @@ export async function getPartners() {
     return Array.from(partnersMap.values())
 }
 
+export async function getCategories() {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('product_categories')
+        .select('id, name, type')
+        .is('parent_id', null)
+        .order('name')
+
+    if (error) {
+        console.error('Error fetching categories:', error)
+        return []
+    }
+    return data || []
+}
+
 export async function updatePartner(userId: string, data: any) {
     console.log("updatePartner action started", { userId, roles: data.roles });
     try {

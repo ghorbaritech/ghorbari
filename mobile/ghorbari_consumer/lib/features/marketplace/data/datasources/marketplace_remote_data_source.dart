@@ -1,4 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ghorbari_consumer/core/network/supabase_service.dart';
 import 'package:ghorbari_consumer/shared/models/category.dart';
 import 'package:ghorbari_consumer/shared/models/product.dart';

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/screens/login_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/home_screen.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:ghorbari_consumer/features/auth/data/repositories/auth_repository_impl.dart';
@@ -103,6 +103,15 @@ void main() async {
   );
 }
 
+class AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+      };
+}
+
 class GhorbariConsumerApp extends StatelessWidget {
   const GhorbariConsumerApp({super.key});
 
@@ -114,6 +123,7 @@ class GhorbariConsumerApp extends StatelessWidget {
       supportedLocales: context.supportedLocales,
       locale: context.locale,
       debugShowCheckedModeBanner: false,
+      scrollBehavior: AppScrollBehavior(),
       theme: GhorbariTheme.lightTheme,
       home: const SplashScreen(),
     );

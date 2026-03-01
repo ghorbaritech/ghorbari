@@ -6,11 +6,9 @@ import { createClient } from '@/utils/supabase/server'
 export default async function AdminOnboardingPage() {
     const supabase = await createClient()
 
-    // Fetch top-level product categories for the form
     const { data: categories } = await supabase
         .from('product_categories')
-        .select('id, name')
-        .eq('type', 'product')
+        .select('id, name, type')
         .is('parent_id', null)
         .order('name')
 

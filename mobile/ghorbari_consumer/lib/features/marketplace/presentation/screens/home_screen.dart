@@ -25,6 +25,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ghorbari_consumer/core/utils/category_icon_helper.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/category_listing_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/service_listing_screen.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:ghorbari_consumer/shared/models/service_item.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -61,8 +62,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDynamicCMSContentFromState(BuildContext context, MarketplaceState state) {
-    if (state.cmsStatus == MarketplaceStatus.loading && state.cmsContent.isEmpty) {
+  Widget _buildDynamicCMSContentFromState(
+      BuildContext context, MarketplaceState state) {
+    if (state.cmsStatus == MarketplaceStatus.loading &&
+        state.cmsContent.isEmpty) {
       return const SliverToBoxAdapter(
         child: Center(
           child: Padding(
@@ -81,17 +84,23 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final content = state.cmsContent.data;
       if (content.isEmpty) {
-        return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No CMS Content found'))));
+        return const SliverToBoxAdapter(
+            child: Center(
+                child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text('No CMS Content found'))));
       }
 
-      print('DEBUG: Building HomeScreen sections for keys: ${content.keys.join(", ")}');
+      print(
+          'DEBUG: Building HomeScreen sections for keys: ${content.keys.join(", ")}');
 
       // 0. Hero Section
       sections.add(_buildHeroSlider(content['hero_section']));
 
       // 1. Featured Categories
       if (content['featured_categories'] != null) {
-        sections.add(_buildFeaturedCategories(CMSCategorySection.fromJson(content['featured_categories'])));
+        sections.add(_buildFeaturedCategories(
+            CMSCategorySection.fromJson(content['featured_categories'])));
       }
 
       // 2. Design & Planning
@@ -100,14 +109,16 @@ class _HomeScreenState extends State<HomeScreen> {
       // 3. Product Sections
       if (content['product_sections'] is List) {
         for (var section in content['product_sections']) {
-          sections.add(_buildProductSection(CMSProductSection.fromJson(section)));
+          sections
+              .add(_buildProductSection(CMSProductSection.fromJson(section)));
         }
       }
 
       // 4. Service Sections
       if (content['service_sections'] is List) {
         for (var section in content['service_sections']) {
-          sections.add(_buildServiceSection(CMSProductSection.fromJson(section)));
+          sections
+              .add(_buildServiceSection(CMSProductSection.fromJson(section)));
         }
       }
 
@@ -123,7 +134,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Container(
           padding: const EdgeInsets.all(20),
           color: Colors.red.shade100,
-          child: Text('Content Error: $e', style: const TextStyle(color: Colors.red)),
+          child: Text('Content Error: $e',
+              style: const TextStyle(color: Colors.red)),
         ),
       );
     }
@@ -147,19 +159,26 @@ class _HomeScreenState extends State<HomeScreen> {
         height: 28,
         errorBuilder: (context, error, stackTrace) => const Text(
           'GHORBARI',
-          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+          style:
+              TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
         ),
       ),
       actions: [
-        IconButton(icon: const Icon(Icons.search, color: Color(0xFF0F172A)), onPressed: () {}),
+        IconButton(
+            icon: const Icon(Icons.search, color: Color(0xFF0F172A)),
+            onPressed: () {}),
         BlocBuilder<CartBloc, CartState>(
           builder: (context, state) {
             return Stack(
               alignment: Alignment.center,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF0F172A)),
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CartScreen())),
+                  icon: const Icon(Icons.shopping_cart_outlined,
+                      color: Color(0xFF0F172A)),
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const CartScreen())),
                 ),
                 if (state.items.isNotEmpty)
                   Positioned(
@@ -167,15 +186,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     right: 8,
                     child: Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Color(0xFF2563EB), shape: BoxShape.circle),
-                      child: Text('${state.items.length}', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                      decoration: const BoxDecoration(
+                          color: Color(0xFF2563EB), shape: BoxShape.circle),
+                      child: Text('${state.items.length}',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold)),
                     ),
                   ),
               ],
             );
           },
         ),
-        IconButton(icon: const Icon(Icons.menu, color: Color(0xFF0F172A)), onPressed: () {}),
+        IconButton(
+            icon: const Icon(Icons.menu, color: Color(0xFF0F172A)),
+            onPressed: () {}),
         const SizedBox(width: 8),
       ],
     );
@@ -218,104 +244,141 @@ class _HomeScreenState extends State<HomeScreen> {
           autoPlayInterval: const Duration(seconds: 5),
         ),
         items: defaultSlides.map((slide) {
-          return Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: slide['color'] as Color,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (slide['badge'] != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(4),
+          return PointerInterceptor(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: slide['color'] as Color,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 15),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (slide['badge'] != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                slide['badge']!,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold),
+                              ),
                             ),
+                          const SizedBox(height: 8),
+                          Flexible(
                             child: Text(
-                              slide['badge']!,
-                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              slide['title']!,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.2),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        const SizedBox(height: 8),
-                        Flexible(
-                          child: Text(
-                            slide['title']!,
-                            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, height: 1.2),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          const SizedBox(height: 4),
+                          Flexible(
+                            child: Text(
+                              slide['subtitle']!,
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 11),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Flexible(
-                          child: Text(
-                            slide['subtitle']!,
-                            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 11),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           GestureDetector(
                             onTap: () {
-                               if (slide['badge'] == 'DESIGN') {
-                                 // Navigate to Design booking (first one)
-                                  final firstService = ServiceItem(
-                                    id: 'arch_01', 
-                                    name: 'Architectural Design', 
-                                    categoryId: 'design', 
-                                    unitPrice: 5000, 
-                                    unitType: 'floor'
-                                  );
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen(service: firstService)));
-                               } else if (slide['badge'] == 'SERVICES') {
-                                  // Navigate to first service section listing
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => ServiceListingScreen(
-                                    section: CMSProductSection(id: 'srv_sec', title: 'Home Maintenance', categoryId: 'maintenance')
-                                  )));
-                               } else {
-                                  // Default to Marketplace/Category listing
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => CategoryListingScreen(
-                                    category: Category(id: 'all', name: 'Marketplace', slug: 'marketplace', type: 'product', level: 0)
-                                  )));
-                               }
+                              if (slide['badge'] == 'DESIGN') {
+                                // Navigate to Design booking (first one)
+                                final firstService = ServiceItem(
+                                    id: 'arch_01',
+                                    name: 'Architectural Design',
+                                    categoryId: 'design',
+                                    unitPrice: 5000,
+                                    unitType: 'floor');
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => BookingScreen(
+                                            service: firstService)));
+                              } else if (slide['badge'] == 'SERVICES') {
+                                // Navigate to first service section listing
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            ServiceListingScreen(
+                                                section: CMSProductSection(
+                                                    id: 'srv_sec',
+                                                    title: 'Home Maintenance',
+                                                    categoryId:
+                                                        'maintenance'))));
+                              } else {
+                                // Default to Marketplace/Category listing
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            CategoryListingScreen(
+                                                category: Category(
+                                                    id: 'all',
+                                                    name: 'Marketplace',
+                                                    slug: 'marketplace',
+                                                    type: 'product',
+                                                    level: 0))));
+                              }
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 6),
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20)),
                               child: const Text(
                                 'আরও জানুন',
-                                style: TextStyle(color: Color(0xFFE7623F), fontSize: 10, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    color: Color(0xFFE7623F),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold),
                               ),
                             ),
                           ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Hero(
-                    tag: 'hero_image_${slide['title']}',
-                    child: Image.asset(
-                      slide['image']!,
-                      fit: BoxFit.contain,
-                      alignment: Alignment.centerRight,
+                  Expanded(
+                    flex: 2,
+                    child: Hero(
+                      tag: 'hero_image_${slide['title']}',
+                      child: Image.asset(
+                        slide['image']!,
+                        fit: BoxFit.contain,
+                        alignment: Alignment.centerRight,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }).toList(),
@@ -332,7 +395,10 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
               section.title!,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A)),
             ),
           ),
         SizedBox(
@@ -348,9 +414,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 CategoryIconHelper.getIcon(item.name),
                 false,
                 () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => CategoryListingScreen(
-                    category: Category(id: item.id, name: item.name, slug: item.slug ?? '', type: 'product', level: 0)
-                  )));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CategoryListingScreen(
+                              category: Category(
+                                  id: item.id,
+                                  name: item.name,
+                                  slug: item.slug ?? '',
+                                  type: 'product',
+                                  level: 0))));
                 },
               );
             },
@@ -365,27 +438,31 @@ class _HomeScreenState extends State<HomeScreen> {
       {
         'title': 'Architectural Design',
         'description': 'Complete building blueprints & permits',
-        'image': 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=400&fit=crop',
+        'image':
+            'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=400&fit=crop',
         'rating': 4.9,
         'price': 5000,
       },
       {
         'title': 'Interior Design',
         'description': 'Modern & functional space planning',
-        'image': 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&h=400&fit=crop',
+        'image':
+            'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&h=400&fit=crop',
         'rating': 4.8,
         'price': 25000,
       },
       {
         'title': 'Approval Service',
         'description': 'RAJUK and other regulatory body approval assistance.',
-        'image': 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&h=400&fit=crop',
+        'image':
+            'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&h=400&fit=crop',
         'rating': 5.0,
         'price': 12000,
       },
     ];
 
-    print('DEBUG: Rendering DesignServicesSection with ${designItems.length} items');
+    print(
+        'DEBUG: Rendering DesignServicesSection with ${designItems.length} items');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +471,10 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
           child: Text(
             'Design & Planning',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A)),
           ),
         ),
         SizedBox(
@@ -430,26 +510,38 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 140,
             width: double.infinity,
             fit: BoxFit.cover,
-            errorWidget: (context, url, error) => Container(color: Colors.grey.shade200, child: const Icon(Icons.broken_image)),
+            errorWidget: (context, url, error) => Container(
+                color: Colors.grey.shade200,
+                child: const Icon(Icons.broken_image)),
           ),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item['title'] ?? '', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), maxLines: 1),
+                Text(item['title'] ?? '',
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.bold),
+                    maxLines: 1),
                 const SizedBox(height: 4),
-                Text(item['description'] ?? '', style: TextStyle(fontSize: 11, color: Colors.grey.shade500), maxLines: 1),
+                Text(item['description'] ?? '',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                    maxLines: 1),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     if (item['price'] != null)
-                      Text('৳${item['price']}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                      Text('৳${item['price']}',
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w900)),
                     ElevatedButton(
                       onPressed: () {
                         final service = ServiceItem(
-                          id: item['title'].toString().toLowerCase().replaceAll(' ', '_'),
+                          id: item['title']
+                              .toString()
+                              .toLowerCase()
+                              .replaceAll(' ', '_'),
                           name: item['title'] ?? 'Service',
                           categoryId: 'design',
                           unitPrice: (item['price'] ?? 0).toDouble(),
@@ -457,9 +549,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           imageUrl: item['image'],
                           rating: (item['rating'] ?? 4.5).toDouble(),
                         );
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen(service: service)));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    BookingScreen(service: service)));
                       },
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0F172A), foregroundColor: Colors.white, minimumSize: const Size(64, 32)),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F172A),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(64, 32)),
                       child: const Text('Book', style: TextStyle(fontSize: 10)),
                     ),
                   ],
@@ -481,15 +580,25 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(section.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+              Text(section.title,
+                  style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A))),
               TextButton(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => CategoryListingScreen(
-                    category: Category(id: section.categoryId ?? 'all', name: section.title, slug: section.title.toLowerCase(), type: 'product', level: 0)
-                  )));
-                }, 
-                child: const Text('See All')
-              ),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => CategoryListingScreen(
+                                category: Category(
+                                    id: section.categoryId ?? 'all',
+                                    name: section.title,
+                                    slug: section.title.toLowerCase(),
+                                    type: 'product',
+                                    level: 0))));
+                  },
+                  child: const Text('See All')),
             ],
           ),
         ),
@@ -507,13 +616,20 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(section.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+              Text(section.title,
+                  style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A))),
               TextButton(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => ServiceListingScreen(section: section)));
-                }, 
-                child: const Text('See All')
-              ),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                ServiceListingScreen(section: section)));
+                  },
+                  child: const Text('See All')),
             ],
           ),
         ),
@@ -528,21 +644,24 @@ class _HomeScreenState extends State<HomeScreen> {
         'title': 'Expert-Selected,\nfast delivered',
         'subtitle': 'Quality Guarantee',
         'badge': 'Top Picks',
-        'image': 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600&h=400&fit=crop',
+        'image':
+            'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600&h=400&fit=crop',
         'color': const Color(0xFF0F172A),
       },
       {
         'title': 'The one app\nfor everything',
         'subtitle': 'Price alerts and offers',
         'badge': 'New',
-        'image': 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&h=400&fit=crop',
+        'image':
+            'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&h=400&fit=crop',
         'color': const Color(0xFFC2410C),
       },
       {
         'title': 'The ones\nyou love',
         'subtitle': 'Trusted and durable',
         'badge': 'Best Value',
-        'image': 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&h=400&fit=crop',
+        'image':
+            'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&h=400&fit=crop',
         'color': const Color(0xFF14532D),
       },
     ];
@@ -554,7 +673,11 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
           child: Text(
             'Our current deals',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.2),
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: Colors.grey,
+                letterSpacing: 1.2),
           ),
         ),
         SizedBox(
@@ -593,7 +716,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [(banner['color'] as Color), (banner['color'] as Color).withOpacity(0)],
+                                colors: [
+                                  (banner['color'] as Color),
+                                  (banner['color'] as Color).withOpacity(0)
+                                ],
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
                               ),
@@ -604,10 +730,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                         final categoryName = banner['title'].toString().contains('Expert') ? 'Construction Materials' : 'New Offers';
-                         Navigator.push(context, MaterialPageRoute(builder: (context) => CategoryListingScreen(
-                          category: Category(id: 'promo_${index}', name: categoryName, slug: 'promo', type: 'product', level: 0)
-                        )));
+                        final categoryName =
+                            banner['title'].toString().contains('Expert')
+                                ? 'Construction Materials'
+                                : 'New Offers';
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => CategoryListingScreen(
+                                    category: Category(
+                                        id: 'promo_${index}',
+                                        name: categoryName,
+                                        slug: 'promo',
+                                        type: 'product',
+                                        level: 0))));
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(20),
@@ -616,32 +752,47 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 banner['badge']!,
-                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold),
                               ),
                             ),
                             const SizedBox(height: 12),
                             Text(
                               banner['title']!,
-                              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, height: 1.1),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1.1),
                             ),
                             const SizedBox(height: 6),
                             Text(
                               banner['subtitle']!,
-                              style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 12),
                             ),
                             const SizedBox(height: 16),
                             const Row(
                               children: [
-                                Text('Explore', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                Text('Explore',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold)),
                                 SizedBox(width: 4),
-                                Icon(Icons.arrow_forward, color: Colors.white, size: 14),
+                                Icon(Icons.arrow_forward,
+                                    color: Colors.white, size: 14),
                               ],
                             ),
                           ],
@@ -663,102 +814,124 @@ class _HomeScreenState extends State<HomeScreen> {
     return BlocBuilder<MarketplaceBloc, MarketplaceState>(
       builder: (context, state) {
         if (state.productsStatus == MarketplaceStatus.loading) {
-          return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+          return const SizedBox(
+              height: 200, child: Center(child: CircularProgressIndicator()));
         }
-        
-        final products = categoryId != null 
+
+        final products = categoryId != null
             ? state.products.where((p) {
                 if (p.categoryId == categoryId) return true;
-                final cat = state.categories.cast<Category?>().firstWhere((c) => c?.id == p.categoryId, orElse: () => null);
+                final cat = state.categories.cast<Category?>().firstWhere(
+                    (c) => c?.id == p.categoryId,
+                    orElse: () => null);
                 if (cat == null) return false;
                 final searchId = categoryId.toLowerCase();
-                 // Improved matching including ID check
-                return cat.id.toLowerCase() == searchId || cat.name.toLowerCase() == searchId || cat.slug.toLowerCase() == searchId;
+                // Improved matching including ID check
+                return cat.id.toLowerCase() == searchId ||
+                    cat.name.toLowerCase() == searchId ||
+                    cat.slug.toLowerCase() == searchId;
               }).toList()
             : state.products;
 
         final sectionTitle = section.title.toLowerCase();
-        final isService = sectionTitle.contains('service') || sectionTitle.contains('maintenance');
-        final isCement = sectionTitle.contains('cement') || 
-                         categoryId?.toLowerCase().contains('cement') == true || 
-                         products.any((p) => p.name.toLowerCase().contains('cement'));
-        final isBrick = sectionTitle.contains('brick') ||
-                        categoryId?.toLowerCase().contains('brick') == true ||
-                        products.any((p) => p.name.toLowerCase().contains('brick'));
-         final isSteel = sectionTitle.contains('steel') || sectionTitle.contains('metal');
+        final searchCategory = (categoryId ?? sectionTitle).toLowerCase();
+        
+        // Match web logic dummy keys
+        String dummyGroupName = "Building Materials";
+        if (searchCategory.contains('steel') || searchCategory.contains('metal')) {
+          dummyGroupName = "Steel";
+        } else if (searchCategory.contains('plumb')) {
+          dummyGroupName = "Plumbing";
+        } else if (searchCategory.contains('finish') || searchCategory.contains('tiles')) {
+          dummyGroupName = "Finishing";
+        } else if (searchCategory.contains('service') || searchCategory.contains('maintenance')) {
+          dummyGroupName = "Services";
+        }
 
         final List<Product> displayProducts;
         if (products.isEmpty) {
-          if (isService) {
+          if (dummyGroupName == "Services") {
             displayProducts = [
               Product(
-                id: 's1', 
-                name: 'Electrical Wiring', 
-                price: 1500, 
-                imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&h=400&fit=crop', 
-                categoryId: categoryId ?? 'c_srv', 
+                id: 's1',
+                name: 'Electrical Wiring',
+                price: 1500,
+                imageUrl:
+                    'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&h=400&fit=crop',
+                categoryId: categoryId ?? 'c_srv',
                 sellerId: 'sel_04',
-                metadata: {'seller_name': 'PowerSafe Solutions', 'type': 'service'},
+                metadata: {
+                  'seller_name': 'PowerSafe Solutions',
+                  'type': 'service'
+                },
               ),
               Product(
-                id: 's2', 
-                name: 'Plumbing Solutions', 
-                price: 1200, 
-                imageUrl: 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=600&h=400&fit=crop', 
-                categoryId: categoryId ?? 'c_srv', 
+                id: 's2',
+                name: 'Plumbing Solutions',
+                price: 1200,
+                imageUrl:
+                    'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=600&h=400&fit=crop',
+                categoryId: categoryId ?? 'c_srv',
                 sellerId: 'sel_03',
                 metadata: {'seller_name': 'The Pipe Fixers', 'type': 'service'},
               ),
               Product(
-                id: 's3', 
-                name: 'Paint & Polishing', 
-                price: 2500, 
-                imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&h=400&fit=crop', 
-                categoryId: categoryId ?? 'c_srv', 
+                id: 's3',
+                name: 'Paint & Polishing',
+                price: 2500,
+                imageUrl:
+                    'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&h=400&fit=crop',
+                categoryId: categoryId ?? 'c_srv',
                 sellerId: 'sel_02',
                 metadata: {'seller_name': 'Color Masters', 'type': 'service'},
               ),
               Product(
-                id: 's4', 
-                name: 'Sanitary Installation', 
-                price: 1800, 
-                imageUrl: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600&h=400&fit=crop', 
-                categoryId: categoryId ?? 'c_srv', 
+                id: 's4',
+                name: 'Sanitary Installation',
+                price: 1800,
+                imageUrl:
+                    'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600&h=400&fit=crop',
+                categoryId: categoryId ?? 'c_srv',
                 sellerId: 'sel_06',
                 metadata: {'seller_name': 'Elegant Floors', 'type': 'service'},
               ),
             ];
-          } else {
+          } else if (dummyGroupName == "Steel") {
             displayProducts = [
-              Product(
-                id: 'd1', 
-                name: isCement ? 'Seven Brand Cement' : (isBrick ? '1st Class Red Bricks' : (isSteel ? 'Seven Star Steel' : 'Premium ${section.title}')), 
-                price: isCement ? 520 : (isBrick ? 12 : (isSteel ? 920 : 500)), 
-                imageUrl: isCement 
-                    ? 'https://images.unsplash.com/photo-1589923188900-85dae523321c?w=600&h=400&fit=crop' 
-                    : (isSteel ? 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&h=400&fit=crop' : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=400&fit=crop'), 
-                categoryId: categoryId ?? 'c1', 
-                sellerId: 's1',
-                metadata: {'seller_name': 'Auspicious'},
-              ),
-              Product(
-                id: 'd2', 
-                name: isBrick ? 'Picket Bricks' : (isCement ? 'Standard Cement' : (isSteel ? 'TMT Bar (Standard)' : 'Standard ${section.title}')), 
-                price: isBrick ? 10 : (isCement ? 480 : (isSteel ? 850 : 350)), 
-                imageUrl: 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=600&h=400&fit=crop', 
-                categoryId: categoryId ?? 'c1', 
-                sellerId: 's1',
-                metadata: {'seller_name': 'Auspicious'},
-              ),
+              Product(id: 'steel-1', name: 'BSRM 500W', price: 92000, imageUrl: 'https://images.unsplash.com/photo-1535732759880-bbd5c7265e3f?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_steel', sellerId: 's_s1', metadata: {'seller_name': 'BSRM Official'}),
+              Product(id: 'steel-2', name: 'AKS Steel', price: 91500, imageUrl: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_steel', sellerId: 's_s1', metadata: {'seller_name': 'BSRM Official'}),
+              Product(id: 'steel-3', name: 'KSRM Bar', price: 91000, imageUrl: 'https://plus.unsplash.com/premium_photo-1664303894360-145466d7ad55?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_steel', sellerId: 's_s1', metadata: {'seller_name': 'BSRM Official'}),
+              Product(id: 'steel-4', name: 'Binding Wire', price: 120, imageUrl: 'https://images.unsplash.com/photo-1558611997-0950a4722ac1?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_steel', sellerId: 's_s1', metadata: {'seller_name': 'BSRM Official'}),
+            ];
+          } else if (dummyGroupName == "Plumbing") {
+             displayProducts = [
+              Product(id: 'plum-1', name: 'uPVC Pipe 4"', price: 450, imageUrl: 'https://images.unsplash.com/photo-1542013936693-884638332954?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_plum', sellerId: 's_p1', metadata: {'seller_name': 'Seven Rings Ltd'}),
+              Product(id: 'plum-2', name: 'Bib Cock', price: 350, imageUrl: 'https://images.unsplash.com/photo-1584622050111-993a426fbf0a?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_plum', sellerId: 's_p1', metadata: {'seller_name': 'Seven Rings Ltd'}),
+              Product(id: 'plum-3', name: 'Basin Mixer', price: 2500, imageUrl: 'https://images.unsplash.com/photo-1616486029423-aaa478965c97?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_plum', sellerId: 's_p1', metadata: {'seller_name': 'Seven Rings Ltd'}),
+              Product(id: 'plum-4', name: 'Water Tank', price: 8000, imageUrl: 'https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_plum', sellerId: 's_p1', metadata: {'seller_name': 'Seven Rings Ltd'}),
+            ];
+          } else if (dummyGroupName == "Finishing") {
+             displayProducts = [
+              Product(id: 'fin-1', name: 'Floor Tiles', price: 120, imageUrl: 'https://images.unsplash.com/photo-1615529182904-14819c35db37?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_fin', sellerId: 's_f1', metadata: {'seller_name': 'Standard Bricks'}),
+              Product(id: 'fin-2', name: 'Wall Paint', price: 3500, imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_fin', sellerId: 's_f1', metadata: {'seller_name': 'Standard Bricks'}),
+              Product(id: 'fin-3', name: 'Commode', price: 15000, imageUrl: 'https://images.unsplash.com/photo-1584622050111-993a426fbf0a?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_fin', sellerId: 's_f1', metadata: {'seller_name': 'Standard Bricks'}),
+              Product(id: 'fin-4', name: 'LED Light', price: 350, imageUrl: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_fin', sellerId: 's_f1', metadata: {'seller_name': 'Standard Bricks'}),
+            ];
+          } else {
+            // Default to Building Materials
+            displayProducts = [
+              Product(id: 'bmat-1', name: 'Portland Cement', price: 520, imageUrl: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_bld', sellerId: 's_b1', metadata: {'seller_name': 'Seven Rings Ltd'}),
+              Product(id: 'bmat-2', name: 'Auto Bricks', price: 12, imageUrl: 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_bld', sellerId: 's_b1', metadata: {'seller_name': 'Standard Bricks'}),
+              Product(id: 'bmat-3', name: 'Sylhet Sand', price: 15000, imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_bld', sellerId: 's_b1', metadata: {'seller_name': 'Seven Rings Ltd'}),
+              Product(id: 'bmat-4', name: 'Stone Chips', price: 8500, imageUrl: 'https://images.unsplash.com/photo-1525869916826-972885c91c1e?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_bld', sellerId: 's_b1', metadata: {'seller_name': 'Standard Bricks'}),
             ];
           }
         } else {
           displayProducts = products;
         }
 
-        print('DEBUG: Section "$categoryId" rendering ${displayProducts.length} items (isCement: $isCement, isBrick: $isBrick)');
-
-        print('DEBUG: HorizontalList for "$categoryId" found ${products.length} products (Total in state: ${state.products.length})');
+        print(
+            'DEBUG: HorizontalList for "$categoryId" found ${products.length} products (Total in state: ${state.products.length})');
 
         return SizedBox(
           height: 240,
@@ -770,11 +943,15 @@ class _HomeScreenState extends State<HomeScreen> {
               return Padding(
                 padding: const EdgeInsets.only(right: 12),
                 child: SizedBox(
-                   width: 160,
-                   child: ProductCard(
-                     product: displayProducts[index],
-                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProductDetailsScreen(product: displayProducts[index]))),
-                   ),
+                  width: 160,
+                  child: ProductCard(
+                    product: displayProducts[index],
+                    onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ProductDetailsScreen(
+                                product: displayProducts[index]))),
+                  ),
                 ),
               );
             },
@@ -784,7 +961,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCircularCategory(String name, String icon, bool isSelected, VoidCallback onTap) {
+  Widget _buildCircularCategory(
+      String name, String icon, bool isSelected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -796,14 +974,30 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 64,
               width: 64,
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFF97316).withOpacity(0.1) : Colors.grey.shade50,
+                color: isSelected
+                    ? const Color(0xFFF97316).withOpacity(0.1)
+                    : Colors.grey.shade50,
                 shape: BoxShape.circle,
-                border: Border.all(color: isSelected ? const Color(0xFFF97316) : Colors.grey.shade200, width: 2),
+                border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFFF97316)
+                        : Colors.grey.shade200,
+                    width: 2),
               ),
-              child: Center(child: Text(icon, style: const TextStyle(fontSize: 24))),
+              child: Center(
+                  child: Text(icon, style: const TextStyle(fontSize: 24))),
             ),
             const SizedBox(height: 8),
-            Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? const Color(0xFFF97316) : const Color(0xFF475569))),
+            Text(name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected
+                        ? const Color(0xFFF97316)
+                        : const Color(0xFF475569))),
           ],
         ),
       ),

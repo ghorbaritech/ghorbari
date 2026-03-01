@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ghorbari_consumer/shared/models/product.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:ghorbari_consumer/shared/widgets/glass_card.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
   final Product product;

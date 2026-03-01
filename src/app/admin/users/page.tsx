@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import PartnerOnboardingForm from '@/components/forms/PartnerOnboardingForm'
-import { getUsers, getPartners, updateUserProfile } from '@/app/admin/onboarding/actions'
+import { getUsers, getPartners, updateUserProfile, getCategories } from '@/app/admin/onboarding/actions'
 
 export default function UserManagementPage() {
     const [loading, setLoading] = useState(false)
@@ -31,6 +31,7 @@ export default function UserManagementPage() {
     // Existing accounts state
     const [users, setUsers] = useState<any[]>([])
     const [partners, setPartners] = useState<any[]>([])
+    const [categories, setCategories] = useState<any[]>([])
     const [searchTerm, setSearchTerm] = useState('')
 
     // Editing state
@@ -38,9 +39,10 @@ export default function UserManagementPage() {
     const [activeTab, setActiveTab] = useState<'customer' | 'retailer'>('customer')
 
     const refreshData = useCallback(async () => {
-        const [uData, pData] = await Promise.all([getUsers(), getPartners()])
+        const [uData, pData, cData] = await Promise.all([getUsers(), getPartners(), getCategories()])
         setUsers(uData)
         setPartners(pData)
+        setCategories(cData)
     }, [])
 
     useEffect(() => {
@@ -216,6 +218,7 @@ export default function UserManagementPage() {
                 <TabsContent value="retailer" className="m-0">
                     <PartnerOnboardingForm
                         key={editingAccount?.id || 'new-partner'}
+                        availableCategories={categories}
                         initialData={editingAccount}
                         userId={editingAccount?.id}
                         onCancel={() => {
