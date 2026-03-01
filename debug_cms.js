@@ -1,53 +1,30 @@
-
-const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
+const dotenv = require('dotenv');
+const path = require('path');
 
-// Read .env.local manually
-let supabaseUrl, supabaseKey;
-try {
-    const envFile = fs.readFileSync('.env.local', 'utf8');
-    const lines = envFile.split('\n');
-    lines.forEach(line => {
-        const [key, val] = line.split('=');
-        if (key && val) {
-            const trimmedKey = key.trim();
-            const trimmedVal = val.trim().replace(/^["']|["']$/g, ''); // Remove quotes
-            if (trimmedKey === 'NEXT_PUBLIC_SUPABASE_URL') supabaseUrl = trimmedVal;
-            if (trimmedKey === 'NEXT_PUBLIC_SUPABASE_ANON_KEY') supabaseKey = trimmedVal;
-        }
-    });
-} catch (e) {
-    console.error('Error reading .env.local:', e.message);
-}
+dotenv.config({ path: path.join(__dirname, '.env.local') });
 
-if (!supabaseUrl || !supabaseKey) {
-    console.error('Missing Supabase env vars');
-    process.exit(1);
-}
-
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function checkContent() {
-    console.log('Checking home_content table...');
+async function checkCMSContent() {
+    console.log('Fetching home_content...');
     const { data, error } = await supabase
         .from('home_content')
         .select('*')
-        .eq('section_key', 'featured_categories');
+        .eq('is_active', true);
 
     if (error) {
-        console.error('Error:', error);
-    } else {
-        console.log('Found rows:', data.length);
-        data.forEach(row => {
-            console.log(`ID: ${row.id}, IsActive: ${row.is_active}, UpdatedAt: ${row.updated_at}`);
-            const items = row.content?.items || [];
-            console.log('Items Count:', items.length);
-            if (items.length > 0) {
-                console.log('First Item:', JSON.stringify(items[0]));
-                console.log('Last Item:', JSON.stringify(items[items.length - 1]));
-            }
-        });
+        console.error('Error fetching home_content:', error);
+        return;
     }
+
+    console.log('Found', data.length, 'active sections.');
+    data.forEach(item => {
+        console.log(`\n--- Section: ${item.section_key} ---`);
+        console.log(JSON.stringify(item.content, null, 2));
+    });
 }
 
-checkContent();
+checkCMSContent();

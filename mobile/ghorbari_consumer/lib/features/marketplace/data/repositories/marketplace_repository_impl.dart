@@ -22,4 +22,9 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
   Future<Product> getProductDetails(String productId) async {
     return await remoteDataSource.getProductDetails(productId);
   }
+
+  @override
+  Future<Map<String, dynamic>> getHomeCMSContent() async {
+    return await remoteDataSource.getHomeCMSContent();
+  }
 }

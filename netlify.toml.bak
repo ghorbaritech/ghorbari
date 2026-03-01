@@ -1,0 +1,8 @@
+[build]
+  command = ""
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+  [plugins.inputs]
+    disableRuntime = true

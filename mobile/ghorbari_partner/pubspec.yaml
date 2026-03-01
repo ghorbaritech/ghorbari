@@ -29,14 +29,12 @@ dependencies:
   # Partner Specific
   fl_chart: ^0.66.0
   qr_flutter: ^4.1.0 # For order verification
-  local_auth: ^2.1.6 # Biometric security
-  
   # Utilities
   easy_localization: ^3.0.3
   get_it: ^7.6.4
   injectable: ^2.3.2
   shared_preferences: ^2.2.2
-  intl: ^0.18.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -50,3 +48,9 @@ flutter:
     - assets/images/
     - assets/translations/
     - assets/lottie/
+
+dependency_overrides:
+  # path_provider_foundation 2.5+ uses objective_c which has a macOS-only native
+  # build hook that breaks Windows builds. 2.4.1 has no objective_c dependency.
+  # This is safe since path_provider_foundation only ever executes on iOS/macOS.
+  path_provider_foundation: 2.4.1

@@ -20,11 +20,11 @@ class Order extends Equatable {
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
       id: json['id'],
-      userId: json['user_id'],
+      userId: json['customer_id'] ?? '',
       status: json['status'],
       totalAmount: (json['total_amount'] ?? 0.0).toDouble(),
       createdAt: DateTime.parse(json['created_at']),
-      items: (json['order_items'] as List?)?.map((i) => OrderItem.fromJson(i)).toList() ?? [],
+      items: (json['items'] as List?)?.map((i) => OrderItem.fromJson(i)).toList() ?? [],
     );
   }
 
@@ -47,8 +47,8 @@ class OrderItem extends Equatable {
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
-      productId: json['product_id'],
-      productName: json['products']?['name'] ?? 'Product',
+      productId: json['productId'] ?? json['product_id'] ?? json['id'] ?? '',
+      productName: json['title'] ?? json['product_name'] ?? json['productName'] ?? json['name'] ?? 'Product',
       quantity: json['quantity'] ?? 1,
       price: (json['price'] ?? 0.0).toDouble(),
     );

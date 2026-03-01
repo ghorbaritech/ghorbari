@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_event.dart';
 import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_partner/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:ghorbari_partner/features/dashboard/presentation/screens/main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (state is AuthAuthenticated) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
           );
         }
         if (state is AuthFailure) {

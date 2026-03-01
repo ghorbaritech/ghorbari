@@ -154,11 +154,20 @@ export default function AdminOrdersPage() {
 
     const handleConfirmProductOrder = async (orderId: string) => {
         if (!confirm("Confirm order routing? This will alert the retailer.")) return;
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            alert("Session expired. Please log in again.");
+            return;
+        }
+
         try {
-            await confirmOrder(orderId, "system_admin"); // simplistic admin id
+            await confirmOrder(orderId, user.id); // Use real admin ID
             loadData(); // Reload to refresh status
-        } catch (error) {
-            alert("Failed to confirm order.");
+        } catch (error: any) {
+            console.error("Confirmation error details:", error);
+            alert(`Failed to confirm order. ${error?.message || "Check admin permissions."}`);
         }
     };
 

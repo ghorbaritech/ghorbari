@@ -258,13 +258,20 @@ export function Navbar() {
                                     </Link>
                                 </>
                             ) : (
-                                <Button
-                                    onClick={handleSignOut}
-                                    variant="outline"
-                                    className="w-full h-14 font-bold uppercase text-rose-600 border-rose-100 rounded-2xl"
-                                >
-                                    {t.nav_logout}
-                                </Button>
+                                <div className="space-y-4">
+                                    <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                                        <Button variant="outline" className="w-full h-14 font-bold uppercase rounded-2xl flex items-center justify-center gap-2">
+                                            <LayoutDashboard className="w-5 h-5" /> {t.nav_dashboard || "Dashboard"}
+                                        </Button>
+                                    </Link>
+                                    <Button
+                                        onClick={handleSignOut}
+                                        variant="ghost"
+                                        className="w-full h-14 font-bold uppercase text-rose-600 hover:bg-rose-50 rounded-2xl flex items-center justify-center gap-2"
+                                    >
+                                        <LogOut className="w-5 h-5" /> {t.nav_logout || "Sign Out"}
+                                    </Button>
+                                </div>
                             )}
                         </div>
                     </div>

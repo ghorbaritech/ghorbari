@@ -181,7 +181,12 @@ export async function confirmOrder(orderId: string, adminId: string, notes?: str
         .single()
 
     if (error) {
-        console.error('Error confirming order:', error)
+        console.error('Error confirming order:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+        })
         throw error
     }
 

@@ -26,3 +26,5 @@ class MarketplaceFetchProductDetails extends MarketplaceEvent {
   @override
   List<Object?> get props => [productId];
 }
+
+class MarketplaceFetchCMSContent extends MarketplaceEvent {}

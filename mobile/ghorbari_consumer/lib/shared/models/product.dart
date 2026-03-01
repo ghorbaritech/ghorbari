@@ -24,17 +24,23 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    double parsePrice(dynamic p) {
+      if (p == null) return 0.0;
+      if (p is num) return p.toDouble();
+      return double.tryParse(p.toString()) ?? 0.0;
+    }
+
     return Product(
-      id: json['id'],
-      name: json['name'],
-      nameBn: json['name_bn'],
-      description: json['description'],
-      descriptionBn: json['description_bn'],
-      categoryId: json['category_id'],
-      price: (json['price'] ?? 0).toDouble(),
-      imageUrl: json['image_url'],
-      sellerId: json['seller_id'],
-      metadata: json['metadata'],
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Untitled Product',
+      nameBn: json['name_bn']?.toString(),
+      description: json['description']?.toString(),
+      descriptionBn: json['description_bn']?.toString(),
+      categoryId: json['category_id']?.toString() ?? '',
+      price: parsePrice(json['price']),
+      imageUrl: json['image_url']?.toString(),
+      sellerId: json['seller_id']?.toString(),
+      metadata: json['metadata'] is Map ? Map<String, dynamic>.from(json['metadata']) : null,
     );
   }
 

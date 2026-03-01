@@ -1,9 +1,6 @@
 import 'package:ghorbari_partner/shared/models/order.dart';
-
-abstract class PartnerOrderRepository {
-  Future<List<Order>> getPartnerOrders(String partnerId);
-  Future<Order> updateOrderStatus(String orderId, String status);
-}
+import 'package:ghorbari_partner/features/orders/domain/repositories/partner_order_repository.dart';
+import 'package:ghorbari_partner/features/orders/data/datasources/partner_order_remote_data_source.dart';
 
 class PartnerOrderRepositoryImpl implements PartnerOrderRepository {
   final PartnerOrderRemoteDataSource remoteDataSource;

@@ -25,6 +25,7 @@ dependencies:
   lottie: ^3.0.0
   shimmer: ^3.0.0
   cached_network_image: ^3.3.1
+  carousel_slider: ^5.0.0
   
   # Utilities
   easy_localization: ^3.0.3

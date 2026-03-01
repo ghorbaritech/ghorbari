@@ -8,6 +8,8 @@ $latest = $deploys[0]
 
 Write-Host "=== Latest deploy details ==="
 Write-Host "ID: $($latest.id)"
+Write-Host "State: $($latest.state)"
+Write-Host "Commit: $($latest.commit_ref)"
 Write-Host "Error: $($latest.error_message)"
 Write-Host "Log access: $($latest.log_access_attributes | ConvertTo-Json)"
 Write-Host "Build id: $($latest.build_id)"

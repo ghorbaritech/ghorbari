@@ -1,9 +1,6 @@
 import 'package:ghorbari_partner/features/auth/domain/entities/partner_entity.dart';
-
-abstract class AuthRepository {
-  Future<PartnerEntity> signIn(String email, String password);
-  Future<void> signOut();
-}
+import 'package:ghorbari_partner/features/auth/domain/repositories/auth_repository.dart';
+import 'package:ghorbari_partner/features/auth/data/datasources/auth_remote_data_source.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;

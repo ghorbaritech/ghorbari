@@ -56,9 +56,9 @@ export function Sidebar() {
                 "fixed left-0 top-0 h-screen bg-white border-r border-neutral-100 transition-all duration-300 z-40",
                 isOpen ? "w-72" : "w-20 -left-20 lg:left-0 lg:w-20"
             )}>
-                <div className="flex flex-col h-full p-6">
+                <div className="flex flex-col h-full overflow-hidden">
                     {/* Brand */}
-                    <div className="flex items-center gap-3 mb-12 px-2">
+                    <div className="flex items-center gap-3 mb-8 px-6 pt-6 flex-shrink-0">
                         <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary-200">
                             <ShieldCheck className="w-6 h-6 text-white" />
                         </div>
@@ -71,7 +71,7 @@ export function Sidebar() {
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 space-y-2">
+                    <nav className="flex-1 overflow-y-auto px-6 space-y-2 custom-scrollbar pb-6">
                         {NAV_ITEMS.map((item) => {
                             const isActive = pathname.startsWith(item.href)
                             return (
@@ -101,17 +101,21 @@ export function Sidebar() {
                     </nav>
 
                     {/* Footer Actions */}
-                    <div className="mt-auto pt-6 border-t border-neutral-50">
-                        <Button
-                            variant="ghost"
+                    <div className="mt-auto px-6 py-6 border-t border-neutral-50 bg-white flex-shrink-0">
+                        <button
+                            onClick={async () => {
+                                const supabase = (await import('@/utils/supabase/client')).createClient()
+                                await supabase.auth.signOut()
+                                window.location.href = '/adminlogin'
+                            }}
                             className={cn(
-                                "w-full justify-start gap-4 p-4 h-auto rounded-2xl text-neutral-400 hover:text-rose-600 hover:bg-rose-50 transition-colors",
+                                "flex items-center gap-4 p-4 rounded-2xl transition-all group relative w-full text-neutral-400 hover:text-rose-600 hover:bg-rose-50",
                                 !isOpen && "px-4"
                             )}
                         >
-                            <LogOut className="w-6 h-6" />
-                            {isOpen && <span className="font-bold text-sm">Sign Out</span>}
-                        </Button>
+                            <LogOut className="w-6 h-6 transition-transform group-hover:scale-110" />
+                            {isOpen && <span className="font-bold text-sm tracking-tight">Sign Out</span>}
+                        </button>
                     </div>
                 </div>
             </aside>

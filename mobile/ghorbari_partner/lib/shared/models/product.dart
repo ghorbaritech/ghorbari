@@ -1,55 +1,59 @@
-class Product {
-  final String id;
-  final String name;
-  final String? nameBn;
-  final String? description;
-  final String? descriptionBn;
-  final String categoryId;
-  final double price;
-  final String? imageUrl;
-  final String? sellerId;
-  final Map<String, dynamic>? metadata;
+import 'package:equatable/equatable.dart';
 
-  Product({
+class Product extends Equatable {
+  final String id;
+  final String sellerId;
+  final String sku;
+  final String title;
+  final String? description;
+  final String? category;
+  final double basePrice;
+  final int stockQuantity;
+  final List<String> images;
+  final String status;
+
+  const Product({
     required this.id,
-    required this.name,
-    this.nameBn,
+    required this.sellerId,
+    required this.sku,
+    required this.title,
     this.description,
-    this.descriptionBn,
-    required this.categoryId,
-    required this.price,
-    this.imageUrl,
-    this.sellerId,
-    this.metadata,
+    this.category,
+    required this.basePrice,
+    required this.stockQuantity,
+    required this.images,
+    required this.status,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       id: json['id'],
-      name: json['name'],
-      nameBn: json['name_bn'],
-      description: json['description'],
-      descriptionBn: json['description_bn'],
-      categoryId: json['category_id'],
-      price: (json['price'] ?? 0).toDouble(),
-      imageUrl: json['image_url'],
       sellerId: json['seller_id'],
-      metadata: json['metadata'],
+      sku: json['sku'],
+      title: json['title'],
+      description: json['description'],
+      category: json['category'],
+      basePrice: (json['base_price'] ?? 0.0).toDouble(),
+      stockQuantity: json['stock_quantity'] ?? 0,
+      images: List<String>.from(json['images'] ?? []),
+      status: json['status'] ?? 'active',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'name': name,
-      'name_bn': nameBn,
-      'description': description,
-      'description_bn': descriptionBn,
-      'category_id': categoryId,
-      'price': price,
-      'image_url': imageUrl,
       'seller_id': sellerId,
-      'metadata': metadata,
+      'sku': sku,
+      'title': title,
+      'description': description,
+      'category': category,
+      'base_price': basePrice,
+      'stock_quantity': stockQuantity,
+      'images': images,
+      'status': status,
     };
   }
+
+  @override
+  List<Object?> get props => [id, sellerId, sku, title, description, category, basePrice, stockQuantity, images, status];
 }

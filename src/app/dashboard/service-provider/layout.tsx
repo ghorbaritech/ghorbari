@@ -3,6 +3,7 @@ import Link from "next/link";
 import { LayoutDashboard, Briefcase, Settings, LogOut, FileText } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 
 export default function ProviderDashboardLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -29,6 +30,10 @@ export default function ProviderDashboardLayout({ children }: { children: React.
                             <Link href="/dashboard/service-provider/settings" className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 rounded-lg text-neutral-600 font-medium">
                                 <Settings className="w-5 h-5" /> Settings
                             </Link>
+                            <LogoutButton
+                                className="w-full text-red-600 hover:bg-red-50"
+                                redirectPath="/login"
+                            />
                         </nav>
                     </div>
                 </aside>

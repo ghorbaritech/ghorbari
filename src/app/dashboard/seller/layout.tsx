@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, ShoppingBag, Settings, LogOut, DollarSign, Tag, Archive, MessageSquare, HelpCircle, User } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 
 function NavLink({ href, icon: Icon, label, exact = false }: { href: string; icon: any; label: string; exact?: boolean }) {
     const pathname = usePathname();
@@ -27,12 +28,12 @@ export default function SellerDashboardLayout({ children }: { children: React.Re
             <Navbar />
             <div className="flex-1 container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
                 <aside className="w-full lg:w-64 flex-shrink-0">
-                    <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden sticky top-24">
+                    <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden sticky top-24 flex flex-col max-h-[calc(100vh-120px)]">
                         <div className="p-6 border-b border-neutral-100 bg-neutral-900 text-white">
                             <div className="font-bold">Seller Console</div>
                             <div className="text-xs opacity-70">Retail Partner</div>
                         </div>
-                        <nav className="p-4 space-y-1">
+                        <nav className="p-4 space-y-1 overflow-y-auto custom-scrollbar flex-1">
                             <NavLink href="/dashboard/seller" icon={LayoutDashboard} label="Overview" exact />
                             <NavLink href="/dashboard/seller/products" icon={Archive} label="Products" />
                             <NavLink href="/dashboard/seller/orders" icon={ShoppingBag} label="Orders" />
@@ -43,9 +44,10 @@ export default function SellerDashboardLayout({ children }: { children: React.Re
                             <NavLink href="/dashboard/seller/support" icon={HelpCircle} label="Support" />
                             <div className="my-2 h-px bg-neutral-100" />
                             <NavLink href="/dashboard/seller/settings" icon={Settings} label="Settings" />
-                            <button className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium">
-                                <LogOut className="w-5 h-5" /> Sign Out
-                            </button>
+                            <LogoutButton
+                                className="w-full text-red-600 hover:bg-red-50"
+                                redirectPath="/login"
+                            />
                         </nav>
                     </div>
                 </aside>

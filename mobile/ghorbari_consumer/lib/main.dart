@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/screens/login_screen.dart';
+import 'package:ghorbari_consumer/features/marketplace/presentation/screens/home_screen.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:ghorbari_consumer/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:ghorbari_consumer/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -25,8 +26,9 @@ void main() async {
   // Initialize Supabase
   await Supabase.initialize(
     url: 'https://nnrzszujwhutbgghtjwc.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ucnrzenVqd2h1dGJnZ2h0andjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxNTM0MDYsImV4cCI6MjA4NDcyOTQwNn0.Wm5Rt80-9_WyDCIxQVbreNSn9BTlqfgN8HmORGZcsO4',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ucnpzenVqd2h1dGJnZ2h0andjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxNTM0MDYsImV4cCI6MjA4NDcyOTQwNn0.Wm5Rt80-9_WyDCIxQVbreNSn9BTlqfgN8HmORGZcsO4',
   );
+  print('DEBUG: Supabase Initialized. Running App...');
 
   runApp(
     EasyLocalization(
@@ -133,11 +135,13 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _navigate() async {
+    print('DEBUG: SplashScreen navigate started');
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
+      print('DEBUG: SplashScreen pushing HomeScreen');
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     }
   }

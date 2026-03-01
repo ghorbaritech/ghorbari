@@ -98,7 +98,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.between,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'ORDER #${order.id.substring(0, 8).toUpperCase()}',
@@ -116,7 +116,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
           const Divider(color: Colors.white10),
           const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.between,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('${order.items.length} Items', style: const TextStyle(color: Colors.white70, fontSize: 13)),
               Text('৳${order.totalAmount.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
@@ -153,7 +153,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
 
   Widget _buildStatusBadge(String status, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, py: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import { CustomerSidebarHeader } from "@/components/dashboard/CustomerSidebarHeader";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 
 export default async function CustomerDashboardLayout({
     children,
@@ -39,10 +40,10 @@ export default async function CustomerDashboardLayout({
             <div className="flex-1 container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
                 {/* Dashboard Sidebar */}
                 <aside className="w-full lg:w-64 flex-shrink-0">
-                    <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden sticky top-24">
+                    <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden sticky top-24 flex flex-col max-h-[calc(100vh-120px)]">
                         <CustomerSidebarHeader profile={profile} email={user?.email} />
 
-                        <nav className="p-4 space-y-1">
+                        <nav className="p-4 space-y-1 overflow-y-auto custom-scrollbar flex-1">
                             <Link href="/dashboard/customer" className="flex items-center gap-3 px-4 py-3 bg-primary-50 text-primary-700 rounded-lg font-medium">
                                 <LayoutDashboard className="w-5 h-5" /> Dashboard
                             </Link>
@@ -59,9 +60,10 @@ export default async function CustomerDashboardLayout({
                                 <User className="w-5 h-5" /> Profile Settings
                             </Link>
                             <div className="my-2 h-px bg-neutral-100"></div>
-                            <button className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium">
-                                <LogOut className="w-5 h-5" /> Sign Out
-                            </button>
+                            <LogoutButton
+                                className="w-full text-red-600 hover:bg-red-50"
+                                redirectPath="/login"
+                            />
                         </nav>
                     </div>
                 </aside>

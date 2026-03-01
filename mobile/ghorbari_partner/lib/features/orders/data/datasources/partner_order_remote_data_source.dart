@@ -10,10 +10,10 @@ abstract class PartnerOrderRemoteDataSource {
 class PartnerOrderRemoteDataSourceImpl implements PartnerOrderRemoteDataSource {
   @override
   Future<List<Order>> getPartnerOrders(String partnerId) async {
-    // In Ghorbari, we need to join order_items with products to filter by partner_id
+    // In Ghorbari, we filter by seller_id for products/materials
     final response = await SupabaseService.from('orders')
-        .select('*, order_items!inner(*, products!inner(*))')
-        .eq('order_items.products.partner_id', partnerId)
+        .select('*')
+        .eq('seller_id', partnerId)
         .order('created_at', ascending: false);
     
     return (response as List).map((json) => Order.fromJson(json)).toList();
