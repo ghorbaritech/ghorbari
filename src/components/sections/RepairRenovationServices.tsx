@@ -8,6 +8,7 @@ const services = [
         title: "Plumbing",
         titleBn: "প্লাম্বিং",
         description: "Leak repairs, pipe installation, and bathroom fittings.",
+        descriptionBn: "লিক মেরামত, পাইপ ইনস্টলেশন এবং বাথরুমের ফিটিংস।",
         color: "bg-blue-100 text-blue-600"
     },
     {
@@ -15,6 +16,7 @@ const services = [
         title: "Electrical",
         titleBn: "ইলেকট্রিক্যাল",
         description: "Wiring, switchboard repairs, and appliance installation.",
+        descriptionBn: "ওয়্যারিং, সুইচবোর্ড মেরামত এবং অ্যাপ্লায়েন্স ইনস্টলেশন।",
         color: "bg-yellow-100 text-yellow-600"
     },
     {
@@ -22,6 +24,7 @@ const services = [
         title: "Painting",
         titleBn: "পেইন্টিং",
         description: "Interior & exterior painting with professional finish.",
+        descriptionBn: "পেশাদার ফিনিশ সহ ইন্টেরিয়র এবং এক্সটেরিয়র পেইন্টিং।",
         color: "bg-pink-100 text-pink-600"
     },
     {
@@ -29,6 +32,7 @@ const services = [
         title: "Carpentry",
         titleBn: "কাঠমিস্ত্রি সার্ভিস",
         description: "Furniture repair, door installation, and custom woodwork.",
+        descriptionBn: "আসবাবপত্র মেরামত, দরজা ইনস্টলেশন এবং কাস্টম কাঠের কাজ।",
         color: "bg-orange-100 text-orange-600"
     },
     {
@@ -36,6 +40,7 @@ const services = [
         title: "General Maintenance",
         titleBn: "সাধারণ রক্ষণাবেক্ষণ",
         description: "Drilling, mounting TV units, and general repairs.",
+        descriptionBn: "ড্রিলিং, টিভি ইউনিট মাউন্ট করা এবং সাধারণ মেরামত।",
         color: "bg-gray-100 text-gray-600"
     }
 ];
@@ -69,7 +74,7 @@ export function RepairRenovationServices() {
                                 </div>
                                 <h3 className="font-bold text-lg mb-2 text-neutral-900">{isBn ? service.titleBn : service.title}</h3>
                                 <p className="text-neutral-500 text-sm leading-relaxed">
-                                    {service.description}
+                                    {isBn ? service.descriptionBn : service.description}
                                 </p>
                             </div>
                         ))}
