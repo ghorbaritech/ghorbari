@@ -4,7 +4,7 @@ export const dummyServiceCategories = [
     { id: 'cat_electrical', name: 'Electrical', nameBn: 'ইলেকট্রিক্যাল' },
     { id: 'cat_plumbing', name: 'Plumbing', nameBn: 'প্লাম্বিং' },
     { id: 'cat_painting', name: 'Painting', nameBn: 'পেইন্টিং' },
-    { id: 'cat_carpentry', name: 'Carpentry', nameBn: 'কার্পেন্ট্রি' },
+    { id: 'cat_carpentry', name: 'Carpentry', nameBn: 'কাঠমিস্ত্রি সার্ভিস' },
     { id: 'cat_tiles', name: 'Tiles & Marble', nameBn: 'টাইলস ও মার্বেল' },
     { id: 'cat_hvac', name: 'AC & HVAC', nameBn: 'এসি ও এইচভিএসি' },
 ];

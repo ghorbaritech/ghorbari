@@ -93,7 +93,7 @@ BEGIN
     -- 2. CARPENTRY SERVICES HIERARCHY (Level 0)
     -- ==========================================
     INSERT INTO public.product_categories (name, name_bn, slug, type, level, section, is_active)
-    VALUES ('Carpentry Services', 'ছুতার পরিষেবা', 'carpentry-services', 'service', 0, 'product', true)
+    VALUES ('Carpentry Services', 'কাঠমিস্ত্রি সার্ভিস', 'carpentry-services', 'service', 0, 'product', true)
     ON CONFLICT (name, type, parent_id) DO UPDATE SET name_bn = EXCLUDED.name_bn, slug = EXCLUDED.slug, level = EXCLUDED.level, section = EXCLUDED.section
     RETURNING id INTO v_root_carpentry;
 
