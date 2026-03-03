@@ -75,12 +75,18 @@ export function ProductCard({
         <div className="group bg-white rounded-2xl border border-neutral-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full overflow-hidden">
             {/* Image */}
             <Link href={productLink} className="block relative aspect-[4/3] overflow-hidden bg-neutral-100">
-                <Image
-                    src={image}
-                    alt={displayName}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                />
+                {image ? (
+                    <Image
+                        src={image}
+                        alt={displayName}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-neutral-300 text-xs font-bold uppercase tracking-widest">No Image</span>
+                    </div>
+                )}
 
                 {/* Discount badge – top left */}
                 {discount && (

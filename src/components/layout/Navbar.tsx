@@ -9,8 +9,10 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useCart } from "@/context/CartContext";
-import { CartDrawer } from "../cart/CartDrawer";
 import { useLanguage } from "@/context/LanguageContext";
+import { useDebounce } from "@/hooks/useDebounce";
+import { SearchOverlay } from "../search/SearchOverlay";
+import { CartDrawer } from "../cart/CartDrawer";
 // Removed: import { getCategories, Category } from "@/services/categoryService"; as categories logic is removed
 
 export function Navbar() {
@@ -63,15 +65,17 @@ export function Navbar() {
         fetchContact();
     }, []);
 
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
     useEffect(() => {
         const fetchSuggestions = async () => {
-            if (searchQuery.trim().length < 2) {
+            if (debouncedSearchQuery.trim().length < 2) {
                 setSuggestions([]);
                 return;
             }
             setIsSearching(true);
             try {
-                const response = await fetch(`/api/search/suggest?q=${encodeURIComponent(searchQuery)}`);
+                const response = await fetch(`/api/search/suggest?q=${encodeURIComponent(debouncedSearchQuery)}`);
                 const data = await response.json();
                 setSuggestions(data.results || []);
             } catch (error) {
@@ -81,12 +85,8 @@ export function Navbar() {
             }
         };
 
-        const timerId = setTimeout(() => {
-            fetchSuggestions();
-        }, 300);
-
-        return () => clearTimeout(timerId);
-    }, [searchQuery]);
+        fetchSuggestions();
+    }, [debouncedSearchQuery]);
 
     const handleSearch = () => {
         if (searchQuery.trim()) {
@@ -237,43 +237,14 @@ export function Navbar() {
                                 {t.search || "Search"}
                             </Button>
 
-                            {/* Suggestions Dropdown */}
-                            {showSuggestions && (searchQuery.length >= 2) && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-neutral-100 overflow-hidden z-[100]">
-                                    {isSearching ? (
-                                        <div className="p-4 text-center text-neutral-500 text-sm">
-                                            <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-                                        </div>
-                                    ) : suggestions.length > 0 ? (
-                                        <ul className="max-h-80 overflow-y-auto w-full py-2">
-                                            {suggestions.map((item) => (
-                                                <li key={`${item.resultType}-${item.id}`}>
-                                                    <Link
-                                                        href={item.resultType === 'product' ? `/products/${item.id}` : `/categories/${item.id}`}
-                                                        className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors"
-                                                        onClick={() => setShowSuggestions(false)}
-                                                    >
-                                                        <Search className="w-4 h-4 text-neutral-400 opacity-50" />
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm font-semibold text-neutral-900">{item.name}</span>
-                                                            <span className="text-xs text-neutral-500 capitalize">{item.resultType}</span>
-                                                        </div>
-                                                    </Link>
-                                                </li>
-                                            ))}
-                                            <li className="border-t border-neutral-100 mt-2">
-                                                <button onClick={handleSearch} className="w-full text-center py-3 text-sm font-bold text-primary-600 hover:bg-primary-50 transition-colors">
-                                                    {t.search || "See all results"}
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    ) : (
-                                        <div className="p-4 text-center text-neutral-500 text-sm font-medium">
-                                            No matches found.
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                            {/* Rich Search Overlay */}
+                            <SearchOverlay
+                                isOpen={showSuggestions}
+                                onClose={() => setShowSuggestions(false)}
+                                query={searchQuery}
+                                results={suggestions}
+                                isLoading={isSearching}
+                            />
                         </div>
                     </div>
 

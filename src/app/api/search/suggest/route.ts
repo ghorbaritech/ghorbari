@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { searchUnified } from '@/services/unifiedSearchService';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -10,33 +10,40 @@ export async function GET(request: Request) {
     }
 
     try {
-        const supabase = await createClient();
+        const results = await searchUnified(query, 12);
 
-        // Use a wildcard search pattern
-        const searchPattern = `%${query}%`;
+        // Map to expected format for existing UI
+        const mappedResults = results.map(r => ({
+            id: r.id,
+            name: r.name,
+            price: r.price,
+            image: r.image,
+            resultType: r.type.includes('category') ? 'category' : 'product', // Keep compat with old UI icons for now
+            type: r.type,
+            category: r.category_name,
+            metadata: r.metadata
+        }));
 
-        // Fetch from products
-        const { data: products } = await supabase
-            .from('products')
-            .select('id, name, type, images')
-            .ilike('name', searchPattern)
-            .limit(5);
+        const response = NextResponse.json({ results: mappedResults });
 
-        // Fetch from categories
-        const { data: categories } = await supabase
-            .from('product_categories')
-            .select('id, name, type')
-            .ilike('name', searchPattern)
-            .limit(3);
+        // Add CORS headers
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-        const results = [
-            ...(products || []).map(p => ({ ...p, resultType: 'product' })),
-            ...(categories || []).map(c => ({ ...c, resultType: 'category' }))
-        ];
-
-        return NextResponse.json({ results });
+        return response;
     } catch (error) {
-        console.error('Search Suggestion Error:', error);
-        return NextResponse.json({ results: [] }, { status: 500 });
+        console.error('Search suggestion error:', error);
+        const errorResponse = NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+        return errorResponse;
     }
+}
+
+export async function OPTIONS() {
+    const response = new NextResponse(null, { status: 204 });
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return response;
 }

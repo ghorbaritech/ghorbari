@@ -40,12 +40,18 @@ export function ServiceCard({
 
             {/* Image — plain, no link */}
             <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
-                <Image
-                    src={image}
-                    alt={displayName}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                />
+                {image ? (
+                    <Image
+                        src={image}
+                        alt={displayName}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-neutral-300 text-xs font-bold uppercase tracking-widest">No Image</span>
+                    </div>
+                )}
                 {/* Rating badge */}
                 <div className="absolute top-3 right-3">
                     <span className="bg-white text-neutral-800 text-[11px] font-bold px-2 py-1 rounded-lg shadow flex items-center gap-1">
@@ -78,8 +84,8 @@ export function ServiceCard({
                     <Button
                         size="sm"
                         className={`rounded-lg h-9 px-4 font-bold uppercase text-[10px] tracking-widest transition-all duration-300 ${isSelected
-                                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-200'
-                                : 'bg-neutral-900 hover:bg-black text-white'
+                            ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-200'
+                            : 'bg-neutral-900 hover:bg-black text-white'
                             }`}
                         onClick={onToggle}
                     >

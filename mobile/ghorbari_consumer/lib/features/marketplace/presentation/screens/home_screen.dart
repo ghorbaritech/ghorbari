@@ -29,6 +29,9 @@ import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:ghorbari_consumer/shared/models/service_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:ghorbari_consumer/core/utils/location_service.dart';
+import 'package:ghorbari_consumer/shared/widgets/ai_assistant_widget.dart';
+import 'package:ghorbari_consumer/features/marketplace/presentation/screens/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,12 +41,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final LocationService _locationService = LocationService();
+  String _locationName = 'Select Location';
+  bool _isLocating = false;
+
   @override
   void initState() {
     super.initState();
     context.read<MarketplaceBloc>().add(MarketplaceFetchCMSContent());
     context.read<MarketplaceBloc>().add(MarketplaceFetchCategories());
     context.read<MarketplaceBloc>().add(const MarketplaceFetchProducts());
+    _requestLocation();
+  }
+
+  Future<void> _requestLocation() async {
+    setState(() => _isLocating = true);
+    final location = await _locationService.getCurrentLocationName();
+    if (mounted) {
+      setState(() {
+        _locationName = location;
+        _isLocating = false;
+      });
+    }
   }
 
   @override
@@ -52,11 +71,16 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, state) {
         return Scaffold(
           backgroundColor: Colors.white,
-          body: CustomScrollView(
-            slivers: [
-              _buildSliverAppBar(context),
-              _buildDynamicCMSContentFromState(context, state),
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          body: Stack(
+            children: [
+              CustomScrollView(
+                slivers: [
+                  _buildSliverAppBar(context),
+                  _buildDynamicCMSContentFromState(context, state),
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                ],
+              ),
+              AIAssistantWidget(),
             ],
           ),
         );
@@ -155,20 +179,66 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       elevation: 0,
       pinned: true,
-      centerTitle: false,
-      title: Image.asset(
-        'assets/images/logo.png',
-        height: 28,
-        errorBuilder: (context, error, stackTrace) => const Text(
-          'GHORBARI',
-          style:
-              TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
-        ),
+      title: Row(
+        children: [
+          Image.asset(
+            'assets/images/logo.png',
+            height: 28,
+            errorBuilder: (context, error, stackTrace) => const Text(
+              'GHORBARI',
+              style: TextStyle(
+                  fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: InkWell(
+              onTap: _requestLocation,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.location_on, size: 12, color: Colors.blue.shade700),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        _locationName,
+                        style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF475569),
+                            fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (_isLocating)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4),
+                        child: SizedBox(
+                          width: 8,
+                          height: 8,
+                          child: CircularProgressIndicator(strokeWidth: 1.5),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       actions: [
         IconButton(
             icon: const Icon(Icons.search, color: Color(0xFF0F172A)),
-            onPressed: () {}),
+            onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SearchScreen()))),
         BlocBuilder<CartBloc, CartState>(
           builder: (context, state) {
             return Stack(
