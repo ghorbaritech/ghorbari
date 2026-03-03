@@ -18,6 +18,8 @@ import { designTranslations } from "@/utils/designTranslations";
 import { Label } from "@/components/ui/label";
 import { RadioCardGroup } from "@/components/design/WizardFormComponents";
 import { WizardStep } from "@/components/design/WizardStep";
+import { getServiceItemsByCategories, ServiceItem } from "@/services/serviceItemService";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Custom Scheduler with Date Picker and 3-Column Time Slots
 function ServiceScheduler({ value, onChange }: { value: any, onChange: (v: any) => void }) {
@@ -84,6 +86,12 @@ export default function BookingWizardPage() {
     const [providers, setProviders] = useState<any[]>([]);
     const [requestNumber, setRequestNumber] = useState<string>("");
     const [loading, setLoading] = useState(false);
+
+    // New State for Subcategory -> Service Items Selection
+    const [availableServiceItems, setAvailableServiceItems] = useState<ServiceItem[]>([]);
+    const [selectedServiceItems, setSelectedServiceItems] = useState<ServiceItem[]>([]);
+    const [loadingItems, setLoadingItems] = useState(true);
+
     const router = useRouter();
 
     const [formData, setFormData] = useState({
@@ -97,12 +105,16 @@ export default function BookingWizardPage() {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
+    // Calculate dynamic cart based on explicitly selected items from Step 1, rather than placeholder subcategories
+    const activeBookingItems = selectedServiceItems.length > 0 ? selectedServiceItems : (items as any[]);
+    const finalTotalAmount = activeBookingItems.reduce((sum, item) => sum + (item.unit_price || 0), 0);
+
     const getJourneyType = () => {
         let hasInterior = false;
         let hasStructural = false;
-        items.forEach(item => {
-            const catName = (item.category?.name || '').toLowerCase();
-            const rootName = ((item.category as any)?.parent?.name || '').toLowerCase();
+        activeBookingItems.forEach(item => {
+            const catName = (item.category?.name || item.name || '').toLowerCase();
+            const rootName = ((item.category as any)?.parent?.name || (item.category as any)?.name || '').toLowerCase();
             if (catName.includes('interior') || catName.includes('paint') || catName.includes('carpentry') ||
                 rootName.includes('interior') || rootName.includes('paint') || rootName.includes('carpentry')) {
                 hasInterior = true;
@@ -120,10 +132,11 @@ export default function BookingWizardPage() {
 
     const journeyType = getJourneyType();
 
-    // Steps: 0=Assignment, 1=Provider (optional), 2=Schedule, 3=Details (optional), 4=Review
+    // Steps: 0=Items, 1=Assignment, 2=Provider (optional), 3=Schedule, 4=Details (optional), 5=Review
     // For 0-indexed WizardStep, figure out dynamic steps:
     const steps = (() => {
         const s = [
+            { label: "Items", title: "Select Specific Services", description: "Choose the exact services you need" },
             { label: "Assign", title: "Choose Provider Route", description: "How would you like to proceed with your service?" },
         ];
         if (assignmentType === 'user_choose') {
@@ -145,7 +158,19 @@ export default function BookingWizardPage() {
     useEffect(() => {
         if (items.length === 0 && !isSuccess) {
             router.push('/services');
+            return;
         }
+
+        // Fetch real service items belonging to the selected subcategories (items mapping)
+        const fetchItemsForCategories = async () => {
+            setLoadingItems(true);
+            const categoryIds = items.map(i => i.id); // In the new flow, cart items ARE the subcategories
+            const results = await getServiceItemsByCategories(categoryIds);
+            setAvailableServiceItems(results);
+            setLoadingItems(false);
+        };
+
+        fetchItemsForCategories();
     }, [items, router, isSuccess]);
 
     useEffect(() => {
@@ -171,7 +196,13 @@ export default function BookingWizardPage() {
 
     const handleNext = async () => {
         const currentTitle = currentStepData?.title || '';
-        if (currentTitle.includes("Route")) {
+
+        if (currentTitle.includes("Specific Services")) {
+            if (selectedServiceItems.length === 0) {
+                toast.error("Please select at least one service item to proceed.");
+                return;
+            }
+        } else if (currentTitle.includes("Route")) {
             // Assignment step — no validation needed
         } else if (currentTitle.includes("Provider")) {
             if (!selectedProvider) {
@@ -187,9 +218,10 @@ export default function BookingWizardPage() {
             // Final step — submit
             setLoading(true);
             try {
+                const mapItemtoCart = selectedServiceItems.map(si => ({ ...si, quantity: 1 })) as any[];
                 const res = await placeServiceRequest({
-                    items, assignmentType, providerId: selectedProvider?.id,
-                    schedule, totalAmount, requirements: formData
+                    items: mapItemtoCart, assignmentType, providerId: selectedProvider?.id,
+                    schedule, totalAmount: finalTotalAmount, requirements: formData
                 });
                 if (res.error) {
                     toast.error(res.error);
@@ -274,6 +306,56 @@ export default function BookingWizardPage() {
                     nextLabel={step === totalSteps - 1 ? (loading ? "Submitting..." : "Complete Booking") : undefined}
                     lang={lang}
                 >
+                    {/* Step -1: Select Specific Services */}
+                    {currentStepData.title.includes("Specific Services") && (
+                        <div className="space-y-4">
+                            {loadingItems ? (
+                                <div className="py-16 flex flex-col items-center gap-4">
+                                    <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+                                    <p className="text-sm text-neutral-500 font-medium">Loading catalog...</p>
+                                </div>
+                            ) : availableServiceItems.length === 0 ? (
+                                <div className="py-16 text-center">
+                                    <p className="text-neutral-500">No specific service items found for the selected subcategories. You can proceed to describe what you need instead.</p>
+                                    <Button onClick={() => setStep(s => s + 1)} className="mt-4">Skip Step</Button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {availableServiceItems.map((item) => {
+                                        const isSelected = selectedServiceItems.some(s => s.id === item.id);
+                                        return (
+                                            <div key={item.id} className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-colors ${isSelected ? 'border-primary-600 bg-primary-50 ring-1 ring-primary-600' : 'border-neutral-200 hover:border-primary-300'}`}
+                                                onClick={() => {
+                                                    if (isSelected) {
+                                                        setSelectedServiceItems(prev => prev.filter(s => s.id !== item.id));
+                                                    } else {
+                                                        setSelectedServiceItems(prev => [...prev, item]);
+                                                    }
+                                                }}>
+                                                <div className="flex items-center gap-4">
+                                                    <Checkbox checked={isSelected} className="rounded-full w-5 h-5 pointer-events-none" />
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-neutral-900 text-sm">{language === 'BN' ? item.name_bn || item.name : item.name}</span>
+                                                        <span className="text-xs text-neutral-500">{item.category?.name}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="block font-black text-neutral-900">৳{item.unit_price}</span>
+                                                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest">per {item.unit_type}</span>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+
+                                    <div className="bg-primary-50 p-4 rounded-xl mt-6 flex justify-between items-center border border-primary-100">
+                                        <span className="font-bold text-primary-900 uppercase text-xs tracking-widest">Running Estimate:</span>
+                                        <span className="font-black text-primary-700 text-xl">৳{finalTotalAmount.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Step 0: Assignment Type */}
                     {currentStepData.title.includes("Route") && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -441,17 +523,17 @@ export default function BookingWizardPage() {
                                     <div>
                                         <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Services</p>
                                         <div className="space-y-1">
-                                            {items.map(item => (
+                                            {activeBookingItems.map(item => (
                                                 <div key={item.id} className="text-sm font-semibold flex justify-between gap-4">
-                                                    <span>{language === 'BN' ? item.name_bn : item.name}</span>
-                                                    <span className="text-neutral-500">৳{item.unit_price.toLocaleString()}</span>
+                                                    <span>{language === 'BN' ? item.name_bn || item.name : item.name}</span>
+                                                    <span className="text-neutral-500">৳{item.unit_price?.toLocaleString()}</span>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Estimate</p>
-                                        <p className="text-2xl font-bold text-neutral-900">৳{totalAmount.toLocaleString()}</p>
+                                        <p className="text-2xl font-bold text-neutral-900">৳{finalTotalAmount.toLocaleString()}</p>
                                     </div>
                                 </div>
                                 <div className="border-t border-neutral-200 pt-4 grid grid-cols-2 gap-4">

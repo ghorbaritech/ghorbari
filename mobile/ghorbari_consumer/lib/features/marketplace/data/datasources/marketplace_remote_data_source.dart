@@ -21,7 +21,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
 
   @override
   Future<List<Product>> getProducts({String? categoryId}) async {
-    var query = SupabaseService.from('products').select();
+    var query = SupabaseService.from('products').select().eq('status', 'active');
     
     if (categoryId != null) {
       query = query.eq('category_id', categoryId);
@@ -29,10 +29,27 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     
     final response = await query.order('created_at', ascending: false);
     final rawList = response as List;
+    print("DEBUG: Fetched ${rawList.length} products from Supabase before filtering.");
+    if (rawList.isNotEmpty) {
+      print("DEBUG: First item JSON: ${rawList.first}");
+    }
     
     return rawList
-        .where((json) => json['name'] != null && json['id'] != null)
-        .map((json) => Product.fromJson(json))
+        .where((json) {
+           final hasTitle = (json['title'] != null || json['name'] != null);
+           final hasId = json['id'] != null;
+           return hasTitle && hasId;
+        })
+        .map((json) {
+           try {
+             return Product.fromJson(json);
+           } catch (e) {
+             print("DEBUG: Failed to parse Product: $e");
+             return null;
+           }
+        })
+        .where((p) => p != null)
+        .cast<Product>()
         .toList();
   }
 

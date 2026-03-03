@@ -7,6 +7,7 @@ class Category {
   final String type; // product, service, design
   final int level;
   final String? parentId;
+  final Map<String, dynamic>? metadata;
 
   Category({
     required this.id,
@@ -17,6 +18,7 @@ class Category {
     required this.type,
     required this.level,
     this.parentId,
+    this.metadata,
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
@@ -25,10 +27,11 @@ class Category {
       name: json['name']?.toString() ?? 'Uncategorized',
       nameBn: json['name_bn']?.toString(),
       slug: json['slug']?.toString() ?? '',
-      icon: json['icon']?.toString(),
+      icon: (json['icon_url'] ?? json['icon'])?.toString(),
       type: json['type']?.toString() ?? 'product',
       level: (json['level'] ?? 0) is int ? json['level'] : int.tryParse(json['level']?.toString() ?? '0') ?? 0,
       parentId: json['parent_id']?.toString(),
+      metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
 
@@ -42,6 +45,7 @@ class Category {
       'type': type,
       'level': level,
       'parent_id': parentId,
+      'metadata': metadata,
     };
   }
 }

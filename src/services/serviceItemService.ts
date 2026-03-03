@@ -37,6 +37,45 @@ export async function getServiceItems(categoryId?: string) {
     return data as ServiceItem[];
 }
 
+export async function getServiceItemsByCategories(categoryIds: string[]) {
+    if (!categoryIds || categoryIds.length === 0) return [];
+
+    // In Ghorbari, specific service items are stored as level 2 product_categories of type 'service'
+    const supabase = createClient();
+    const { data: catData, error } = await supabase
+        .from('product_categories')
+        .select(`
+            id, name, name_bn, type, level, metadata, icon, icon_url, parent_id,
+            parent:parent_id(id, name, name_bn)
+        `)
+        .in('parent_id', categoryIds)
+        .eq('type', 'service')
+        .order('name');
+
+    if (error) {
+        console.error("Error fetching service items by categories:", error);
+        return [];
+    }
+
+    return catData.map((cat: any) => ({
+        id: cat.id,
+        category_id: cat.parent_id,
+        name: cat.name,
+        name_bn: cat.name_bn || "",
+        description: "",
+        description_bn: "",
+        unit_price: cat.metadata?.price || 0,
+        unit_type: cat.metadata?.unit || "hr",
+        image_url: cat.icon_url || cat.icon || "",
+        is_active: true,
+        category: cat.parent ? {
+            name: cat.parent.name,
+            name_bn: cat.parent.name_bn || "",
+            parent_id: cat.parent.id // fallback for UI mapped id
+        } : undefined
+    })) as ServiceItem[];
+}
+
 export async function getServiceItemById(id: string, supabaseClient?: any) {
     // Basic UUID validation
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

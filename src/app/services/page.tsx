@@ -51,34 +51,41 @@ export default function ServicesPage() {
         fetchData();
     }, []);
 
-    // Filter services based on state
-    const filteredServices = serviceItems.filter(service => {
-        const pkgCat = service.category;
-
-        // Category Hierarchy Filter
-        if (selectedSubId) {
-            const isDirectMatch = service.category_id === selectedSubId;
-            const isChildMatch = pkgCat?.parent_id === selectedSubId;
-            if (!isDirectMatch && !isChildMatch) return false;
-        } else if (selectedRootId) {
-            const isDirectMatch = service.category_id === selectedRootId;
-            const isChildMatch = pkgCat?.parent_id === selectedRootId;
-            const subCat = categories.find(c => c.id === pkgCat?.parent_id);
-            const isGrandchildMatch = subCat?.parent_id === selectedRootId;
-
-            if (!isDirectMatch && !isChildMatch && !isGrandchildMatch) return false;
-        }
-
-        // Price Filter
-        const price = service.unit_price;
-        if (minPrice && price < parseInt(minPrice)) return false;
-        if (maxPrice && price > parseInt(maxPrice)) return false;
-
-        return true;
-    });
-
     const rootCategories = categories.filter(c => c.level === 0 || !c.parent_id);
-    const subCategories = selectedRootId ? categories.filter(c => c.parent_id === selectedRootId) : [];
+    const subCategories = selectedRootId
+        ? categories.filter(c => c.parent_id === selectedRootId)
+        : categories.filter(c => c.level === 1 || (c.parent_id && rootCategories.some(r => r.id === c.parent_id)));
+
+    const getDisplayItems = () => {
+        // Use filtered subCategories if a specific subCategory is selected
+        const itemsToProcess = selectedSubId
+            ? subCategories.filter((sub: any) => sub.id === selectedSubId)
+            : subCategories;
+
+        return itemsToProcess.map((cat: any) => {
+            const rootId = cat.parent_id || selectedRootId;
+
+            return {
+                id: cat.id,
+                category_id: rootId,
+                name: cat.name,
+                name_bn: cat.name_bn,
+                description: '',
+                description_bn: '',
+                unit_price: cat.metadata?.price || 0,
+                unit_type: cat.metadata?.unit || 'hr',
+                image_url: cat.icon_url || cat.icon || '',
+                is_active: true,
+                category: {
+                    name: categories.find(c => c.id === rootId)?.name || '',
+                    name_bn: categories.find(c => c.id === rootId)?.name_bn || '',
+                    parent_id: rootId
+                }
+            };
+        }) as ServiceItem[];
+    };
+
+    const displayItems = getDisplayItems();
 
     const handleRootClick = (id: string) => {
         setSelectedRootId(id);
@@ -228,16 +235,15 @@ export default function ServicesPage() {
                             </div>
                         </div>
 
-                        {/* Services Grid */}
                         {loading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {[1, 2, 3, 4, 5, 6].map(n => (
                                     <div key={n} className="h-[280px] rounded-2xl bg-neutral-100 animate-pulse" />
                                 ))}
                             </div>
-                        ) : filteredServices.length > 0 ? (
+                        ) : displayItems.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredServices.map((service) => {
+                                {displayItems.map((service) => {
                                     const isSelected = selectedItems.some(i => i.id === service.id);
                                     return (
                                         <ServiceCard

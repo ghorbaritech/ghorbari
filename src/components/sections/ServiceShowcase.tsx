@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, Wrench, ShieldCheck, Clock, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 import { getL } from "@/utils/localization"
-import { getServiceItems, ServiceItem } from "@/services/serviceItemService"
+import { getSubcategoriesByParentId, Category } from "@/services/categoryService"
 import Link from 'next/link'
 import { ServiceCard } from '@/components/ui/ServiceCard'
+import { useServiceCart } from '@/context/ServiceCartContext'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface ServiceShowcaseProps {
     title?: string
@@ -27,6 +30,8 @@ const DEFAULT_SERVICES = [
 export function ServiceShowcase({ title, items = [], category, bgClass = "bg-blue-50" }: ServiceShowcaseProps) {
     const { t, language } = useLanguage();
     const scrollContainerRef = useRef<HTMLDivElement>(null)
+    const { addService, clearCart, items: selectedItems, removeService } = useServiceCart()
+    const router = useRouter()
     const [fetchedItems, setFetchedItems] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
     const processedCategory = useRef<string | symbol>(Symbol('init'))
@@ -57,20 +62,13 @@ export function ServiceShowcase({ title, items = [], category, bgClass = "bg-blu
 
         async function doFetch() {
             try {
-                const data = await getServiceItems(isUUID ? category : undefined);
-                console.log(`[ServiceShowcase] SUCCESS for: ${category} (Found ${data.length})`);
-
-                let results = data;
-                if (category && !isUUID) {
-                    results = data.filter(item =>
-                        item.category?.name === category ||
-                        item.category?.name_bn === category
-                    );
-                    console.log(`[ServiceShowcase] FILTER result for ${category}: ${results.length}`);
-                }
-
+                if (!category) return;
+                let results: any[] = [];
+                // Support both UUIDs and category names
+                results = await getSubcategoriesByParentId(category);
+                console.log(`[ServiceShowcase] SUCCESS for: ${category} (Found ${results.length} subcategories)`);
                 setFetchedItems(results);
-            } catch (err) {
+            } catch (err: any) {
                 console.error(`[ServiceShowcase] ERROR for: ${category}`, err);
             } finally {
                 clearTimeout(timer);
@@ -134,22 +132,54 @@ export function ServiceShowcase({ title, items = [], category, bgClass = "bg-blu
                         </div>
                     ) : visibleItems.map((item, idx) => {
                         const itemName = item.name_bn && language === 'BN' ? item.name_bn : (item.name || item.title);
-                        const itemImage = item.image_url || item.image || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&h=400&fit=crop';
-                        const itemPrice = item.unit_price || item.price || 2500;
-                        const itemUnit = item.unit_type || item.unit || 'sqft';
+                        // Map image from category icon/icon_url, with fallback
+                        const itemImage = item.icon_url || item.icon || item.image || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&h=400&fit=crop';
+                        // Extract price from metadata block or fallback based on parent naming
+                        const itemPrice = item.metadata?.price || item.unit_price || item.price || 500;
+                        const itemUnit = item.metadata?.unit || item.unit_type || item.unit || 'sqft';
+
+                        // Check if it's actually a category vs old legacy item
+                        const isCategory = item.type === 'service';
+                        const linkId = isCategory ? `category/${item.id}` : item.id;
 
                         return (
                             <div key={idx} className="min-w-[240px] lg:min-w-0 snap-center h-full">
                                 <ServiceCard
-                                    id={item.id}
+                                    id={linkId}
                                     name={item.name || item.title}
                                     nameBn={item.name_bn}
                                     price={itemPrice}
                                     image={itemImage}
                                     rating={item.rating || 4.8}
-                                    category={item.category?.name || "Service"}
+                                    category={item.parent?.name || "Subcategory"}
                                     unitType={itemUnit}
-                                    onToggle={() => { }} // Placeholder for now
+                                    onToggle={() => {
+                                        const isSelected = selectedItems.some(i => i.id === item.id);
+                                        if (isSelected) {
+                                            removeService(item.id);
+                                            toast.info(`${itemName} removed from booking`);
+                                        } else {
+                                            const pseudoService = {
+                                                id: item.id,
+                                                category_id: category || 'service_category',
+                                                name: item.name,
+                                                name_bn: item.name_bn,
+                                                description: '',
+                                                description_bn: '',
+                                                unit_price: itemPrice,
+                                                unit_type: itemUnit,
+                                                image_url: itemImage,
+                                                is_active: true,
+                                                category: {
+                                                    name: item.parent?.name || "Subcategory",
+                                                    name_bn: item.parent?.name_bn || "",
+                                                }
+                                            };
+                                            addService(pseudoService as any);
+                                            toast.success(`${itemName} ready for booking`);
+                                            router.push('/services/booking');
+                                        }
+                                    }}
                                 />
                             </div>
                         );

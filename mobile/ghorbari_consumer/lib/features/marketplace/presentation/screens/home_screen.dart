@@ -27,6 +27,8 @@ import 'package:ghorbari_consumer/features/marketplace/presentation/screens/cate
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/service_listing_screen.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:ghorbari_consumer/shared/models/service_item.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -199,9 +201,6 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
         ),
-        IconButton(
-            icon: const Icon(Icons.menu, color: Color(0xFF0F172A)),
-            onPressed: () {}),
         const SizedBox(width: 8),
       ],
     );
@@ -633,8 +632,110 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-        _buildProductsHorizontalList(section),
+        _buildServiceSubcategoryList(section),
       ],
+    );
+  }
+
+  Widget _buildServiceSubcategoryList(CMSProductSection section) {
+    final categorySource = section.categoryId;
+    
+    return BlocBuilder<MarketplaceBloc, MarketplaceState>(
+      builder: (context, state) {
+        if (state.productsStatus == MarketplaceStatus.loading) {
+          return const SizedBox(
+              height: 200, child: Center(child: CircularProgressIndicator()));
+        }
+
+        // 1. Find the Parent Category by ID or Name
+        Category? parentCat;
+        if (categorySource != null) {
+          try {
+            parentCat = state.categories.cast<Category>().firstWhere(
+              (c) => c.id == categorySource || c.name.toLowerCase() == categorySource.toLowerCase(),
+            );
+          } catch (e) {
+            parentCat = null;
+          }
+        }
+
+        // Fallback or exact string match if ID lookup fails
+        if (parentCat == null && categorySource != null) {
+           try {
+             parentCat = state.categories.cast<Category>().firstWhere(
+                (c) => c.name.toLowerCase().contains(categorySource.split(' ').first.toLowerCase())
+             );
+           } catch(e) { /* ignore */ }
+        }
+
+        // 2. Fetch all subcategories that belong to this Parent Category
+        List<Category> subcategories = [];
+        if (parentCat != null) {
+          subcategories = state.categories.cast<Category>().where(
+            (c) => c.parentId == parentCat!.id && c.type == 'service'
+          ).toList();
+        }
+
+        if (subcategories.isEmpty) {
+           return const SizedBox(
+              height: 200, 
+              child: Center(child: Text('Service categories unavailable.', style: TextStyle(color: Colors.grey)))
+           );
+        }
+
+        // 3. Map Subcategories to ServiceItems to render in ServiceCard
+        final serviceItems = subcategories.map((cat) {
+            final price = (cat.metadata?['price'] ?? 0).toDouble();
+            final unit = cat.metadata?['unit'] ?? 'hr';
+            
+            String? icon;
+            if (cat.icon != null && cat.icon!.isNotEmpty) {
+              if (cat.icon!.startsWith('http')) {
+                icon = cat.icon;
+              } else if (cat.icon!.startsWith('/')) {
+                icon = (kIsWeb ? 'http://localhost:3000' : 'http://10.0.2.2:3000') + cat.icon!;
+              } else {
+                icon = Supabase.instance.client.storage
+                    .from('public')
+                    .getPublicUrl(cat.icon!);
+              }
+            }
+
+            return ServiceItem(
+              id: cat.id,
+              name: cat.name,
+              categoryId: parentCat?.id ?? 'service',
+              unitPrice: price,
+              unitType: unit,
+              imageUrl: icon ?? '',
+              rating: 4.8, // Fallback rating
+              description: cat.nameBn ?? 'Expert professional service',
+            );
+        }).toList();
+
+        return SizedBox(
+          height: 280,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: serviceItems.length,
+            itemBuilder: (context, index) {
+              return ServiceCard(
+                service: serviceItems[index],
+                onTap: () {
+                   // Navigate to the Booking UI with the selected subcategory pseudo-item
+                   Navigator.push(
+                     context,
+                     MaterialPageRoute(
+                       builder: (context) => BookingScreen(service: serviceItems[index])
+                     ),
+                   );
+                },
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -711,6 +812,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               fit: BoxFit.cover,
                               color: Colors.black.withOpacity(0.3),
                               colorBlendMode: BlendMode.darken,
+                              errorWidget: (context, url, err) => Container(
+                                color: banner['color'] as Color,
+                                child: const Center(
+                                  child: Icon(Icons.image_not_supported, color: Colors.white, size: 48),
+                                ),
+                              ),
                             ),
                           ),
                           Container(
@@ -825,11 +932,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     (c) => c?.id == p.categoryId,
                     orElse: () => null);
                 if (cat == null) return false;
-                final searchId = categoryId.toLowerCase();
-                // Improved matching including ID check
-                return cat.id.toLowerCase() == searchId ||
-                    cat.name.toLowerCase() == searchId ||
-                    cat.slug.toLowerCase() == searchId;
+                final searchId = categoryId.toLowerCase().replaceAll('_', '-');
+                final catIdLower = cat.id.toLowerCase();
+                final catNameLower = cat.name.toLowerCase();
+                final catSlugLower = cat.slug.toLowerCase();
+                
+                if (catIdLower == searchId) return true;
+                
+                // Loose matching for hardcoded names vs actual titles
+                if (searchId.contains('concrete') && catNameLower.contains('cement')) return true;
+                if (searchId.contains('steel') && catNameLower.contains('steel')) return true;
+                if (searchId.contains('tiles') && catNameLower.contains('tiles')) return true;
+                
+                return catNameLower.contains(searchId) || catSlugLower.contains(searchId);
               }).toList()
             : state.products;
 

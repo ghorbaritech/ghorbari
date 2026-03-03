@@ -30,15 +30,28 @@ class Product {
       return double.tryParse(p.toString()) ?? 0.0;
     }
 
+    String? parsedImageUrl = json['image_url']?.toString();
+    if (parsedImageUrl == null && json['images'] != null) {
+      if (json['images'] is List && (json['images'] as List).isNotEmpty) {
+        parsedImageUrl = (json['images'] as List)[0].toString();
+      } else if (json['images'] is String && json['images'].toString().startsWith('[')) {
+        // Fallback if it's strictly a stringified JSON array
+        final cleaned = json['images'].toString().replaceAll('[', '').replaceAll(']', '').replaceAll('"', '').split(',');
+        if (cleaned.isNotEmpty && cleaned[0].trim().isNotEmpty) {
+          parsedImageUrl = cleaned[0].trim();
+        }
+      }
+    }
+
     return Product(
       id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? 'Untitled Product',
+      name: json['title']?.toString() ?? json['name']?.toString() ?? 'Untitled Product',
       nameBn: json['name_bn']?.toString(),
       description: json['description']?.toString(),
       descriptionBn: json['description_bn']?.toString(),
       categoryId: json['category_id']?.toString() ?? '',
-      price: parsePrice(json['price']),
-      imageUrl: json['image_url']?.toString(),
+      price: parsePrice(json['base_price'] ?? json['price']),
+      imageUrl: parsedImageUrl,
       sellerId: json['seller_id']?.toString(),
       metadata: json['metadata'] is Map ? Map<String, dynamic>.from(json['metadata']) : null,
     );

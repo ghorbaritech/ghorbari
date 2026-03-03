@@ -73,7 +73,7 @@ export default async function Home() {
             <ServiceShowcase
               key={section.id}
               title={section.title}
-              category={section.category_id}
+              category={section.category_source || section.category_id}
               bgClass={section.bg_style}
             />
           ))

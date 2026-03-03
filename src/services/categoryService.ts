@@ -87,6 +87,43 @@ export async function deleteCategory(id: string) {
         console.error('Error deleting category:', error);
         throw error;
     }
-
     return true;
+}
+
+export async function getSubcategoriesByParentId(parentIdOrName: string) {
+    const supabase = createClient();
+
+    let actualParentId = parentIdOrName;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parentIdOrName);
+
+    if (!isUUID) {
+        // Fetch parent by name first
+        const { data: parentData, error: parentError } = await supabase
+            .from('product_categories')
+            .select('id')
+            .or(`name.eq."${parentIdOrName}",name_bn.eq."${parentIdOrName}"`)
+            .eq('type', 'service')
+            .limit(1)
+            .single();
+
+        if (parentError || !parentData) {
+            console.error('Error finding parent category by name:', parentError);
+            return [];
+        }
+        actualParentId = parentData.id;
+    }
+
+    const { data, error } = await supabase
+        .from('product_categories')
+        .select('*')
+        .eq('parent_id', actualParentId)
+        .eq('type', 'service')
+        .order('name');
+
+    if (error) {
+        console.error('Error fetching subcategories:', error);
+        return [];
+    }
+
+    return data as Category[];
 }

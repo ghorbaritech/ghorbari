@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/home_screen.dart';
+import 'package:ghorbari_consumer/features/marketplace/presentation/screens/main_screen.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:ghorbari_consumer/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:ghorbari_consumer/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -148,10 +149,10 @@ class _SplashScreenState extends State<SplashScreen> {
     print('DEBUG: SplashScreen navigate started');
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
-      print('DEBUG: SplashScreen pushing HomeScreen');
+      print('DEBUG: SplashScreen pushing MainScreen');
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const MainScreen()),
       );
     }
   }

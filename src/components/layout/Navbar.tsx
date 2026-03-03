@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ShoppingCart, User, Menu, X, ArrowRight, LayoutDashboard, LogOut } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, ArrowRight, LayoutDashboard, LogOut, Home, Package, PencilRuler, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
@@ -178,10 +178,6 @@ export function Navbar() {
                                 </span>
                             )}
                         </button>
-
-                        <Button variant="ghost" size="icon" className="md:hidden text-neutral-700" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                        </Button>
                     </div>
                 </div>
             </div>
@@ -277,6 +273,30 @@ export function Navbar() {
                     </div>
                 )
             }
+
+            {/* Mobile Bottom Navigation Bar */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-[70] h-16 flex items-center justify-between px-2 pb-safe shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+                <Link href="/" className="flex flex-col items-center justify-center flex-1 w-full h-full text-neutral-500 hover:text-primary-600 transition-colors gap-1">
+                    <Home className="w-[22px] h-[22px]" strokeWidth={2.5} />
+                    <span className="text-[9px] font-bold uppercase tracking-wider">Home</span>
+                </Link>
+                <Link href="/services/design" className="flex flex-col items-center justify-center flex-1 w-full h-full text-neutral-500 hover:text-primary-600 transition-colors gap-1">
+                    <PencilRuler className="w-[22px] h-[22px]" strokeWidth={2.5} />
+                    <span className="text-[9px] font-bold uppercase tracking-wider">Design</span>
+                </Link>
+                <Link href="/services" className="flex flex-col items-center justify-center flex-1 w-full h-full text-neutral-500 hover:text-primary-600 transition-colors gap-1">
+                    <Wrench className="w-[22px] h-[22px]" strokeWidth={2.5} />
+                    <span className="text-[9px] font-bold uppercase tracking-wider">Services</span>
+                </Link>
+                <Link href="/products" className="flex flex-col items-center justify-center flex-1 w-full h-full text-neutral-500 hover:text-primary-600 transition-colors gap-1">
+                    <Package className="w-[22px] h-[22px]" strokeWidth={2.5} />
+                    <span className="text-[9px] font-bold uppercase tracking-wider">Product</span>
+                </Link>
+                <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex flex-col items-center justify-center flex-1 w-full h-full text-neutral-500 hover:text-primary-600 transition-colors gap-1">
+                    {isMenuOpen ? <X className="w-[22px] h-[22px]" strokeWidth={2.5} /> : <Menu className="w-[22px] h-[22px]" strokeWidth={2.5} />}
+                    <span className="text-[9px] font-bold uppercase tracking-wider">Menu</span>
+                </button>
+            </nav>
         </header >
     );
 }

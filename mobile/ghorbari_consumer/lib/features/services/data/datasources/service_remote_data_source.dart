@@ -10,14 +10,35 @@ abstract class ServiceRemoteDataSource {
 class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
   @override
   Future<List<ServiceItem>> getServices({String? categoryId}) async {
-    var query = SupabaseService.from('service_items').select();
+    // Service items are actually stored as level-2 product_categories with type 'service'
+    var query = SupabaseService.from('product_categories')
+        .select('id, name, name_bn, type, level, metadata, icon, icon_url, parent_id, parent:parent_id(id, name, name_bn)')
+        .eq('type', 'service');
     
     if (categoryId != null) {
-      query = query.eq('category_id', categoryId);
+      query = query.eq('parent_id', categoryId);
     }
     
     final response = await query.order('name');
-    return (response as List).map((json) => ServiceItem.fromJson(json)).toList();
+    final List<dynamic> catData = response;
+    
+    return catData.map((cat) {
+      final price = (cat['metadata']?['price'] ?? 0).toDouble();
+      final unit = cat['metadata']?['unit'] ?? 'hr';
+      final icon = cat['icon_url'] ?? cat['icon'];
+      
+      return ServiceItem(
+        id: cat['id'],
+        name: cat['name'],
+        description: cat['name_bn'],
+        unitPrice: price,
+        unitType: unit,
+        imageUrl: icon ?? '',
+        categoryId: cat['parent_id'] ?? '',
+        providerId: 'ghorbari',
+        rating: 4.8,
+      );
+    }).toList();
   }
 
   @override

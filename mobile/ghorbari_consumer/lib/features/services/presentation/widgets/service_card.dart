@@ -5,8 +5,7 @@ import 'package:ghorbari_consumer/shared/widgets/glass_card.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/screens/checkout_screen.dart';
-import 'package:ghorbari_consumer/shared/models/product.dart';
+import 'package:ghorbari_consumer/features/bookings/presentation/screens/booking_screen.dart';
 class ServiceCard extends StatelessWidget {
   final ServiceItem service;
   final VoidCallback onTap;
@@ -37,10 +36,17 @@ class ServiceCard extends StatelessWidget {
                       child: Hero(
                         tag: 'service_${service.id}',
                         child: service.imageUrl != null
-                            ? CachedNetworkImage(
-                                imageUrl: service.imageUrl!,
+                            ? Image.network(
+                                service.imageUrl!,
                                 fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(color: Colors.grey.shade100),
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  color: Colors.grey.shade100,
+                                  child: const Icon(Icons.handyman_outlined, color: Colors.grey),
+                                ),
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(color: Colors.grey.shade100);
+                                },
                               )
                             : Container(color: Colors.grey.shade100, child: const Icon(Icons.handyman_outlined)),
                       ),
@@ -111,19 +117,10 @@ class ServiceCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        ElevatedButton(
+                         ElevatedButton(
                           onPressed: () {
-                             final product = Product(
-                               id: service.id,
-                               name: service.name,
-                               price: service.unitPrice,
-                               categoryId: service.categoryId,
-                               imageUrl: service.imageUrl,
-                               sellerId: 'ghorbari',
-                               metadata: {'type': 'service', 'rating': service.rating},
-                             );
-                             context.read<CartBloc>().add(CartItemAdded(product));
-                             Navigator.push(context, MaterialPageRoute(builder: (context) => const CheckoutScreen()));
+                             // Push directly to the new booking flow for services
+                             Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen(service: service)));
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF0F172A),

@@ -39,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${dmSans.variable} ${hindSiliguri.variable} antialiased font-sans`}
+        className={`${dmSans.variable} ${hindSiliguri.variable} antialiased font-sans pb-16 md:pb-0`}
       >
         <LanguageProvider>
           <CartProvider>

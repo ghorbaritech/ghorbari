@@ -1,0 +1,7 @@
+# Ignore the Flutter App directory entirely
+mobile/
+.next/
+node_modules/
+*.log
+*.txt
+*.sql
