@@ -30,6 +30,7 @@ import { CompareProvider } from "@/context/CompareContext";
 import { CompareStickyBar } from "@/components/ui/CompareStickyBar";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { AIChatAssistant } from "@/components/ui/AIChatAssistant";
 
 export default function RootLayout({
   children,
@@ -49,6 +50,7 @@ export default function RootLayout({
                 <Toaster />
                 <CompareStickyBar />
                 <SonnerToaster />
+                <AIChatAssistant />
               </CompareProvider>
             </ServiceCartProvider>
           </CartProvider>

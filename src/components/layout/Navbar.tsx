@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ShoppingCart, User, Menu, X, ArrowRight, LayoutDashboard, LogOut, Home, Package, PencilRuler, Wrench } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, ArrowRight, LayoutDashboard, LogOut, Home, Package, PencilRuler, Wrench, Phone, MapPin, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
@@ -19,6 +19,15 @@ export function Navbar() {
     const [searchQuery, setSearchQuery] = useState("");
     const [user, setUser] = useState<any>(null);
     const [profile, setProfile] = useState<any>(null);
+    const [contactPhone, setContactPhone] = useState<string | null>(null);
+    const [locationName, setLocationName] = useState<string>("Set Location");
+    const [isLocating, setIsLocating] = useState(false);
+
+    // Search Autocomplete State
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
     const { itemCount, isDrawerOpen, closeDrawer, openDrawer } = useCart();
     const router = useRouter();
     const supabase = createClient();
@@ -45,17 +54,39 @@ export function Navbar() {
         }
         fetchUser();
 
-        // Removed: fetchCategories logic as it was unused in Navbar
-        // async function fetchCategories() {
-        //     try {
-        //         const data = await getCategories();
-        //         setCategories(data);
-        //     } catch (e) {
-        //         console.error("Failed to fetch categories for menu:", e);
-        //     }
-        // }
-        // fetchCategories();
+        async function fetchContact() {
+            const { data } = await supabase.from('home_content').select('content').eq('section_key', 'contact_info').single();
+            if (data?.content?.phone) {
+                setContactPhone(data.content.phone);
+            }
+        }
+        fetchContact();
     }, []);
+
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            if (searchQuery.trim().length < 2) {
+                setSuggestions([]);
+                return;
+            }
+            setIsSearching(true);
+            try {
+                const response = await fetch(`/api/search/suggest?q=${encodeURIComponent(searchQuery)}`);
+                const data = await response.json();
+                setSuggestions(data.results || []);
+            } catch (error) {
+                console.error("Error fetching suggestions:", error);
+            } finally {
+                setIsSearching(false);
+            }
+        };
+
+        const timerId = setTimeout(() => {
+            fetchSuggestions();
+        }, 300);
+
+        return () => clearTimeout(timerId);
+    }, [searchQuery]);
 
     const handleSearch = () => {
         if (searchQuery.trim()) {
@@ -66,6 +97,43 @@ export function Navbar() {
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
             handleSearch();
+        }
+    };
+
+    const requestLocation = () => {
+        setIsLocating(true);
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    try {
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                        const data = await response.json();
+                        const addr = data.address || {};
+                        const localArea = addr.suburb || addr.neighbourhood || addr.road || addr.village || addr.town;
+                        const mainCity = addr.city || addr.state_district || "Location Found";
+
+                        const fullLocation = localArea && localArea !== mainCity
+                            ? `${localArea}, ${mainCity}`
+                            : mainCity;
+
+                        setLocationName(fullLocation);
+                    } catch (error) {
+                        console.error("Error fetching location name:", error);
+                        setLocationName("Location Error");
+                    } finally {
+                        setIsLocating(false);
+                    }
+                },
+                (error) => {
+                    console.error("Geolocation error:", error.message || "Unknown error occurred while fetching location.");
+                    setLocationName("Access Denied");
+                    setIsLocating(false);
+                }
+            );
+        } else {
+            setLocationName("Not Supported");
+            setIsLocating(false);
         }
     };
 
@@ -90,6 +158,15 @@ export function Navbar() {
                         </Link>
                     </div>
                     <div className="flex items-center gap-6">
+                        {contactPhone && (
+                            <>
+                                <div className="flex items-center gap-1.5 text-neutral-600 hover:text-primary-600 transition-colors">
+                                    <Phone className="w-3.5 h-3.5" />
+                                    <a href={`tel:${contactPhone}`} className="font-semibold tracking-wider">{contactPhone}</a>
+                                </div>
+                                <span className="w-px h-3 bg-neutral-200"></span>
+                            </>
+                        )}
                         <button
                             onClick={() => setLanguage(language === 'EN' ? 'BN' : 'EN')}
                             className="hover:text-primary-600 transition-colors flex items-center gap-1 font-bold"
@@ -118,14 +195,38 @@ export function Navbar() {
                         </div>
                     </Link>
 
+                    {/* Location Tracker */}
+                    <div className="hidden md:flex items-center">
+                        <button
+                            onClick={requestLocation}
+                            disabled={isLocating}
+                            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-neutral-100 transition-colors text-neutral-600 group"
+                        >
+                            {isLocating ? (
+                                <Loader2 className="w-5 h-5 text-primary-600 animate-spin" />
+                            ) : (
+                                <MapPin className="w-5 h-5 group-hover:text-primary-600 transition-colors" />
+                            )}
+                            <div className="flex flex-col items-start gap-0.5 max-w-[120px]">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 leading-none">Delivering to</span>
+                                <span className="text-sm font-semibold text-neutral-900 leading-none truncate w-full text-left">{locationName}</span>
+                            </div>
+                        </button>
+                    </div>
+
                     {/* Prominent Search Bar */}
-                    <div className="hidden md:flex flex-1 relative group">
+                    <div className="hidden md:flex flex-1 relative group max-w-2xl">
                         <div className="w-full relative">
                             <Input
                                 placeholder={t.nav_search_placeholder}
                                 className="w-full pl-12 h-12 bg-neutral-100 border-none focus:bg-white focus:ring-2 focus:ring-primary-600 transition-all rounded-full font-medium text-neutral-900 pr-24"
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setShowSuggestions(true);
+                                }}
+                                onFocus={() => setShowSuggestions(true)}
+                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                                 onKeyDown={handleKeyDown}
                             />
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-primary-600 transition-colors" />
@@ -135,6 +236,44 @@ export function Navbar() {
                             >
                                 {t.search || "Search"}
                             </Button>
+
+                            {/* Suggestions Dropdown */}
+                            {showSuggestions && (searchQuery.length >= 2) && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-neutral-100 overflow-hidden z-[100]">
+                                    {isSearching ? (
+                                        <div className="p-4 text-center text-neutral-500 text-sm">
+                                            <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                                        </div>
+                                    ) : suggestions.length > 0 ? (
+                                        <ul className="max-h-80 overflow-y-auto w-full py-2">
+                                            {suggestions.map((item) => (
+                                                <li key={`${item.resultType}-${item.id}`}>
+                                                    <Link
+                                                        href={item.resultType === 'product' ? `/products/${item.id}` : `/categories/${item.id}`}
+                                                        className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors"
+                                                        onClick={() => setShowSuggestions(false)}
+                                                    >
+                                                        <Search className="w-4 h-4 text-neutral-400 opacity-50" />
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-semibold text-neutral-900">{item.name}</span>
+                                                            <span className="text-xs text-neutral-500 capitalize">{item.resultType}</span>
+                                                        </div>
+                                                    </Link>
+                                                </li>
+                                            ))}
+                                            <li className="border-t border-neutral-100 mt-2">
+                                                <button onClick={handleSearch} className="w-full text-center py-3 text-sm font-bold text-primary-600 hover:bg-primary-50 transition-colors">
+                                                    {t.search || "See all results"}
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    ) : (
+                                        <div className="p-4 text-center text-neutral-500 text-sm font-medium">
+                                            No matches found.
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 

@@ -16,17 +16,10 @@ export default function PartnerLoginPage() {
     async function handleSubmit(formData: FormData) {
         setLoading(true)
         setError(null)
-        try {
-            const result = await partnerSignIn(formData)
+        const result = await partnerSignIn(formData)
 
-            if (result?.error) {
-                setError(result.error)
-                setLoading(false)
-            } else if (result?.success) {
-                router.push('/dashboard')
-            }
-        } catch (err) {
-            setError("An unexpected error occurred. Please try again.")
+        if (result?.error) {
+            setError(result.error)
             setLoading(false)
         }
     }

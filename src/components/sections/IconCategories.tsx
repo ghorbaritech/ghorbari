@@ -52,18 +52,18 @@ export function IconCategories({ items = [], title = "Explore Categories" }: Ico
                     </button>
 
                     <div className="overflow-hidden flex-1" ref={emblaRef}>
-                        <div className="flex -ml-3 touch-pan-y py-2">
+                        <div className="flex -ml-2 touch-pan-y py-2">
                             {displayItems.map((cat: any, idx: number) => (
-                                <div key={idx} className="flex-[0_0_40%] sm:flex-[0_0_25%] md:flex-[0_0_18%] lg:flex-[0_0_14.28%] pl-3">
+                                <div key={idx} className="flex-[0_0_40%] sm:flex-[0_0_25%] md:flex-[0_0_18%] lg:flex-[0_0_14.28%] pl-2">
                                     <Link
                                         href={`/products?category=${cat.name}`}
                                         className="flex flex-col items-center gap-3 group cursor-pointer"
                                     >
-                                        <div className="w-20 h-20 rounded-full bg-neutral-100 flex items-center justify-center transition-colors duration-300 group-hover:bg-primary-100">
+                                        <div className="w-24 h-24 shadow-sm rounded-full bg-neutral-100 flex items-center justify-center transition-colors duration-300 group-hover:bg-primary-100">
                                             {cat.icon && (typeof cat.icon === 'string' && (cat.icon.startsWith('http') || cat.icon.startsWith('/'))) ? (
-                                                <img src={cat.icon} alt={cat.name} className="w-9 h-9 object-contain" />
+                                                <img src={cat.icon} alt={cat.name} className="w-11 h-11 object-contain" />
                                             ) : (
-                                                <DynamicIcon name={cat.icon || "LayoutGrid"} className="w-9 h-9 text-primary-950" />
+                                                <DynamicIcon name={cat.icon || "LayoutGrid"} className="w-11 h-11 text-primary-950" />
                                             )}
                                         </div>
                                         <span className="text-[12px] font-semibold text-neutral-600 group-hover:text-primary-950 text-center transition-colors max-w-full leading-tight">

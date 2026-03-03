@@ -17,7 +17,8 @@ import {
     Flag,
     Tag,
     MessageSquare,
-    LifeBuoy
+    LifeBuoy,
+    Bot
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
     { label: 'Messages', icon: MessageSquare, href: '/admin/messages' },
     { label: 'Support', icon: LifeBuoy, href: '/admin/support' },
     { label: 'Settings', icon: Settings, href: '/admin/settings' },
+    { label: 'AI Training', icon: Bot, href: '/admin/ai-training' },
 ]
 
 export function Sidebar() {

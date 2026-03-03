@@ -24,6 +24,7 @@ import { toast } from 'sonner' // Assuming sonner is used, or alerts
 import { parseCSV, generateCSVTemplate } from '@/utils/csvParser'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
+import { uploadProductImage } from './actions'
 
 export default function InventoryPage() {
     const [products, setProducts] = useState<any[]>([])
@@ -35,6 +36,8 @@ export default function InventoryPage() {
 
     // Edit State
     const [editingProduct, setEditingProduct] = useState<any>(null)
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(null)
 
     // Roles Data
     const [designerData, setDesignerData] = useState<any>(null)
@@ -185,6 +188,25 @@ export default function InventoryPage() {
         const { data: seller } = await supabase.from('sellers').select('id').eq('user_id', user.id).single()
         if (!seller) return // Should warn
 
+        let finalImageUrl = editingProduct?.images?.[0] || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800';
+
+        if (imageFile) {
+            const uploadData = new FormData();
+            uploadData.append('file', imageFile);
+
+            const result = await uploadProductImage(uploadData);
+
+            if (result.error) {
+                alert('Error uploading image: ' + result.error);
+                setSubmitting(false);
+                return;
+            }
+
+            if (result.publicUrl) {
+                finalImageUrl = result.publicUrl;
+            }
+        }
+
         const productData = {
             seller_id: seller.id,
             sku: formData.get('sku') || 'SKU-' + Math.random().toString(36).substring(7).toUpperCase(),
@@ -194,7 +216,7 @@ export default function InventoryPage() {
             base_price: parseFloat(formData.get('price') as string) || 0,
             stock_quantity: parseInt(formData.get('stock') as string) || 0,
             is_quote_only: formData.get('is_quote') === 'on',
-            images: ['https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800'],
+            images: [finalImageUrl],
             status: 'active'
         }
 
@@ -296,7 +318,12 @@ export default function InventoryPage() {
                     <TabsContent value="products" className="mt-0 outline-none">
                         <div className="flex justify-between items-center mb-6">
                             <p className="text-neutral-500 font-bold uppercase text-xs tracking-widest leading-none mt-2">{products.length} Products Types</p>
-                            <Button onClick={() => { setEditingProduct(null); setShowAddForm(true) }} className="h-12 px-8 bg-neutral-900 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl hover:bg-black transition-all">
+                            <Button onClick={() => {
+                                setEditingProduct(null);
+                                setImageFile(null);
+                                setImagePreview(null);
+                                setShowAddForm(true);
+                            }} className="h-12 px-8 bg-neutral-900 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl hover:bg-black transition-all">
                                 <Plus className="w-4 h-4 mr-2" /> Add New Item
                             </Button>
                         </div>
@@ -404,7 +431,12 @@ export default function InventoryPage() {
                                             </td>
                                             <td className="px-8 py-4 text-right">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-neutral-200 rounded-lg" onClick={() => { setEditingProduct(product); setShowAddForm(true) }}>
+                                                    <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-neutral-200 rounded-lg" onClick={() => {
+                                                        setEditingProduct(product);
+                                                        setImageFile(null);
+                                                        setImagePreview(product.images?.[0] || null);
+                                                        setShowAddForm(true);
+                                                    }}>
                                                         <Edit2 className="w-4 h-4 text-neutral-600" />
                                                     </Button>
                                                     <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-red-50 rounded-lg" onClick={() => handleDelete(product.id)}>
@@ -504,10 +536,32 @@ export default function InventoryPage() {
 
                             <div className="overflow-y-auto p-8 pt-4">
                                 <form action={handleSaveProduct as unknown as string} id="product-form" className="space-y-8">
-                                    {/* Image Upload Placeholder */}
-                                    <div className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-neutral-200 rounded-3xl bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer group">
-                                        <Upload className="w-10 h-10 text-neutral-300 group-hover:text-neutral-500 mb-2" />
-                                        <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Click to upload product image</p>
+                                    {/* Image Upload Area */}
+                                    <div
+                                        onClick={() => document.getElementById('image-upload')?.click()}
+                                        className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-neutral-200 rounded-3xl bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer group relative overflow-hidden"
+                                    >
+                                        {imagePreview ? (
+                                            <img src={imagePreview} className="w-full h-full object-cover" alt="Product Preview" />
+                                        ) : (
+                                            <>
+                                                <Upload className="w-10 h-10 text-neutral-300 group-hover:text-neutral-500 mb-2" />
+                                                <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Click to upload product image</p>
+                                            </>
+                                        )}
+                                        <input
+                                            type="file"
+                                            id="image-upload"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    setImageFile(file);
+                                                    setImagePreview(URL.createObjectURL(file));
+                                                }
+                                            }}
+                                        />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-6">
@@ -527,7 +581,7 @@ export default function InventoryPage() {
                                                 <SelectTrigger className="h-14 rounded-2xl bg-neutral-50 border-none font-bold">
                                                     <SelectValue placeholder="Select Category" />
                                                 </SelectTrigger>
-                                                <SelectContent>
+                                                <SelectContent className="z-[110]">
                                                     {categories.map(c => (
                                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                                     ))}

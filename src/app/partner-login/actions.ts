@@ -1,8 +1,11 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
 
 export async function partnerSignIn(formData: FormData) {
+    let redirectPath = '/dashboard'
+
     try {
         const supabase = await createClient()
 
@@ -52,9 +55,11 @@ export async function partnerSignIn(formData: FormData) {
             return { error: 'Unauthorized: This portal is for Designers and Sellers only.' }
         }
 
-        return { success: true }
     } catch (err: any) {
         console.error('Unexpected Partner Login Error:', err)
         return { error: `An unexpected error occurred: ${err.message || 'Unknown error'}` }
     }
+
+    // Call redirect outside try-catch so Next.js NEXT_REDIRECT error isn't swallowed
+    redirect(redirectPath)
 }
