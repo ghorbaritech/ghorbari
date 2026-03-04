@@ -53,6 +53,8 @@
   "all_services": "All Services",
   "services_found": "Services Found",
   "no_services_found": "No services match your filters.",
+  "search_products": "Search products...",
+  "search_services": "Search services...",
   "construction_marketplace": "Construction Marketplace",
   "all_products": "All Products",
   "products_found": "Products Found",
@@ -63,5 +65,12 @@
   "please_login_messages": "Please sign in to view your messages.",
   "orders": "Orders",
   "welcome": "Welcome",
-  "product_marketplace": "Product Marketplace"
+  "product_marketplace": "Product Marketplace",
+  "design_studio": "Design Studio",
+  "search_design": "Search design services...",
+  "packages_found": "Packages Found",
+  "sorted_by_tier": "Sorted by Tier",
+  "no_packages_found": "No packages found.",
+  "book_service": "Book Service",
+  "details": "Details"
 }

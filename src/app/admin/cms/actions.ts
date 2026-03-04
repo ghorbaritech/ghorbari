@@ -64,6 +64,52 @@ export async function getHomeContent() {
             }
         }
 
+        // Enrichment: design_display_config (NEW)
+        const designConfig = contentMap['design_display_config'];
+        if (designConfig?.selected_ids && Array.isArray(designConfig.selected_ids) && designConfig.selected_ids.length > 0) {
+            // Fetch all categories to build the lineage tree
+            const { data: allCats } = await supabase
+                .from('product_categories')
+                .select('id, name, name_bn, icon, icon_url, metadata, parent_id')
+
+            if (allCats) {
+                // Helper to determine root service type
+                const getServiceType = (id: string): 'interior' | 'structural' => {
+                    let currentId = id;
+                    while (currentId) {
+                        const node = allCats.find((c: any) => c.id === currentId);
+                        if (!node) break;
+
+                        const nameLower = node.name.toLowerCase();
+                        if (nameLower.includes('interior')) return 'interior';
+                        if (nameLower.includes('structural') || nameLower.includes('architectural')) return 'structural';
+
+                        currentId = node.parent_id;
+                    }
+                    return 'structural'; // default fallback
+                };
+
+                // Map back to maintain order if needed, but for now just provide the full objects
+                const enrichedDesignItems = designConfig.selected_ids.map((id: string) => {
+                    const fresh = allCats.find((c: any) => c.id === id)
+                    if (!fresh) return null
+                    return {
+                        id: fresh.id,
+                        title: fresh.name,
+                        titleBn: fresh.name_bn,
+                        image: fresh.icon_url || fresh.icon || '/images/placeholders/design.jpg',
+                        description: fresh.metadata?.description || 'Professional architectural and interior design solutions',
+                        descriptionBn: fresh.metadata?.description_bn || 'পেশাদার আর্কিটেকচারাল এবং ইন্টেরিয়র ডিজাইন সলিউশন',
+                        rating: fresh.metadata?.rating || 4.8,
+                        price: fresh.metadata?.starting_price || 1600,
+                        serviceType: getServiceType(fresh.id)
+                    }
+                }).filter(Boolean);
+
+                contentMap['design_display_config'].enriched_items = enrichedDesignItems;
+            }
+        }
+
         return contentMap
     } catch (error) {
         console.error('Critical Error in getHomeContent:', error)
@@ -117,18 +163,24 @@ export async function getCMSDependencies() {
     try {
         const supabase = await createClient()
 
-        // 1. Categories (Filtered: Product/Service/Design, Level 0/1 only)
+        // 1. Product/Service Categories (Level 0/1 only for featured categories feature)
         const { data: categories, error: catError } = await supabase
             .from('product_categories')
-            .select('*')
+            .select('id, name, name_bn, icon, type, level, parent_id')
             .in('type', ['product', 'service', 'design'])
-            .lt('level', 2) // Exclude items (level 2)
+            .lt('level', 2)
+            .order('level')
             .order('name')
         if (catError) console.error('Error fetching categories:', catError)
 
-        // 2. Initial Design Packages (for selection)
-        const { data: designPackages, error: designError } = await supabase.from('design_packages').select('id, title, images').limit(50)
-        if (designError) console.error('Error fetching design packages:', designError)
+        // 2. ALL Design Categories (all levels: ROOT, SUB, ITEM, SUB-ITEM) for the Design display config tree
+        const { data: allDesignCategories, error: designCatError } = await supabase
+            .from('product_categories')
+            .select('id, name, name_bn, icon, icon_url, type, level, parent_id, metadata')
+            .eq('type', 'design')
+            .order('level')
+            .order('name')
+        if (designCatError) console.error('Error fetching design categories:', designCatError)
 
         // 3. Initial Service Packages (for selection)
         const { data: servicePackages, error: serviceError } = await supabase.from('service_packages').select('id, title, images').limit(50)
@@ -136,13 +188,15 @@ export async function getCMSDependencies() {
 
         return {
             categories: categories || [],
-            designPackages: designPackages || [],
+            allDesignCategories: allDesignCategories || [],
+            designPackages: [], // kept for backward compat
             servicePackages: servicePackages || []
         }
     } catch (error) {
         console.error('Critical Error in getCMSDependencies:', error)
         return {
             categories: [],
+            allDesignCategories: [],
             designPackages: [],
             servicePackages: []
         }

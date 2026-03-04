@@ -44,11 +44,11 @@ export default async function Home() {
           title={!Array.isArray(rawFeatured) ? rawFeatured?.title : undefined}
         />
 
-        {/* 3. Design & Planning Services */}
+        {/* 3. Design & Planning Services (Now from CMS config if available) */}
         <DesignServicesSection
-          title={designServices.title}
-          items={designServices.items}
-          sliderCount={designServices.slider_count}
+          title={contentMap['design_display_config']?.title || designServices.title}
+          items={contentMap['design_display_config']?.enriched_items || designServices.items}
+          sliderCount={contentMap['design_display_config']?.slider_count || designServices.slider_count}
         />
 
         {/* 4. Product Categories (Dynamic) */}

@@ -7,10 +7,8 @@ import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dar
 import 'package:ghorbari_consumer/features/auth/presentation/screens/login_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/home_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/product_explore_screen.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/service_listing_screen.dart';
 import 'package:ghorbari_consumer/features/services/presentation/screens/service_explore_screen.dart';
-import 'package:ghorbari_consumer/shared/models/category.dart';
-import 'package:ghorbari_consumer/shared/models/cms_content.dart';
+import 'package:ghorbari_consumer/features/design/presentation/screens/design_studio_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/orders_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/profile_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/messages_screen.dart';
@@ -32,14 +30,8 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _pages = [
-      const HomeScreen(),
-      const ServiceListingScreen(
-        section: CMSProductSection(
-          id: 'design_nav',
-          title: 'Design & Planning',
-          categoryId: 'design',
-        ),
-      ),
+      HomeScreen(onNavigateToTab: _onItemTapped),
+      const DesignStudioScreen(),
       const ServiceExploreScreen(),
       const ProductExploreScreen(),
     ];

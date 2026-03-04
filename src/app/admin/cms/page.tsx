@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -536,9 +536,12 @@ export default function CMSPage() {
                 <TabsContent value="design" className="space-y-6">
                     <Card className="p-8 rounded-[2.5rem] border-none shadow-xl bg-white">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-black uppercase text-neutral-900">Design Section Config</h2>
+                            <div>
+                                <h2 className="text-xl font-black uppercase text-neutral-900">Design &amp; Planning Config</h2>
+                                <p className="text-xs text-neutral-400 mt-1">Checked items appear in both the Home page slider and the app Design tab</p>
+                            </div>
                             <Button
-                                onClick={() => handleSave('design_services', content['design_services'])}
+                                onClick={() => handleSave('design_display_config', content['design_display_config'])}
                                 disabled={saving}
                                 className="bg-black text-white rounded-xl font-bold uppercase text-xs"
                             >
@@ -546,59 +549,106 @@ export default function CMSPage() {
                             </Button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase text-neutral-500">Section Title</label>
-                                <Input
-                                    value={content['design_services']?.title || 'Design & Planning'}
-                                    onChange={(e) => setContent({ ...content, design_services: { ...content['design_services'], title: e.target.value } })}
-                                    className="font-bold border-neutral-200"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase text-neutral-500">Slider Display Count</label>
-                                <Input
-                                    type="number"
-                                    value={content['design_services']?.slider_count || 4}
-                                    onChange={(e) => setContent({ ...content, design_services: { ...content['design_services'], slider_count: parseInt(e.target.value) } })}
-                                    className="font-bold border-neutral-200"
-                                />
-                            </div>
-                        </div>
+                        {/* Stats bar */}
+                        {(() => {
+                            const selectedIds: string[] = content['design_display_config']?.selected_ids || []
+                            const totalCheckable = (dependencies.allDesignCategories || []).filter((c: any) => c.level >= 2).length
+                            return (
+                                <div className="flex items-center gap-4 mb-6 p-3 bg-purple-50 rounded-xl border border-purple-100">
+                                    <span className="text-purple-700 font-black text-sm">{selectedIds.length} selected</span>
+                                    <span className="text-neutral-300">|</span>
+                                    <span className="text-neutral-500 text-xs">{totalCheckable} total items available</span>
+                                    {selectedIds.length > 0 && (
+                                        <>
+                                            <span className="text-neutral-300">|</span>
+                                            <button
+                                                onClick={() => setContent({ ...content, design_display_config: { ...content['design_display_config'], selected_ids: [] } })}
+                                                className="text-xs text-red-400 hover:text-red-600 font-bold"
+                                            >
+                                                Clear all
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            )
+                        })()}
 
-                        <h3 className="text-sm font-black uppercase text-neutral-400 mb-4">Select Packages to Display</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 h-96 overflow-y-auto pr-2">
-                            {dependencies.designPackages.map((pkg: any) => {
-                                const isSelected = content['design_services']?.items?.some((i: any) => i.id === pkg.id)
-                                return (
-                                    <label key={pkg.id} className={`p-4 border-2 rounded-2xl cursor-pointer transition-all ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-neutral-100 hover:border-neutral-200'}`}>
-                                        <div className="flex flex-col gap-3">
-                                            <div className="flex items-start justify-between">
-                                                <Checkbox
-                                                    checked={isSelected}
-                                                    onCheckedChange={(checked) => {
-                                                        const currentItems = content['design_services']?.items || []
-                                                        let newItems
-                                                        if (checked) {
-                                                            newItems = [...currentItems, { id: pkg.id, title: pkg.title, image: pkg.images?.[0] }]
-                                                        } else {
-                                                            newItems = currentItems.filter((i: any) => i.id !== pkg.id)
-                                                        }
-                                                        setContent({
-                                                            ...content,
-                                                            design_services: { ...content['design_services'], items: newItems }
-                                                        })
-                                                    }}
-                                                />
-                                                {isSelected && <span className="w-2 h-2 rounded-full bg-blue-500" />}
+                        {/* Category Tree */}
+                        <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+                            {(() => {
+                                const allCats: any[] = dependencies.allDesignCategories || []
+                                const selectedIds: string[] = content['design_display_config']?.selected_ids || []
+
+                                const toggleItem = (id: string) => {
+                                    const current: string[] = content['design_display_config']?.selected_ids || []
+                                    const newIds = current.includes(id) ? current.filter((x: string) => x !== id) : [...current, id]
+                                    setContent({ ...content, design_display_config: { ...content['design_display_config'], selected_ids: newIds } })
+                                }
+
+                                const roots = allCats.filter((c: any) => c.level === 0)
+                                const byParent = (parentId: string) => allCats.filter((c: any) => c.parent_id === parentId)
+
+                                const levelLabels: Record<number, string> = {
+                                    0: 'ROOT', 1: 'SUB', 2: 'ITEM', 3: 'SUB-ITEM L3', 4: 'SUB-ITEM L4'
+                                }
+                                const levelColors: Record<number, string> = {
+                                    0: 'bg-purple-700 text-white',
+                                    1: 'bg-purple-200 text-purple-800',
+                                    2: 'bg-blue-100 text-blue-700',
+                                    3: 'bg-green-100 text-green-700',
+                                    4: 'bg-yellow-100 text-yellow-700'
+                                }
+
+                                const renderNode = (cat: any, depth: number): React.ReactNode => {
+                                    const children = byParent(cat.id)
+                                    const isCheckable = cat.level >= 2
+                                    const isChecked = selectedIds.includes(cat.id)
+
+                                    return (
+                                        <div key={cat.id} style={{ marginLeft: `${depth * 20}px` }}>
+                                            <div className={`flex items-center gap-3 py-2 px-3 rounded-xl transition-all ${isCheckable ? (isChecked ? 'bg-purple-50 border border-purple-200' : 'hover:bg-neutral-50 border border-transparent') : 'border border-transparent'}`}>
+                                                {isCheckable ? (
+                                                    <Checkbox
+                                                        checked={isChecked}
+                                                        onCheckedChange={() => toggleItem(cat.id)}
+                                                        className="border-purple-300"
+                                                    />
+                                                ) : (
+                                                    <span className="w-4 h-4 flex-shrink-0" />
+                                                )}
+                                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest flex-shrink-0 ${levelColors[cat.level] || 'bg-neutral-100 text-neutral-500'}`}>
+                                                    {levelLabels[cat.level] || `L${cat.level}`}
+                                                </span>
+                                                <span
+                                                    className={`text-sm ${isCheckable ? 'font-semibold cursor-pointer' : 'font-black text-neutral-700'}`}
+                                                    onClick={() => isCheckable && toggleItem(cat.id)}
+                                                >
+                                                    {cat.name}
+                                                </span>
+                                                {cat.name_bn && <span className="text-xs text-neutral-400 ml-1">{cat.name_bn}</span>}
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-xs line-clamp-2">{pkg.title}</p>
-                                            </div>
+                                            {children.length > 0 && (
+                                                <div className="mt-1 space-y-1">
+                                                    {children.map((child: any) => renderNode(child, depth + 1))}
+                                                </div>
+                                            )}
                                         </div>
-                                    </label>
+                                    )
+                                }
+
+                                if (roots.length === 0) return (
+                                    <div className="text-center py-12 text-neutral-400">
+                                        <p className="font-bold">No design categories found</p>
+                                        <p className="text-xs mt-1">Add design categories in the Categories section first</p>
+                                    </div>
                                 )
-                            })}
+
+                                return roots.map((root: any) => (
+                                    <div key={root.id} className="border border-neutral-100 rounded-2xl p-4 mb-3 bg-white shadow-sm">
+                                        {renderNode(root, 0)}
+                                    </div>
+                                ))
+                            })()}
                         </div>
                     </Card>
                 </TabsContent>

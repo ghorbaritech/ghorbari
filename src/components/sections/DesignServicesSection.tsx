@@ -65,7 +65,7 @@ export function DesignServicesSection({ title = 'Design & Planning', items = [],
     const { t, language } = useLanguage();
     const scrollContainerRef = useRef<HTMLDivElement>(null)
     const rawItems = items.length > 0 ? items : DEFAULT_ITEMS
-    const displayItems = rawItems.slice(0, Math.max(sliderCount, 5))
+    const displayItems = rawItems
 
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
@@ -105,13 +105,13 @@ export function DesignServicesSection({ title = 'Design & Planning', items = [],
 
                 <div
                     ref={scrollContainerRef}
-                    className="flex lg:grid lg:grid-cols-5 gap-6 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar"
+                    className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory no-scrollbar"
                 >
                     {displayItems.map((item) => (
-                        <div key={item.id} className="min-w-[260px] lg:min-w-0 snap-center h-full">
+                        <div key={item.id} className="min-w-[240px] w-full lg:min-w-[calc((100%-96px)/5)] lg:w-[calc((100%-96px)/5)] flex-shrink-0 snap-center h-full">
                             <div className="group bg-white rounded-2xl border border-neutral-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full overflow-hidden">
                                 {/* Image */}
-                                <div className="aspect-[4/3] relative overflow-hidden bg-neutral-100">
+                                <div className="aspect-square relative overflow-hidden bg-neutral-100">
                                     <img
                                         src={item.image}
                                         alt={getL(item.title, item.titleBn || item.title_bn, language)}
@@ -141,7 +141,7 @@ export function DesignServicesSection({ title = 'Design & Planning', items = [],
                                             <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-widest">{t.lbl_starting_from}</span>
                                             <span className="text-xl font-black text-neutral-900 tracking-tight">৳{(Number(item.price) || 5000).toLocaleString(language === 'BN' ? 'bn-BD' : 'en-BD')}</span>
                                         </div>
-                                        <Link href={`/services/design/book?service=${item.title.toLowerCase().split(' ')[0]}`}>
+                                        <Link href={`/services/design/book?service=${item.serviceType || 'structural'}`}>
                                             <button className="bg-neutral-900 hover:bg-black text-white font-bold text-[10px] uppercase tracking-widest px-4 h-9 rounded-lg transition-colors">
                                                 {t.service_book_now}
                                             </button>

@@ -89,7 +89,7 @@ class _AIAssistantWidgetState extends State<AIAssistantWidget> {
 
     try {
       final response = await _dio.post(
-        'https://ghorbari.netlify.app/api/ai/chat',
+        'https://ghorbari.tech/api/ai/chat',
         data: {'message': userText, 'lang': _currentLang},
       );
 

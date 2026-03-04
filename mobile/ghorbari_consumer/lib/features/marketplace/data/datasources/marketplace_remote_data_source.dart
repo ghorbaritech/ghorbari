@@ -118,7 +118,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
           .toList();
       
       final List<dynamic> categoriesResponse = await SupabaseService.from('product_categories')
-          .select('id, name, name_bn, icon, type, slug')
+          .select('id, name, name_bn, icon, icon_url, type, slug')
           .filter('id', 'in', ids);
       
        final enrichedItems = itemsToEnrich.map((item) {
@@ -129,7 +129,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
             ...item,
             'name': freshCat['name'],
             'name_bn': freshCat['name_bn'],
-            'icon': freshCat['icon'] ?? item['icon'],
+            'icon': freshCat['icon_url'] ?? freshCat['icon'] ?? item['icon'],
             'type': freshCat['type'],
             'slug': freshCat['slug'],
           };

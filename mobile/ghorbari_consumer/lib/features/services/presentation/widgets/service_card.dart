@@ -19,6 +19,11 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (service.imageUrl != null && service.imageUrl!.isNotEmpty) {
+       print('SERVICE CARD [${service.name}] IMAGE URL: ${service.imageUrl}');
+    } else {
+       print('SERVICE CARD [${service.name}] HAS NO IMAGE URL!');
+    }
     return Container(
       width: 160,
       margin: const EdgeInsets.only(right: 16),
@@ -36,18 +41,17 @@ class ServiceCard extends StatelessWidget {
                     Positioned.fill(
                       child: Hero(
                         tag: 'service_${service.id}',
-                        child: service.imageUrl != null
-                            ? Image.network(
-                                service.imageUrl!,
+                        child: service.imageUrl != null && service.imageUrl!.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: service.imageUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
+                                placeholder: (context, url) => Container(
+                                  color: Colors.grey.shade100,
+                                ),
+                                errorWidget: (context, url, error) => Container(
                                   color: Colors.grey.shade100,
                                   child: const Icon(Icons.handyman_outlined, color: Colors.grey),
                                 ),
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Container(color: Colors.grey.shade100);
-                                },
                               )
                             : Container(color: Colors.grey.shade100, child: const Icon(Icons.handyman_outlined)),
                       ),

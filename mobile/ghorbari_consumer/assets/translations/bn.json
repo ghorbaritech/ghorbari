@@ -53,6 +53,8 @@
   "all_services": "সকল সার্ভিস",
   "services_found": "টি সার্ভিস পাওয়া গেছে",
   "no_services_found": "আপনার ফিল্টারের সাথে মিলে এমন কোনো সার্ভিস নেই।",
+  "search_products": "পণ্য খুঁজুন...",
+  "search_services": "সার্ভিস খুঁজুন...",
   "construction_marketplace": "কন্সট্রাকশন মার্কেটপ্লেস",
   "all_products": "সকল পণ্য",
   "products_found": "টি পণ্য পাওয়া গেছে",
@@ -63,5 +65,12 @@
   "please_login_messages": "আপনার মেসেজ দেখতে অনুগ্রহ করে সাইন ইন করুন।",
   "orders": "অর্ডার",
   "welcome": "স্বাগতম",
-  "product_marketplace": "প্রোডাক্ট মার্কেটপ্লেস"
+  "product_marketplace": "প্রোডাক্ট মার্কেটপ্লেস",
+  "design_studio": "ডিজাইন স্টুডিও",
+  "search_design": "ডিজাইন সার্ভিস খুঁজুন...",
+  "packages_found": "টি প্যাকেজ পাওয়া গেছে",
+  "sorted_by_tier": "স্তর অনুযায়ী সাজানো",
+  "no_packages_found": "কোনো প্যাকেজ পাওয়া যায়নি।",
+  "book_service": "সার্ভিস বুক করুন",
+  "details": "বিস্তারিত"
 }

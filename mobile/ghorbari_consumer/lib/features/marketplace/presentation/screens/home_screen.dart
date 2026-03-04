@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
@@ -35,7 +36,9 @@ import 'package:ghorbari_consumer/shared/widgets/ai_assistant_widget.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Function(int)? onNavigateToTab;
+
+  const HomeScreen({super.key, this.onNavigateToTab});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -131,7 +134,10 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       // 2. Design & Planning
-      sections.add(_buildDesignServicesSection(content['design_services']));
+      sections.add(_buildDesignServicesSection(
+        content['design_display_config'],
+        state,
+      ));
 
       // 3. Product Sections
       if (content['product_sections'] is List) {
@@ -234,11 +240,41 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       actions: [
+        // 1. Search
         IconButton(
             icon: const Icon(Icons.search, color: Color(0xFF0F172A)),
             onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => SearchScreen()))),
+        // 2. Notification Bell
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined, color: Color(0xFF0F172A)),
+              onPressed: () {
+                // TODO: Navigate to notifications screen
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Notifications coming soon!')),
+                );
+              },
+            ),
+            // Static badge — replace with real unread count later
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEF4444),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
+        ),
+        // 3. Cart
         BlocBuilder<CartBloc, CartState>(
           builder: (context, state) {
             return Stack(
@@ -271,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
       ],
     );
   }
@@ -377,43 +413,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           GestureDetector(
                             onTap: () {
                               if (slide['badge'] == 'DESIGN') {
-                                // Navigate to Design booking (first one)
-                                final firstService = ServiceItem(
-                                    id: 'arch_01',
-                                    name: 'Architectural Design',
-                                    categoryId: 'design',
-                                    unitPrice: 5000,
-                                    unitType: 'floor');
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => BookingScreen(
-                                            service: firstService)));
+                                if (widget.onNavigateToTab != null) {
+                                  widget.onNavigateToTab!(1);
+                                }
                               } else if (slide['badge'] == 'SERVICES') {
-                                // Navigate to first service section listing
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            ServiceListingScreen(
-                                                section: CMSProductSection(
-                                                    id: 'srv_sec',
-                                                    title: 'Home Maintenance',
-                                                    categoryId:
-                                                        'maintenance'))));
+                                if (widget.onNavigateToTab != null) {
+                                  widget.onNavigateToTab!(2);
+                                }
                               } else {
-                                // Default to Marketplace/Category listing
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            CategoryListingScreen(
-                                                category: Category(
-                                                    id: 'all',
-                                                    name: 'Marketplace',
-                                                    slug: 'marketplace',
-                                                    type: 'product',
-                                                    level: 0))));
+                                if (widget.onNavigateToTab != null) {
+                                  widget.onNavigateToTab!(3);
+                                }
                               }
                             },
                             child: Container(
@@ -504,36 +514,33 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDesignServicesSection(dynamic designData) {
-    final List<Map<String, dynamic>> designItems = [
-      {
-        'title': 'Architectural Design',
-        'description': 'Complete building blueprints & permits',
-        'image':
-            'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=400&fit=crop',
-        'rating': 4.9,
-        'price': 5000,
-      },
-      {
-        'title': 'Interior Design',
-        'description': 'Modern & functional space planning',
-        'image':
-            'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&h=400&fit=crop',
-        'rating': 4.8,
-        'price': 25000,
-      },
-      {
-        'title': 'Approval Service',
-        'description': 'RAJUK and other regulatory body approval assistance.',
-        'image':
-            'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&h=400&fit=crop',
-        'rating': 5.0,
-        'price': 12000,
-      },
-    ];
+    Widget _buildDesignServicesSection(dynamic displayConfig, MarketplaceState state) {
+    // Get selected_ids from CMS design_display_config, fall back to all design items
+    final selectedIds = displayConfig != null && displayConfig['selected_ids'] is List
+        ? List<String>.from(displayConfig['selected_ids'] as List)
+        : <String>[];
 
-    print(
-        'DEBUG: Rendering DesignServicesSection with ${designItems.length} items');
+    // Get design categories from state (level >= 2 are the displayable items)
+    final allDesignItems = state.categories
+        .where((c) => c.type == 'design' && c.level >= 2)
+        .toList();
+
+    // Filter by selected IDs if CMS config exists
+    final displayItems = selectedIds.isNotEmpty
+        ? allDesignItems.where((c) => selectedIds.contains(c.id)).toList()
+        : allDesignItems;
+
+    if (displayItems.isEmpty) {
+      // Fallback: show nothing if no design items are selected in CMS yet
+      return const SizedBox.shrink();
+    }
+
+    final cardColors = [
+      const Color(0xFF0F172A),
+      const Color(0xFF14532D),
+      const Color(0xFF78350F),
+      const Color(0xFF1D4ED8),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,9 +560,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: designItems.length,
+            itemCount: displayItems.length,
             itemBuilder: (context, index) {
-              return _buildDesignCard(designItems[index]);
+              final cat = displayItems[index];
+              return _buildDesignCard(cat);
             },
           ),
         ),
@@ -563,85 +571,150 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDesignCard(Map<String, dynamic> item) {
+  Widget _buildDesignCard(Category cat) {
     return Container(
-      width: 240,
-      margin: const EdgeInsets.only(right: 12),
+      width: 200,
+      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade100),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CachedNetworkImage(
-            imageUrl: item['image'] ?? '',
-            height: 140,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            errorWidget: (context, url, error) => Container(
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.broken_image)),
+          // Image and Rating
+          Stack(
+            children: [
+              CachedNetworkImage(
+                imageUrl: cat.icon ?? '',
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey.shade200,
+                  child: const Center(
+                    child: Icon(Icons.design_services, color: Colors.grey),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.star, color: Colors.amber, size: 14),
+                      SizedBox(width: 2),
+                      Text(
+                        '4.8',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item['title'] ?? '',
+          
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    cat.nameBn ?? cat.name,
                     style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.bold),
-                    maxLines: 1),
-                const SizedBox(height: 4),
-                Text(item['description'] ?? '',
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                    maxLines: 1),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (item['price'] != null)
-                      Text('৳${item['price']}',
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w900)),
-                    ElevatedButton(
-                      onPressed: () {
-                        final service = ServiceItem(
-                          id: item['title']
-                              .toString()
-                              .toLowerCase()
-                              .replaceAll(' ', '_'),
-                          name: item['title'] ?? 'Service',
-                          categoryId: 'design',
-                          unitPrice: (item['price'] ?? 0).toDouble(),
-                          unitType: 'sqft',
-                          imageUrl: item['image'],
-                          rating: (item['rating'] ?? 4.5).toDouble(),
-                        );
-                        Navigator.push(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const Spacer(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'শুরু',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                          const Text(
+                            '৳১৬০০', // Placeholder for now or dynamic if available
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          final service = ServiceItem(
+                            id: cat.id,
+                            name: cat.name,
+                            categoryId: 'design',
+                            unitPrice: 1600.0,
+                            unitType: 'sqft',
+                            imageUrl: cat.icon,
+                            rating: 4.8,
+                          );
+                          Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) =>
-                                    BookingScreen(service: service)));
-                      },
-                      style: ElevatedButton.styleFrom(
+                              builder: (context) => BookingScreen(service: service),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF0F172A),
                           foregroundColor: Colors.white,
-                          minimumSize: const Size(64, 32)),
-                      child: Text('book'.tr(), style: const TextStyle(fontSize: 10)),
-                    ),
-                  ],
-                ),
-              ],
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          minimumSize: const Size(0, 32),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'বুকিং দিন',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
-
 
   Widget _buildServiceSection(CMSProductSection section) {
     return Column(
@@ -721,17 +794,30 @@ class _HomeScreenState extends State<HomeScreen> {
             final unit = cat.metadata?['unit'] ?? 'hr';
             
             String? icon;
+            final String webBaseUrl = kIsWeb ? 'https://ghorbari.tech' : 'https://ghorbari.tech';
+            
             if (cat.icon != null && cat.icon!.isNotEmpty) {
               if (cat.icon!.startsWith('http')) {
                 icon = cat.icon;
               } else if (cat.icon!.startsWith('/')) {
-                // Use the correct Supabase URL for public assets if it starts with /
-                icon = 'https://nnrzszujwhutbgghtjwc.supabase.co/storage/v1/object/public/public${cat.icon}';
+                // Category icons are hosted on the main Web platform
+                icon = '$webBaseUrl${cat.icon}';
               } else {
                 icon = Supabase.instance.client.storage
                     .from('public')
                     .getPublicUrl(cat.icon!);
               }
+            } else if (cat.metadata?['image'] != null && cat.metadata!['image'].isNotEmpty) {
+               final String metaImage = cat.metadata!['image'];
+               if (metaImage.startsWith('http')) {
+                  icon = metaImage;
+               } else if (metaImage.startsWith('/')) {
+                  icon = '$webBaseUrl$metaImage';
+               } else {
+                  icon = Supabase.instance.client.storage
+                      .from('public')
+                      .getPublicUrl(metaImage);
+               }
             }
 
             final isBn = context.locale.languageCode == 'bn';

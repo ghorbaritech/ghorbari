@@ -47,7 +47,13 @@ export async function updateSession(request: NextRequest) {
     })
 
     // refreshing the auth token
-    await supabase.auth.getUser()
+    try {
+        await supabase.auth.getUser()
+    } catch (e) {
+        // Handle gracefully - if session is invalid or refresh token not found, 
+        // the user will simply be treated as unauthenticated.
+        console.warn('Auth session refresh skipped or failed in middleware:', e)
+    }
 
     return supabaseResponse
 }

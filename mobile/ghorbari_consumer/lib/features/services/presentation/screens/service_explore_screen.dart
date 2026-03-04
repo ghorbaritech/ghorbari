@@ -20,6 +20,7 @@ class ServiceExploreScreen extends StatefulWidget {
 class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
   String? _selectedRootId;
   String? _selectedSubId;
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -59,17 +60,66 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
             } else if (_selectedRootId != null) {
                return sub.parentId == _selectedRootId;
             }
-            return true; // if neither is selected, show all subcategories
+            // B. Search Filter
+            if (_searchQuery.isNotEmpty) {
+              final q = _searchQuery.toLowerCase();
+              final name = sub.name.toLowerCase();
+              final nameBn = sub.nameBn?.toLowerCase() ?? '';
+              return name.contains(q) || nameBn.contains(q);
+            }
+            return true;
           }).toList();
 
 
           return SingleChildScrollView(
             child: Column(
               children: [
-              // --- HERO BANNER SLIDER ---
+              // 1. Search Bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        child: Icon(Icons.search, color: Color(0xFF94A3B8), size: 20),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          onChanged: (value) => setState(() => _searchQuery = value),
+                          decoration: InputDecoration(
+                            hintText: 'search_services'.tr(),
+                            hintStyle: const TextStyle(
+                                color: Color(0xFF94A3B8), fontSize: 14),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
+                        ),
+                      ),
+                      if (_searchQuery.isNotEmpty)
+                        GestureDetector(
+                          onTap: () => setState(() => _searchQuery = ''),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12),
+                            child: Icon(Icons.close, color: Color(0xFF94A3B8), size: 18),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              // 2. Banner Slider
               _buildPromoBanners(),
 
-              // --- TOP: Root Categories (Horizontal Scroll) ---
+              // 3. Root Categories (Horizontal Scroll)
               if (rootCategories.isNotEmpty)
                 SizedBox(
                   height: 50,
@@ -224,17 +274,30 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
                         final unit = cat.metadata?['unit'] ?? 'hr';
                         
                         String? icon;
+                        final String webBaseUrl = kIsWeb ? 'https://ghorbari.tech' : 'https://ghorbari.tech';
+                        
                         if (cat.icon != null && cat.icon!.isNotEmpty) {
                           if (cat.icon!.startsWith('http')) {
                             icon = cat.icon;
                           } else if (cat.icon!.startsWith('/')) {
-                            // Use the correct Supabase URL for public assets if it starts with /
-                            icon = 'https://nnrzszujwhutbgghtjwc.supabase.co/storage/v1/object/public/public${cat.icon}';
+                            // Category icons are hosted on the main Web platform
+                            icon = '$webBaseUrl${cat.icon}';
                           } else {
                             icon = Supabase.instance.client.storage
                                 .from('public')
                                 .getPublicUrl(cat.icon!);
                           }
+                        } else if (cat.metadata?['image'] != null && cat.metadata!['image'].isNotEmpty) {
+                           final String metaImage = cat.metadata!['image'];
+                           if (metaImage.startsWith('http')) {
+                              icon = metaImage;
+                           } else if (metaImage.startsWith('/')) {
+                              icon = '$webBaseUrl$metaImage';
+                           } else {
+                              icon = Supabase.instance.client.storage
+                                  .from('public')
+                                  .getPublicUrl(metaImage);
+                           }
                         }
                         
                         final sItem = ServiceItem(

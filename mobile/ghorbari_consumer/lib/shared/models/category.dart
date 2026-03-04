@@ -27,7 +27,7 @@ class Category {
       name: json['name']?.toString() ?? 'Uncategorized',
       nameBn: json['name_bn']?.toString(),
       slug: json['slug']?.toString() ?? '',
-      icon: (json['icon_url'] ?? json['icon'])?.toString(),
+      icon: (json['icon_url'] ?? json['icon'] ?? (json['metadata'] != null ? json['metadata']['image'] : null))?.toString(),
       type: json['type']?.toString() ?? 'product',
       level: (json['level'] ?? 0) is int ? json['level'] : int.tryParse(json['level']?.toString() ?? '0') ?? 0,
       parentId: json['parent_id']?.toString(),

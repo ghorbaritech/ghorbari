@@ -6,7 +6,7 @@ class SearchService {
   // For mobile emulator, localhost is 10.0.2.2.
   // Use foundation to detect web
   final String _baseUrl = (const bool.fromEnvironment('dart.vm.product') || !const bool.hasEnvironment('dart.library.html')) 
-    ? 'https://ghorbari.netlify.app' 
+    ? 'https://ghorbari.tech' 
     : 'http://localhost:3000';
 
   Future<List<Map<String, dynamic>>> getSuggestions(String query) async {

@@ -19,6 +19,7 @@ class ProductExploreScreen extends StatefulWidget {
 class _ProductExploreScreenState extends State<ProductExploreScreen> {
   String? _selectedRootId;
   String? _selectedSubId;
+  String _searchQuery = '';
 
   String _minPrice = '';
   String _maxPrice = '';
@@ -88,13 +89,64 @@ class _ProductExploreScreenState extends State<ProductExploreScreen> {
               }
             } catch (e) {}
 
+            // C. Search Filter
+            if (_searchQuery.isNotEmpty) {
+              final q = _searchQuery.toLowerCase();
+              final name = product.name.toLowerCase();
+              if (!name.contains(q)) return false;
+            }
+
             return true;
           }).toList();
 
           return SingleChildScrollView(
             child: Column(
               children: [
+                // 1. Search Bar
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Icon(Icons.search, color: Color(0xFF94A3B8), size: 20),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            onChanged: (value) => setState(() => _searchQuery = value),
+                            decoration: InputDecoration(
+                              hintText: 'search_products'.tr(),
+                              hintStyle: const TextStyle(
+                                  color: Color(0xFF94A3B8), fontSize: 14),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
+                          ),
+                        ),
+                        if (_searchQuery.isNotEmpty)
+                          GestureDetector(
+                            onTap: () => setState(() => _searchQuery = ''),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12),
+                              child: Icon(Icons.close, color: Color(0xFF94A3B8), size: 18),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // 2. Banner Slider
                 _buildPromoBanners(),
+                // 3. Root Category Chips
                 if (rootCategories.isNotEmpty)
                   SizedBox(
                     height: 50,
@@ -268,17 +320,19 @@ class _ProductExploreScreenState extends State<ProductExploreScreen> {
 
     return Container(
       height: 140,
-      margin: const EdgeInsets.symmetric(vertical: 12),
+      margin: const EdgeInsets.only(top: 12, bottom: 12),
       child: CarouselSlider(
         options: CarouselOptions(
           height: 140,
           viewportFraction: 0.9,
           enlargeCenterPage: true,
           autoPlay: true,
+          autoPlayInterval: const Duration(seconds: 4),
         ),
         items: banners.map((slide) {
           return PointerInterceptor(
             child: Container(
+              width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 color: slide['color'] as Color,
@@ -286,6 +340,7 @@ class _ProductExploreScreenState extends State<ProductExploreScreen> {
               clipBehavior: Clip.antiAlias,
               child: Stack(
                 children: [
+                  // Background Image overlay
                   Positioned(
                     right: 0,
                     top: 0,
@@ -320,40 +375,65 @@ class _ProductExploreScreenState extends State<ProductExploreScreen> {
                                   ),
                                 ),
                         ),
-                        // Soft elegant fade from solid color to image
-                        Positioned.fill(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  slide['color'] as Color,
-                                  (slide['color'] as Color).withOpacity(0.8),
-                                  Colors.transparent,
-                                ],
-                                stops: const [0.0, 0.4, 1.0],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                (slide['color'] as Color),
+                                (slide['color'] as Color).withOpacity(0)
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
+                  // Content
                   Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(slide['badge']!,
-                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            slide['badge']!,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
                         const SizedBox(height: 8),
-                        Text(slide['title']!,
-                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                        Text(
+                          slide['title']!,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              height: 1.2),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         const SizedBox(height: 4),
-                        Text(slide['subtitle']!,
-                            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 10)),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.5,
+                          child: Text(
+                            slide['subtitle']!,
+                            style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 10),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
                   ),
