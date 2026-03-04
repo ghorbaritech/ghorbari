@@ -5,7 +5,7 @@ import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart
 import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_event.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/screens/signup_screen.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/home_screen.dart';
+import 'package:ghorbari_consumer/features/marketplace/presentation/screens/main_screen.dart';
 import 'dart:ui';
 
 class LoginScreen extends StatefulWidget {
@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (state is AuthAuthenticated) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
             (route) => false,
           );
         }
@@ -69,8 +69,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.home_work_rounded, 
-                                size: 64, color: GhorbariTheme.primaryBlue),
+                              Image.asset(
+                                'assets/images/logo.png',
+                                height: 48,
+                              ),
                               const SizedBox(height: 16),
                               const Text(
                                 'Welcome to Ghorbari',

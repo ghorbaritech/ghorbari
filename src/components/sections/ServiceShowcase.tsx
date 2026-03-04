@@ -20,12 +20,7 @@ interface ServiceShowcaseProps {
     bgClass?: string
 }
 
-const DEFAULT_SERVICES = [
-    { title: 'Electrical Wiring', titleBn: 'ইলেকট্রিক্যাল ওয়্যারিং', image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&h=400&fit=crop', price: 1500 },
-    { title: 'Plumbing Solutions', titleBn: 'প্লাম্বিং সমাধান', image: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600&h=400&fit=crop', price: 1200 },
-    { title: 'Paint & Polishing', titleBn: 'রঙ এবং পলিশিং', image: 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=600&h=400&fit=crop', price: 2500 },
-    { title: 'Sanitary Installation', titleBn: 'স্যানিটারি ইন্সটলেশন', image: 'https://images.unsplash.com/photo-1584622050111-993a426fbf0a?w=600&h=400&fit=crop', price: 1800 },
-]
+// Services are now strictly fetched from the database
 
 export function ServiceShowcase({ title, items = [], category, bgClass = "bg-blue-50" }: ServiceShowcaseProps) {
     const { t, language } = useLanguage();
@@ -80,7 +75,7 @@ export function ServiceShowcase({ title, items = [], category, bgClass = "bg-blu
         doFetch();
     }, [category, items])
 
-    const displayItems = items.length > 0 ? items : (fetchedItems.length > 0 ? fetchedItems : DEFAULT_SERVICES)
+    const displayItems = items.length > 0 ? items : fetchedItems
     const visibleItems = displayItems.slice(0, 10) // Show up to 10 in slider
 
     const scroll = (direction: 'left' | 'right') => {

@@ -6,6 +6,7 @@ import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketp
 import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_event.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_state.dart';
 import 'package:ghorbari_consumer/shared/models/cms_content.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/widgets/product_card.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/product_details_screen.dart';
@@ -42,7 +43,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final LocationService _locationService = LocationService();
-  String _locationName = 'Select Location';
+  String _locationName = 'select_location'.tr();
   bool _isLocating = false;
 
   @override
@@ -134,9 +135,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // 3. Product Sections
       if (content['product_sections'] is List) {
-        for (var section in content['product_sections']) {
-          sections
-              .add(_buildProductSection(CMSProductSection.fromJson(section)));
+        for (var sectionData in content['product_sections']) {
+          sections.add(_buildProductSection(CMSProductSection.fromJson(sectionData), state));
         }
       }
 
@@ -303,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Container(
       height: 180,
-      margin: const EdgeInsets.only(top: 12, bottom: 8),
+      margin: const EdgeInsets.only(top: 12, bottom: 32),
       child: CarouselSlider(
         options: CarouselOptions(
           height: 180,
@@ -478,8 +478,10 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: section.items.length,
             itemBuilder: (context, index) {
               final item = section.items[index];
+              final isBn = context.locale.languageCode == 'bn';
+              final displayName = (isBn && item.nameBn != null && item.nameBn!.isNotEmpty) ? item.nameBn! : item.name;
               return _buildCircularCategory(
-                item.name,
+                displayName,
                 CategoryIconHelper.getIcon(item.name),
                 false,
                 () {
@@ -628,7 +630,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           backgroundColor: const Color(0xFF0F172A),
                           foregroundColor: Colors.white,
                           minimumSize: const Size(64, 32)),
-                      child: const Text('Book', style: TextStyle(fontSize: 10)),
+                      child: Text('book'.tr(), style: const TextStyle(fontSize: 10)),
                     ),
                   ],
                 ),
@@ -640,41 +642,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProductSection(CMSProductSection section) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(section.title,
-                  style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A))),
-              TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => CategoryListingScreen(
-                                category: Category(
-                                    id: section.categoryId ?? 'all',
-                                    name: section.title,
-                                    slug: section.title.toLowerCase(),
-                                    type: 'product',
-                                    level: 0))));
-                  },
-                  child: const Text('See All')),
-            ],
-          ),
-        ),
-        _buildProductsHorizontalList(section),
-      ],
-    );
-  }
 
   Widget _buildServiceSection(CMSProductSection section) {
     return Column(
@@ -685,7 +652,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(section.title,
+              Text(section.title, // NOTE: section title from CMS could be updated if CMS provides bilingual titles
                   style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -698,7 +665,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             builder: (context) =>
                                 ServiceListingScreen(section: section)));
                   },
-                  child: const Text('See All')),
+                  child: Text('see_all'.tr())),
             ],
           ),
         ),
@@ -723,19 +690,14 @@ class _HomeScreenState extends State<HomeScreen> {
           try {
             parentCat = state.categories.cast<Category>().firstWhere(
               (c) => c.id == categorySource || c.name.toLowerCase() == categorySource.toLowerCase(),
+              orElse: () => state.categories.cast<Category>().firstWhere(
+                (c) => c.name.toLowerCase().contains(categorySource.split(' ').first.toLowerCase()),
+                orElse: () => state.categories.first, // Last ditch fallback if possible, but actually we want null if not found
+              ),
             );
           } catch (e) {
             parentCat = null;
           }
-        }
-
-        // Fallback or exact string match if ID lookup fails
-        if (parentCat == null && categorySource != null) {
-           try {
-             parentCat = state.categories.cast<Category>().firstWhere(
-                (c) => c.name.toLowerCase().contains(categorySource.split(' ').first.toLowerCase())
-             );
-           } catch(e) { /* ignore */ }
         }
 
         // 2. Fetch all subcategories that belong to this Parent Category
@@ -763,7 +725,8 @@ class _HomeScreenState extends State<HomeScreen> {
               if (cat.icon!.startsWith('http')) {
                 icon = cat.icon;
               } else if (cat.icon!.startsWith('/')) {
-                icon = (kIsWeb ? 'http://localhost:3000' : 'http://10.0.2.2:3000') + cat.icon!;
+                // Use the correct Supabase URL for public assets if it starts with /
+                icon = 'https://nnrzszujwhutbgghtjwc.supabase.co/storage/v1/object/public/public${cat.icon}';
               } else {
                 icon = Supabase.instance.client.storage
                     .from('public')
@@ -771,20 +734,23 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             }
 
+            final isBn = context.locale.languageCode == 'bn';
+            final displayName = (isBn && cat.nameBn != null && cat.nameBn!.isNotEmpty) ? cat.nameBn! : cat.name;
+
             return ServiceItem(
               id: cat.id,
-              name: cat.name,
+              name: displayName,
               categoryId: parentCat?.id ?? 'service',
               unitPrice: price,
               unitType: unit,
               imageUrl: icon ?? '',
               rating: 4.8, // Fallback rating
-              description: cat.nameBn ?? 'Expert professional service',
+              description: isBn ? (cat.nameBn ?? 'Expert professional service') : 'Expert professional service',
             );
         }).toList();
 
         return SizedBox(
-          height: 280,
+          height: 240,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -840,11 +806,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
           child: Text(
-            'Our current deals',
-            style: TextStyle(
+            'our_current_deals'.tr(),
+            style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
                 color: Colors.grey,
@@ -960,10 +926,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   fontSize: 12),
                             ),
                             const SizedBox(height: 16),
-                            const Row(
+                            Row(
                               children: [
-                                Text('Explore',
-                                    style: TextStyle(
+                                Text('explore'.tr(),
+                                    style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold)),
@@ -986,164 +952,106 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProductsHorizontalList(CMSProductSection section) {
-    final categoryId = section.categoryId;
-    return BlocBuilder<MarketplaceBloc, MarketplaceState>(
-      builder: (context, state) {
-        if (state.productsStatus == MarketplaceStatus.loading) {
-          return const SizedBox(
-              height: 200, child: Center(child: CircularProgressIndicator()));
-        }
+  Widget _buildProductSection(CMSProductSection section, MarketplaceState state) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                section.title ?? 'Products',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const SearchScreen()));
+                  },
+                  child: Text('see_all'.tr())),
+            ],
+          ),
+        ),
+        _buildProductsHorizontalList(section, state),
+      ],
+    );
+  }
 
-        final products = categoryId != null
-            ? state.products.where((p) {
-                if (p.categoryId == categoryId) return true;
-                final cat = state.categories.cast<Category?>().firstWhere(
-                    (c) => c?.id == p.categoryId,
-                    orElse: () => null);
-                if (cat == null) return false;
-                final searchId = categoryId.toLowerCase().replaceAll('_', '-');
-                final catIdLower = cat.id.toLowerCase();
-                final catNameLower = cat.name.toLowerCase();
-                final catSlugLower = cat.slug.toLowerCase();
-                
-                if (catIdLower == searchId) return true;
-                
-                // Loose matching for hardcoded names vs actual titles
-                if (searchId.contains('concrete') && catNameLower.contains('cement')) return true;
-                if (searchId.contains('steel') && catNameLower.contains('steel')) return true;
-                if (searchId.contains('tiles') && catNameLower.contains('tiles')) return true;
-                
-                return catNameLower.contains(searchId) || catSlugLower.contains(searchId);
-              }).toList()
-            : state.products;
-
-        final sectionTitle = section.title.toLowerCase();
-        final searchCategory = (categoryId ?? sectionTitle).toLowerCase();
+  Widget _buildProductsHorizontalList(CMSProductSection section, MarketplaceState state) {
+        // --- SYMMETRIC OVERHAUL LOGIC (PHASE 9 - DIRECT STATE & DIAGNOSTICS) ---
+        final categorySource = section.categoryId;
         
-        // Match web logic dummy keys
-        String dummyGroupName = "Building Materials";
-        if (searchCategory.contains('steel') || searchCategory.contains('metal')) {
-          dummyGroupName = "Steel";
-        } else if (searchCategory.contains('plumb')) {
-          dummyGroupName = "Plumbing";
-        } else if (searchCategory.contains('finish') || searchCategory.contains('tiles')) {
-          dummyGroupName = "Finishing";
-        } else if (searchCategory.contains('service') || searchCategory.contains('maintenance')) {
-          dummyGroupName = "Services";
-        }
-
-        final List<Product> displayProducts;
-        if (products.isEmpty) {
-          if (dummyGroupName == "Services") {
-            displayProducts = [
-              Product(
-                id: 's1',
-                name: 'Electrical Wiring',
-                price: 1500,
-                imageUrl:
-                    'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&h=400&fit=crop',
-                categoryId: categoryId ?? 'c_srv',
-                sellerId: 'sel_04',
-                metadata: {
-                  'seller_name': 'PowerSafe Solutions',
-                  'type': 'service'
-                },
+        // 1. Resolve Parent Category
+        Category? parentCat;
+        if (categorySource != null) {
+          try {
+            parentCat = state.categories.cast<Category>().firstWhere(
+              (c) => c.id == categorySource || c.name.toLowerCase() == categorySource.toLowerCase(),
+              orElse: () => state.categories.cast<Category>().firstWhere(
+                (c) => c.name.toLowerCase().contains(categorySource.split(' ').first.toLowerCase()),
               ),
-              Product(
-                id: 's2',
-                name: 'Plumbing Solutions',
-                price: 1200,
-                imageUrl:
-                    'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=600&h=400&fit=crop',
-                categoryId: categoryId ?? 'c_srv',
-                sellerId: 'sel_03',
-                metadata: {'seller_name': 'The Pipe Fixers', 'type': 'service'},
-              ),
-              Product(
-                id: 's3',
-                name: 'Paint & Polishing',
-                price: 2500,
-                imageUrl:
-                    'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&h=400&fit=crop',
-                categoryId: categoryId ?? 'c_srv',
-                sellerId: 'sel_02',
-                metadata: {'seller_name': 'Color Masters', 'type': 'service'},
-              ),
-              Product(
-                id: 's4',
-                name: 'Sanitary Installation',
-                price: 1800,
-                imageUrl:
-                    'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600&h=400&fit=crop',
-                categoryId: categoryId ?? 'c_srv',
-                sellerId: 'sel_06',
-                metadata: {'seller_name': 'Elegant Floors', 'type': 'service'},
-              ),
-            ];
-          } else if (dummyGroupName == "Steel") {
-            displayProducts = [
-              Product(id: 'steel-1', name: 'BSRM 500W', price: 92000, imageUrl: 'https://images.unsplash.com/photo-1535732759880-bbd5c7265e3f?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_steel', sellerId: 's_s1', metadata: {'seller_name': 'BSRM Official'}),
-              Product(id: 'steel-2', name: 'AKS Steel', price: 91500, imageUrl: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_steel', sellerId: 's_s1', metadata: {'seller_name': 'BSRM Official'}),
-              Product(id: 'steel-3', name: 'KSRM Bar', price: 91000, imageUrl: 'https://plus.unsplash.com/premium_photo-1664303894360-145466d7ad55?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_steel', sellerId: 's_s1', metadata: {'seller_name': 'BSRM Official'}),
-              Product(id: 'steel-4', name: 'Binding Wire', price: 120, imageUrl: 'https://images.unsplash.com/photo-1558611997-0950a4722ac1?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_steel', sellerId: 's_s1', metadata: {'seller_name': 'BSRM Official'}),
-            ];
-          } else if (dummyGroupName == "Plumbing") {
-             displayProducts = [
-              Product(id: 'plum-1', name: 'uPVC Pipe 4"', price: 450, imageUrl: 'https://images.unsplash.com/photo-1542013936693-884638332954?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_plum', sellerId: 's_p1', metadata: {'seller_name': 'Seven Rings Ltd'}),
-              Product(id: 'plum-2', name: 'Bib Cock', price: 350, imageUrl: 'https://images.unsplash.com/photo-1584622050111-993a426fbf0a?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_plum', sellerId: 's_p1', metadata: {'seller_name': 'Seven Rings Ltd'}),
-              Product(id: 'plum-3', name: 'Basin Mixer', price: 2500, imageUrl: 'https://images.unsplash.com/photo-1616486029423-aaa478965c97?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_plum', sellerId: 's_p1', metadata: {'seller_name': 'Seven Rings Ltd'}),
-              Product(id: 'plum-4', name: 'Water Tank', price: 8000, imageUrl: 'https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_plum', sellerId: 's_p1', metadata: {'seller_name': 'Seven Rings Ltd'}),
-            ];
-          } else if (dummyGroupName == "Finishing") {
-             displayProducts = [
-              Product(id: 'fin-1', name: 'Floor Tiles', price: 120, imageUrl: 'https://images.unsplash.com/photo-1615529182904-14819c35db37?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_fin', sellerId: 's_f1', metadata: {'seller_name': 'Standard Bricks'}),
-              Product(id: 'fin-2', name: 'Wall Paint', price: 3500, imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_fin', sellerId: 's_f1', metadata: {'seller_name': 'Standard Bricks'}),
-              Product(id: 'fin-3', name: 'Commode', price: 15000, imageUrl: 'https://images.unsplash.com/photo-1584622050111-993a426fbf0a?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_fin', sellerId: 's_f1', metadata: {'seller_name': 'Standard Bricks'}),
-              Product(id: 'fin-4', name: 'LED Light', price: 350, imageUrl: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_fin', sellerId: 's_f1', metadata: {'seller_name': 'Standard Bricks'}),
-            ];
-          } else {
-            // Default to Building Materials
-            displayProducts = [
-              Product(id: 'bmat-1', name: 'Portland Cement', price: 520, imageUrl: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_bld', sellerId: 's_b1', metadata: {'seller_name': 'Seven Rings Ltd'}),
-              Product(id: 'bmat-2', name: 'Auto Bricks', price: 12, imageUrl: 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_bld', sellerId: 's_b1', metadata: {'seller_name': 'Standard Bricks'}),
-              Product(id: 'bmat-3', name: 'Sylhet Sand', price: 15000, imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_bld', sellerId: 's_b1', metadata: {'seller_name': 'Seven Rings Ltd'}),
-              Product(id: 'bmat-4', name: 'Stone Chips', price: 8500, imageUrl: 'https://images.unsplash.com/photo-1525869916826-972885c91c1e?w=600&h=400&fit=crop', categoryId: categoryId ?? 'c_bld', sellerId: 's_b1', metadata: {'seller_name': 'Standard Bricks'}),
-            ];
+            );
+          } catch (e) {
+            parentCat = null;
           }
-        } else {
-          displayProducts = products;
         }
 
-        print(
-            'DEBUG: HorizontalList for "$categoryId" found ${products.length} products (Total in state: ${state.products.length})');
+        if (parentCat == null) {
+           return const SizedBox.shrink();
+        }
+
+        // 2. Resolve Descendants
+        final Set<String> targetIdsSet = {parentCat.id};
+        void addChildren(String pid) {
+          final children = state.categories.where((c) => c.parentId == pid).map((c) => c.id).toList();
+          for (var cid in children) {
+            if (targetIdsSet.add(cid)) {
+              addChildren(cid);
+            }
+          }
+        }
+        addChildren(parentCat.id);
+        final List<String> targetCategoryIds = targetIdsSet.toList();
+
+        // 3. Filter Products
+        final products = state.products.where((p) => targetCategoryIds.contains(p.categoryId)).toList();
+
+        if (products.isEmpty) {
+           return const SizedBox.shrink();
+        }
 
         return SizedBox(
           height: 240,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: displayProducts.length,
+            itemCount: products.length,
             itemBuilder: (context, index) {
               return Padding(
                 padding: const EdgeInsets.only(right: 12),
                 child: SizedBox(
                   width: 160,
                   child: ProductCard(
-                    product: displayProducts[index],
+                    product: products[index],
                     onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) => ProductDetailsScreen(
-                                product: displayProducts[index]))),
+                                product: products[index]))),
                   ),
                 ),
               );
             },
           ),
         );
-      },
-    );
   }
 
   Widget _buildCircularCategory(

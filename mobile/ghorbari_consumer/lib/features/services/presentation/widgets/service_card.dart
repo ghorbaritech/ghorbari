@@ -3,6 +3,7 @@ import 'package:ghorbari_consumer/shared/models/service_item.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ghorbari_consumer/shared/widgets/glass_card.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
 import 'package:ghorbari_consumer/features/bookings/presentation/screens/booking_screen.dart';
@@ -19,7 +20,7 @@ class ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 280,
+      width: 160,
       margin: const EdgeInsets.only(right: 16),
       child: InkWell(
         onTap: onTap,
@@ -76,28 +77,20 @@ class ServiceCard extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      service.name,
+                      (context.locale.languageCode == 'bn' && service.description != null && service.description!.isNotEmpty)
+                          ? service.description!
+                          : service.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      service.description ?? 'Expert professional service',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade500,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -108,30 +101,30 @@ class ServiceCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'STARTING FROM',
-                              style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.grey.shade400, letterSpacing: 1),
+                              'from'.tr().toUpperCase(),
+                              style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: Colors.grey.shade400, letterSpacing: 0.5),
                             ),
                             Text(
                               '৳${service.unitPrice.toStringAsFixed(0)}',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
                             ),
                           ],
                         ),
                          ElevatedButton(
                           onPressed: () {
-                             // Push directly to the new booking flow for services
                              Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen(service: service)));
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF0F172A),
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                            minimumSize: const Size(0, 36),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                            minimumSize: const Size(0, 32),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            elevation: 0,
                           ),
-                          child: const Text(
-                            'BOOK NOW',
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
+                          child: Text(
+                            'book'.tr(),
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],

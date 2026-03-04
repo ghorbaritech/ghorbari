@@ -14,6 +14,8 @@ import 'package:ghorbari_consumer/shared/models/booking.dart';
 import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:ghorbari_consumer/features/services/data/repositories/service_repository_impl.dart';
+import 'package:ghorbari_consumer/features/marketplace/presentation/screens/main_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BookingScreen extends StatefulWidget {
   final ServiceItem service;
@@ -35,6 +37,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
 
@@ -44,8 +47,20 @@ class _BookingScreenState extends State<BookingScreen> {
     super.initState();
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
-      _nameController.text = authState.user.fullName ?? authState.user.email;
+      _nameController.text = authState.user.fullName ?? '';
+      _emailController.text = authState.user.email ?? '';
       _phoneController.text = authState.user.phone ?? '';
+    }
+    _loadSavedInfo();
+  }
+
+  Future<void> _loadSavedInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_phoneController.text.isEmpty) {
+      _phoneController.text = prefs.getString('saved_phone') ?? '';
+    }
+    if (_addressController.text.isEmpty) {
+      _addressController.text = prefs.getString('saved_address') ?? '';
     }
   }
 
@@ -86,6 +101,12 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   void _submitBooking() {
+    // Save info for future reuse
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('saved_phone', _phoneController.text);
+      prefs.setString('saved_address', _addressController.text);
+    });
+
     final authState = context.read<AuthBloc>().state;
     final userId = authState is AuthAuthenticated ? authState.user.id : 'guest_user';
     
@@ -106,6 +127,7 @@ class _BookingScreenState extends State<BookingScreen> {
         'selected_items': _selectedItems.map((i) => {'id': i.id, 'name': i.name, 'price': i.unitPrice}).toList(),
         'guest_info': {
           'name': _nameController.text,
+          'email': _emailController.text,
           'phone': _phoneController.text,
           'address': _addressController.text,
         },
@@ -121,10 +143,25 @@ class _BookingScreenState extends State<BookingScreen> {
     return BlocListener<BookingBloc, BookingState>(
       listener: (context, state) {
         if (state is BookingSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Booking request sent successfully!')),
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Row(children: [Icon(Icons.check_circle, color: Colors.green), SizedBox(width: 8), Text('Booking Successful')]),
+              content: const Text('Your service request has been submitted for admin review. Thank you!'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const MainScreen()),
+                      (route) => false,
+                    );
+                  },
+                  child: const Text('BACK TO HOME', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                )
+              ],
+            )
           );
-          Navigator.pop(context);
         }
         if (state is BookingFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -291,6 +328,13 @@ class _BookingScreenState extends State<BookingScreen> {
           ),
           const SizedBox(height: 16),
           TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(labelText: 'Email Address', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+            validator: (value) => value == null || value.isEmpty || !value.contains('@') ? 'Please enter a valid email' : null,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
             decoration: InputDecoration(labelText: 'Phone Number', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
@@ -354,6 +398,7 @@ class _BookingScreenState extends State<BookingScreen> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 32),
         _buildReviewRow('Name', _nameController.text),
+        _buildReviewRow('Email', _emailController.text),
         _buildReviewRow('Phone', _phoneController.text),
         _buildReviewRow('Address', _addressController.text),
         const Divider(height: 32),
@@ -435,7 +480,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   side: const BorderSide(color: Color(0xFF0F172A)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('BACK', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
+                child: const Text('Back', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
               ),
             ),
           if (_currentStep > 0) const SizedBox(width: 16),
@@ -453,8 +498,8 @@ class _BookingScreenState extends State<BookingScreen> {
                   if (state is BookingLoading) {
                     return const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2));
                   }
-                  return Text(_currentStep == 2 ? 'CONFIRM BOOKING' : 'NEXT', 
-                    style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1));
+                  return Text(_currentStep == 2 ? 'Confirm Booking' : 'Next', 
+                    style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1, color: Colors.white));
                 },
               ),
             ),

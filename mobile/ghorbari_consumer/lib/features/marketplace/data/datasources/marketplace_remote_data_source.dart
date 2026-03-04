@@ -4,7 +4,7 @@ import 'package:ghorbari_consumer/shared/models/product.dart';
 
 abstract class MarketplaceRemoteDataSource {
   Future<List<Category>> getCategories();
-  Future<List<Product>> getProducts({String? categoryId});
+  Future<List<Product>> getProducts({String? categoryId, bool recursive = false});
   Future<Product> getProductDetails(String productId);
   Future<Map<String, dynamic>> getHomeCMSContent();
 }
@@ -20,11 +20,35 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
   }
 
   @override
-  Future<List<Product>> getProducts({String? categoryId}) async {
-    var query = SupabaseService.from('products').select().eq('status', 'active');
+  Future<List<Product>> getProducts({String? categoryId, bool recursive = false}) async {
+    List<String> categoryIds = [];
+
+    if (recursive && categoryId != null) {
+      final List<dynamic> allCategories = await SupabaseService.from('product_categories').select('id, parent_id');
+      
+      List<String> children = [categoryId];
+      List<String> searchIds = [categoryId];
+      
+      while (searchIds.isNotEmpty) {
+        List<String> nextIds = allCategories
+            .where((c) => c['parent_id'] != null && searchIds.contains(c['parent_id']))
+            .map((c) => c['id'] as String)
+            .toList();
+        children.addAll(nextIds);
+        searchIds = nextIds;
+      }
+      categoryIds = children;
+    } else if (categoryId != null) {
+      categoryIds = [categoryId];
+    }
+
+    // Joining with sellers to get business name dynamically
+    var query = SupabaseService.from('products')
+        .select('*, seller:sellers(business_name)')
+        .eq('status', 'active');
     
-    if (categoryId != null) {
-      query = query.eq('category_id', categoryId);
+    if (categoryIds.isNotEmpty) {
+      query = query.filter('category_id', 'in', categoryIds);
     }
     
     final response = await query.order('created_at', ascending: false);
@@ -38,7 +62,11 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
         .where((json) {
            final hasTitle = (json['title'] != null || json['name'] != null);
            final hasId = json['id'] != null;
-           return hasTitle && hasId;
+           // Filter out dummy sellers
+           final sellerId = json['seller_id'] as String?;
+           final isNotDummy = sellerId != 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1' && 
+                              sellerId != '886df843-ec20-4413-9654-9352bbc9ee41';
+           return hasTitle && hasId && isNotDummy;
         })
         .map((json) {
            try {

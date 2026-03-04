@@ -72,7 +72,10 @@ class MarketplaceBloc extends Bloc<MarketplaceEvent, MarketplaceState> {
     print('DEBUG: _onFetchProducts started (categoryId: ${event.categoryId})');
     emit(state.copyWith(productsStatus: MarketplaceStatus.loading));
     try {
-      final products = await marketplaceRepository.getProducts(categoryId: event.categoryId);
+      final products = await marketplaceRepository.getProducts(
+        categoryId: event.categoryId,
+        recursive: event.recursive,
+      );
       print('DEBUG: Fetched ${products.length} products');
       for (var p in products) {
         print('DEBUG: Product: "${p.name}" (ID: ${p.id}, CategoryID: ${p.categoryId})');

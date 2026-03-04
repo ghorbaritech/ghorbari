@@ -14,8 +14,8 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
   }
 
   @override
-  Future<List<Product>> getProducts({String? categoryId}) async {
-    return await remoteDataSource.getProducts(categoryId: categoryId);
+  Future<List<Product>> getProducts({String? categoryId, bool recursive = false}) async {
+    return await remoteDataSource.getProducts(categoryId: categoryId, recursive: recursive);
   }
 
   @override

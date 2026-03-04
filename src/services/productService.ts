@@ -27,11 +27,36 @@ export async function getProducts(options: {
     query?: string,
     categoryId?: string,
     categoryName?: string,
+    recursiveCategoryId?: string, // New option for recursive search
     minPrice?: number,
     maxPrice?: number,
     limit?: number
 } = {}) {
     const supabase = createClient()
+
+    let categoryIds: string[] = [];
+
+    // If recursive search is requested, find all descendant category IDs
+    if (options.recursiveCategoryId) {
+        const { data: allCategories, error: catError } = await supabase
+            .from('product_categories')
+            .select('id, parent_id');
+
+        if (!catError && allCategories) {
+            const children_ids = [options.recursiveCategoryId];
+            let search_ids = [options.recursiveCategoryId];
+            while (search_ids.length > 0) {
+                const next_ids = allCategories
+                    .filter(c => c.parent_id && search_ids.includes(c.parent_id))
+                    .map(c => c.id);
+                children_ids.push(...next_ids);
+                search_ids = next_ids;
+            }
+            categoryIds = children_ids;
+        }
+    } else if (options.categoryId) {
+        categoryIds = [options.categoryId];
+    }
 
     // Use !inner if filtering by category name to ensure we only get products with that category
     const categoryJoin = options.categoryName ? 'category:product_categories!inner(id, name, name_bn, parent_id, level)' : 'category:product_categories(id, name, name_bn, parent_id, level)'
@@ -49,8 +74,8 @@ export async function getProducts(options: {
         })
     }
 
-    if (options.categoryId) {
-        q = q.eq('category_id', options.categoryId)
+    if (categoryIds.length > 0) {
+        q = q.in('category_id', categoryIds)
     }
 
     if (options.categoryName) {

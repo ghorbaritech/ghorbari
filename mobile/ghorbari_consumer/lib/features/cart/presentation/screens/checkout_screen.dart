@@ -9,7 +9,8 @@ import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_state.dart';
 import 'package:ghorbari_consumer/shared/models/booking.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/home_screen.dart';
+import 'package:ghorbari_consumer/features/marketplace/presentation/screens/main_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -20,6 +21,7 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _dateController = TextEditingController();
@@ -65,8 +67,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // Pre-fill if logged in
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
-      _nameController.text = authState.user.fullName ?? authState.user.email;
+      _nameController.text = authState.user.fullName ?? '';
+      _emailController.text = authState.user.email ?? '';
       _phoneController.text = authState.user.phone ?? '';
+    }
+    _loadSavedInfo();
+  }
+
+  Future<void> _loadSavedInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_phoneController.text.isEmpty) {
+      _phoneController.text = prefs.getString('saved_phone') ?? '';
+    }
+    if (_addressController.text.isEmpty) {
+      _addressController.text = prefs.getString('saved_address') ?? '';
     }
   }
 
@@ -79,6 +93,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select Date and Time for your appointment.'), backgroundColor: Colors.red));
       return;
     }
+
+    // Save info for future reuse
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('saved_phone', _phoneController.text);
+      prefs.setString('saved_address', _addressController.text);
+    });
 
     final authState = context.read<AuthBloc>().state;
     final userId = authState is AuthAuthenticated ? authState.user.id : 'guest_user';
@@ -95,6 +115,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (hasService) 'appointment_time': _selectedTime?.format(context),
         'guest_info': {
           'name': _nameController.text,
+          'email': _emailController.text,
           'phone': _phoneController.text,
           'address': _addressController.text,
         },
@@ -104,6 +125,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           'price': i.product.price,
           'quantity': i.quantity,
         }).toList(),
+        'seller_id': cartState.items.isNotEmpty ? cartState.items.first.product.sellerId : null,
       },
       createdAt: DateTime.now(),
     );
@@ -127,7 +149,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                  TextButton(
                    onPressed: () {
                      Navigator.of(context).pushAndRemoveUntil(
-                       MaterialPageRoute(builder: (context) => const HomeScreen()), 
+                       MaterialPageRoute(builder: (context) => const MainScreen()), 
                        (route) => false
                      );
                    },
@@ -166,6 +188,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                        controller: _nameController,
                        decoration: InputDecoration(labelText: 'Full Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
                        validator: (value) => value == null || value.isEmpty ? 'Please enter your name' : null,
+                     ),
+                     const SizedBox(height: 16),
+                     TextFormField(
+                       controller: _emailController,
+                       keyboardType: TextInputType.emailAddress,
+                       decoration: InputDecoration(labelText: 'Email Address', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                       validator: (value) => value == null || value.isEmpty || !value.contains('@') ? 'Please enter a valid email' : null,
                      ),
                      const SizedBox(height: 16),
                      TextFormField(

@@ -19,34 +19,43 @@ export async function submitServiceRequest(data: any) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) throw new Error('Must be logged in')
-
     const requestNumber = await generateRequestNumber()
+
+    const insertData: any = {
+        request_number: requestNumber,
+        service_type: data.serviceType,
+        project_type: data.projectType,
+        requirements: data.requirements,
+        status: 'pending_assignment'
+    }
+
+    if (user) {
+        insertData.customer_id = user.id
+    } else if (data.customerDetails) {
+        insertData.customer_email = data.customerDetails.email
+        insertData.customer_phone = data.customerDetails.phone
+        insertData.customer_name = data.customerDetails.name
+    }
 
     const { data: request, error } = await supabase
         .from('service_requests')
-        .insert({
-            request_number: requestNumber,
-            customer_id: user.id,
-            service_type: data.serviceType,
-            project_type: data.projectType,
-            requirements: data.requirements,
-            status: 'pending_assignment'
-        })
+        .insert(insertData)
         .select()
         .single()
 
     if (error) return { error: error.message }
 
-    // Create notification for admin
-    await supabase.from('notifications').insert({
-        user_id: user.id, // In a real app, this would be for admin users
-        type: 'service_request_submitted',
-        title: 'New Service Request',
-        message: `New request ${requestNumber} submitted.`,
-        related_type: 'service_request',
-        related_id: request.id
-    })
+    // Create notification for admin (using user id if available as fallback)
+    if (user) {
+        await supabase.from('notifications').insert({
+            user_id: user.id, // In a real app, this would be for admin users
+            type: 'service_request_submitted',
+            title: 'New Service Request',
+            message: `New request ${requestNumber} submitted.`,
+            related_type: 'service_request',
+            related_id: request.id
+        })
+    }
 
     return { success: true, request }
 }
@@ -148,22 +157,29 @@ export async function acceptQuotation(requestId: string) {
     return { success: true }
 }
 
-export async function submitDesignBooking(data: { serviceType: string, details: any }) {
+export async function submitDesignBooking(data: { serviceType: string, details: any, customerDetails?: any }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
-        return { error: 'You must be logged in to submit a request.' }
+    const insertData: any = {
+        service_type: data.serviceType,
+        status: 'pending',
+        details: data.details
+    }
+
+    if (user) {
+        insertData.user_id = user.id
+    } else if (data.customerDetails) {
+        insertData.customer_email = data.customerDetails.email
+        insertData.customer_phone = data.customerDetails.phone
+        insertData.customer_name = data.customerDetails.name
+    } else {
+        return { error: 'Customer details or login required to submit a booking.' }
     }
 
     const { data: booking, error } = await supabase
         .from('design_bookings')
-        .insert({
-            user_id: user.id,
-            service_type: data.serviceType,
-            status: 'pending',
-            details: data.details
-        })
+        .insert(insertData)
         .select()
         .single()
 

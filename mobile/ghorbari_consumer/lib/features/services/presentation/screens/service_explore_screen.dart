@@ -8,6 +8,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:ghorbari_consumer/shared/models/service_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ServiceExploreScreen extends StatefulWidget {
   const ServiceExploreScreen({super.key});
@@ -25,8 +26,8 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('GHORBARI Services',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text('ghorbari_services'.tr(),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF0F172A),
         elevation: 0,
@@ -82,7 +83,7 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
                         return Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: ChoiceChip(
-                            label: const Text('All Services'),
+                            label: Text('all_services'.tr()),
                             selected: isSelected,
                             onSelected: (selected) {
                               if (selected) {
@@ -107,7 +108,11 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 8.0),
                         child: ChoiceChip(
-                          label: Text(cat.name),
+                          label: Text(
+                            (context.locale.languageCode == 'bn' && cat.nameBn != null && cat.nameBn!.isNotEmpty)
+                                ? cat.nameBn!
+                                : cat.name,
+                          ),
                           selected: isSelected,
                           onSelected: (selected) {
                             setState(() {
@@ -140,7 +145,11 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 8.0),
                         child: FilterChip(
-                          label: Text(sub.name),
+                          label: Text(
+                            (context.locale.languageCode == 'bn' && sub.nameBn != null && sub.nameBn!.isNotEmpty)
+                                ? sub.nameBn!
+                                : sub.name,
+                          ),
                           selected: isSelected,
                           onSelected: (selected) {
                             setState(() {
@@ -170,7 +179,7 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${displaySubcategories.length} Services Found',
+                      '${displaySubcategories.length} ${"services_found".tr()}',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -192,7 +201,7 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
                             Icon(Icons.handyman_outlined,
                                 size: 64, color: Colors.grey.shade300),
                             const SizedBox(height: 16),
-                            Text('No services match your filters.',
+                            Text('no_services_found'.tr(),
                                 style: TextStyle(color: Colors.grey.shade500)),
                           ],
                         ),
@@ -204,7 +213,7 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 0.85, // Adjusted to fit the shorter service cards
+                        childAspectRatio: 0.7, // Matches ProductExploreScreen for consistency
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
                       ),
@@ -219,9 +228,8 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
                           if (cat.icon!.startsWith('http')) {
                             icon = cat.icon;
                           } else if (cat.icon!.startsWith('/')) {
-                            // Assuming local Next.js images are served from a known domain or just replace with placeholder for now if host unknown
-                            // For local testing, we might need a generic fallback or actual web url
-                            icon = (kIsWeb ? 'http://localhost:3000' : 'http://10.0.2.2:3000') + cat.icon!;
+                            // Use the correct Supabase URL for public assets if it starts with /
+                            icon = 'https://nnrzszujwhutbgghtjwc.supabase.co/storage/v1/object/public/public${cat.icon}';
                           } else {
                             icon = Supabase.instance.client.storage
                                 .from('public')

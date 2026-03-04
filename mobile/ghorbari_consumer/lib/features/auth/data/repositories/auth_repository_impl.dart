@@ -18,6 +18,11 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<UserEntity> updateProfile(String fullName, String phone) async {
+    return await remoteDataSource.updateProfile(fullName, phone);
+  }
+
+  @override
   Future<void> signOut() async {
     await remoteDataSource.signOut();
   }

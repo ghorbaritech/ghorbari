@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:ghorbari_consumer/shared/models/product.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
+import 'package:ghorbari_consumer/features/cart/presentation/screens/cart_screen.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
   final Product product;
@@ -86,13 +90,19 @@ class ProductDetailsScreen extends StatelessWidget {
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  context.read<CartBloc>().add(CartItemAdded(product));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CartScreen()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0F172A),
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                child: const Text('ADD TO CART', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1, color: Colors.white)),
+                child: const Text('Buy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
               ),
             ),
           ],
@@ -111,7 +121,7 @@ class ProductDetailsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _buildSpecRow('Unit', 'Bag / Truckload'),
-        _buildSpecRow('Seller', 'Verified Partner'),
+        _buildSpecRow('Seller', product.sellerName ?? product.metadata?['seller_name'] ?? 'Verified Partner'),
         _buildSpecRow('Delivery', '2-3 Business Days'),
       ],
     );

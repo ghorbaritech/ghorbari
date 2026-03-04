@@ -94,6 +94,18 @@ export default function BookingWizardPage() {
 
     const router = useRouter();
 
+    const [user, setUser] = useState<any>(null);
+    const [guestDetails, setGuestDetails] = useState({ name: '', phone: '', email: '' });
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const supabase = createClient();
+            const { data } = await supabase.auth.getUser();
+            setUser(data.user);
+        };
+        fetchUser();
+    }, []);
+
     const [formData, setFormData] = useState({
         landAreaKatha: '', initialFloors: '', unitsPerFloor: '',
         bedroomsPerUnit: '', bathroomsPerUnit: '', kitchenPerUnit: '', balconyPerUnit: '',
@@ -216,12 +228,18 @@ export default function BookingWizardPage() {
             }
         } else if (currentTitle.includes("Confirm")) {
             // Final step — submit
+            if (!user && (!guestDetails.name || !guestDetails.phone || !guestDetails.email)) {
+                toast.error("Please fill in all your contact details");
+                return;
+            }
+
             setLoading(true);
             try {
                 const mapItemtoCart = selectedServiceItems.map(si => ({ ...si, quantity: 1 })) as any[];
                 const res = await placeServiceRequest({
                     items: mapItemtoCart, assignmentType, providerId: selectedProvider?.id,
-                    schedule, totalAmount: finalTotalAmount, requirements: formData
+                    schedule, totalAmount: finalTotalAmount, requirements: formData,
+                    customerDetails: user ? undefined : guestDetails
                 });
                 if (res.error) {
                     toast.error(res.error);
@@ -551,6 +569,28 @@ export default function BookingWizardPage() {
                                     </div>
                                 </div>
                             </div>
+
+                            {!user && (
+                                <div className="space-y-4 pt-2">
+                                    <h3 className="text-sm font-bold text-neutral-900">Contact Information</h3>
+                                    <p className="text-xs text-neutral-500">Please provide your details so we can reach you.</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Full Name</Label>
+                                            <Input placeholder="John Doe" value={guestDetails.name} onChange={(e) => setGuestDetails(prev => ({ ...prev, name: e.target.value }))} className="h-11 rounded-xl bg-neutral-50 border-neutral-200" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Phone</Label>
+                                            <Input placeholder="+880" value={guestDetails.phone} onChange={(e) => setGuestDetails(prev => ({ ...prev, phone: e.target.value }))} className="h-11 rounded-xl bg-neutral-50 border-neutral-200" />
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Email</Label>
+                                            <Input type="email" placeholder="john@example.com" value={guestDetails.email} onChange={(e) => setGuestDetails(prev => ({ ...prev, email: e.target.value }))} className="h-11 rounded-xl bg-neutral-50 border-neutral-200" />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100 text-xs text-yellow-800 leading-relaxed">
                                 <strong>Note:</strong> Final cost may vary based on actual measurements and scope defined during site visit. No upfront payment required.
                             </div>

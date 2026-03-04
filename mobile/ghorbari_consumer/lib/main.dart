@@ -36,6 +36,7 @@ void main() async {
       supportedLocales: const [Locale('en'), Locale('bn')],
       path: 'assets/translations',
       fallbackLocale: const Locale('en'),
+      startLocale: const Locale('bn'), // Default to Bangla
       child: MultiRepositoryProvider(
         providers: [
           RepositoryProvider<AuthRemoteDataSource>(
@@ -164,10 +165,13 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-             Icon(Icons.home_work_rounded, 
-               size: 80, color: Theme.of(context).colorScheme.primary),
+             Image.asset(
+               'assets/images/logo.png',
+               height: 64,
+             ),
              const SizedBox(height: 24),
-             const Text(
+             if (false) // Hide the text logo for now
+               const Text(
               'GHORBARI',
               style: TextStyle(
                 fontSize: 28,

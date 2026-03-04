@@ -4,7 +4,7 @@ import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_event.dart';
 import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/home_screen.dart';
+import 'package:ghorbari_consumer/features/marketplace/presentation/screens/main_screen.dart';
 import 'dart:ui';
 
 class SignUpScreen extends StatefulWidget {
@@ -26,7 +26,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         if (state is AuthAuthenticated) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
             (route) => false,
           );
         }

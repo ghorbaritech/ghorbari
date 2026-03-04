@@ -11,11 +11,12 @@ class MarketplaceFetchCategories extends MarketplaceEvent {}
 
 class MarketplaceFetchProducts extends MarketplaceEvent {
   final String? categoryId;
+  final bool recursive;
 
-  const MarketplaceFetchProducts({this.categoryId});
+  const MarketplaceFetchProducts({this.categoryId, this.recursive = false});
 
   @override
-  List<Object?> get props => [categoryId];
+  List<Object?> get props => [categoryId, recursive];
 }
 
 class MarketplaceFetchProductDetails extends MarketplaceEvent {

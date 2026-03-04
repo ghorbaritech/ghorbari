@@ -8,6 +8,7 @@ class Product {
   final double price;
   final String? imageUrl;
   final String? sellerId;
+  final String? sellerName;
   final Map<String, dynamic>? metadata;
 
   Product({
@@ -20,6 +21,7 @@ class Product {
     required this.price,
     this.imageUrl,
     this.sellerId,
+    this.sellerName,
     this.metadata,
   });
 
@@ -43,6 +45,11 @@ class Product {
       }
     }
 
+    String? parsedSellerName = json['seller_name']?.toString();
+    if (parsedSellerName == null && json['seller'] != null) {
+      parsedSellerName = json['seller']['business_name']?.toString() ?? json['seller']['name']?.toString();
+    }
+
     return Product(
       id: json['id']?.toString() ?? '',
       name: json['title']?.toString() ?? json['name']?.toString() ?? 'Untitled Product',
@@ -53,6 +60,7 @@ class Product {
       price: parsePrice(json['base_price'] ?? json['price']),
       imageUrl: parsedImageUrl,
       sellerId: json['seller_id']?.toString(),
+      sellerName: parsedSellerName,
       metadata: json['metadata'] is Map ? Map<String, dynamic>.from(json['metadata']) : null,
     );
   }
@@ -68,6 +76,7 @@ class Product {
       'price': price,
       'image_url': imageUrl,
       'seller_id': sellerId,
+      'seller_name': sellerName,
       'metadata': metadata,
     };
   }

@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_event.dart';
+import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
+import 'package:ghorbari_consumer/features/auth/presentation/screens/login_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/home_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/product_explore_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/service_listing_screen.dart';
 import 'package:ghorbari_consumer/features/services/presentation/screens/service_explore_screen.dart';
 import 'package:ghorbari_consumer/shared/models/category.dart';
 import 'package:ghorbari_consumer/shared/models/cms_content.dart';
+import 'package:ghorbari_consumer/features/marketplace/presentation/screens/orders_screen.dart';
+import 'package:ghorbari_consumer/features/marketplace/presentation/screens/profile_screen.dart';
+import 'package:ghorbari_consumer/features/marketplace/presentation/screens/messages_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -39,7 +48,6 @@ class _MainScreenState extends State<MainScreen> {
   void _onItemTapped(int index) {
     if (index == 4) {
       // Menu tapped - open drawer or show modal
-      // For now, we'll just show a modal bottom sheet as a placeholder for the menu
       _showMenuSheet(context);
     } else {
       setState(() {
@@ -55,38 +63,143 @@ class _MainScreenState extends State<MainScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Menu',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        return BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, authState) {
+            final isLoggedIn = authState is AuthAuthenticated;
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isLoggedIn && authState is AuthAuthenticated)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              'welcome'.tr(),
+                              style: const TextStyle(fontSize: 14, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              authState.user.fullName ?? 'User',
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Text(
+                          'menu'.tr(),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    if (isLoggedIn)
+                      ListTile(
+                        leading: const Icon(Icons.person_outline),
+                        title: Text('profile'.tr()),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                          );
+                        },
+                      )
+                    else
+                      ListTile(
+                        leading: const Icon(Icons.login),
+                        title: Text('login'.tr()),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LoginScreen()),
+                          );
+                        },
+                      ),
+                    ListTile(
+                      leading: const Icon(Icons.message_outlined),
+                      title: Text('messages'.tr()),
+                      onTap: () {
+                          Navigator.pop(context);
+                          if (!isLoggedIn) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('please_login_messages'.tr())));
+                          } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const MessagesScreen()),
+                              );
+                          }
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.shopping_bag_outlined),
+                      title: Text('orders'.tr()),
+                      onTap: () {
+                          Navigator.pop(context);
+                          if (!isLoggedIn) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('please_login_orders'.tr())));
+                          } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const OrdersScreen()),
+                              );
+                          }
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.event_note_outlined),
+                      title: Text('my_bookings'.tr()),
+                      onTap: () {
+                          Navigator.pop(context);
+                          if (!isLoggedIn) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('please_login_bookings'.tr())));
+                          }
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.language),
+                      title: Text('language'.tr()),
+                      trailing: DropdownButton<Locale>(
+                        value: context.locale,
+                        underline: const SizedBox(),
+                        items: const [
+                          DropdownMenuItem(value: Locale('en'), child: Text('English')),
+                          DropdownMenuItem(value: Locale('bn'), child: Text('বাংলা')),
+                        ],
+                        onChanged: (Locale? newLocale) {
+                          if (newLocale != null) {
+                            context.setLocale(newLocale);
+                            Navigator.pop(context);
+                          }
+                        },
+                      ),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.settings_outlined),
+                      title: Text('settings'.tr()),
+                      onTap: () => Navigator.pop(context),
+                    ),
+                    if (isLoggedIn) ...[
+                      const Divider(),
+                      ListTile(
+                        leading: const Icon(Icons.logout, color: Colors.red),
+                        title: Text('logout'.tr(), style: const TextStyle(color: Colors.red)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.read<AuthBloc>().add(AuthLogoutRequested());
+                        },
+                      ),
+                    ]
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.person_outline),
-                title: const Text('Profile'),
-                onTap: () => Navigator.pop(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.shopping_bag_outlined),
-                title: const Text('My Orders'),
-                onTap: () => Navigator.pop(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.event_note_outlined),
-                title: const Text('My Bookings'),
-                onTap: () => Navigator.pop(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.settings_outlined),
-                title: const Text('Settings'),
-                onTap: () => Navigator.pop(context),
-              ),
-            ],
-          ),
+            );
+          }
         );
       },
     );
@@ -120,57 +233,57 @@ class _MainScreenState extends State<MainScreen> {
           unselectedFontSize: 10,
           iconSize: 24,
           elevation: 0,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Padding(
+              icon: const Padding(
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.home_outlined),
               ),
-              activeIcon: Padding(
+              activeIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.home_rounded),
               ),
-              label: 'Home',
+              label: 'home'.tr(),
             ),
             BottomNavigationBarItem(
-              icon: Padding(
+              icon: const Padding(
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.architecture_outlined),
               ),
-              activeIcon: Padding(
+              activeIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.architecture),
               ),
-              label: 'Design',
+              label: 'design'.tr(),
             ),
             BottomNavigationBarItem(
-              icon: Padding(
+              icon: const Padding(
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.handyman_outlined),
               ),
-              activeIcon: Padding(
+              activeIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.handyman),
               ),
-              label: 'Services',
+              label: 'services'.tr(),
             ),
             BottomNavigationBarItem(
-              icon: Padding(
+              icon: const Padding(
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.inventory_2_outlined),
               ),
-              activeIcon: Padding(
+              activeIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.inventory_2),
               ),
-              label: 'Product',
+              label: 'product'.tr(),
             ),
             BottomNavigationBarItem(
-              icon: Padding(
+              icon: const Padding(
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.menu_rounded),
               ),
-              label: 'Menu',
+              label: 'menu'.tr(),
             ),
           ],
         ),

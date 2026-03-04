@@ -28,4 +28,14 @@ class AuthSignUpRequested extends AuthEvent {
   List<Object> get props => [email, password, fullName];
 }
 
+class AuthUpdateProfileRequested extends AuthEvent {
+  final String fullName;
+  final String phone;
+
+  const AuthUpdateProfileRequested(this.fullName, this. phone);
+
+  @override
+  List<Object> get props => [fullName, phone];
+}
+
 class AuthLogoutRequested extends AuthEvent {}
