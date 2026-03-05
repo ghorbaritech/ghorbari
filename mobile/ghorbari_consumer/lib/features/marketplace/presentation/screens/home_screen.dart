@@ -17,6 +17,7 @@ import 'package:ghorbari_consumer/features/services/presentation/bloc/service_ev
 import 'package:ghorbari_consumer/features/services/presentation/bloc/service_state.dart';
 import 'package:ghorbari_consumer/features/services/presentation/widgets/service_card.dart';
 import 'package:ghorbari_consumer/features/bookings/presentation/screens/booking_screen.dart';
+import 'package:ghorbari_consumer/features/design/presentation/screens/design_booking_wizard_screen.dart';
 import 'package:ghorbari_consumer/features/bookings/presentation/screens/my_bookings_screen.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_state.dart';
@@ -633,26 +634,26 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    cat.nameBn ?? cat.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  cat.nameBn ?? cat.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
                   ),
-                  const Spacer(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -675,19 +676,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          final service = ServiceItem(
-                            id: cat.id,
-                            name: cat.name,
-                            categoryId: 'design',
-                            unitPrice: 1600.0,
-                            unitType: 'sqft',
-                            imageUrl: cat.icon,
-                            rating: 4.8,
-                          );
+                          // Route design items to the wizard
+                          final name = cat.name.toLowerCase();
+                          final isStructural = name.contains('structur') || name.contains('architectur') || name.contains('build') || name.contains('plan');
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => BookingScreen(service: service),
+                              builder: (context) => DesignBookingWizardScreen(
+                                initialService: isStructural ? 'structural-architectural' : 'interior',
+                              ),
                             ),
                           );
                         },
@@ -710,11 +707,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
   }
+
 
   Widget _buildServiceSection(CMSProductSection section) {
     return Column(
@@ -845,7 +842,6 @@ class _HomeScreenState extends State<HomeScreen> {
               return ServiceCard(
                 service: serviceItems[index],
                 onTap: () {
-                   // Navigate to the Booking UI with the selected subcategory pseudo-item
                    Navigator.push(
                      context,
                      MaterialPageRoute(

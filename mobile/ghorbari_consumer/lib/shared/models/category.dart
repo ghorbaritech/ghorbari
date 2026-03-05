@@ -22,10 +22,11 @@ class Category {
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
+    final bn = json['name_bn']?.toString().trim();
     return Category(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Uncategorized',
-      nameBn: json['name_bn']?.toString(),
+      nameBn: (bn != null && bn.isNotEmpty) ? bn : null,
       slug: json['slug']?.toString() ?? '',
       icon: (json['icon_url'] ?? json['icon'] ?? (json['metadata'] != null ? json['metadata']['image'] : null))?.toString(),
       type: json['type']?.toString() ?? 'product',

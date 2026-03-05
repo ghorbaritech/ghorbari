@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
 import 'package:ghorbari_consumer/features/bookings/presentation/screens/booking_screen.dart';
+import 'package:ghorbari_consumer/features/design/presentation/screens/design_booking_wizard_screen.dart';
 class ServiceCard extends StatelessWidget {
   final ServiceItem service;
   final VoidCallback onTap;
@@ -116,7 +117,18 @@ class ServiceCard extends StatelessWidget {
                         ),
                          ElevatedButton(
                           onPressed: () {
-                             Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen(service: service)));
+                            // Route design services to the dedicated design wizard
+                            if (service.categoryId == 'design') {
+                              final name = service.name.toLowerCase();
+                              final isStructural = name.contains('structur') || name.contains('architectur') || name.contains('build') || name.contains('plan');
+                              Navigator.push(context, MaterialPageRoute(
+                                builder: (context) => DesignBookingWizardScreen(
+                                  initialService: isStructural ? 'structural-architectural' : 'interior',
+                                ),
+                              ));
+                            } else {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen(service: service)));
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF0F172A),

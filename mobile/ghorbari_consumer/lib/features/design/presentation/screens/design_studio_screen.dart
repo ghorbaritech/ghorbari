@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ghorbari_consumer/features/bookings/presentation/screens/booking_screen.dart';
+import 'package:ghorbari_consumer/features/design/presentation/screens/design_booking_wizard_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_bloc.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_state.dart';
 import 'package:ghorbari_consumer/shared/models/category.dart';
@@ -280,7 +281,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                         ),
                         itemCount: gridItems.length,
                         itemBuilder: (context, index) =>
-                            _buildItemCard(gridItems[index], index),
+                            _buildItemCard(gridItems[index], index, allCats),
                       ),
               ],
             ),
@@ -304,18 +305,8 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => BookingScreen(
-            service: ServiceItem(
-              id: catId,
-              name: category?.name ?? (serviceType == 'structural'
-                  ? 'Structural & Architectural Design'
-                  : 'Interior Design'),
-              nameBn: title,
-              categoryId: 'design',
-              unitPrice: 0,
-              unitType: 'project',
-              imageUrl: category?.icon ?? imageUrl,
-            ),
+          builder: (context) => DesignBookingWizardScreen(
+            initialService: serviceType == 'structural' ? 'structural-architectural' : 'interior',
           ),
         ),
       ),
@@ -396,60 +387,60 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
 
   Widget _buildFilterChip(String? value, String label) {
     final isSelected = _selectedRootId == value;
-    return GestureDetector(
-      onTap: () => setState(() {
-        _selectedRootId = value;
-        _selectedSubId = null;
-      }),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0F172A) : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF0F172A) : Colors.grey.shade200,
-          ),
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          _selectedRootId = selected ? value : null;
+          _selectedSubId = null;
+        });
+      },
+      selectedColor: const Color(0xFFC2410C).withOpacity(0.1),
+      showCheckmark: true,
+      checkmarkColor: const Color(0xFFC2410C),
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: isSelected ? const Color(0xFFC2410C).withOpacity(0.5) : Colors.grey.shade300,
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Colors.white : Colors.black87,
-          ),
-        ),
+      ),
+      labelStyle: TextStyle(
+        color: isSelected ? const Color(0xFFC2410C) : Colors.black87,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        fontSize: 13,
       ),
     );
   }
 
   Widget _buildSubChip(String? value, String label) {
     final isSelected = _selectedSubId == value;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedSubId = value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1D4ED8) : Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF1D4ED8) : Colors.blue.shade100,
-          ),
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          _selectedSubId = selected ? value : null;
+        });
+      },
+      backgroundColor: Colors.grey.shade100,
+      selectedColor: const Color(0xFFC2410C),
+      checkmarkColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: isSelected ? const Color(0xFFC2410C) : Colors.grey.shade300,
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Colors.white : const Color(0xFF1D4ED8),
-          ),
-        ),
+      ),
+      labelStyle: TextStyle(
+        fontSize: 12,
+        color: isSelected ? Colors.white : Colors.black87,
       ),
     );
   }
 
-  Widget _buildItemCard(Category cat, int index) {
+  Widget _buildItemCard(Category cat, int index, List<Category> allCats) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -469,7 +460,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
         children: [
           // Image and Rating Overlay
           Expanded(
-            flex: 3,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -514,14 +504,11 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
             ),
           ),
           
-          // Card Details
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
                 children: [
                    Text(
                     cat.nameBn ?? cat.name,
@@ -533,6 +520,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -559,20 +547,72 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          final service = ServiceItem(
-                            id: cat.id,
-                            name: cat.name,
-                            nameBn: cat.nameBn,
-                            categoryId: 'design',
-                            unitPrice: 1600.0,
-                            unitType: 'sqft',
-                            imageUrl: cat.icon,
-                            rating: 4.8,
-                          );
+                          // Find root category
+                          // Find root category route
+                          String rootType = ''; 
+                          
+                          // 1. Traverse up the tree to find root type by keywords
+                          Category? current = cat;
+                          while (current != null) {
+                            final nameEn = current.name.toLowerCase();
+                            final nameBn = current.nameBn?.toLowerCase() ?? '';
+                            
+                            if (nameEn.contains('structur') || nameEn.contains('architectur') || nameBn.contains('স্ট্রাকচারাল')) {
+                              rootType = 'structural-architectural';
+                              break;
+                            } else if (nameEn.contains('interior') || nameBn.contains('ইন্টেরিয়র')) {
+                              rootType = 'interior';
+                              break;
+                            }
+                            
+                            if (current.parentId == null || current.parentId!.isEmpty) break;
+                            
+                            final parentId = current.parentId;
+                            try {
+                                current = allCats.firstWhere((c) => c.id == parentId);
+                            } catch (_) {
+                                current = null;
+                            }
+                          }
+                          
+                          // 2. Check explicitly by root IDs (fallback if keywords failed to match cleanly)
+                          if (rootType.isEmpty) {
+                            try {
+                              final structuralRootId = allCats.firstWhere((c) => c.type == 'design' && c.level == 0 && (c.name.toLowerCase().contains('structur') || c.name.toLowerCase().contains('architectur'))).id;
+                              final interiorRootId = allCats.firstWhere((c) => c.type == 'design' && c.level == 0 && c.name.toLowerCase().contains('interior')).id;
+                              
+                              Category? ancestor = cat;
+                              while(ancestor != null) {
+                                if (ancestor.parentId == structuralRootId || ancestor.id == structuralRootId) { rootType = 'structural-architectural'; break; }
+                                if (ancestor.parentId == interiorRootId || ancestor.id == interiorRootId) { rootType = 'interior'; break; }
+                                
+                                final pid = ancestor.parentId;
+                                if (pid == null || pid.isEmpty) break;
+                                try { ancestor = allCats.firstWhere((c) => c.id == pid); } catch (_) { ancestor = null; }
+                              }
+                            } catch (_) {
+                                // Root IDs not explicitly found
+                            }
+                          }
+
+                          // 3. Ultimate Fallback if ancestry is broken/unlinked in database
+                          if (rootType.isEmpty) {
+                              final name = cat.name.toLowerCase();
+                              if (name.contains('build') || name.contains('plan') || name.contains('approv') || name.contains('foundat') || name.contains('draw') || name.contains('floor')) {
+                                  rootType = 'structural-architectural';
+                              } else {
+                                  // Default to interior for specific rooms, furniture, paints, ceilings, etc.
+                                  rootType = 'interior';
+                              }
+                          }
+
+                          // Always route to the wizard now!
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => BookingScreen(service: service),
+                              builder: (context) => DesignBookingWizardScreen(
+                                initialService: rootType,
+                              ),
                             ),
                           );
                         },
@@ -593,7 +633,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     ],
                   ),
                 ],
-              ),
             ),
           ),
         ],
