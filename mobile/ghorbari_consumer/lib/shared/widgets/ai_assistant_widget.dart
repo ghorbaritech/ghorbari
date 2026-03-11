@@ -3,6 +3,9 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:dio/dio.dart';
 import 'dart:async';
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
+import 'dart:io';
 
 class AIAssistantWidget extends StatefulWidget {
   const AIAssistantWidget({super.key});
@@ -26,6 +29,8 @@ class _AIAssistantWidgetState extends State<AIAssistantWidget> {
   bool _isListening = false;
   bool _isTyping = false;
   String _currentLang = 'en';
+  File? _attachedImage;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -76,33 +81,99 @@ class _AIAssistantWidgetState extends State<AIAssistantWidget> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _attachedImage = File(image.path);
+      });
+    }
+  }
+
   Future<void> _handleSend() async {
-    if (_controller.text.trim().isEmpty) return;
+    if (_controller.text.trim().isEmpty && _attachedImage == null) return;
 
     final userText = _controller.text.trim();
+    final imageFile = _attachedImage;
+    
     setState(() {
-      _messages.add({'role': 'user', 'text': userText});
+      _messages.add({
+        'role': 'user', 
+        'text': userText.isEmpty ? 'Attached image' : userText,
+        if (imageFile != null) 'imagePath': imageFile.path,
+      });
       _controller.clear();
+      _attachedImage = null;
       _isTyping = true;
     });
     _scrollToBottom();
 
     try {
+      String? base64Image;
+      String? mimeType;
+      if (imageFile != null) {
+        final bytes = await imageFile.readAsBytes();
+        base64Image = base64Encode(bytes);
+        mimeType = 'image/${imageFile.path.split('.').last}';
+      }
+
+      // Format messages for the advanced API (AI SDK format)
+      final apiMessages = _messages.map((m) {
+        final Map<String, dynamic> msg = {
+          'role': m['role'],
+          'content': m['text'],
+        };
+        
+        if (m.containsKey('imagePath') && m['role'] == 'user') {
+          // This is a simplification; the real API expect attachments in the last message
+          // but for now we'll just send the current interaction data.
+        }
+        return msg;
+      }).toList();
+
       final response = await _dio.post(
-        'https://ghorbari.tech/api/ai/chat',
-        data: {'message': userText, 'lang': _currentLang},
+        'https://ghorbari.tech/api/chat',
+        data: {
+          'userId': 'mobile_user', // TODO: Get real user ID
+          'messages': apiMessages,
+          'language': _currentLang,
+          'stream': false, // Request JSON for mobile
+          if (base64Image != null)
+            'experimental_attachments': [
+              {
+                'name': 'image.png',
+                'contentType': mimeType,
+                'url': 'data:$mimeType;base64,$base64Image',
+              }
+            ],
+        },
       );
 
       if (response.statusCode == 200) {
-        final botReply = response.data['reply'];
-        final responseLang = response.data['lang'] ?? _currentLang;
+        final data = response.data;
+        final botReply = data['text'] ?? "I've processed your request.";
+        final toolResults = data['toolResults'] as List?;
+        
+        String? generatedImageUrl;
+        if (toolResults != null) {
+          for (var res in toolResults) {
+            if (res['toolName'] == 'generate_design_image' && 
+                res['result'] != null && 
+                res['result']['success'] == true) {
+              generatedImageUrl = res['result']['url'];
+            }
+          }
+        }
         
         setState(() {
-          _messages.add({'role': 'assistant', 'text': botReply});
+          _messages.add({
+            'role': 'assistant', 
+            'text': botReply,
+            if (generatedImageUrl != null) 'imageUrl': generatedImageUrl,
+          });
           _isTyping = false;
         });
         _scrollToBottom();
-        _speak(botReply, responseLang);
       }
     } catch (e) {
       print('AI Chat Error: $e');
@@ -255,12 +326,42 @@ class _AIAssistantWidgetState extends State<AIAssistantWidget> {
                 bottomLeft: !isUser ? Radius.zero : null,
               ),
             ),
-            child: Text(
-              msg['text']!,
-              style: TextStyle(
-                color: isUser ? Colors.white : Colors.black87,
-                fontSize: 13,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (msg.containsKey('imagePath') || msg.containsKey('imageUrl'))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: msg.containsKey('imagePath') 
+                        ? Image.file(
+                            File(msg['imagePath']!),
+                            height: 150,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.network(
+                            msg['imageUrl']!,
+                            height: 150,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              height: 150,
+                              color: Colors.grey.shade200,
+                              child: const Center(child: CircularProgressIndicator()),
+                            ),
+                          ),
+                    ),
+                  ),
+                Text(
+                  msg['text']!,
+                  style: TextStyle(
+                    color: isUser ? Colors.white : Colors.black87,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -301,16 +402,57 @@ class _AIAssistantWidgetState extends State<AIAssistantWidget> {
                 color: Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(25),
               ),
-              child: TextField(
-                controller: _controller,
-                onSubmitted: (_) => _handleSend(),
-                decoration: const InputDecoration(
-                  hintText: 'Ask me something...',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(fontSize: 13),
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_attachedImage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(
+                              _attachedImage!,
+                              height: 60,
+                              width: 60,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned(
+                            top: -5,
+                            right: -5,
+                            child: GestureDetector(
+                              onTap: () => setState(() => _attachedImage = null),
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.close, size: 14, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  TextField(
+                    controller: _controller,
+                    onSubmitted: (_) => _handleSend(),
+                    decoration: const InputDecoration(
+                      hintText: 'Ask me something...',
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.image_outlined, color: Colors.grey),
+            onPressed: _pickImage,
           ),
           IconButton(
             icon: Icon(_isListening ? Icons.mic : Icons.mic_none, color: _isListening ? Colors.red : Colors.grey),

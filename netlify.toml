@@ -3,9 +3,4 @@
   publish = ".next"
 
 [build.environment]
-  CI = "false"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-  [plugins.inputs]
-    disableRuntime = true
+  CI = "true"

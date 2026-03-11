@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
+  transpilePackages: ['@react-pdf/renderer'],
+
   async headers() {
     return [
       {

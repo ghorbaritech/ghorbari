@@ -21,7 +21,12 @@ export async function getPlatformConfigs() {
         .order('category_id', { ascending: false }); // Put NULL (Global) last or handle sorting in UI
 
     if (error) {
-        console.error('Error fetching platform configs:', error);
+        console.error('Error fetching platform configs:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+        });
         throw error;
     }
 

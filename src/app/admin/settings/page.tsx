@@ -8,11 +8,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
     Settings as SettingsIcon,
     Shield,
-    Plus,
-    Save,
-    Percent,
-    CreditCard,
-    CircleDollarSign,
     Loader2,
     CheckCircle2,
     AlertCircle,
@@ -61,8 +56,8 @@ export default function PlatformSettingsPage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center py-32 text-neutral-300 gap-4">
-                <Loader2 className="w-12 h-12 animate-spin text-primary-200" />
+            <div className="flex flex-col items-center justify-center py-32 text-neutral-500 gap-4">
+                <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
                 <p className="font-black uppercase tracking-widest text-xs tracking-[0.2em]">Syncing Master Data...</p>
             </div>
         )
@@ -75,14 +70,14 @@ export default function PlatformSettingsPage() {
 
     return (
         <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in duration-700">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-neutral-800 pb-8">
                 <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-600 text-[10px] font-black uppercase tracking-widest">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest border border-blue-500/20">
                         <SettingsIcon className="w-3 h-3" />
                         System Governance
                     </div>
-                    <h1 className="text-5xl font-black text-neutral-900 tracking-tighter uppercase italic">
-                        Control <span className="text-primary-600">Center</span>
+                    <h1 className="text-5xl font-black text-white tracking-tighter uppercase italic">
+                        Control <span className="text-blue-500">Center</span>
                     </h1>
                     <p className="text-neutral-500 font-medium">Manage platform rates, tax thresholds, and category overrides.</p>
                 </div>
@@ -90,26 +85,26 @@ export default function PlatformSettingsPage() {
 
             {(success || error) && (
                 <div className={cn(
-                    "p-6 rounded-3xl flex items-center gap-4 font-bold border animate-in zoom-in duration-300",
-                    success ? "bg-green-50 border-green-100 text-green-700" : "bg-rose-50 border-rose-100 text-rose-700"
+                    "p-6 rounded-2xl flex items-center gap-4 font-bold border animate-in zoom-in duration-300",
+                    success ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-rose-500/10 border-rose-500/20 text-rose-400"
                 )}>
-                    {success ? <CheckCircle2 className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
+                    {success ? <CheckCircle2 className="w-6 h-6 flex-shrink-0" /> : <AlertCircle className="w-6 h-6 flex-shrink-0" />}
                     {success || error}
                 </div>
             )}
 
             <Tabs defaultValue="global" className="space-y-10">
-                <TabsList className="bg-neutral-100/50 p-1.5 rounded-[2rem] border border-neutral-100 flex flex-wrap h-auto gap-2">
-                    <TabsTrigger value="global" className="px-8 py-3 rounded-[1.5rem] font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-neutral-900 data-[state=active]:text-white flex items-center gap-2">
+                <TabsList className="bg-neutral-900 p-1.5 rounded-2xl border border-neutral-800 flex flex-wrap h-auto gap-2">
+                    <TabsTrigger value="global" className="px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all flex items-center gap-2">
                         <Shield className="w-3 h-3" /> Global Settings
                     </TabsTrigger>
-                    <TabsTrigger value="products" className="px-8 py-3 rounded-[1.5rem] font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-neutral-900 data-[state=active]:text-white flex items-center gap-2">
+                    <TabsTrigger value="products" className="px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all flex items-center gap-2">
                         <Package className="w-3 h-3" /> Product Rates
                     </TabsTrigger>
-                    <TabsTrigger value="services" className="px-8 py-3 rounded-[1.5rem] font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-neutral-900 data-[state=active]:text-white flex items-center gap-2">
+                    <TabsTrigger value="services" className="px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all flex items-center gap-2">
                         <Wrench className="w-3 h-3" /> Service Rates
                     </TabsTrigger>
-                    <TabsTrigger value="design" className="px-8 py-3 rounded-[1.5rem] font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-neutral-900 data-[state=active]:text-white flex items-center gap-2">
+                    <TabsTrigger value="design" className="px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all flex items-center gap-2">
                         <Palette className="w-3 h-3" /> Design Rates
                     </TabsTrigger>
                 </TabsList>
@@ -153,17 +148,17 @@ export default function PlatformSettingsPage() {
 function RateCard({ title, subtitle, config, onSave, saving, compact = false }: any) {
     return (
         <Card className={cn(
-            "border-neutral-100 rounded-[3rem] shadow-2xl shadow-neutral-200/40 bg-white overflow-hidden relative",
+            "border border-neutral-800 rounded-3xl bg-neutral-900 shadow-sm overflow-hidden relative",
             compact ? "p-8" : "p-12"
         )}>
             <div className="relative z-10 space-y-8">
-                <div className="flex items-center gap-4 border-b border-neutral-50 pb-6">
-                    <div className="w-10 h-10 bg-neutral-900 rounded-xl flex items-center justify-center text-white shadow-lg">
+                <div className="flex items-center gap-4 border-b border-neutral-800 pb-6">
+                    <div className="w-10 h-10 bg-neutral-950 border border-neutral-800 rounded-xl flex items-center justify-center text-blue-500 shadow-sm">
                         <Shield className="w-5 h-5" />
                     </div>
                     <div>
-                        <h3 className={cn("font-black italic uppercase tracking-tighter", compact ? "text-lg" : "text-xl")}>{title}</h3>
-                        <p className="text-[10px] font-black uppercase text-neutral-400 tracking-widest">{subtitle}</p>
+                        <h3 className={cn("font-black italic uppercase tracking-tighter text-white", compact ? "text-lg" : "text-xl")}>{title}</h3>
+                        <p className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">{subtitle}</p>
                     </div>
                 </div>
 
@@ -178,22 +173,22 @@ function RateCard({ title, subtitle, config, onSave, saving, compact = false }: 
                 }} className="space-y-6">
                     <div className={cn("grid gap-6", compact ? "grid-cols-3" : "grid-cols-1 md:grid-cols-3")}>
                         <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-neutral-400">VAT (%)</label>
-                            <Input name="vat" type="number" step="0.01" defaultValue={config.vat_rate} className="h-12 rounded-xl bg-neutral-50 font-bold" />
+                            <label className="text-[9px] font-black uppercase tracking-widest text-neutral-500">VAT (%)</label>
+                            <Input name="vat" type="number" step="0.01" defaultValue={config.vat_rate} className="h-12 rounded-xl border-neutral-800 bg-neutral-950 text-white font-bold focus:ring-1 focus:ring-blue-500" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-neutral-400">Fee (%)</label>
-                            <Input name="fee" type="number" step="0.01" defaultValue={config.platform_fee_rate} className="h-12 rounded-xl bg-neutral-50 font-bold" />
+                            <label className="text-[9px] font-black uppercase tracking-widest text-neutral-500">Fee (%)</label>
+                            <Input name="fee" type="number" step="0.01" defaultValue={config.platform_fee_rate} className="h-12 rounded-xl border-neutral-800 bg-neutral-950 text-white font-bold focus:ring-1 focus:ring-blue-500" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-neutral-400">Adv. (%)</label>
-                            <Input name="advance" type="number" step="0.01" defaultValue={config.advance_payment_rate} className="h-12 rounded-xl bg-neutral-50 font-bold" />
+                            <label className="text-[9px] font-black uppercase tracking-widest text-neutral-500">Adv. (%)</label>
+                            <Input name="advance" type="number" step="0.01" defaultValue={config.advance_payment_rate} className="h-12 rounded-xl border-neutral-800 bg-neutral-950 text-white font-bold focus:ring-1 focus:ring-blue-500" />
                         </div>
                     </div>
 
                     <Button
                         disabled={saving}
-                        className="w-full h-14 bg-neutral-900 hover:bg-primary-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
+                        className="w-full h-14 bg-neutral-950 border border-neutral-800 hover:bg-neutral-800 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
                     >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply Rates'}
                     </Button>

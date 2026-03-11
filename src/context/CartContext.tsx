@@ -58,8 +58,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
 
         async function loadConfigs() {
-            const data = await getPlatformConfigs();
-            setConfigs(data);
+            try {
+                const data = await getPlatformConfigs();
+                setConfigs(data);
+            } catch (err) {
+                console.error('Failed to load platform configs in CartContext:', err);
+            }
         }
         loadConfigs();
     }, []);

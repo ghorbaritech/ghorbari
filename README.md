@@ -29,8 +29,20 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The project is configured for deployment on **Vercel**, which is our default and recommended production environment.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Deploying to Vercel
+
+To deploy the project to Vercel, you can use the following command:
+
+```bash
+npx vercel --prod
+```
+
+Make sure you have the Vercel CLI installed or use `npx` as shown above. The project is already linked to the Vercel project `ghorbari`.
+
+### Environment Variables
+
+Ensure that all necessary environment variables from `.env.local` are also configured in your Vercel project settings.

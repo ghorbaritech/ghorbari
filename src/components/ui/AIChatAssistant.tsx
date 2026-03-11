@@ -1,82 +1,45 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Mic, X, Send, Loader2, Volume2, Bot } from "lucide-react";
+import { MessageSquare, Mic, X, Send, Loader2, Volume2, Bot, Sparkles } from "lucide-react";
+import { useChat } from "@ai-sdk/react";
+import { toast } from "sonner";
 
 export function AIChatAssistant() {
     const [isOpen, setIsOpen] = useState(false);
-    const [messages, setMessages] = useState<{ role: 'user' | 'assistant', text: string }[]>([
-        { role: 'assistant', text: "Hello! I am your Ghorbari AI assistant. How can I help you today?" }
-    ]);
+    const [lang, setLang] = useState<'en' | 'bn'>('bn');
+    const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
     const [input, setInput] = useState("");
     const [isListening, setIsListening] = useState(false);
-    const [isTyping, setIsTyping] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const [lang, setLang] = useState<'en' | 'bn'>('en');
-    const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+    const { messages, append, status, setMessages } = useChat({
+        api: "/api/chat",
+        body: { userId: "assistant-user", lang },
+        initialMessages: [
+            {
+                id: 'init-1',
+                role: 'assistant',
+                content: "Assalamu Alaikum! I am Ghorbari AI Assistant. How can I help you today?"
+            }
+        ],
+    });
+
+    const isTyping = status === 'submitted' || status === 'streaming';
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const speakText = (text: string, language: 'en' | 'bn') => {
-        if (!isVoiceEnabled || !window.speechSynthesis) return;
-
-        // Cancel any ongoing speech
-        window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(text);
-
-        // Try to find a suitable voice
-        const voices = window.speechSynthesis.getVoices();
-        if (language === 'bn') {
-            // common Bengali voice identifiers in different OS
-            const bnVoice = voices.find(v => v.lang.startsWith('bn') || v.name.includes('Bengali') || v.name.includes('Bangladesh'));
-            if (bnVoice) utterance.voice = bnVoice;
-            utterance.lang = 'bn-BD';
-        } else {
-            const enVoice = voices.find(v => v.lang.startsWith('en'));
-            if (enVoice) utterance.voice = enVoice;
-            utterance.lang = 'en-US';
-        }
-
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-        window.speechSynthesis.speak(utterance);
-    };
-
     const handleSend = async () => {
         if (!input.trim()) return;
-        const userText = input.trim();
-        setMessages(prev => [...prev, { role: 'user', text: userText }]);
+        const msgText = input.trim();
         setInput("");
-        setIsTyping(true);
-
-        try {
-            const response = await fetch('/api/ai/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userText, lang })
-            });
-
-            const data = await response.json();
-            const botResponse = data.reply || "I encountered an error. Please try again.";
-            const responseLang = data.lang || lang;
-
-            setMessages(prev => [...prev, { role: 'assistant', text: botResponse }]);
-            setIsTyping(false);
-
-            // Trigger Voice Output
-            if (isVoiceEnabled) {
-                speakText(botResponse, responseLang);
-            }
-        } catch (error) {
-            console.error("AI Chat Error:", error);
-            setMessages(prev => [...prev, { role: 'assistant', text: "Sorry, I'm having trouble connecting right now." }]);
-            setIsTyping(false);
-        }
+        await append({
+            role: 'user',
+            content: msgText,
+        }, { body: { userId: 'guest', lang } });
     };
 
     const toggleListen = () => {
@@ -101,11 +64,8 @@ export function AIChatAssistant() {
 
         recognition.onresult = (event: any) => {
             const speechResult = event.results[0][0].transcript;
-            setInput(speechResult);
-            // Auto-send voice input for a smoother experience
-            setTimeout(() => {
-                // We need to use the value from local scope or handleSend needs to allow passing text
-            }, 100);
+            setInput("");
+            sendMessage({ text: speechResult }, { body: { userId: 'guest', lang } });
         };
 
         recognition.onspeechend = () => {
@@ -166,15 +126,100 @@ export function AIChatAssistant() {
                         </div>
                     </div>
 
-                    {/* Messages Body */}
                     <div className="flex-1 h-80 max-h-[60vh] overflow-y-auto p-4 flex flex-col gap-4 bg-neutral-50/50">
                         {messages.map((msg, i) => (
-                            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div key={msg.id || i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${msg.role === 'user'
                                     ? 'bg-primary-600 text-white rounded-br-sm'
                                     : 'bg-white border border-neutral-100 text-neutral-800 rounded-bl-sm shadow-sm'
                                     }`}>
-                                    {msg.text}
+                                    {/* Visible Debug for Tool Issues - will remove after fix */}
+                                    {msg.role === 'assistant' && (
+                                        <div className="text-[8px] text-neutral-300 mb-1 font-mono">
+                                            ID: {msg.id.substring(0,4)} | P: {msg.parts?.length || 0} | TI: {(msg as any).toolInvocations?.length || 0}
+                                        </div>
+                                    )}
+
+                                    {/* Text Content Rendering using parts */}
+                                    {msg.parts && msg.parts.map((part, pIdx) => (
+                                        <div key={pIdx}>
+                                            {part.type === 'text' && <span className="whitespace-pre-wrap">{part.text}</span>}
+                                            {part.type === 'reasoning' && (
+                                                <p className="text-xs text-neutral-400 italic mb-1">{part.text}</p>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {/* Robust Tool Rendering Logic */}
+                                    {(() => {
+                                        // Combine toolInvocations and parts into a single list
+                                        const toolInvocations = (msg as any).toolInvocations || [];
+                                        const parts = msg.parts || [];
+                                        const toolParts = parts.filter((p: any) => p.type?.startsWith('tool-'));
+
+                                        const allTools = [
+                                            ...toolInvocations.map((ti: any) => ({
+                                                id: ti.toolCallId,
+                                                name: ti.toolName,
+                                                state: ti.state === 'result' ? 'output-available' : ti.state,
+                                                result: ti.result
+                                            })),
+                                            ...toolParts.map((tp: any) => ({
+                                                id: tp.toolCallId,
+                                                name: tp.toolName || tp.name || (tp.type === 'tool-result' ? 'result' : 'call'),
+                                                state: tp.type === 'tool-result' ? 'output-available' : 'calling',
+                                                result: tp.output || tp.result
+                                            }))
+                                        ];
+
+                                        if (allTools.length === 0) return null;
+
+                                        return allTools.map((tool: any, idx: number) => {
+                                            const result = tool.result;
+                                            const isDesignTool = 
+                                                tool.name?.includes('design') || 
+                                                tool.name?.includes('image') || 
+                                                (result && (result.url || result.designUrl)) ||
+                                                tool.name === 'result';
+
+                                            if (isDesignTool && result && (result.url || (typeof result === 'string' && result.startsWith('http')))) {
+                                                const imageUrl = result.url || (typeof result === 'string' ? result : null);
+                                                
+                                                return (
+                                                    <div key={tool.id || idx} className="mt-3 pt-3 border-t border-neutral-100 not-prose">
+                                                        <div className="space-y-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <p className="text-[10px] font-bold uppercase tracking-wider text-primary-600 flex items-center gap-1.5">
+                                                                    <Sparkles className="w-3 h-3" /> Design Created
+                                                                </p>
+                                                            </div>
+                                                            <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-neutral-100 shadow-sm bg-neutral-50 group">
+                                                                <img
+                                                                    src={imageUrl}
+                                                                    alt="Generated Design"
+                                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                />
+                                                            </div>
+                                                            {result.message && (
+                                                                <p className="text-[10px] text-neutral-500 italic leading-snug">
+                                                                    {result.message}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        });
+                                    })()}
+
+                                    {msg.role === 'assistant' && (
+                                        <div className="mt-2 pt-2 border-t border-neutral-100/50">
+                                            <p className="text-[10px] text-neutral-400 leading-tight italic">
+                                                Ghorbari AI helps you understand the basics, to understand the professional depth please talk to Ghorbari experts
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -235,7 +280,7 @@ export function AIChatAssistant() {
                     <X className="w-7 h-7" />
                 ) : (
                     <div className="relative">
-                        <Bot className="w-8 h-8 transition-transform group-hover:scale-110" />
+                        <Bot size={24} className={`${isListening ? 'animate-pulse text-accent-500' : ''} group-hover:rotate-12 transition-transform`} />
                         {/* Status indicator / Voice ready pulse */}
                         <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-primary-600 rounded-full animate-pulse shadow-sm" />
                     </div>

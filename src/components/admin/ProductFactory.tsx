@@ -11,6 +11,7 @@ import {
     CheckCircle2,
     Loader2,
     Image as ImageIcon,
+    Info,
     ChevronRight
 } from 'lucide-react'
 import { getCategories, createProduct } from '@/services/productService'
@@ -111,15 +112,15 @@ export function ProductFactory() {
     }
 
     return (
-        <div className="space-y-12 animate-in fade-in duration-700">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-8 animate-in fade-in duration-700">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-neutral-800 pb-8">
                 <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-widest">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest border border-blue-500/20">
                         <Package className="w-3 h-3" />
                         Inventory Control
                     </div>
-                    <h1 className="text-5xl font-black text-neutral-900 tracking-tighter uppercase italic">
-                        Product <span className="text-orange-600">Factory</span>
+                    <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">
+                        Product <span className="text-blue-500">Factory</span>
                     </h1>
                     <p className="text-neutral-500 font-medium">Manage marketplace stock and retailer offerings.</p>
                 </div>
@@ -127,8 +128,8 @@ export function ProductFactory() {
                 <div className="flex items-center gap-4">
                     <label className="cursor-pointer">
                         <Input type="file" className="hidden" accept=".json" onChange={handleBulkUpload} />
-                        <div className="flex items-center gap-2 bg-neutral-900 text-white px-8 h-14 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-neutral-200 hover:bg-neutral-800 transition-all active:scale-95">
-                            <Upload className="w-4 h-4" />
+                        <div className="flex items-center gap-3 bg-neutral-900 border border-neutral-800 text-white px-6 h-12 rounded-xl font-black uppercase tracking-widest text-xs shadow-sm hover:bg-neutral-800 transition-all active:scale-95">
+                            <Upload className="w-4 h-4 text-blue-500" />
                             Bulk JSON Upload
                         </div>
                     </label>
@@ -137,97 +138,128 @@ export function ProductFactory() {
 
             {(success || error) && (
                 <div className={cn(
-                    "p-6 rounded-3xl flex items-center gap-4 font-bold border animate-in zoom-in duration-300",
-                    success ? "bg-green-50 border-green-100 text-green-700" : "bg-rose-50 border-rose-100 text-rose-700"
+                    "p-6 rounded-2xl flex items-start gap-4 font-bold border animate-in zoom-in duration-300",
+                    success ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-rose-500/10 border-rose-500/20 text-rose-400"
                 )}>
-                    {success ? <CheckCircle2 className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
-                    {success || error}
+                    {success ? <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />}
+                    <span className="text-sm">{success || error}</span>
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 {/* Form Section */}
-                <Card className="lg:col-span-2 border-neutral-100 rounded-[3rem] p-10 shadow-2xl shadow-neutral-200/40 bg-white overflow-hidden relative">
-                    <div className="absolute top-0 left-0 w-64 h-64 bg-orange-50/50 blur-3xl -ml-32 -mt-32 rounded-full" />
-
-                    <form onSubmit={handleSingleUpload} className="relative z-10 space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Product Title</label>
-                                <Input required name="title" className="h-14 rounded-2xl border-neutral-100 bg-neutral-50/50" placeholder="e.g. 50kg Seven Rings Cement" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Unique SKU</label>
-                                <Input required name="sku" className="h-14 rounded-2xl border-neutral-100 bg-neutral-50/50 uppercase" placeholder="SRC-50-WH" />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Target Retailer</label>
-                                <select required name="sellerId" className="w-full h-14 px-4 rounded-2xl border border-neutral-100 bg-neutral-50/50 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-orange-600">
-                                    <option value="">Select Seller</option>
-                                    {sellers.map(s => <option key={s.id} value={s.id}>{s.business_name}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Listing Category</label>
-                                <select required name="categoryId" className="w-full h-14 px-4 rounded-2xl border border-neutral-100 bg-neutral-50/50 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-orange-600">
-                                    <option value="">Select Category</option>
-                                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Base Price (BDT)</label>
-                                <Input required name="price" type="number" step="0.01" className="h-14 rounded-2xl border-neutral-100 bg-neutral-50/50" placeholder="0.00" />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Initial Stock</label>
-                                <Input required name="stock" type="number" className="h-14 rounded-2xl border-neutral-100 bg-neutral-50/50" placeholder="100" />
-                            </div>
-
-                            <div className="space-y-2 md:col-span-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Cover Image URL</label>
-                                <div className="relative">
-                                    <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-300" />
-                                    <Input required name="imageUrl" className="h-14 pl-12 rounded-2xl border-neutral-100 bg-neutral-50/50" placeholder="https://..." />
-                                </div>
-                            </div>
+                <div className="lg:col-span-8 space-y-6">
+                    <Card className="border-neutral-800 rounded-3xl overflow-hidden shadow-2xl bg-neutral-900/50">
+                        <div className="p-8 border-b border-neutral-800 bg-neutral-900">
+                            <h3 className="text-xl font-black text-white uppercase italic flex items-center gap-3">
+                                <Package className="w-5 h-5 text-blue-500" /> Single Product Entry
+                            </h3>
+                            <p className="text-sm text-neutral-500 font-medium mt-1">Manually onboard a new SKU directly to the marketplace catalog.</p>
                         </div>
+                        <div className="p-8">
+                            <form onSubmit={handleSingleUpload} className="space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Product Title</label>
+                                        <Input required name="title" className="h-12 rounded-xl border border-neutral-800 bg-neutral-950 text-white focus:ring-1 focus:ring-blue-500 placeholder:text-neutral-600 font-medium" placeholder="e.g. 50kg Seven Rings Cement" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Unique SKU</label>
+                                        <Input required name="sku" className="h-12 rounded-xl border border-neutral-800 bg-neutral-950 text-white uppercase focus:ring-1 focus:ring-blue-500 placeholder:text-neutral-600 font-medium" placeholder="SRC-50-WH" />
+                                    </div>
+                                    <div className="space-y-3 md:col-span-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Target Retailer</label>
+                                        <div className="relative">
+                                            <select required name="sellerId" className="w-full h-12 px-4 pr-10 rounded-xl border border-neutral-800 bg-neutral-950 text-white font-bold text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 appearance-none">
+                                                <option value="">Select Seller / Retailer...</option>
+                                                {sellers.map(s => <option key={s.id} value={s.id}>{s.business_name}</option>)}
+                                            </select>
+                                            <ChevronRight className="absolute right-4 top-[14px] w-4 h-4 text-neutral-500 pointer-events-none rotate-90" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3 md:col-span-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Listing Category</label>
+                                        <div className="relative">
+                                            <select required name="categoryId" className="w-full h-12 px-4 pr-10 rounded-xl border border-neutral-800 bg-neutral-950 text-white font-bold text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 appearance-none">
+                                                <option value="">Select Category...</option>
+                                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                            </select>
+                                            <ChevronRight className="absolute right-4 top-[14px] w-4 h-4 text-neutral-500 pointer-events-none rotate-90" />
+                                        </div>
+                                    </div>
 
-                        <Button
-                            disabled={loading}
-                            className="w-full h-20 bg-neutral-900 hover:bg-orange-600 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-[12px] shadow-2xl shadow-neutral-900/10 transition-all active:scale-95"
-                        >
-                            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Deploy Product to Marketplace'}
-                        </Button>
-                    </form>
-                </Card>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Base Price (BDT)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-[14px] text-xs font-black text-neutral-500">৳</span>
+                                            <Input required name="price" type="number" step="0.01" className="h-12 pl-8 rounded-xl border border-neutral-800 bg-neutral-950 text-white font-black tracking-widest focus:ring-1 focus:ring-blue-500" placeholder="0.00" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Initial Stock</label>
+                                        <Input required name="stock" type="number" className="h-12 rounded-xl border border-neutral-800 bg-neutral-950 text-white font-black tracking-widest focus:ring-1 focus:ring-blue-500" placeholder="100" />
+                                    </div>
+
+                                    <div className="space-y-3 md:col-span-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 pl-1">Cover Image URL</label>
+                                        <div className="relative">
+                                            <ImageIcon className="absolute left-4 top-[14px] w-4 h-4 text-neutral-500" />
+                                            <Input required name="imageUrl" className="h-12 pl-11 rounded-xl border border-neutral-800 bg-neutral-950 text-white focus:ring-1 focus:ring-blue-500 placeholder:text-neutral-600 font-medium" placeholder="https://source.unsplash.com/..." />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 border-t border-neutral-800 flex justify-end">
+                                    <Button
+                                        disabled={loading}
+                                        className="h-12 px-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-900/40 transition-all active:scale-95 disabled:opacity-50"
+                                    >
+                                        {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Deploy Product'}
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
+                    </Card>
+                </div>
 
                 {/* Guide Section */}
-                <div className="space-y-6">
-                    <Card className="border-none rounded-[2.5rem] p-8 bg-neutral-900 text-white space-y-6 shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-600/30 blur-3xl -mr-16 -mt-16" />
-                        <h4 className="text-xl font-black italic tracking-tighter uppercase mb-4 flex items-center gap-3">
-                            <AlertCircle className="w-6 h-6 text-orange-500" />
-                            Bulk Upload Rules
-                        </h4>
-                        <div className="space-y-4 text-xs font-bold text-neutral-400 leading-relaxed uppercase tracking-widest">
-                            <p className="flex gap-3"><ChevronRight className="w-4 h-4 text-orange-500 flex-shrink-0" /> Format: Valid JSON Array</p>
-                            <p className="flex gap-3"><ChevronRight className="w-4 h-4 text-orange-500 flex-shrink-0" /> Required: title, sku, seller_id, base_price</p>
-                            <p className="flex gap-3"><ChevronRight className="w-4 h-4 text-orange-500 flex-shrink-0" /> Images: Must be array of URLs</p>
+                <div className="lg:col-span-4 space-y-6">
+                    <Card className="border border-neutral-800 rounded-3xl p-8 bg-neutral-900 text-white space-y-6 shadow-sm overflow-hidden">
+                        <div className="flex items-center gap-3 border-b border-neutral-800 pb-4 mb-4">
+                            <AlertCircle className="w-5 h-5 text-blue-400" />
+                            <h4 className="text-sm font-black italic tracking-widest uppercase">
+                                Bulk Config
+                            </h4>
                         </div>
-                        <Button variant="outline" className="w-full h-12 border-neutral-700 bg-transparent text-white border-2 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-neutral-900">
-                            Download JSON Template
+                        <div className="space-y-4">
+                            <div className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800">
+                                <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1">Upload Format</p>
+                                <p className="text-xs font-medium text-white">Valid JSON Array Document.</p>
+                            </div>
+                            <div className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800">
+                                <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1">Required Schema</p>
+                                <p className="text-xs font-mono text-blue-400 bg-blue-500/10 p-2 rounded-lg break-all">title, sku, seller_id, category_id, base_price, stock_quantity</p>
+                            </div>
+                            <div className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800">
+                                <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1">Media</p>
+                                <p className="text-xs font-medium text-white">images field must be an array of string URLs.</p>
+                            </div>
+                        </div>
+                        <Button variant="outline" className="w-full h-10 border-neutral-800 bg-neutral-950 text-neutral-400 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-neutral-800 hover:border-neutral-700 hover:text-white transition-all mt-4">
+                            JSON Target Schema
                         </Button>
                     </Card>
 
-                    <Card className="border-neutral-100 rounded-[2.5rem] p-8 bg-white space-y-4 shadow-sm border">
-                        <h4 className="font-black text-neutral-900 uppercase italic">Admin Insight</h4>
-                        <p className="text-xs text-neutral-500 font-medium leading-relaxed">
-                            Uploading as an administrator bypasses typical retailer approval workflows. Use this carefully for manual onboarding.
-                        </p>
+                    <Card className="border border-neutral-800 rounded-3xl p-6 bg-neutral-950 flex gap-4 shadow-sm items-start">
+                        <div className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center flex-shrink-0">
+                            <Info className="w-4 h-4 text-neutral-500" />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-black text-white uppercase tracking-widest mb-1">Admin Privilege</h4>
+                            <p className="text-[10px] text-neutral-500 font-medium leading-relaxed">
+                                Uploading items as an administrator bypasses typical retailer approval workflows entirely. Use this specific portal for manual high-priority onboarding only.
+                            </p>
+                        </div>
                     </Card>
                 </div>
             </div>

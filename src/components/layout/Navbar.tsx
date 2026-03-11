@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ShoppingCart, User, Menu, X, ArrowRight, LayoutDashboard, LogOut, Home, Package, PencilRuler, Wrench, Phone, MapPin, Loader2 } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, ArrowRight, LayoutDashboard, LogOut, Home, Package, PencilRuler, Wrench, Phone, MapPin, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
@@ -13,7 +13,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { SearchOverlay } from "../search/SearchOverlay";
 import { CartDrawer } from "../cart/CartDrawer";
-// Removed: import { getCategories, Category } from "@/services/categoryService"; as categories logic is removed
+import { MegaMenu } from "./MegaMenu";
 
 export function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -297,13 +297,7 @@ export function Navbar() {
             <div className="border-b hidden md:block overflow-x-auto no-scrollbar">
                 <div className="section-container">
                     <nav className="flex items-center gap-10 h-12 text-[12px] font-bold text-neutral-700 uppercase tracking-wide whitespace-nowrap">
-                        <Link
-                            href="/categories"
-                            className="flex items-center gap-2 py-3 border-b-2 border-transparent hover:text-primary-600 hover:border-primary-600 transition-all"
-                        >
-                            <Menu className="w-4 h-4" />
-                            <span>{t.nav_all_categories}</span>
-                        </Link>
+                        <MegaMenu language={language} />
                         <Link
                             href="/services/design/book"
                             className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
@@ -321,6 +315,16 @@ export function Navbar() {
                             className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
                         >
                             {t.nav_renovation}
+                        </Link>
+
+                        {/* AI Consultant CTA */}
+                        <Link
+                            href={user ? "/ai-consultant" : "/login?next=/ai-consultant"}
+                            className="ml-auto flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest text-white bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 shadow-md hover:shadow-teal-300/50 transition-all animate-pulse-slow relative overflow-hidden"
+                            style={{ animationDuration: '3s' }}
+                        >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            AI Consultant
                         </Link>
                     </nav>
                 </div>
@@ -342,6 +346,16 @@ export function Navbar() {
                         </div>
 
                         <nav className="flex flex-col gap-6 font-bold text-neutral-900 uppercase text-sm tracking-widest">
+                            {/* AI Consultant - highlighted at top */}
+                            <Link
+                                href={user ? "/ai-consultant" : "/login?next=/ai-consultant"}
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex items-center gap-3 py-3 px-4 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md"
+                            >
+                                <Sparkles className="w-5 h-5" />
+                                AI Consultant
+                                <ArrowRight className="w-4 h-4 ml-auto" />
+                            </Link>
                             <Link href="/services/design/book" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between py-2 border-b">
                                 {t.nav_design_planning} <ArrowRight className="w-4 h-4 text-neutral-300" />
                             </Link>
@@ -394,6 +408,14 @@ export function Navbar() {
                     <PencilRuler className="w-[22px] h-[22px]" strokeWidth={2.5} />
                     <span className="text-[9px] font-bold uppercase tracking-wider">Design</span>
                 </Link>
+                {/* AI Consultant centre button */}
+                <Link
+                    href={user ? "/ai-consultant" : "/login?next=/ai-consultant"}
+                    className="flex flex-col items-center justify-center w-14 h-14 -mt-5 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/30 gap-1 transition-all hover:scale-105"
+                >
+                    <Sparkles className="w-5 h-5" strokeWidth={2.5} />
+                    <span className="text-[8px] font-black uppercase tracking-wider leading-none">AI</span>
+                </Link>
                 <Link href="/services" className="flex flex-col items-center justify-center flex-1 w-full h-full text-neutral-500 hover:text-primary-600 transition-colors gap-1">
                     <Wrench className="w-[22px] h-[22px]" strokeWidth={2.5} />
                     <span className="text-[9px] font-bold uppercase tracking-wider">Services</span>
@@ -402,10 +424,6 @@ export function Navbar() {
                     <Package className="w-[22px] h-[22px]" strokeWidth={2.5} />
                     <span className="text-[9px] font-bold uppercase tracking-wider">Product</span>
                 </Link>
-                <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex flex-col items-center justify-center flex-1 w-full h-full text-neutral-500 hover:text-primary-600 transition-colors gap-1">
-                    {isMenuOpen ? <X className="w-[22px] h-[22px]" strokeWidth={2.5} /> : <Menu className="w-[22px] h-[22px]" strokeWidth={2.5} />}
-                    <span className="text-[9px] font-bold uppercase tracking-wider">Menu</span>
-                </button>
             </nav>
         </header >
     );

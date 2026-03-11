@@ -192,3 +192,23 @@ export async function confirmOrder(orderId: string, adminId: string, notes?: str
 
     return data
 }
+
+export async function cancelOrder(orderId: string, adminId: string, notes?: string) {
+    const supabase = createClient()
+    const { data, error } = await supabase
+        .from('orders')
+        .update({
+            status: 'cancelled',
+            admin_notes: notes || 'Cancelled by Admin'
+        })
+        .eq('id', orderId)
+        .select()
+        .single()
+
+    if (error) {
+        console.error('Error cancelling order:', error)
+        throw error
+    }
+
+    return data
+}

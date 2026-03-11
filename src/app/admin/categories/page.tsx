@@ -55,7 +55,6 @@ export default function AdminCategoriesPage() {
         }
     };
 
-    // Open dialog for a brand new root category
     const openAddRootDialog = () => {
         setSelectedCategory(null);
         setDefaultParentId(null);
@@ -63,7 +62,6 @@ export default function AdminCategoriesPage() {
         setIsDialogOpen(true);
     };
 
-    // Open dialog pre-filled to add a subcategory under a root
     const openAddSubDialog = (parent: Category) => {
         setSelectedCategory(null);
         setDefaultParentId(parent.id);
@@ -71,7 +69,6 @@ export default function AdminCategoriesPage() {
         setIsDialogOpen(true);
     };
 
-    // Open dialog pre-filled to add an item under a subcategory
     const openAddItemDialog = (parent: Category) => {
         setSelectedCategory(null);
         setDefaultParentId(parent.id);
@@ -79,7 +76,6 @@ export default function AdminCategoriesPage() {
         setIsDialogOpen(true);
     };
 
-    // Open dialog pre-filled to add a sub-item under an item
     const openAddSubItemDialog = (parent: Category) => {
         setSelectedCategory(null);
         setDefaultParentId(parent.id);
@@ -87,7 +83,6 @@ export default function AdminCategoriesPage() {
         setIsDialogOpen(true);
     };
 
-    // Open dialog for editing
     const openEditDialog = (category: Category) => {
         setSelectedCategory(category);
         setDefaultParentId(null);
@@ -117,7 +112,6 @@ export default function AdminCategoriesPage() {
         }
     };
 
-    // Helper to sort categories into a tree structure flat list
     const getSortedCategories = (cats: Category[]) => {
         const roots = cats.filter(c => !c.parent_id);
         const sorted: Category[] = [];
@@ -141,38 +135,38 @@ export default function AdminCategoriesPage() {
     const sortedFilteredCategories = getSortedCategories(filteredCategories);
 
     return (
-        <div className="p-8 space-y-8">
+        <div className="space-y-8 animate-in fade-in duration-700 pb-20">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+                    <h1 className="text-3xl font-extrabold text-white tracking-tight italic">
                         Category Management
                     </h1>
-                    <p className="text-neutral-500 mt-1">Manage products, services, and design categories.</p>
+                    <p className="text-neutral-400 mt-1 font-medium">Manage products, services, and design categories.</p>
                 </div>
-                <Button onClick={openAddRootDialog} className="bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg shadow-primary-200">
+                <Button onClick={openAddRootDialog} className="bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/20">
                     <Plus className="w-4 h-4 mr-2" /> Add Root Category
                 </Button>
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-neutral-100">
+            <div className="flex flex-col sm:flex-row gap-4 bg-neutral-900 p-4 rounded-3xl shadow-sm border border-neutral-800 backdrop-blur-sm">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 w-5 h-5" />
                     <Input
                         placeholder="Search categories..."
-                        className="pl-10 border-neutral-200"
+                        className="pl-12 h-14 rounded-2xl border-neutral-800 bg-neutral-950 text-white focus:ring-blue-500/50"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div className="flex bg-neutral-100 p-1 rounded-lg">
+                <div className="flex bg-neutral-950 border border-neutral-800 p-1.5 rounded-2xl items-center">
                     {['all', 'product', 'service', 'design'].map((type) => (
                         <button
                             key={type}
                             onClick={() => setFilterType(type as any)}
-                            className={`px-4 py-2 rounded-md text-sm font-bold capitalize transition-all ${filterType === type
-                                ? 'bg-white text-neutral-900 shadow-sm'
-                                : 'text-neutral-500 hover:text-neutral-900'
+                            className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${filterType === type
+                                ? 'bg-neutral-800 text-white shadow-sm'
+                                : 'text-neutral-500 hover:text-white hover:bg-neutral-900'
                                 }`}
                         >
                             {type}
@@ -182,124 +176,122 @@ export default function AdminCategoriesPage() {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-6 text-xs font-medium text-neutral-500">
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-neutral-900 inline-block" /> Root Category</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-neutral-400 inline-block" /> Subcategory</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-neutral-200 inline-block" /> Item</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-neutral-100 border border-neutral-200 inline-block" /> Sub-Item</span>
-                <span className="flex items-center gap-1.5 ml-auto text-neutral-400 text-[10px] italic">{categories.length} total categories</span>
+            <div className="flex items-center gap-6 text-xs font-bold uppercase tracking-widest text-neutral-500 bg-neutral-900/30 p-4 rounded-xl border border-neutral-800/50">
+                <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)] inline-block" /> Root Category</span>
+                <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-neutral-400 inline-block" /> Subcategory</span>
+                <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-neutral-600 inline-block" /> Item</span>
+                <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-neutral-800 border border-neutral-700 inline-block" /> Sub-Item</span>
+                <span className="flex items-center gap-2 ml-auto text-blue-400">{categories.length} total categories</span>
             </div>
 
             {/* List */}
-            <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-neutral-50 border-b border-neutral-100">
+            <div className="bg-neutral-900 rounded-[2.5rem] shadow-xl border border-neutral-800 overflow-hidden backdrop-blur-md">
+                <div className="overflow-x-auto p-4">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
                             <tr>
-                                <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">Name</th>
-                                <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">Type</th>
-                                <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">Level</th>
-                                <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">Metadata</th>
-                                <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider text-right">Actions</th>
+                                <th className="p-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest border-b border-neutral-800">Name</th>
+                                <th className="p-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest border-b border-neutral-800">Type</th>
+                                <th className="p-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest border-b border-neutral-800">Level</th>
+                                <th className="p-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest border-b border-neutral-800">Metadata</th>
+                                <th className="p-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest border-b border-neutral-800 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-neutral-100">
+                        <tbody className="divide-y divide-neutral-800/50">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="p-8 text-center text-neutral-500">Loading categories...</td>
+                                    <td colSpan={5} className="p-10 text-center text-neutral-500 font-bold tracking-widest uppercase text-xs">Loading categories...</td>
                                 </tr>
                             ) : filteredCategories.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="p-8 text-center text-neutral-500">No categories found.</td>
+                                    <td colSpan={5} className="p-10 text-center text-neutral-500 font-bold tracking-widest uppercase text-xs">No categories found.</td>
                                 </tr>
                             ) : (
                                 sortedFilteredCategories.map((cat) => (
-                                    <tr key={cat.id} className="hover:bg-neutral-50/50 transition-colors group">
-                                        <td className="p-4 font-bold text-neutral-900">
-                                            <div style={{ paddingLeft: `${(cat.level || 0) * 24}px` }} className="flex items-center gap-2">
-                                                {cat.level > 0 && <span className="text-neutral-300">└─</span>}
+                                    <tr key={cat.id} className="hover:bg-neutral-800/30 transition-colors group">
+                                        <td className="p-4 font-bold text-white">
+                                            <div style={{ paddingLeft: `${(cat.level || 0) * 24}px` }} className="flex items-center gap-3">
+                                                {cat.level > 0 && <span className="text-neutral-600">└─</span>}
                                                 {cat.icon_url && cat.icon_url.startsWith('http') ? (
-                                                    <img src={cat.icon_url} alt="" className="w-6 h-6 rounded object-cover" />
+                                                    <img src={cat.icon_url} alt="" className="w-6 h-6 rounded object-cover border border-neutral-700" />
                                                 ) : (
-                                                    <DynamicIcon name={cat.icon || cat.icon_url || undefined} className={`w-5 h-5 ${cat.level === 0 ? 'text-primary-600' : 'text-neutral-400'}`} />
+                                                    <DynamicIcon name={cat.icon || cat.icon_url || undefined} className={`w-5 h-5 ${cat.level === 0 ? 'text-blue-400' : 'text-neutral-500'}`} />
                                                 )}
-                                                {cat.name}
+                                                <span className={cat.level === 0 ? 'text-base font-black' : 'text-sm text-neutral-300'}>{cat.name}</span>
                                             </div>
                                         </td>
 
                                         <td className="p-4">
-                                            <div className="flex items-center gap-2 text-sm font-medium capitalize text-neutral-600">
+                                            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-neutral-400">
                                                 {getTypeIcon(cat.type)}
                                                 {cat.type}
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide ${cat.level === 0 ? 'bg-neutral-900 text-white' :
-                                                cat.level === 1 ? 'bg-neutral-200 text-neutral-700' :
-                                                    cat.level === 2 ? 'bg-neutral-100 text-neutral-500' :
-                                                        'bg-neutral-50 text-neutral-400 border border-neutral-200'
+                                            <span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${cat.level === 0 ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.2)]' :
+                                                cat.level === 1 ? 'bg-neutral-700 text-white' :
+                                                    cat.level === 2 ? 'bg-neutral-800 text-neutral-300' :
+                                                        'bg-neutral-900 border border-neutral-700 text-neutral-500'
                                                 }`}>
                                                 {cat.level === 0 ? 'Root' : cat.level === 1 ? 'Sub' : cat.level === 2 ? 'Item' : `Sub-Item L${cat.level}`}
                                             </span>
                                         </td>
                                         <td className="p-4 text-xs">
                                             {cat.level >= 2 && cat.metadata ? (
-                                                <div className="space-y-1">
-                                                    {cat.metadata.unit && <div><span className="text-neutral-400">Unit:</span> {cat.metadata.unit}</div>}
-                                                    {cat.metadata.price && <div><span className="text-neutral-400">Price:</span> ৳{cat.metadata.price}</div>}
+                                                <div className="space-y-1 font-medium bg-neutral-950 p-2 rounded-xl border border-neutral-800/50 inline-block">
+                                                    {cat.metadata.unit && <div><span className="text-neutral-500">Unit:</span> <span className="text-neutral-300">{cat.metadata.unit}</span></div>}
+                                                    {cat.metadata.price && <div><span className="text-neutral-500">Price:</span> <span className="text-emerald-400">৳{cat.metadata.price}</span></div>}
                                                     {cat.metadata.brands && cat.metadata.brands.length > 0 && (
                                                         <div className="truncate max-w-[200px]" title={cat.metadata.brands.join(', ')}>
-                                                            <span className="text-neutral-400">Brands:</span> {cat.metadata.brands.length}
+                                                            <span className="text-neutral-500">Brands:</span> <span className="text-blue-400">{cat.metadata.brands.length}</span>
                                                         </div>
                                                     )}
                                                 </div>
-                                            ) : <span className="text-neutral-300">-</span>}
+                                            ) : <span className="text-neutral-600">-</span>}
                                         </td>
                                         <td className="p-4">
-                                            <div className="flex items-center justify-end gap-1">
-                                                {/* Root → add Subcategory */}
+                                            <div className="flex items-center justify-end gap-2 outline-none">
                                                 {cat.level === 0 && (
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-7 px-2 text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                        className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-xl"
                                                         onClick={() => openAddSubDialog(cat)}
                                                         title={`Add subcategory under ${cat.name}`}
                                                     >
-                                                        <FolderPlus className="w-3.5 h-3.5 mr-1" />
+                                                        <FolderPlus className="w-3.5 h-3.5 mr-1.5" />
                                                         +Sub
                                                     </Button>
                                                 )}
-                                                {/* Subcategory → add Item */}
                                                 {cat.level === 1 && (
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-7 px-2 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                        className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-xl"
                                                         onClick={() => openAddItemDialog(cat)}
                                                         title={`Add item under ${cat.name}`}
                                                     >
-                                                        <FilePlus className="w-3.5 h-3.5 mr-1" />
+                                                        <FilePlus className="w-3.5 h-3.5 mr-1.5" />
                                                         +Item
                                                     </Button>
                                                 )}
-                                                {/* Item or any Sub-Item → add another Sub-Item (unlimited depth) */}
                                                 {cat.level >= 2 && (
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-7 px-2 text-[10px] font-bold text-violet-600 hover:text-violet-700 hover:bg-violet-50"
+                                                        className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 rounded-xl"
                                                         onClick={() => openAddSubItemDialog(cat)}
                                                         title={`Add sub-item under ${cat.name}`}
                                                     >
-                                                        <FilePlus className="w-3.5 h-3.5 mr-1" />
+                                                        <FilePlus className="w-3.5 h-3.5 mr-1.5" />
                                                         +Sub-Item
                                                     </Button>
                                                 )}
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 hover:text-primary-600" onClick={() => openEditDialog(cat)}>
+                                                <div className="w-px h-6 bg-neutral-800 mx-1"></div>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl text-neutral-500 hover:text-white hover:bg-neutral-800" onClick={() => openEditDialog(cat)}>
                                                     <Edit className="w-4 h-4" />
                                                 </Button>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 hover:text-rose-500" onClick={() => handleDelete(cat.id)}>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10" onClick={() => handleDelete(cat.id)}>
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
                                             </div>
