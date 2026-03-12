@@ -110,6 +110,37 @@ export async function getHomeContent() {
             }
         }
 
+        // --- NEW: Generate default page_layout if missing ---
+        if (!contentMap['page_layout']) {
+            contentMap['page_layout'] = [
+                { id: '1', type: 'HeroSlider', data_key: 'hero_section', hidden: false, title: 'Main Hero Banner' },
+                { id: '2', type: 'IconSlider', data_key: 'featured_categories', hidden: false, title: 'Category Quick Menu' },
+                { id: '3', type: 'DesignServices', data_key: 'design_display_config', hidden: false, title: 'Design & Planning Services' },
+                { id: '4', type: 'PromoBanners', data_key: 'promo_banners', hidden: false, title: 'Promotional Banners' }
+            ];
+
+            // Append product/service sections generically
+            const pSections = contentMap['product_sections'] || [];
+            pSections.forEach((s: any, i: number) => {
+                contentMap['page_layout'].push({
+                    id: `p_${s.id || i}`, type: 'CategoryShowcase', data_key: `product_sections[${i}]`, hidden: false, title: s.title || 'Product Showcase'
+                })
+            });
+
+            const sSections = contentMap['service_sections'] || [];
+            if (sSections.length > 0) {
+                sSections.forEach((s: any, i: number) => {
+                    contentMap['page_layout'].push({
+                        id: `s_${s.id || i}`, type: 'ServiceShowcase', data_key: `service_sections[${i}]`, hidden: false, title: s.title || 'Service Showcase'
+                    })
+                });
+            } else if (contentMap['service_showcase']) {
+                contentMap['page_layout'].push({
+                    id: 's_main', type: 'ServiceShowcaseOld', data_key: 'service_showcase', hidden: false, title: contentMap['service_showcase'].title || 'Service Showcase'
+                })
+            }
+        }
+
         return contentMap
     } catch (error) {
         console.error('Critical Error in getHomeContent:', error)

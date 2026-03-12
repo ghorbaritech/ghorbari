@@ -15,9 +15,25 @@ import {
     Save,
     Loader2,
     Plus,
-    Trash2
+    Trash2,
+    ArrowUp,
+    ArrowDown,
+    Eye,
+    EyeOff,
+    GripVertical,
+    Star
 } from 'lucide-react'
 import { getHomeContent, updateHomeSection, getCMSDependencies } from './actions'
+
+import { GenericCardSlider } from "@/components/sections/GenericCardSlider"
+import { IconCategories } from "@/components/sections/IconCategories"
+import { PromoBannerSection } from "@/components/sections/PromoBannerSection"
+import { HeroContainer } from "@/components/sections/HeroContainer"
+import { SingleSlider } from "@/components/sections/SingleSlider"
+import { MovingIconSlider } from "@/components/sections/MovingIconSlider"
+import { InfoCardSlider } from "@/components/sections/InfoCardSlider"
+import { BlogSlider } from "@/components/sections/BlogSlider"
+import TestimonialSlider from "@/components/sections/TestimonialSlider"
 
 export default function CMSPage() {
     const [loading, setLoading] = useState(true)
@@ -25,7 +41,59 @@ export default function CMSPage() {
     const [saveAlert, setSaveAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
     const [content, setContent] = useState<any>({})
     const [dependencies, setDependencies] = useState<any>({ categories: [], designPackages: [], servicePackages: [] })
-    const [activeTab, setActiveTab] = useState('categories')
+    const [activeTab, setActiveTab] = useState('layout')
+
+    const [customSegmentType, setCustomSegmentType] = useState('CardSlider')
+    const [customSegmentTitle, setCustomSegmentTitle] = useState('')
+    const [customSegmentItems, setCustomSegmentItems] = useState<any[]>([])
+    const [editingKey, setEditingKey] = useState<string | null>(null)
+
+    const CONTAINER_CONFIG: Record<string, { label: string, maxItems: number, minItems: number, guidance: string, fields: ('title' | 'image' | 'link' | 'description' | 'subtitle')[], autoFillKey?: string }> = {
+        CardSlider: { label: 'Standard Card Slider', maxItems: 15, minItems: 3, guidance: 'Recommended size: 800x600px (4:3 Ratio for Products)', fields: ['title', 'image', 'link'] },
+        IconSlider: { label: 'Circular Icon Slider', maxItems: 15, minItems: 4, guidance: 'Recommended size: 256x256px (1:1 Ratio for App Icons)', fields: ['title', 'image', 'link'], autoFillKey: 'featured_categories' },
+        ThreeSliderBanner: { label: '3 Banner Slider', maxItems: 3, minItems: 3, guidance: 'Recommended size: 600x400px per banner (3 side-by-side)', fields: ['title', 'image', 'link'], autoFillKey: 'promo_banners' },
+        HeroContainer: { label: 'Hero Container (3-item layout)', maxItems: 3, minItems: 3, guidance: 'Requires exactly 3 items. Item 1: Large Main Card, Item 2: Top Right, Item 3: Bottom Right.', fields: ['title', 'subtitle', 'description', 'image', 'link'], autoFillKey: 'hero_section' },
+        SingleSlider: { label: 'Single Slider Banner (Full Width)', maxItems: 1, minItems: 1, guidance: 'Recommended size: 1200x180px (Wide Showcase, short height)', fields: ['title', 'image', 'link'] },
+        MovingIconSlider: { label: 'Moving Icon Slider (Auto-rotating)', maxItems: 30, minItems: 5, guidance: 'Recommended size: 256x256px (1:1 Ratio for App Icons). Constantly moving.', fields: ['title', 'image', 'link'] },
+        InfoCardSlider: { label: 'Information Slider (Taller Cards)', maxItems: 15, minItems: 3, guidance: 'Recommended size: 800x1200px (Portrait Cards for Info)', fields: ['title', 'description', 'image', 'link'] },
+        BlogSlider: { label: 'Blog Post Slider', maxItems: 10, minItems: 2, guidance: 'Recommended size: 1200x600px (Standard Blog Post Thumbnails)', fields: ['title', 'subtitle', 'description', 'image', 'link'] },
+        TestimonialSlider: { label: 'User Testimonial Slider', maxItems: 10, minItems: 2, guidance: 'Recommended: Large 5-star reviews with user avatars.', fields: ['title', 'subtitle', 'description', 'image'], autoFillKey: 'user_reviews' },
+    };
+
+    // Auto-fill logic when container type changes
+    useEffect(() => {
+        if (editingKey) return;
+        const config = CONTAINER_CONFIG[customSegmentType];
+        if (config && config.autoFillKey && content[config.autoFillKey]) {
+            const data = content[config.autoFillKey];
+            let itemsToFill: any[] = [];
+
+            if (Array.isArray(data)) itemsToFill = data;
+            else if (data.items && Array.isArray(data.items)) itemsToFill = data.items;
+            else if (typeof data === 'object') itemsToFill = [data]; // for single item like old hero_section if it was an obj
+
+            // Map old fields to new generic fields if possible
+            const mappedItems = itemsToFill.slice(0, config.maxItems).map((i, idx) => ({
+                id: Date.now() + idx,
+                title: i.title || i.name || '',
+                subtitle: i.subtitle || '',
+                description: i.description || i.content || '',
+                image: i.image_url || i.icon || i.image || '',
+                link: i.link_url || i.link || ''
+            }));
+
+            // Pad if less than minItems
+            while (mappedItems.length < config.minItems) {
+                mappedItems.push({ id: Date.now() + Math.random(), title: '', subtitle: '', description: '', image: '', link: '' });
+            }
+
+            setCustomSegmentItems(mappedItems);
+        } else {
+            // Default blank state
+            const blanks = Array.from({ length: config.minItems }).map((_, i) => ({ id: Date.now() + i, title: '', subtitle: '', description: '', image: '', link: '' }));
+            setCustomSegmentItems(blanks);
+        }
+    }, [customSegmentType]);
 
     useEffect(() => {
         async function loadData() {
@@ -97,6 +165,10 @@ export default function CMSPage() {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
                 <TabsList className="bg-neutral-950 p-1.5 rounded-3xl h-auto flex-wrap shadow-sm border border-neutral-800">
+                    <TabsTrigger value="layout" className="flex-1 h-12 px-6 rounded-2xl font-bold text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all text-xs uppercase tracking-widest gap-2">
+                        <GripVertical className="w-4 h-4" />
+                        Layout Controller
+                    </TabsTrigger>
                     <TabsTrigger value="categories" className="flex-1 h-12 px-6 rounded-2xl font-bold text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all text-xs uppercase tracking-widest gap-2">
                         <Tag className="w-4 h-4" />
                         Categories
@@ -121,7 +193,634 @@ export default function CMSPage() {
                         <LayoutTemplate className="w-4 h-4" />
                         Hero Section
                     </TabsTrigger>
+                    <TabsTrigger value="reviews" className="flex-1 h-12 px-6 rounded-2xl font-bold text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all text-xs uppercase tracking-widest gap-2">
+                        <Star className="w-4 h-4 text-yellow-500" />
+                        User Reviews
+                    </TabsTrigger>
+                    <TabsTrigger value="custom" className="flex-1 h-12 px-6 rounded-2xl font-bold text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all text-xs uppercase tracking-widest gap-2">
+                        <Plus className="w-4 h-4" />
+                        Custom Segments
+                    </TabsTrigger>
                 </TabsList>
+
+                {/* CUSTOM SEGMENTS TAB */}
+                <TabsContent value="custom" className="space-y-6">
+                    <Card className="p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl bg-neutral-900">
+                        <div className="flex justify-between items-start mb-8">
+                            <div>
+                                <h2 className="text-2xl font-black uppercase text-white italic tracking-tighter">Segment <span className="text-blue-500">Builder</span></h2>
+                                <p className="text-neutral-500 font-medium text-sm mt-1">Create fully custom sections to appear on your home page with strict variations.</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-8">
+                            <div className="grid grid-cols-2 gap-6 bg-neutral-950/50 p-6 rounded-2xl border border-neutral-800/50">
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-black uppercase text-blue-400 tracking-widest">Section Title (Internal/Display)</label>
+                                        <span className="text-[8px] font-black uppercase text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">Required</span>
+                                    </div>
+                                    <Input
+                                        value={customSegmentTitle}
+                                        onChange={(e) => setCustomSegmentTitle(e.target.value)}
+                                        placeholder="e.g. Summer Collection"
+                                        className={`h-12 text-sm bg-neutral-950 text-white rounded-xl transition-colors ${!customSegmentTitle ? 'border-blue-500/50 focus-visible:ring-blue-500' : 'border-neutral-800'}`}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Container Type</label>
+                                    <select
+                                        value={customSegmentType}
+                                        onChange={(e) => setCustomSegmentType(e.target.value)}
+                                        disabled={!!editingKey}
+                                        className="w-full h-12 px-4 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
+                                    >
+                                        <option value="CardSlider">Standard Card Slider</option>
+                                        <option value="IconSlider">Circular Icon Slider</option>
+                                        <option value="ThreeSliderBanner">3 Banner Slider</option>
+                                        <option value="HeroContainer">Hero Container (3-item layout)</option>
+                                        <option value="SingleSlider">Single Slider Banner</option>
+                                        <option value="MovingIconSlider">Moving Icon Slider</option>
+                                        <option value="InfoCardSlider">Information Slider</option>
+                                        <option value="BlogSlider">Blog Post Slider</option>
+                                    </select>
+                                    {CONTAINER_CONFIG[customSegmentType] && (
+                                        <p className="text-[11px] text-blue-400 font-medium px-2 py-1.5 bg-blue-500/10 rounded-lg mt-2 flex items-center gap-1.5">
+                                            👉 {CONTAINER_CONFIG[customSegmentType].guidance}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center border-b border-neutral-800 pb-3">
+                                    <div>
+                                        <h3 className="text-sm font-black uppercase tracking-widest text-white">Container Items</h3>
+                                        {CONTAINER_CONFIG[customSegmentType] && (
+                                            <p className="text-xs text-neutral-500 mt-1">Required items: {CONTAINER_CONFIG[customSegmentType].minItems} to {CONTAINER_CONFIG[customSegmentType].maxItems}</p>
+                                        )}
+                                    </div>
+                                    <Button
+                                        onClick={() => setCustomSegmentItems([...customSegmentItems, { id: Date.now(), title: '', subtitle: '', description: '', image: '', link: '' }])}
+                                        disabled={!CONTAINER_CONFIG[customSegmentType] || customSegmentItems.length >= CONTAINER_CONFIG[customSegmentType].maxItems}
+                                        variant="outline"
+                                        className="h-9 border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white rounded-lg text-xs font-bold uppercase tracking-wider"
+                                    >
+                                        <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Item
+                                    </Button>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {customSegmentItems.map((item, index) => {
+                                        const cfgFields = CONTAINER_CONFIG[customSegmentType]?.fields || [];
+                                        return (
+                                            <div key={item.id} className="flex gap-3 p-4 border border-neutral-800 rounded-2xl bg-neutral-950 relative overflow-hidden group">
+                                                <div className="absolute top-0 left-0 bottom-0 w-1 bg-neutral-800 group-hover:bg-blue-500 transition-colors" />
+                                                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 pl-2">
+                                                    {cfgFields.includes('title') && (
+                                                        <div className="space-y-1.5">
+                                                            <div className="flex items-center justify-between">
+                                                                <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest">Item Title</label>
+                                                                <span className="text-[8px] font-bold uppercase text-neutral-600 bg-neutral-900 px-1.5 py-0.5 rounded">Optional</span>
+                                                            </div>
+                                                            <Input
+                                                                placeholder="e.g. Heavy Duty Drill"
+                                                                value={item.title || ''}
+                                                                onChange={e => {
+                                                                    const newI = [...customSegmentItems];
+                                                                    newI[index].title = e.target.value;
+                                                                    setCustomSegmentItems(newI);
+                                                                }}
+                                                                className="h-10 border-neutral-800 bg-neutral-900 text-white text-sm"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    {cfgFields.includes('subtitle') && (
+                                                        <div className="space-y-1.5">
+                                                            <div className="flex items-center justify-between">
+                                                                <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest">Badge / Date / Subtitle</label>
+                                                                <span className="text-[8px] font-bold uppercase text-neutral-600 bg-neutral-900 px-1.5 py-0.5 rounded">Optional</span>
+                                                            </div>
+                                                            <Input
+                                                                placeholder="e.g. New Arrival"
+                                                                value={item.subtitle || ''}
+                                                                onChange={e => {
+                                                                    const newI = [...customSegmentItems];
+                                                                    newI[index].subtitle = e.target.value;
+                                                                    setCustomSegmentItems(newI);
+                                                                }}
+                                                                className="h-10 border-neutral-800 bg-neutral-900 text-white text-sm"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    {cfgFields.includes('description') && (
+                                                        <div className="space-y-1.5 lg:col-span-2">
+                                                            <div className="flex items-center justify-between">
+                                                                <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest">Short Description</label>
+                                                                <span className="text-[8px] font-bold uppercase text-neutral-600 bg-neutral-900 px-1.5 py-0.5 rounded">Optional</span>
+                                                            </div>
+                                                            <Input
+                                                                placeholder="A brief description of the item..."
+                                                                value={item.description || ''}
+                                                                onChange={e => {
+                                                                    const newI = [...customSegmentItems];
+                                                                    newI[index].description = e.target.value;
+                                                                    setCustomSegmentItems(newI);
+                                                                }}
+                                                                className="h-10 border-neutral-800 bg-neutral-900 text-white text-sm"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    {cfgFields.includes('image') && (
+                                                        <div className="space-y-1.5 lg:col-span-2">
+                                                            <div className="flex items-center justify-between">
+                                                                <label className="text-[9px] font-black uppercase text-blue-400 tracking-widest">Image Source URL</label>
+                                                                <span className="text-[8px] font-black uppercase text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">Required</span>
+                                                            </div>
+                                                            <Input
+                                                                placeholder="https://images.unsplash.com/..."
+                                                                value={item.image || ''}
+                                                                onChange={e => {
+                                                                    const newI = [...customSegmentItems];
+                                                                    newI[index].image = e.target.value;
+                                                                    setCustomSegmentItems(newI);
+                                                                }}
+                                                                className={`h-10 text-sm bg-neutral-900 text-white transition-colors ${!item.image ? 'border-blue-500/50 focus-visible:ring-blue-500' : 'border-neutral-800'}`}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    {cfgFields.includes('link') && (
+                                                        <div className="space-y-1.5 lg:col-span-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest">Redirect Action URL</label>
+                                                                <span className="text-[8px] font-bold uppercase text-neutral-600 bg-neutral-900 px-1.5 py-0.5 rounded">Optional</span>
+                                                            </div>
+                                                            <Input
+                                                                placeholder="/products?category=tools"
+                                                                value={item.link || ''}
+                                                                onChange={e => {
+                                                                    const newI = [...customSegmentItems];
+                                                                    newI[index].link = e.target.value;
+                                                                    setCustomSegmentItems(newI);
+                                                                }}
+                                                                className="h-10 border-neutral-800 bg-neutral-900 text-white text-sm"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    onClick={() => setCustomSegmentItems(customSegmentItems.filter((_, i) => i !== index))}
+                                                    disabled={!CONTAINER_CONFIG[customSegmentType] || customSegmentItems.length <= CONTAINER_CONFIG[customSegmentType].minItems}
+                                                    className="h-10 w-10 mt-6 p-0 text-neutral-600 hover:bg-red-500/10 hover:text-red-400 rounded-xl shrink-0 transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        )
+                                    })}
+                                    {customSegmentItems.length === 0 && (
+                                        <div className="text-center py-10 border border-dashed border-neutral-800 rounded-2xl bg-neutral-950/30">
+                                            <p className="text-sm text-neutral-500 font-medium">No items added to this segment yet.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-4 mt-4">
+                                {editingKey && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setEditingKey(null);
+                                            setCustomSegmentTitle('');
+                                            setCustomSegmentItems([]);
+                                            setCustomSegmentType('CardSlider');
+                                        }}
+                                        className="h-12 border-neutral-800 text-neutral-400 hover:text-white rounded-xl whitespace-nowrap px-8 font-black uppercase text-xs tracking-widest"
+                                    >
+                                        Cancel Edit
+                                    </Button>
+                                )}
+                                <Button
+                                    disabled={
+                                        saving ||
+                                        !customSegmentTitle ||
+                                        !CONTAINER_CONFIG[customSegmentType] ||
+                                        customSegmentItems.length < CONTAINER_CONFIG[customSegmentType].minItems ||
+                                        customSegmentItems.some(item => !item.image)
+                                    }
+                                    onClick={async () => {
+                                        if (!customSegmentTitle) return;
+                                        setSaving(true);
+                                        const segmentKey = editingKey || `custom_${Date.now()}`;
+                                        const newSection = {
+                                            title: customSegmentTitle,
+                                            items: customSegmentItems
+                                        };
+
+                                        const r1 = await updateHomeSection(segmentKey, newSection);
+
+                                        if (r1.success) {
+                                            let newLayout = content['page_layout'] || [];
+                                            if (!editingKey) {
+                                                const newLayoutItem = {
+                                                    id: segmentKey,
+                                                    type: customSegmentType,
+                                                    data_key: segmentKey,
+                                                    hidden: false,
+                                                    title: customSegmentTitle
+                                                };
+                                                newLayout = [...newLayout, newLayoutItem];
+                                                await updateHomeSection('page_layout', newLayout);
+                                            } else {
+                                                const layoutItemIndex = newLayout.findIndex((l: any) => l.data_key === segmentKey);
+                                                if (layoutItemIndex >= 0) {
+                                                    newLayout[layoutItemIndex].title = customSegmentTitle;
+                                                    await updateHomeSection('page_layout', newLayout);
+                                                }
+                                            }
+
+                                            setContent({
+                                                ...content,
+                                                [segmentKey]: newSection,
+                                                page_layout: newLayout
+                                            });
+
+                                            setSaveAlert({ type: 'success', message: editingKey ? 'Saved! Click SAVE LAYOUT SEQUENCE to apply.' : 'Created & added to Layout!' });
+
+                                            if (!editingKey) {
+                                                setCustomSegmentTitle('');
+                                                const config = CONTAINER_CONFIG[customSegmentType];
+                                                if (config) {
+                                                    const blanks = Array.from({ length: config.minItems }).map((_, i) => ({ id: Date.now() + i, title: '', image: '', link: '' }));
+                                                    setCustomSegmentItems(blanks);
+                                                }
+                                            } else {
+                                                setEditingKey(null);
+                                                setCustomSegmentTitle('');
+                                                setCustomSegmentItems([]);
+                                            }
+                                        }
+                                        setSaving(false);
+                                        setTimeout(() => setSaveAlert(null), 8000);
+                                    }}
+                                    className="flex-1 h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase text-xs tracking-widest disabled:bg-neutral-800 disabled:text-neutral-500 disabled:cursor-not-allowed transition-all"
+                                >
+                                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : (editingKey ? 'Update Segment' : 'Create & Add to Layout')}
+                                </Button>
+                            </div>
+
+                            {/* EXISTING SEGMENTS LIST */}
+                            <div className="mt-12 pt-8 border-t border-neutral-800">
+                                <div className="mb-6 flex items-center gap-3">
+                                    <h3 className="text-xl font-black uppercase text-white tracking-widest flex items-center gap-2">
+                                        <Briefcase className="w-5 h-5 text-neutral-500" />
+                                        Existing <span className="text-blue-500">Segments</span>
+                                    </h3>
+                                    <div className="h-px flex-1 bg-gradient-to-r from-neutral-800 to-transparent"></div>
+                                </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    {Object.keys(content).filter(k => k.startsWith('custom_')).map(key => {
+                                        const layoutItem = (content['page_layout'] || []).find((l: any) => l.data_key === key);
+                                        const segType = layoutItem ? layoutItem.type : 'Unknown Type';
+                                        return (
+                                            <div key={key} className="bg-neutral-950 p-4 rounded-xl border border-neutral-800 flex justify-between items-center">
+                                                <div className="truncate pr-4">
+                                                    <h4 className="text-sm font-bold text-white uppercase tracking-wider truncate">{content[key].title}</h4>
+                                                    <p className="text-[10px] text-neutral-500 font-medium uppercase tracking-widest mt-1.5">{segType} &bull; {content[key].items?.length || 0} ITEMS</p>
+                                                </div>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={!!editingKey}
+                                                    onClick={() => {
+                                                        setEditingKey(key);
+                                                        setCustomSegmentTitle(content[key].title || '');
+                                                        if (layoutItem?.type) setCustomSegmentType(layoutItem.type);
+                                                        // Ensure all fields exist to avoid uncontrolled input warnings
+                                                        const existingItems = (content[key].items || []).map((item: any) => ({
+                                                            id: item.id || Date.now() + Math.random(),
+                                                            title: item.title || '',
+                                                            subtitle: item.subtitle || '',
+                                                            description: item.description || '',
+                                                            image: item.image || '',
+                                                            link: item.link || ''
+                                                        }));
+                                                        setCustomSegmentItems(existingItems);
+                                                        window.scrollTo({ top: 300, behavior: 'smooth' });
+                                                    }}
+                                                    className="h-8 bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 font-bold uppercase tracking-widest text-[10px] shrink-0"
+                                                >
+                                                    Edit
+                                                </Button>
+                                            </div>
+                                        )
+                                    })}
+                                    {Object.keys(content).filter(k => k.startsWith('custom_')).length === 0 && (
+                                        <div className="col-span-full text-center py-8 text-neutral-500 text-sm font-medium border border-dashed border-neutral-800 rounded-xl bg-neutral-950/50">
+                                            No custom segments exist. Build one above to see it here.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* LIVE PREVIEW SECTION */}
+                            <div className="mt-12 pt-8 border-t border-neutral-800">
+                                <div className="mb-6 flex items-center gap-3">
+                                    <h3 className="text-xl font-black uppercase text-white tracking-widest flex items-center gap-2">
+                                        <LayoutTemplate className="w-5 h-5 text-neutral-500" />
+                                        Live <span className="text-blue-500">Preview</span>
+                                    </h3>
+                                    <div className="h-px flex-1 bg-gradient-to-r from-neutral-800 to-transparent"></div>
+                                </div>
+                                <div className="bg-[#f8f9fa] rounded-[1.5rem] overflow-hidden border border-neutral-800 relative shadow-2xl origin-top">
+                                    <div className="absolute top-4 right-4 bg-black/80 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full z-10 backdrop-blur-md">
+                                        Consumer View
+                                    </div>
+                                    <div className="w-full max-h-[800px] overflow-y-auto no-scrollbar pointer-events-none opacity-95">
+                                        {customSegmentType === 'CardSlider' && (
+                                            <GenericCardSlider
+                                                title={customSegmentTitle || 'Segment Title'}
+                                                items={customSegmentItems}
+                                            />
+                                        )}
+                                        {customSegmentType === 'IconSlider' && (
+                                            <IconCategories
+                                                title={customSegmentTitle || 'Segment Title'}
+                                                items={customSegmentItems}
+                                            />
+                                        )}
+                                        {customSegmentType === 'ThreeSliderBanner' && (
+                                            <PromoBannerSection
+                                                title={customSegmentTitle || 'Promotions'}
+                                                banners={customSegmentItems}
+                                            />
+                                        )}
+                                        {customSegmentType === 'HeroContainer' && (
+                                            <HeroContainer
+                                                title={customSegmentTitle || 'Hero Section'}
+                                                items={customSegmentItems}
+                                            />
+                                        )}
+                                        {customSegmentType === 'SingleSlider' && (
+                                            <SingleSlider
+                                                title={customSegmentTitle || 'Single Slider'}
+                                                items={customSegmentItems}
+                                            />
+                                        )}
+                                        {customSegmentType === 'MovingIconSlider' && (
+                                            <MovingIconSlider
+                                                title={customSegmentTitle || 'Segment Title'}
+                                                items={customSegmentItems}
+                                            />
+                                        )}
+                                        {customSegmentType === 'InfoCardSlider' && (
+                                            <InfoCardSlider
+                                                title={customSegmentTitle || 'Segment Title'}
+                                                items={customSegmentItems}
+                                            />
+                                        )}
+                                        {customSegmentType === 'BlogSlider' && (
+                                            <BlogSlider
+                                                title={customSegmentTitle || 'Segment Title'}
+                                                items={customSegmentItems}
+                                            />
+                                        )}
+                                        {customSegmentType === 'TestimonialSlider' && ( // Added TestimonialSlider to live preview
+                                            <TestimonialSlider
+                                                title={customSegmentTitle || 'Segment Title'}
+                                                items={customSegmentItems}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                </TabsContent>
+                {/* 7. USER REVIEWS TAB */}
+                <TabsContent value="reviews" className="space-y-6">
+                    <Card className="p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl bg-neutral-900">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-black uppercase text-white tracking-widest">Customer Testimonials</h2>
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => {
+                                        const current = content['user_reviews'] || { title: '', items: [] };
+                                        const items = current.items || [];
+                                        setContent({
+                                            ...content,
+                                            user_reviews: {
+                                                ...current,
+                                                items: [...items, { id: Date.now(), title: '', subtitle: '', description: '', image: '' }]
+                                            }
+                                        });
+                                    }}
+                                    variant="outline"
+                                    className="rounded-xl font-bold uppercase text-xs border-neutral-700 text-white hover:bg-neutral-800"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" /> Add Review
+                                </Button>
+                                <Button
+                                    onClick={() => handleSave('user_reviews', content['user_reviews'])}
+                                    disabled={saving}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold uppercase text-xs px-6"
+                                >
+                                    {saving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Save Reviews'}
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="mb-8 max-w-md space-y-2">
+                            <label className="text-xs font-black uppercase text-neutral-500 tracking-widest">Section Title (Bengali Recommended)</label>
+                            <Input
+                                value={content['user_reviews']?.title || ''}
+                                onChange={(e) => setContent({ ...content, user_reviews: { ...content['user_reviews'], title: e.target.value } })}
+                                className="font-bold border-neutral-800 bg-neutral-950 text-white h-12 rounded-xl"
+                                placeholder="e.g. ক্লায়েন্টদের গল্প"
+                            />
+                        </div>
+
+                        <div className="space-y-6">
+                            {(content['user_reviews']?.items || []).map((review: any, index: number) => (
+                                <div key={review.id} className="p-6 border border-neutral-800 bg-neutral-950 rounded-2xl space-y-4 relative group hover:border-neutral-700 transition-all shadow-sm">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-4 right-4 text-neutral-500 hover:text-red-400 hover:bg-red-500/10"
+                                        onClick={() => {
+                                            const newItems = content['user_reviews'].items.filter((r: any) => r.id !== review.id)
+                                            setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
+                                        }}
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </Button>
+
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center font-black text-xs border border-blue-500/20">
+                                            {index + 1}
+                                        </div>
+                                        <span className="font-black text-neutral-400 uppercase tracking-widest text-xs">Customer Review</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">User Name</label>
+                                                <Input
+                                                    value={review.title || ''}
+                                                    onChange={(e) => {
+                                                        const newItems = [...content['user_reviews'].items]
+                                                        newItems[index].title = e.target.value
+                                                        setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
+                                                    }}
+                                                    className="font-bold text-sm border-neutral-800 bg-neutral-900 text-white"
+                                                    placeholder="e.g. Ahmed Kabir"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Designation / Location</label>
+                                                <Input
+                                                    value={review.subtitle || ''}
+                                                    onChange={(e) => {
+                                                        const newItems = [...content['user_reviews'].items]
+                                                        newItems[index].subtitle = e.target.value
+                                                        setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
+                                                    }}
+                                                    className="text-xs border-neutral-800 bg-neutral-900 text-white"
+                                                    placeholder="e.g. Dhaka, Bangladesh"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Review Text (Feedback)</label>
+                                                <Input
+                                                    value={review.description || ''}
+                                                    onChange={(e) => {
+                                                        const newItems = [...content['user_reviews'].items]
+                                                        newItems[index].description = e.target.value
+                                                        setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
+                                                    }}
+                                                    className="text-sm border-neutral-800 bg-neutral-900 text-white italic"
+                                                    placeholder="Write the review content here..."
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">User Avatar URL</label>
+                                                <div className="flex gap-4">
+                                                    <div className="w-20 h-20 rounded-2xl bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0 flex items-center justify-center">
+                                                        {review.image ? <img src={review.image} className="w-full h-full object-cover" /> : <Star className="w-6 h-6 text-neutral-700" />}
+                                                    </div>
+                                                    <Input
+                                                        value={review.image || ''}
+                                                        onChange={(e) => {
+                                                            const newItems = [...content['user_reviews'].items]
+                                                            newItems[index].image = e.target.value
+                                                            setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
+                                                        }}
+                                                        className="flex-1 text-xs border-neutral-800 bg-neutral-900 text-white self-end"
+                                                        placeholder="https://..."
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                </TabsContent>
+
+                {/* 0. LAYOUT CONTROLLER TAB */}
+                <TabsContent value="layout" className="space-y-6">
+                    <Card className="p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl bg-neutral-900">
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h2 className="text-2xl font-black uppercase text-white italic tracking-tighter">Central <span className="text-blue-500">Controller</span></h2>
+                                <p className="text-neutral-500 font-medium text-sm mt-1">Reorder and toggle sections to design your home page flow.</p>
+                            </div>
+                            <Button
+                                onClick={() => handleSave('page_layout', content['page_layout'])}
+                                disabled={saving}
+                                className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-6 shadow-lg shadow-blue-900/40"
+                            >
+                                {saving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                                Save Layout Sequence
+                            </Button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {(content['page_layout'] || []).map((section: any, index: number) => (
+                                <div key={section.id} className={`flex items-center justify-between p-5 rounded-2xl border transition-all ${section.hidden ? 'bg-neutral-950/50 border-neutral-800/50 opacity-70' : 'bg-neutral-950 border-neutral-800 shadow-sm'}`}>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex flex-col gap-1">
+                                            <button
+                                                onClick={() => {
+                                                    if (index === 0) return;
+                                                    const newLayout = [...content['page_layout']];
+                                                    const temp = newLayout[index - 1];
+                                                    newLayout[index - 1] = newLayout[index];
+                                                    newLayout[index] = temp;
+                                                    setContent({ ...content, page_layout: newLayout });
+                                                }}
+                                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${index === 0 ? 'text-neutral-800 cursor-not-allowed' : 'bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white'}`}
+                                            >
+                                                <ArrowUp className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    const newLayout = [...content['page_layout']];
+                                                    if (index === newLayout.length - 1) return;
+                                                    const temp = newLayout[index + 1];
+                                                    newLayout[index + 1] = newLayout[index];
+                                                    newLayout[index] = temp;
+                                                    setContent({ ...content, page_layout: newLayout });
+                                                }}
+                                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${index === (content['page_layout']?.length || 0) - 1 ? 'text-neutral-800 cursor-not-allowed' : 'bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white'}`}
+                                            >
+                                                <ArrowDown className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <div className="w-12 h-12 rounded-xl bg-neutral-900 flex items-center justify-center text-neutral-500 border border-neutral-800">
+                                            {section.type === 'HeroSlider' ? <LayoutTemplate className="w-5 h-5 text-purple-400" /> :
+                                                section.type === 'IconSlider' ? <Tag className="w-5 h-5 text-orange-400" /> :
+                                                    section.type === 'CardSlider' ? <Layers className="w-5 h-5 text-blue-400" /> :
+                                                        section.type === 'PromoBanners' ? <ImageIcon className="w-5 h-5 text-emerald-400" /> :
+                                                            <Briefcase className="w-5 h-5" />}
+                                        </div>
+                                        <div>
+                                            <h3 className={`font-black uppercase tracking-widest text-sm ${section.hidden ? 'text-neutral-500' : 'text-white'}`}>{section.title}</h3>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-[10px] font-black uppercase text-neutral-600 bg-neutral-900 px-2 py-0.5 rounded-md border border-neutral-800">
+                                                    {section.type}
+                                                </span>
+                                                <span className="text-xs font-medium text-neutral-500">Key: {section.data_key}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => {
+                                                const newLayout = [...content['page_layout']];
+                                                newLayout[index].hidden = !newLayout[index].hidden;
+                                                setContent({ ...content, page_layout: newLayout });
+                                            }}
+                                            className={`rounded-xl w-12 h-12 transition-all ${section.hidden ? 'text-neutral-600 hover:text-white hover:bg-neutral-800' : 'text-blue-500 bg-blue-500/10 hover:bg-blue-500/20'}`}
+                                            title={section.hidden ? 'Show Section' : 'Hide Section'}
+                                        >
+                                            {section.hidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                </TabsContent>
 
                 {/* 1. CATEGORIES TAB */}
                 <TabsContent value="categories" className="space-y-6">
@@ -318,7 +1017,7 @@ export default function CMSPage() {
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold uppercase text-neutral-500 tracking-widest">Section Title</label>
                                             <Input
-                                                value={section.title}
+                                                value={section.title || ''}
                                                 onChange={(e) => {
                                                     const newSections = content['product_sections'].map((s: any, i: number) =>
                                                         i === index ? { ...s, title: e.target.value } : s
@@ -332,7 +1031,7 @@ export default function CMSPage() {
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold uppercase text-neutral-500 tracking-widest">Category Source</label>
                                             <select
-                                                value={section.category_id}
+                                                value={section.category_id || ''}
                                                 onChange={(e) => {
                                                     const newSections = content['product_sections'].map((s: any, i: number) =>
                                                         i === index ? { ...s, category_id: e.target.value } : s
@@ -432,14 +1131,14 @@ export default function CMSPage() {
                                 return (
                                     <div key={i} className="space-y-4 p-4 border border-neutral-800 rounded-2xl bg-neutral-950">
                                         <div className="aspect-[2/1] bg-neutral-800 rounded-xl overflow-hidden relative group flex items-center justify-center">
-                                            {banner.image_url ? (
-                                                <img src={banner.image_url} alt="Promo" className="h-[80%] w-auto object-contain" />
+                                            {banner.image_url || (i === 0 ? 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1738749841/samples/ecommerce/accessories-bag.jpg' : i === 1 ? 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1738749839/samples/ecommerce/leather-bag-gray.jpg' : 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1740924976/Frame_1618868661_3_gqqxyw.png') ? (
+                                                <img src={banner.image_url || (i === 0 ? 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1738749841/samples/ecommerce/accessories-bag.jpg' : i === 1 ? 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1738749839/samples/ecommerce/leather-bag-gray.jpg' : 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1740924976/Frame_1618868661_3_gqqxyw.png')} alt="Promo" className="h-[80%] w-auto object-contain z-10 relative" />
                                             ) : (
                                                 <div className="text-white/50 font-bold uppercase text-[10px]">No Image</div>
                                             )}
-                                            <div className="absolute inset-0 flex flex-col justify-center p-4 bg-black/40">
-                                                <p className="text-white font-black text-lg leading-tight line-clamp-2 w-2/3">{banner.title || 'Title Here'}</p>
-                                                <p className="text-blue-300 text-xs font-medium w-2/3">{banner.subtitle || 'Subtitle'}</p>
+                                            <div className="absolute inset-0 flex flex-col justify-center p-4 bg-gradient-to-r from-black/80 to-transparent z-20">
+                                                <p className="text-white font-black text-lg leading-tight line-clamp-2 w-2/3">{banner.title || (i === 0 ? 'Smart Tools' : i === 1 ? 'Premium Gear' : 'New Arrivals')}</p>
+                                                <p className="text-blue-300 text-xs font-medium w-2/3">{banner.subtitle || (i === 0 ? 'Up to 30% off' : i === 1 ? 'Explore now' : 'Shop latest')}</p>
                                             </div>
                                         </div>
 
@@ -447,7 +1146,7 @@ export default function CMSPage() {
                                             <div className="space-y-1">
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Title</label>
                                                 <Input
-                                                    value={banner.title || ''}
+                                                    value={banner.title ?? (i === 0 ? 'Smart Tools' : i === 1 ? 'Premium Gear' : 'New Arrivals')}
                                                     onChange={(e) => {
                                                         const currentData = content['promo_banners'] || {}
                                                         const banners = Array.isArray(currentData) ? currentData : (currentData.items || [])
@@ -468,7 +1167,7 @@ export default function CMSPage() {
                                             <div className="space-y-1">
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Subtitle</label>
                                                 <Input
-                                                    value={banner.subtitle || ''}
+                                                    value={banner.subtitle ?? (i === 0 ? 'Up to 30% off' : i === 1 ? 'Explore now' : 'Shop latest')}
                                                     onChange={(e) => {
                                                         const currentData = content['promo_banners'] || {}
                                                         const banners = Array.isArray(currentData) ? currentData : (currentData.items || [])
@@ -491,7 +1190,7 @@ export default function CMSPage() {
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Image URL</label>
                                             <Input
-                                                value={banner.image_url || ''}
+                                                value={banner.image_url ?? (i === 0 ? 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1738749841/samples/ecommerce/accessories-bag.jpg' : i === 1 ? 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1738749839/samples/ecommerce/leather-bag-gray.jpg' : 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1740924976/Frame_1618868661_3_gqqxyw.png')}
                                                 onChange={(e) => {
                                                     const currentData = content['promo_banners'] || {}
                                                     const banners = Array.isArray(currentData) ? currentData : (currentData.items || [])
@@ -512,7 +1211,7 @@ export default function CMSPage() {
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Link URL</label>
                                             <Input
-                                                value={banner.link_url || ''}
+                                                value={banner.link_url ?? '/'}
                                                 onChange={(e) => {
                                                     const currentData = content['promo_banners'] || {}
                                                     const banners = Array.isArray(currentData) ? currentData : (currentData.items || [])
@@ -709,7 +1408,7 @@ export default function CMSPage() {
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold uppercase text-neutral-500 tracking-widest">Section Title</label>
                                             <Input
-                                                value={section.title}
+                                                value={section.title || ''}
                                                 onChange={(e) => {
                                                     const newSections = content['service_sections'].map((s: any, i: number) =>
                                                         i === index ? { ...s, title: e.target.value } : s
@@ -723,7 +1422,7 @@ export default function CMSPage() {
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold uppercase text-neutral-500 tracking-widest">Category Source</label>
                                             <select
-                                                value={section.category_id}
+                                                value={section.category_id || ''}
                                                 onChange={(e) => {
                                                     const newSections = content['service_sections'].map((s: any, i: number) =>
                                                         i === index ? { ...s, category_id: e.target.value } : s
@@ -807,7 +1506,7 @@ export default function CMSPage() {
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Title</label>
                                                     <Input
-                                                        value={item.title || ''}
+                                                        value={item.title ?? (slot === 'main' ? 'Construction Marketplace' : slot === 'top_right' ? 'Premium Hardware' : 'Expert Services')}
                                                         onChange={(e) => {
                                                             const newItems = [...items.filter((i: any) => i.id !== slot), { ...item, title: e.target.value }];
                                                             setContent({ ...content, hero_section: { ...currentData, items: newItems } });
@@ -819,7 +1518,7 @@ export default function CMSPage() {
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Subtitle</label>
                                                     <Input
-                                                        value={item.subtitle || ''}
+                                                        value={item.subtitle ?? (slot === 'main' ? 'Everything for your dream home' : slot === 'top_right' ? 'Top Brands' : 'Hire Professionals')}
                                                         onChange={(e) => {
                                                             const newItems = [...items.filter((i: any) => i.id !== slot), { ...item, subtitle: e.target.value }];
                                                             setContent({ ...content, hero_section: { ...currentData, items: newItems } });
@@ -831,7 +1530,7 @@ export default function CMSPage() {
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Description</label>
                                                     <Input
-                                                        value={item.desc || ''}
+                                                        value={item.desc ?? (slot === 'main' ? 'Find everything you need' : slot === 'top_right' ? 'Quality tools to match' : 'Get the job done')}
                                                         onChange={(e) => {
                                                             const newItems = [...items.filter((i: any) => i.id !== slot), { ...item, desc: e.target.value }];
                                                             setContent({ ...content, hero_section: { ...currentData, items: newItems } });
@@ -846,7 +1545,7 @@ export default function CMSPage() {
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Image URL</label>
                                                     <Input
-                                                        value={item.image || ''}
+                                                        value={item.image ?? (slot === 'main' ? 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1740924976/Frame_1618868661_2_w1oab5.png' : slot === 'top_right' ? 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1738749842/samples/ecommerce/shoes.png' : 'https://res.cloudinary.com/dcbcex2pe/image/upload/v1740924974/Frame_1618868661_f7o0v4.png')}
                                                         onChange={(e) => {
                                                             const newItems = [...items.filter((i: any) => i.id !== slot), { ...item, image: e.target.value }];
                                                             setContent({ ...content, hero_section: { ...currentData, items: newItems } });

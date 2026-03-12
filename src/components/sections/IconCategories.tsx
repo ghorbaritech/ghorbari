@@ -56,18 +56,20 @@ export function IconCategories({ items = [], title = "Explore Categories" }: Ico
                             {displayItems.map((cat: any, idx: number) => (
                                 <div key={idx} className="flex-[0_0_40%] sm:flex-[0_0_25%] md:flex-[0_0_18%] lg:flex-[0_0_14.28%] pl-2">
                                     <Link
-                                        href={`/products?category=${cat.name}`}
+                                        href={cat.link || `/products?category=${cat.name}`}
                                         className="flex flex-col items-center gap-3 group cursor-pointer"
                                     >
-                                        <div className="w-24 h-24 shadow-sm rounded-full bg-neutral-100 flex items-center justify-center transition-colors duration-300 group-hover:bg-primary-100">
-                                            {cat.icon && (typeof cat.icon === 'string' && (cat.icon.startsWith('http') || cat.icon.startsWith('/'))) ? (
+                                        <div className="w-24 h-24 shadow-sm rounded-full bg-neutral-100 flex items-center justify-center transition-colors duration-300 group-hover:bg-primary-100 overflow-hidden">
+                                            {cat.image ? (
+                                                <img src={cat.image} alt={cat.title || cat.name} className="w-16 h-16 object-cover rounded-full" />
+                                            ) : cat.icon && (typeof cat.icon === 'string' && (cat.icon.startsWith('http') || cat.icon.startsWith('/'))) ? (
                                                 <img src={cat.icon} alt={cat.name} className="w-11 h-11 object-contain" />
                                             ) : (
                                                 <DynamicIcon name={cat.icon || "LayoutGrid"} className="w-11 h-11 text-primary-950" />
                                             )}
                                         </div>
                                         <span className="text-[12px] font-semibold text-neutral-600 group-hover:text-primary-950 text-center transition-colors max-w-full leading-tight">
-                                            {(language === 'BN' && (cat.nameBn || cat.name_bn)) ? (cat.nameBn || cat.name_bn) : cat.name}
+                                            {cat.title || ((language === 'BN' && (cat.nameBn || cat.name_bn)) ? (cat.nameBn || cat.name_bn) : cat.name)}
                                         </span>
                                     </Link>
                                 </div>

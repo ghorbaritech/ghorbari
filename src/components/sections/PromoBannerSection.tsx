@@ -76,16 +76,16 @@ export function PromoBannerSection({ title, banners = [] }: PromoBannerSectionPr
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {filledBanners.map((banner, index) => (
                         <Link
-                            href={banner.link_url || '#'}
+                            href={banner.link || banner.link_url || '#'}
                             key={index}
                             className={`group relative h-[200px] rounded-2xl overflow-hidden flex transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${banner.bg || 'bg-[#0f172a]'}`}
                         >
                             {/* Background image (right side, faded) */}
-                            {banner.image_url && (
+                            {(banner.image || banner.image_url) && (
                                 <div className="absolute right-0 top-0 bottom-0 w-[55%] overflow-hidden">
                                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent z-10" />
                                     <img
-                                        src={banner.image_url}
+                                        src={banner.image || banner.image_url}
                                         alt={banner.title || "Promo"}
                                         className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
                                     />
