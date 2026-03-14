@@ -21,7 +21,10 @@ import {
     Eye,
     EyeOff,
     GripVertical,
-    Star
+    Star,
+    Coffee,
+    Compass,
+    Settings
 } from 'lucide-react'
 import { getHomeContent, updateHomeSection, getCMSDependencies } from './actions'
 
@@ -200,6 +203,10 @@ export default function CMSPage() {
                     <TabsTrigger value="custom" className="flex-1 h-12 px-6 rounded-2xl font-bold text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all text-xs uppercase tracking-widest gap-2">
                         <Plus className="w-4 h-4" />
                         Custom Segments
+                    </TabsTrigger>
+                    <TabsTrigger value="design-page" className="flex-1 h-12 px-6 rounded-2xl font-bold text-neutral-500 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all text-xs uppercase tracking-widest gap-2 border-2 border-transparent data-[state=active]:border-blue-400/50">
+                        <Compass className="w-4 h-4" />
+                        Design Landing
                     </TabsTrigger>
                 </TabsList>
 
@@ -1604,6 +1611,539 @@ export default function CMSPage() {
                             })}
                         </div>
                     </Card>
+                </TabsContent>
+                {/* DESIGN LANDING PAGE CMS */}
+                <TabsContent value="design-page" className="space-y-6">
+                    <div className="grid grid-cols-1 gap-8">
+                        {/* HERO CONFIGURATION */}
+                        <Card className="p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl bg-neutral-900">
+                            <div className="flex justify-between items-center mb-8">
+                                <div>
+                                    <h2 className="text-2xl font-black uppercase text-white italic tracking-tighter">Hero <span className="text-blue-500">Configuration</span></h2>
+                                    <p className="text-neutral-500 font-medium text-sm mt-1">Manage the top banners and intro text for the Design Landing Page.</p>
+                                </div>
+                                <Button
+                                    onClick={() => handleSave('design_hero', content['design_hero'])}
+                                    disabled={saving}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-6"
+                                >
+                                    {saving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                                    Save Hero Config
+                                </Button>
+                            </div>
+
+                            <div className="space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-neutral-950/50 p-6 rounded-2xl border border-neutral-800/50">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-blue-400 tracking-widest">Page Main Title (English)</label>
+                                        <Input
+                                            value={content['design_hero']?.title || ''}
+                                            onChange={(e) => setContent({ ...content, design_hero: { ...content['design_hero'], title: e.target.value } })}
+                                            className="h-12 bg-neutral-950 text-white rounded-xl border-neutral-800"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-blue-400 tracking-widest">Page Main Title (Bengali)</label>
+                                        <Input
+                                            value={content['design_hero']?.titleBn || ''}
+                                            onChange={(e) => setContent({ ...content, design_hero: { ...content['design_hero'], titleBn: e.target.value } })}
+                                            className="h-12 bg-neutral-950 text-white rounded-xl border-neutral-800"
+                                        />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Hero Subtitle</label>
+                                        <Input
+                                            value={content['design_hero']?.subtitle || ''}
+                                            onChange={(e) => setContent({ ...content, design_hero: { ...content['design_hero'], subtitle: e.target.value } })}
+                                            className="h-12 bg-neutral-950 text-white rounded-xl border-neutral-800"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    {(content['design_hero']?.items || []).map((item: any, idx: number) => (
+                                        <div key={item.id} className="p-6 border border-neutral-800 bg-neutral-950 rounded-2xl space-y-4 relative group">
+                                            <div className="absolute top-0 left-0 bottom-0 w-1 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                                            <h3 className="font-black text-xs uppercase text-blue-500 tracking-widest mb-2 flex items-center gap-2">
+                                                <ImageIcon className="w-3 h-3" /> Showcase Card {idx + 1}
+                                            </h3>
+
+                                            <div className="flex gap-4">
+                                                <div className="w-32 h-32 rounded-xl bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0 flex items-center justify-center group-hover:border-blue-500/50 transition-colors">
+                                                    {item.image ? <img src={item.image} className="w-full h-full object-cover" /> : <ImageIcon className="w-8 h-8 text-neutral-800" />}
+                                                </div>
+                                                <div className="flex-1 space-y-3">
+                                                    <div>
+                                                        <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest mb-1 block">Card Title</label>
+                                                        <Input
+                                                            value={item.title || ''}
+                                                            onChange={(e) => {
+                                                                const newItems = [...content['design_hero'].items];
+                                                                newItems[idx].title = e.target.value;
+                                                                setContent({ ...content, design_hero: { ...content['design_hero'], items: newItems } });
+                                                            }}
+                                                            className="h-9 text-xs bg-neutral-900 border-neutral-800 text-white"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest mb-1 block">Image URL</label>
+                                                        <Input
+                                                            value={item.image || ''}
+                                                            onChange={(e) => {
+                                                                const newItems = [...content['design_hero'].items];
+                                                                newItems[idx].image = e.target.value;
+                                                                setContent({ ...content, design_hero: { ...content['design_hero'], items: newItems } });
+                                                            }}
+                                                            className="h-9 text-[10px] bg-neutral-900 border-neutral-800 text-white"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                                <div>
+                                                    <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest mb-1 block">Overlay Color</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="color"
+                                                            value={item.overlay_color || '#000000'}
+                                                            onChange={(e) => {
+                                                                const newItems = [...content['design_hero'].items];
+                                                                newItems[idx].overlay_color = e.target.value;
+                                                                setContent({ ...content, design_hero: { ...content['design_hero'], items: newItems } });
+                                                            }}
+                                                            className="w-10 h-8 rounded-lg bg-transparent border-none cursor-pointer"
+                                                        />
+                                                        <span className="text-[10px] font-mono text-neutral-500">{item.overlay_color}</span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest mb-1 block">Opacity ({item.overlay_opacity}%)</label>
+                                                    <Input
+                                                        type="number"
+                                                        value={item.overlay_opacity || 50}
+                                                        onChange={(e) => {
+                                                            const newItems = [...content['design_hero'].items];
+                                                            newItems[idx].overlay_opacity = parseInt(e.target.value);
+                                                            setContent({ ...content, design_hero: { ...content['design_hero'], items: newItems } });
+                                                        }}
+                                                        className="h-9 text-xs bg-neutral-900 border-neutral-800 text-white"
+                                                    />
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest mb-1 block">Booking Action Link</label>
+                                                    <Input
+                                                        value={item.href || ''}
+                                                        onChange={(e) => {
+                                                            const newItems = [...content['design_hero'].items];
+                                                            newItems[idx].href = e.target.value;
+                                                            setContent({ ...content, design_hero: { ...content['design_hero'], items: newItems } });
+                                                        }}
+                                                        className="h-9 text-xs bg-neutral-900 border-neutral-800 text-white"
+                                                        placeholder="/services/design/book?service=..."
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </Card>
+
+                        {/* WORKFLOW CONFIGURATION (DESIGNING TO MOVE IN) */}
+                        <Card className="p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl bg-neutral-900">
+                            <div className="flex justify-between items-start mb-8">
+                                <div>
+                                    <h2 className="text-2xl font-black uppercase text-white italic tracking-tighter">Workflow <span className="text-blue-500">Slider</span></h2>
+                                    <p className="text-neutral-500 font-medium text-sm mt-1">Manage the steps for "Designing to Move In" (Homelane Style Slider).</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            const currentData = content['design_workflow'] || { steps: [] };
+                                            const newSteps = [...(currentData.steps || []), { id: Date.now(), title: '', description: '', image: '' }];
+                                            setContent({ ...content, design_workflow: { ...currentData, steps: newSteps } });
+                                        }}
+                                        className="rounded-xl font-bold uppercase text-xs border-neutral-700 text-white hover:bg-neutral-800"
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" /> Add Step
+                                    </Button>
+                                    <Button
+                                        onClick={() => handleSave('design_workflow', content['design_workflow'])}
+                                        disabled={saving}
+                                        className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-6 shadow-lg shadow-blue-900/40"
+                                    >
+                                        {saving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                                        Save Workflow
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                {(content['design_workflow']?.steps || []).map((step: any, idx: number) => (
+                                    <div key={step.id} className="p-6 border border-neutral-800 bg-neutral-950 rounded-2xl relative group hover:border-blue-500/30 transition-all">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => {
+                                                const newSteps = content['design_workflow'].steps.filter((s: any) => s.id !== step.id);
+                                                setContent({ ...content, design_workflow: { ...content['design_workflow'], steps: newSteps } });
+                                            }}
+                                            className="absolute top-4 right-4 text-neutral-600 hover:text-red-400 hover:bg-red-500/10"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </Button>
+
+                                        <div className="flex gap-6 items-start">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-black text-lg border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                                                    {(idx + 1).toString().padStart(2, '0')}
+                                                </div>
+                                                <div className="h-full w-px bg-neutral-800" />
+                                            </div>
+
+                                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-4">
+                                                    <div className="space-y-1">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Step Title</label>
+                                                        <Input
+                                                            value={step.title || ''}
+                                                            onChange={(e) => {
+                                                                const newSteps = [...content['design_workflow'].steps];
+                                                                newSteps[idx].title = e.target.value;
+                                                                setContent({ ...content, design_workflow: { ...content['design_workflow'], steps: newSteps } });
+                                                            }}
+                                                            className="font-bold border-neutral-800 bg-neutral-900 text-white"
+                                                            placeholder="e.g. Design Consultation"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Description</label>
+                                                        <Input
+                                                            value={step.description || ''}
+                                                            onChange={(e) => {
+                                                                const newSteps = [...content['design_workflow'].steps];
+                                                                newSteps[idx].description = e.target.value;
+                                                                setContent({ ...content, design_workflow: { ...content['design_workflow'], steps: newSteps } });
+                                                            }}
+                                                            className="text-sm border-neutral-800 bg-neutral-900 text-white h-20"
+                                                            placeholder="Briefly describe this step..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <div className="space-y-1">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Sketch Image URL</label>
+                                                        <div className="flex gap-4">
+                                                            <div className="w-24 h-24 rounded-2xl bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0 flex items-center justify-center group-hover:border-blue-500/50 transition-colors">
+                                                                {step.image ? <img src={step.image} className="w-full h-full object-contain p-2" /> : <ImageIcon className="w-8 h-8 text-neutral-800" />}
+                                                            </div>
+                                                            <Input
+                                                                value={step.image || ''}
+                                                                onChange={(e) => {
+                                                                    const newSteps = [...content['design_workflow'].steps];
+                                                                    newSteps[idx].image = e.target.value;
+                                                                    setContent({ ...content, design_workflow: { ...content['design_workflow'], steps: newSteps } });
+                                                                }}
+                                                                className="flex-1 text-[10px] border-neutral-800 bg-neutral-900 text-white self-end mb-2 h-9"
+                                                                placeholder="https://..."
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(!content['design_workflow']?.steps || content['design_workflow'].steps?.length === 0) && (
+                                    <div className="text-center py-10 text-neutral-500 font-medium bg-neutral-950 rounded-2xl border border-neutral-800 border-dashed">
+                                        No workflow steps added. Click "Add Step" to begin.
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+
+                        {/* CATEGORY SHOWCASE CONFIGURATION (NEW) */}
+                        <Card className="p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl bg-neutral-900">
+                            <div className="flex justify-between items-start mb-8">
+                                <div>
+                                    <h2 className="text-2xl font-black uppercase text-white italic tracking-tighter">Category <span className="text-blue-500">Showcase</span></h2>
+                                    <p className="text-neutral-500 font-medium text-sm mt-1">Select which design categories to feature in the Showcase section.</p>
+                                </div>
+                                <Button
+                                    onClick={() => handleSave('design_display_config', content['design_display_config'])}
+                                    disabled={saving}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-6 shadow-lg shadow-blue-900/40"
+                                >
+                                    {saving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                                    Save Categories
+                                </Button>
+                            </div>
+
+                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                {(() => {
+                                    const allCats = dependencies.allDesignCategories || []
+                                    const selectedIds = content['design_display_config']?.selected_ids || []
+
+                                    const toggleItem = (id: string) => {
+                                        const current = content['design_display_config']?.selected_ids || []
+                                        const newIds = current.includes(id) ? current.filter((x: string) => x !== id) : [...current, id]
+                                        setContent({ ...content, design_display_config: { ...content['design_display_config'], selected_ids: newIds } })
+                                    }
+
+                                    const roots = allCats.filter((c: any) => c.level === 0)
+                                    const byParent = (parentId: string) => allCats.filter((c: any) => c.parent_id === parentId)
+
+                                    const renderNode = (cat: any, depth: number): React.ReactNode => {
+                                        const children = byParent(cat.id)
+                                        const isCheckable = cat.level >= 2
+                                        const isChecked = selectedIds.includes(cat.id)
+
+                                        return (
+                                            <div key={cat.id} style={{ marginLeft: `${depth * 20}px` }}>
+                                                <div className={`flex items-center gap-3 py-2 px-3 rounded-xl transition-all ${isCheckable ? (isChecked ? 'bg-blue-500/10 border border-blue-500/30' : 'hover:bg-neutral-800 border border-transparent') : 'border border-transparent'}`}>
+                                                    {isCheckable ? (
+                                                        <Checkbox
+                                                            checked={isChecked}
+                                                            onCheckedChange={() => toggleItem(cat.id)}
+                                                            className="border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                                        />
+                                                    ) : (
+                                                        <span className="w-4 h-4 flex-shrink-0" />
+                                                    )}
+                                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest flex-shrink-0 ${cat.level === 0 ? 'bg-blue-600 text-white' : 'bg-neutral-800 text-neutral-400'}`}>
+                                                        {cat.level === 0 ? 'ROOT' : cat.level === 1 ? 'SUB' : cat.level === 2 ? 'ITEM' : 'L4'}
+                                                    </span>
+                                                    <span className={`text-sm ${isCheckable ? 'font-semibold cursor-pointer text-neutral-200 hover:text-white' : 'font-black text-neutral-400'}`} onClick={() => isCheckable && toggleItem(cat.id)}>
+                                                        {cat.name}
+                                                    </span>
+                                                </div>
+                                                {children.length > 0 && (
+                                                    <div className="mt-1 space-y-1">
+                                                        {children.map((child: any) => renderNode(child, depth + 1))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    }
+
+                                    if (roots.length === 0) return <div className="text-center py-10 text-neutral-500 italic">No design categories found.</div>
+
+                                    return roots.map((root: any) => (
+                                        <div key={root.id} className="border border-neutral-800 rounded-2xl p-4 mb-3 bg-neutral-950/50">
+                                            {renderNode(root, 0)}
+                                        </div>
+                                    ))
+                                })()}
+                            </div>
+                        </Card>
+
+                        {/* CLIENT STORIES CONFIGURATION (NEW) */}
+                        <Card className="p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl bg-neutral-900">
+                            <div className="flex justify-between items-start mb-8">
+                                <div>
+                                    <h2 className="text-2xl font-black uppercase text-white italic tracking-tighter">Client <span className="text-blue-500">Stories</span></h2>
+                                    <p className="text-neutral-500 font-medium text-sm mt-1">Manage the testimonials and reviews shown on the Design Landing Page.</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            const current = content['user_reviews'] || { title: '', items: [] };
+                                            setContent({
+                                                ...content,
+                                                user_reviews: {
+                                                    ...current,
+                                                    items: [...(current.items || []), { id: Date.now(), title: '', subtitle: '', description: '', image: '' }]
+                                                }
+                                            });
+                                        }}
+                                        className="rounded-xl font-bold uppercase text-xs border-neutral-700 text-white hover:bg-neutral-800"
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" /> Add Review
+                                    </Button>
+                                    <Button
+                                        onClick={() => handleSave('user_reviews', content['user_reviews'])}
+                                        disabled={saving}
+                                        className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-6 shadow-lg shadow-blue-900/40"
+                                    >
+                                        {saving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                                        Save Stories
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                {(content['user_reviews']?.items || []).map((review: any, index: number) => (
+                                    <div key={review.id} className="p-6 border border-neutral-800 bg-neutral-950 rounded-2xl space-y-4 relative group">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute top-4 right-4 text-neutral-500 hover:text-red-400 hover:bg-red-500/10"
+                                            onClick={() => {
+                                                const newItems = content['user_reviews'].items.filter((r: any) => r.id !== review.id)
+                                                setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
+                                            }}
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </Button>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                                            <div className="space-y-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Client Name</label>
+                                                    <Input
+                                                        value={review.title || ''}
+                                                        onChange={(e) => {
+                                                            const newItems = [...content['user_reviews'].items]
+                                                            newItems[index].title = e.target.value
+                                                            setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
+                                                        }}
+                                                        className="font-bold border-neutral-800 bg-neutral-900 text-white"
+                                                        placeholder="e.g. Ahmed Kabir"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Designation / Location</label>
+                                                    <Input
+                                                        value={review.subtitle || ''}
+                                                        onChange={(e) => {
+                                                            const newItems = [...content['user_reviews'].items]
+                                                            newItems[index].subtitle = e.target.value
+                                                            setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
+                                                        }}
+                                                        className="text-xs border-neutral-800 bg-neutral-900 text-white"
+                                                        placeholder="e.g. Interior Client, Dhaka"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Review Description</label>
+                                                    <Input
+                                                        value={review.description || ''}
+                                                        onChange={(e) => {
+                                                            const newItems = [...content['user_reviews'].items]
+                                                            newItems[index].description = e.target.value
+                                                            setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
+                                                        }}
+                                                        className="text-sm border-neutral-800 bg-neutral-900 text-white h-20"
+                                                        placeholder="Write the testimonial content here..."
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Client Image URL</label>
+                                                    <div className="flex gap-4">
+                                                        <div className="w-24 h-24 rounded-2xl bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0 flex items-center justify-center">
+                                                            {review.image ? <img src={review.image} className="w-full h-full object-cover" /> : <ImageIcon className="w-8 h-8 text-neutral-800" />}
+                                                        </div>
+                                                        <Input
+                                                            value={review.image || ''}
+                                                            onChange={(e) => {
+                                                                const newItems = [...content['user_reviews'].items]
+                                                                newItems[index].image = e.target.value
+                                                                setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
+                                                            }}
+                                                            className="flex-1 text-[10px] border-neutral-800 bg-neutral-900 text-white self-end mb-2 h-9"
+                                                            placeholder="https://..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(!content['user_reviews']?.items || content['user_reviews'].items?.length === 0) && (
+                                    <div className="text-center py-10 text-neutral-500 font-medium bg-neutral-950 rounded-2xl border border-neutral-800 border-dashed">
+                                        No reviews added. Click "Add Review" to begin.
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+
+                        {/* DESIGN PAGE LAYOUT CONTROLLER */}
+                        <Card className="p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl bg-neutral-900">
+                            <div className="flex justify-between items-center mb-8">
+                                <div>
+                                    <h2 className="text-2xl font-black uppercase text-white italic tracking-tighter">Design Page <span className="text-blue-500">Layout</span></h2>
+                                    <p className="text-neutral-500 font-medium text-sm mt-1">Order the sections specifically for the Design Landing Page.</p>
+                                </div>
+                                <Button
+                                    onClick={() => handleSave('design_page_layout', content['design_page_layout'])}
+                                    disabled={saving}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-6"
+                                >
+                                    {saving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                                    Save Design Layout
+                                </Button>
+                            </div>
+
+                            <div className="space-y-3">
+                                {(content['design_page_layout'] || []).map((section: any, index: number) => (
+                                    <div key={section.id} className={`flex items-center justify-between p-5 rounded-2xl border transition-all ${section.hidden ? 'bg-neutral-950/50 border-neutral-800/50 opacity-70' : 'bg-neutral-950 border-neutral-800 shadow-sm hover:border-blue-500/30'}`}>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex flex-col gap-1">
+                                                <button
+                                                    onClick={() => {
+                                                        if (index === 0) return;
+                                                        const newLayout = [...content['design_page_layout']];
+                                                        const temp = newLayout[index - 1];
+                                                        newLayout[index - 1] = newLayout[index];
+                                                        newLayout[index] = temp;
+                                                        setContent({ ...content, design_page_layout: newLayout });
+                                                    }}
+                                                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${index === 0 ? 'text-neutral-800 cursor-not-allowed' : 'bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white'}`}
+                                                >
+                                                    <ArrowUp className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const newLayout = [...content['design_page_layout']];
+                                                        if (index === newLayout.length - 1) return;
+                                                        const temp = newLayout[index + 1];
+                                                        newLayout[index + 1] = newLayout[index];
+                                                        newLayout[index] = temp;
+                                                        setContent({ ...content, design_page_layout: newLayout });
+                                                    }}
+                                                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${index === (content['design_page_layout']?.length || 0) - 1 ? 'text-neutral-800 cursor-not-allowed' : 'bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white'}`}
+                                                >
+                                                    <ArrowDown className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
+                                                {section.type === 'DesignHero' ? <LayoutTemplate className="w-5 h-5" /> :
+                                                    section.type === 'DesignWorkflow' ? <Coffee className="w-5 h-5" /> :
+                                                        section.type === 'DesignShowcase' ? <Settings className="w-5 h-5" /> :
+                                                            <Star className="w-5 h-5" />}
+                                            </div>
+                                            <div>
+                                                <h3 className={`font-black uppercase tracking-widest text-sm ${section.hidden ? 'text-neutral-500' : 'text-white'}`}>{section.title}</h3>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[10px] font-black uppercase text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">
+                                                        {section.type}
+                                                    </span>
+                                                    <span className="text-xs font-medium text-neutral-500">Key: {section.data_key}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => {
+                                                const newLayout = [...content['design_page_layout']];
+                                                newLayout[index].hidden = !newLayout[index].hidden;
+                                                setContent({ ...content, design_page_layout: newLayout });
+                                            }}
+                                            className={`rounded-xl w-12 h-12 transition-all ${section.hidden ? 'text-neutral-600' : 'text-blue-500 bg-blue-500/10'}`}
+                                        >
+                                            {section.hidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    </div>
                 </TabsContent>
             </Tabs>
         </div>

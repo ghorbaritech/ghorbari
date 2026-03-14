@@ -26,75 +26,70 @@ const TestimonialSlider = ({ title, items }: TestimonialSliderProps) => {
     if (!items || items.length === 0) return null
 
     return (
-        <section className="py-20 bg-white overflow-hidden">
-            <div className="section-container">
-                <div className="flex flex-col items-center mb-12 text-center">
-                    <h2 className="text-3xl md:text-5xl font-black text-neutral-900 mb-4 tracking-tight">
-                        {title || 'ক্লায়েন্টদের গল্প'}
-                    </h2>
-                    <div className="w-20 h-1.5 bg-blue-600 rounded-full" />
-                </div>
-
-                <div className="relative px-4">
-                    <Swiper
-                        modules={[Autoplay, Pagination, Navigation]}
-                        spaceBetween={30}
-                        slidesPerView={1}
-                        loop={true}
-                        autoplay={{
-                            delay: 5000,
-                            disableOnInteraction: false,
-                        }}
-                        pagination={{
-                            clickable: true,
-                            bulletClass: 'testimonial-bullet',
-                            bulletActiveClass: 'testimonial-bullet-active',
-                        }}
-                        breakpoints={{
-                            768: { slidesPerView: 2 },
-                            1280: { slidesPerView: 3 },
-                        }}
-                        className="!pb-16"
-                    >
-                        {items.map((item, index) => (
-                            <SwiperSlide key={item.id || index} className="h-auto">
-                                <div className="h-full bg-white border border-neutral-100 rounded-[2.5rem] p-8 md:p-10 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] flex flex-col relative group hover:border-blue-100 transition-all duration-300">
-                                    <div className="absolute top-8 right-8 text-blue-100 group-hover:text-blue-200 transition-colors">
-                                        <Quote size={60} strokeWidth={2.5} />
-                                    </div>
-
-                                    <div className="flex items-center gap-4 mb-8">
-                                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-md">
-                                            <img
-                                                src={item.image}
-                                                alt={item.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-neutral-900 text-xl leading-tight">
-                                                {item.title}
-                                            </h4>
-                                            <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mt-1">
-                                                {item.subtitle}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-1 mb-6">
-                                        {[1, 2, 3, 4, 5].map((_, i) => (
-                                            <Star key={i} size={16} fill="#FACC15" color="#FACC15" />
-                                        ))}
-                                    </div>
-
-                                    <p className="text-neutral-600 leading-relaxed text-lg font-medium italic">
-                                        "{item.description}"
-                                    </p>
+        <>
+            <div className="relative px-4">
+                <Swiper
+                    modules={[Autoplay, Pagination, Navigation]}
+                    spaceBetween={30}
+                    slidesPerView={1}
+                    loop={true}
+                    autoplay={{
+                        delay: 5000,
+                        disableOnInteraction: false,
+                    }}
+                    pagination={{
+                        clickable: true,
+                        bulletClass: 'testimonial-bullet',
+                        bulletActiveClass: 'testimonial-bullet-active',
+                    }}
+                    breakpoints={{
+                        768: { slidesPerView: 2 },
+                        1280: { slidesPerView: 3 },
+                    }}
+                    className="!pb-16"
+                >
+                    {items.map((item, index) => (
+                        <SwiperSlide key={item.id || index} className="h-auto">
+                            <div className="h-full bg-white border border-neutral-100 rounded-[2rem] p-8 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.08)] flex flex-col relative group hover:border-blue-100 transition-all duration-500">
+                                {/* Quote Icon */}
+                                <div className="absolute top-8 right-8 text-blue-100 group-hover:text-blue-200 transition-colors">
+                                    <Quote size={54} strokeWidth={2.5} />
                                 </div>
-                            </SwiperSlide>
-                        ))}
-                    </Swiper>
-                </div>
+
+                                {/* User Header */}
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-sm ring-2 ring-neutral-50">
+                                        <img
+                                            src={item.image}
+                                            alt={item.title}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-neutral-900 text-lg leading-tight mb-0.5">
+                                            {item.title}
+                                        </h4>
+                                        <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
+                                            {item.subtitle}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Ratings */}
+                                <div className="flex gap-1 mb-6">
+                                    {[1, 2, 3, 4, 5].map((_, i) => (
+                                        <Star key={i} size={14} fill="#FACC15" color="#FACC15" />
+                                    ))}
+                                </div>
+
+                                {/* Description */}
+                                <p className="text-neutral-500 leading-relaxed text-sm font-medium italic">
+                                    "{item.description}"
+                                </p>
+                            </div>
+                        </SwiperSlide>
+                    ))}
+                </Swiper>
             </div>
 
             <style jsx global>{`
@@ -114,7 +109,7 @@ const TestimonialSlider = ({ title, items }: TestimonialSliderProps) => {
                     border-radius: 10px;
                 }
             `}</style>
-        </section>
+        </>
     )
 }
 
