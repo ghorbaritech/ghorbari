@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react";
-import { ProductCard } from "@/components/ui/ProductCard";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Filter, ChevronRight, LayoutGrid, Star } from "lucide-react";
+import Link from "next/link";
+import { Loader2, ChevronRight, Star } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { getL } from "@/utils/localization";
 
@@ -22,6 +21,21 @@ export function DesignL3Display({ packages, categories, loading, config }: Desig
     const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
 
     const selectedIds = config?.selected_ids || [];
+
+    // Helper to determine root service type
+    const getServiceType = (item: any): 'interior' | 'structural' => {
+        let current = item;
+        while (current) {
+            if (current.level === 0 || !current.parent_id) {
+                const name = (current.name || '').toLowerCase();
+                if (name.includes('interior')) return 'interior';
+                return 'structural';
+            }
+            // Support both objects and IDs if needed, but here categories is the full list
+            current = categories.find(c => c.id === current.parent_id);
+        }
+        return 'structural';
+    };
 
     // Helper to check if a category or any of its descendants are in the selected list
     const hasSelection = (catId: string): boolean => {
@@ -161,51 +175,58 @@ export function DesignL3Display({ packages, categories, loading, config }: Desig
                             </div>
                         ) : displayItems.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {displayItems.map((item: any) => (
-                                    <div
-                                        key={item.id}
-                                        onClick={() => handleCategoryClick(item)}
-                                        className="group cursor-pointer bg-white rounded-2xl border border-neutral-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden flex flex-col h-full"
-                                    >
-                                        {/* Image wrapper */}
-                                        <div className="aspect-square relative overflow-hidden bg-neutral-50">
-                                            <img
-                                                src={item.icon_url || item.image || `https://source.unsplash.com/featured/?${encodeURIComponent(item.name)},design`}
-                                                alt={getL(item.name, item.name_bn, language)}
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                            />
-                                            {/* Rating Badge */}
-                                            <div className="absolute top-3 right-3">
-                                                <span className="bg-white/90 backdrop-blur-md text-neutral-900 text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm flex items-center gap-1">
-                                                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                                    4.9
-                                                </span>
-                                            </div>
-                                        </div>
+                                {displayItems.map((item: any) => {
+                                    const serviceType = getServiceType(item);
+                                    const bookingUrl = `/services/design/book?service=${serviceType}`;
 
-                                        {/* Content */}
-                                        <div className="p-5 flex flex-col flex-1">
-                                            <h3 className="font-bold text-neutral-900 text-base mb-1 group-hover:text-red-600 transition-colors">
-                                                {getL(item.name, item.name_bn, language)}
-                                            </h3>
-                                            <p className="text-neutral-500 text-[11px] mb-4 line-clamp-1">
-                                                {item.level === 0 ? 'Root Category' : item.level === 1 ? 'Sub-Category' : 'Design Collection'}
-                                            </p>
-
-                                            <div className="mt-auto flex items-center justify-between">
-                                                <div className="flex flex-col">
-                                                    <span className="text-[8px] text-neutral-400 font-bold uppercase tracking-widest">{t.lbl_starting_from}</span>
-                                                    <span className="text-lg font-black text-neutral-900">
-                                                        ৳{(item.metadata?.price || 5000).toLocaleString()}
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            onClick={() => handleCategoryClick(item)}
+                                            className="group cursor-pointer bg-white rounded-2xl border border-neutral-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden flex flex-col h-full"
+                                        >
+                                            {/* Image wrapper */}
+                                            <div className="aspect-square relative overflow-hidden bg-neutral-50">
+                                                <img
+                                                    src={item.icon_url || item.image || `https://source.unsplash.com/featured/?${encodeURIComponent(item.name)},design`}
+                                                    alt={getL(item.name, item.name_bn, language)}
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                />
+                                                {/* Rating Badge */}
+                                                <div className="absolute top-3 right-3">
+                                                    <span className="bg-white/90 backdrop-blur-md text-neutral-900 text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm flex items-center gap-1">
+                                                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                                        4.9
                                                     </span>
                                                 </div>
-                                                <button className="bg-neutral-900 text-white text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg hover:bg-black transition-colors">
-                                                    {t.service_book_now}
-                                                </button>
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="p-5 flex flex-col flex-1">
+                                                <h3 className="font-bold text-neutral-900 text-base mb-1 group-hover:text-red-600 transition-colors">
+                                                    {getL(item.name, item.name_bn, language)}
+                                                </h3>
+                                                <p className="text-neutral-500 text-[11px] mb-4 line-clamp-1">
+                                                    {item.level === 0 ? 'Root Category' : item.level === 1 ? 'Sub-Category' : 'Design Collection'}
+                                                </p>
+
+                                                <div className="mt-auto flex items-center justify-between">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[8px] text-neutral-400 font-bold uppercase tracking-widest">{t.lbl_starting_from}</span>
+                                                        <span className="text-lg font-black text-neutral-900">
+                                                            ৳{(item.metadata?.price || 5000).toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                    <Link href={bookingUrl} onClick={(e) => e.stopPropagation()}>
+                                                        <button className="bg-neutral-900 text-white text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg hover:bg-black transition-colors">
+                                                            {t.service_book_now}
+                                                        </button>
+                                                    </Link>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="text-center py-20 bg-neutral-50 rounded-3xl border border-dashed border-neutral-200">

@@ -39,11 +39,11 @@ export function DesignHero({ data }: DesignHeroProps) {
     return (
         <section className="pt-8 pb-12 px-6 container mx-auto">
             <div className="mb-10 text-center animate-in fade-in slide-in-from-top-4 duration-1000">
-                <h1 className="text-2xl md:text-4xl font-bold text-neutral-900 tracking-tight mb-3">
+                <h1 className="text-2xl md:text-4xl font-bold text-neutral-900 tracking-tight mb-3 line-clamp-1">
                     {getL(data.title, data.titleBn, language)}
                 </h1>
-                <p className="text-neutral-500 max-w-xl mx-auto font-medium text-xs md:text-sm leading-relaxed opacity-80">
-                    {getL(data.subtitle, data.subtitleBn, language)}
+                <p className="text-neutral-500 max-w-2xl mx-auto font-medium text-xs md:text-sm leading-relaxed opacity-80 line-clamp-1">
+                    {getL(data.subtitle, data.subtitleBn || "ভাবনা থেকে বাড়ি", language)}
                 </p>
             </div>
 

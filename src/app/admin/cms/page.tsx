@@ -1650,12 +1650,21 @@ export default function CMSPage() {
                                             className="h-12 bg-neutral-950 text-white rounded-xl border-neutral-800"
                                         />
                                     </div>
-                                    <div className="space-y-2 md:col-span-2">
-                                        <label className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Hero Subtitle</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Hero Subtitle (English)</label>
                                         <Input
                                             value={content['design_hero']?.subtitle || ''}
                                             onChange={(e) => setContent({ ...content, design_hero: { ...content['design_hero'], subtitle: e.target.value } })}
                                             className="h-12 bg-neutral-950 text-white rounded-xl border-neutral-800"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Hero Subtitle (Bengali)</label>
+                                        <Input
+                                            value={content['design_hero']?.subtitleBn || ''}
+                                            onChange={(e) => setContent({ ...content, design_hero: { ...content['design_hero'], subtitleBn: e.target.value } })}
+                                            className="h-12 bg-neutral-950 text-white rounded-xl border-neutral-800"
+                                            placeholder="ভাবনা থেকে বাড়ি"
                                         />
                                     </div>
                                 </div>
