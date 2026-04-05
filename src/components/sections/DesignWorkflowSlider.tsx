@@ -41,7 +41,7 @@ export function DesignWorkflowSlider({ data }: DesignWorkflowSliderProps) {
             <div className="container mx-auto px-6">
                 <div className="text-center mb-10">
                     <h2 className="text-lg md:text-xl font-bold text-neutral-900 mb-2">
-                        {getL(data.title, data.titleBn, language)}
+                        {getL(data.title, data.titleBn || "ভাবনা থেকে বাড়ি", language)}
                     </h2>
                 </div>
 
@@ -119,11 +119,12 @@ export function DesignWorkflowSlider({ data }: DesignWorkflowSliderProps) {
                                             onError={(e) => {
                                                 const target = e.target as HTMLImageElement;
                                                 // Prevent infinite loop if fallback also fails
-                                                if (target.src.includes('photo-1497366216548-37526070297c')) {
+                                                if (target.src.includes('images.unsplash.com/photo-1497366216548-37526070297c')) {
                                                     target.src = "https://placehold.co/1200x800?text=Design+Step"; // Absolute last resort
                                                     return;
                                                 }
-                                                console.error("Image failed to load:", step.image);
+                                                // Log as warning to avoid cluttering error monitoring while providing fallback
+                                                console.warn("Image loading failure (handled by fallback):", step.image);
                                                 target.src = "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80"; // Reliable office/design fallback
                                             }}
                                         />

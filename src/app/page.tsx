@@ -38,6 +38,7 @@ export default async function Home() {
   });
 
   const pageLayout = contentMap['page_layout'] || [];
+  console.log('FINAL PAGE LAYOUT ORDER:', pageLayout.map((l: any) => l.data_key));
 
   return (
     <main className="min-h-screen flex flex-col font-sans bg-neutral-50 overflow-x-hidden">

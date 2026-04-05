@@ -27,11 +27,36 @@ export async function getSellerProfile(sellerId: string) {
 
     // 2. Try fetching Designer Profile (if any) linked to this user
     let designerData: any = null
-    let targetUserId = sellerData?.user_id || sellerId; // fallback to sellerId if it might be a user_id without a seller profile
+    let targetUserId = sellerData?.user_id || sellerId;
 
-    // Some partners might ONLY be designers and not have a row in `sellers`.
-    // Let's ensure we fetch their designer row either way.
-    if (targetUserId) {
+    // Path A: seller found → look up designer by seller's user_id
+    // Path B: no seller → the ID might be a designers.id directly (e.g. from booking wizard)
+    // Path C: no seller → the ID might be a profiles.user_id where designer.user_id = sellerId
+    if (!sellerData) {
+        // Try finding designer directly by designers.id
+        const { data: designerById } = await supabase
+            .from('designers')
+            .select('*')
+            .eq('id', sellerId)
+            .single()
+
+        if (designerById) {
+            designerData = designerById;
+            targetUserId = designerById.user_id;
+        } else {
+            // Try by user_id (profile.id passed in URL)
+            const { data: designerByUser } = await supabase
+                .from('designers')
+                .select('*')
+                .eq('user_id', sellerId)
+                .single()
+            if (designerByUser) {
+                designerData = designerByUser;
+                targetUserId = designerByUser.user_id;
+            }
+        }
+    } else {
+        // Seller found — supplement with designer row if they also offer design services
         const { data: dData } = await supabase
             .from('designers')
             .select('*')

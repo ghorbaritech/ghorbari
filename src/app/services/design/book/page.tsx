@@ -11,11 +11,114 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Car, Trees, Waves, Dog, Baby, FileText, CheckCircle2, UserCircle, Map as MapIcon, Hash, CheckSquare, Star } from 'lucide-react';
+import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Wind, Car, Trees, Waves, Dog, Baby, FileText, CheckCircle2, UserCircle, Map as MapIcon, Hash, CheckSquare, Star } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { designTranslations } from '@/utils/designTranslations';
 import { useLanguage } from '@/context/LanguageContext';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
+
+// Layout Types
+type UnitDetail = {
+    unitId: number;
+    bedrooms: string;
+    drawingRooms: string;
+    bathrooms: string;
+    balcony: string;
+    kitchen: string;
+    diningRooms: string;
+    additionalSpace: string;
+};
+
+type LayoutData = {
+    id: number;
+    isGarage: string; // 'yes' | 'no'
+    numberOfUnits: string;
+    unitsAreIdentical: string; // 'yes' | 'no'
+    unitDetails: UnitDetail[];
+};
+
+const UnitInputs = ({ layoutId, unit, updateFn, t, title }: { layoutId: number, unit: UnitDetail, updateFn: any, t: any, title: string }) => (
+    <div className="space-y-6 animate-in slide-in-from-left-4 duration-500">
+        <div className="flex items-center gap-3">
+            <div className="h-8 w-1 bg-primary-600 rounded-full" />
+            <h4 className="font-black text-neutral-800 text-sm uppercase tracking-wider">{title}</h4>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.bed}</Label>
+                <Input 
+                    type="number" 
+                    placeholder="2" 
+                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
+                    value={unit.bedrooms} 
+                    onChange={(e) => updateFn(layoutId, unit.unitId, 'bedrooms', e.target.value)} 
+                />
+            </div>
+            <div className="space-y-2">
+                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.drawing}</Label>
+                <Input 
+                    type="number" 
+                    placeholder="1" 
+                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
+                    value={unit.drawingRooms} 
+                    onChange={(e) => updateFn(layoutId, unit.unitId, 'drawingRooms', e.target.value)} 
+                />
+            </div>
+            <div className="space-y-2">
+                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.bath}</Label>
+                <Input 
+                    type="number" 
+                    placeholder="2" 
+                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
+                    value={unit.bathrooms} 
+                    onChange={(e) => updateFn(layoutId, unit.unitId, 'bathrooms', e.target.value)} 
+                />
+            </div>
+            <div className="space-y-2">
+                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.balcony}</Label>
+                <Input 
+                    type="number" 
+                    placeholder="2" 
+                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
+                    value={unit.balcony} 
+                    onChange={(e) => updateFn(layoutId, unit.unitId, 'balcony', e.target.value)} 
+                />
+            </div>
+            <div className="space-y-2">
+                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.kitchen}</Label>
+                <Input 
+                    type="number" 
+                    placeholder="1" 
+                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
+                    value={unit.kitchen} 
+                    onChange={(e) => updateFn(layoutId, unit.unitId, 'kitchen', e.target.value)} 
+                />
+            </div>
+            <div className="space-y-2">
+                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">Dining</Label>
+                <Input 
+                    type="number" 
+                    placeholder="1" 
+                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
+                    value={unit.diningRooms} 
+                    onChange={(e) => updateFn(layoutId, unit.unitId, 'diningRooms', e.target.value)} 
+                />
+            </div>
+            <div className="space-y-2 sm:col-span-2 lg:col-span-2">
+                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.additionalSpace}</Label>
+                <Input 
+                    type="text" 
+                    placeholder="e.g. Study room, Store" 
+                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
+                    value={unit.additionalSpace} 
+                    onChange={(e) => updateFn(layoutId, unit.unitId, 'additionalSpace', e.target.value)} 
+                />
+            </div>
+        </div>
+    </div>
+);
 
 // Service Types
 type ServiceType = 'structural-architectural' | 'interior';
@@ -53,6 +156,7 @@ function DesignBookingWizard() {
     const [step, setStep] = useState(initialService === 'interior' ? 8 : (initialService ? 1 : 0));
     const [serviceType, setServiceType] = useState<ServiceType | null>(initialService);
     const [loading, setLoading] = useState(false);
+    const [cmsWizardData, setCmsWizardData] = useState<any>(null);
 
     // Eligible designers fetched from DB
     const [designers, setDesigners] = useState<any[]>([]);
@@ -70,17 +174,28 @@ function DesignBookingWizard() {
         hasBuildingApproval: false,
 
         // Design Questionnaire Fields
-        landAreaKatha: '',
-        plotOrientation: [] as string[],
+        landAreaInput: '',
+        landAreaUnit: 'Katha',
         initialFloors: '',
-        unitsPerFloor: '',
-        bedroomsPerUnit: '',
-        bathroomsPerUnit: '',
-        drawingRoomPerUnit: '',
-        kitchenPerUnit: '',
-        balconyPerUnit: '',
-        othersPerUnit: '',
+        numberOfLayouts: '1',
+        layoutsData: [{
+            id: 1,
+            isGarage: 'no',
+            numberOfUnits: '1',
+            unitsAreIdentical: 'yes',
+            unitDetails: [{
+                unitId: 1,
+                bedrooms: '',
+                drawingRooms: '',
+                bathrooms: '',
+                balcony: '',
+                kitchen: '',
+                diningRooms: '',
+                additionalSpace: ''
+            }]
+        }] as LayoutData[],
         specialZones: [] as string[],
+        plotOrientation: [] as string[],
         structuralVibe: '',
         soilTest: '',
         roofFeatures: [] as string[],
@@ -119,21 +234,52 @@ function DesignBookingWizard() {
     );
 
     useEffect(() => {
+        async function fetchCMSData() {
+            try {
+                const { data } = await supabase.from('home_content').select('content').eq('section_key', 'design_wizard_structural').single();
+                if (data?.content) {
+                    setCmsWizardData(data.content);
+                }
+            } catch (err) {
+                console.error("Error fetching structural wizard CMS data:", err);
+            }
+        }
+        if (serviceTypes.includes('structural-architectural')) {
+            fetchCMSData();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [JSON.stringify(serviceTypes)]);
+
+    useEffect(() => {
         async function fetchDesigners() {
             try {
                 const reqSpecs: string[] = [];
                 if (serviceTypes.includes('structural-architectural')) reqSpecs.push('Structural & architectural');
                 if (serviceTypes.includes('interior')) reqSpecs.push('Interior design');
 
-                let query = supabase.from('designers').select('*, profile:profiles(*)');
+                // Try specialization-filtered query first
+                let query = supabase
+                    .from('designers')
+                    .select('*, profile:profiles(*)');
 
                 if (reqSpecs.length > 0) {
                     query = query.overlaps('active_specializations', reqSpecs);
                 }
 
-                const { data } = await query;
+                let { data, error } = await query;
+                console.log('[Designers] specialization query:', data?.length, error);
+
+                // Fallback 1: any designer with a matching specialization but no is_active filter
+                if (!data || data.length === 0) {
+                    const fb1 = await supabase
+                        .from('designers')
+                        .select('*, profile:profiles(*)');
+                    data = fb1.data;
+                    console.log('[Designers] fallback all:', data?.length, fb1.error);
+                }
+
                 if (data) {
-                    const processed = data.map(d => ({
+                    const processed = data.map((d: any) => ({
                         ...d,
                         specializations: Array.isArray(d.specializations)
                             ? d.specializations.map((s: any) => typeof s === 'string' ? s : JSON.stringify(s))
@@ -146,7 +292,8 @@ function DesignBookingWizard() {
             }
         }
         fetchDesigners();
-    }, [serviceTypes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [JSON.stringify(serviceTypes)]);
 
 
     const updateData = (key: string, value: any) => {
@@ -163,6 +310,84 @@ function DesignBookingWizard() {
             }
         });
     };
+
+    const updateLayoutData = (layoutId: number, field: string, value: any) => {
+        setFormData(prev => ({
+            ...prev,
+            layoutsData: prev.layoutsData.map(l => l.id === layoutId ? { ...l, [field]: value } : l)
+        }));
+    };
+
+    const updateUnitDetail = (layoutId: number, unitId: number, field: string, value: any) => {
+        setFormData(prev => ({
+            ...prev,
+            layoutsData: prev.layoutsData.map(l => l.id === layoutId ? {
+                ...l,
+                unitDetails: l.unitDetails.map(u => u.unitId === unitId ? { ...u, [field]: value } : u)
+            } : l)
+        }));
+    };
+
+    const handleNumUnitsChange = (layoutId: number, num: string) => {
+        const n = parseInt(num) || 1;
+        setFormData(prev => ({
+            ...prev,
+            layoutsData: prev.layoutsData.map(l => {
+                if (l.id !== layoutId) return l;
+                const currentUnits = [...l.unitDetails];
+                if (currentUnits.length === n) return { ...l, numberOfUnits: num };
+                if (currentUnits.length < n) {
+                    for (let i = currentUnits.length + 1; i <= n; i++) {
+                        currentUnits.push({
+                            unitId: i,
+                            bedrooms: '',
+                            drawingRooms: '',
+                            bathrooms: '',
+                            balcony: '',
+                            kitchen: '',
+                            diningRooms: '',
+                            additionalSpace: ''
+                        });
+                    }
+                } else {
+                    currentUnits.splice(n);
+                }
+                return { ...l, numberOfUnits: num, unitDetails: currentUnits };
+            })
+        }));
+    };
+
+    useEffect(() => {
+        const num = parseInt(formData.numberOfLayouts) || 1;
+        if (formData.layoutsData.length !== num) {
+            setFormData(prev => {
+                const currentLayouts = [...prev.layoutsData];
+                if (currentLayouts.length < num) {
+                    for (let i = currentLayouts.length + 1; i <= num; i++) {
+                        currentLayouts.push({
+                            id: i,
+                            isGarage: 'no',
+                            numberOfUnits: '1',
+                            unitsAreIdentical: 'yes',
+                            unitDetails: [{
+                                unitId: 1,
+                                bedrooms: '',
+                                drawingRooms: '',
+                                bathrooms: '',
+                                balcony: '',
+                                kitchen: '',
+                                diningRooms: '',
+                                additionalSpace: ''
+                            }]
+                        });
+                    }
+                } else {
+                    currentLayouts.splice(num);
+                }
+                return { ...prev, layoutsData: currentLayouts };
+            });
+        }
+    }, [formData.numberOfLayouts]);
 
     const showsDesignQ = formData.designerOption === 'design' || formData.designerOption === 'both';
     const skippableListStep = formData.designerSelectionType === 'ghorbari';
@@ -226,13 +451,25 @@ function DesignBookingWizard() {
                 preferredSchedule: {
                     date: formData.preferredDate,
                     time: formData.preferredTime
-                }
+                },
+                // Add specific structural fields for backend clarity if needed
+                buildingDetails: serviceTypes.includes('structural-architectural') ? {
+                    landArea: formData.landAreaInput,
+                    landAreaUnit: formData.landAreaUnit,
+                    floors: formData.initialFloors,
+                    layouts: formData.layoutsData
+                } : null
             };
             delete payloadDetails.aptInspiration;
             delete payloadDetails.roomInspiration;
             delete payloadDetails.roomImage;
             delete payloadDetails.preferredDate;
             delete payloadDetails.preferredTime;
+            // Clean up old fields that are now nested
+            delete payloadDetails.landAreaInput;
+            delete payloadDetails.landAreaUnit;
+            delete payloadDetails.initialFloors;
+            delete payloadDetails.layoutsData;
 
             const { error } = await supabase.from('design_bookings').insert({
                 user_id: user.id,
@@ -255,122 +492,90 @@ function DesignBookingWizard() {
         if (step === 0) {
             if (serviceTypes.includes('structural-architectural')) setStep(1);
             else if (serviceTypes.includes('interior')) setStep(8);
-            else setStep(12);
+            else setStep(13);
         } else if (step >= 1 && step <= 7) {
-            // End of Structural logic
-
+            // Structural flow: always go through checklist (step 2) then upload (step 3)
             if (step === 1) setStep(2);
-            else if (step === 2) {
-                if (showsDesignQ) setStep(3);
-                else setStep(6);
+            else if (step === 2) setStep(3);
+            else if (step === 3) {
+                if (showsDesignQ) setStep(4);
+                else if (serviceTypes.includes('interior')) setStep(8);
+                else setStep(11);
             }
-            else if (step === 3) setStep(4);
             else if (step === 4) setStep(5);
             else if (step === 5) setStep(6);
-            else if (step === 6) {
-                if (skippableListStep) {
-                    if (serviceTypes.includes('interior')) setStep(8);
-                    else setStep(12);
-                }
-                else setStep(7);
-            }
+            else if (step === 6) setStep(7);
             else if (step === 7) {
                 if (serviceTypes.includes('interior')) setStep(8);
-                else setStep(12);
+                else setStep(11);
             }
-        } else if (step >= 8 && step <= 11) {
-            // End of Interior logic
+        } else if (step >= 8 && step <= 10) {
+            // Interior flow
             if (step === 8) setStep(9);
             else if (step === 9) setStep(10);
             else if (step === 10) setStep(11);
-            else if (step === 11) setStep(12);
+        } else if (step === 11) {
+            // Designer route decision
+            if (skippableListStep) setStep(13); // Skip list, go to schedule
+            else setStep(12); // Go to designer selection list
         } else if (step === 12) {
-            setStep(13);
+            setStep(13); // From list to schedule
+        } else if (step === 13) {
+            setStep(14); // From schedule to review
         }
     };
 
     const prevStep = () => {
         if (step === 1) setStep(0);
-        else if (step > 1 && step <= 7) {
-
-            if (step === 6 && !showsDesignQ) setStep(2);
-            else if (step === 7) setStep(6);
+        else if (step >= 2 && step <= 7) {
+            if (step === 4) setStep(3);
             else setStep(step - 1);
         } else if (step === 8) {
             if (serviceTypes.includes('structural-architectural')) {
-                let skippableListStep = formData.designerSelectionType === 'ghorbari';
-                if (skippableListStep) setStep(6);
-                else setStep(7);
-            } else {
-                setStep(0);
-            }
-        } else if (step > 8 && step <= 11) {
+                if (showsDesignQ) setStep(7);
+                else setStep(3);
+            } else setStep(0);
+        } else if (step >= 9 && step <= 10) {
             setStep(step - 1);
-        } else if (step === 12) {
-            if (serviceTypes.includes('interior')) setStep(11);
+        } else if (step === 11) {
+            if (serviceTypes.includes('interior')) setStep(10);
             else if (serviceTypes.includes('structural-architectural')) {
-                let skippableListStep = formData.designerSelectionType === 'ghorbari';
-                if (skippableListStep) setStep(6);
-                else setStep(7);
-            } else {
-                setStep(0);
-            }
+                if (showsDesignQ) setStep(7);
+                else setStep(3);
+            } else setStep(0);
+        } else if (step === 12) {
+            setStep(11);
         } else if (step === 13) {
-            setStep(12);
+            if (skippableListStep) setStep(11);
+            else setStep(12);
+        } else if (step === 14) {
+            setStep(13);
         }
     };
 
-    const getDynamicTotalSteps = () => {
-        let total = 1; // Start with Selection
+
+    const getActiveSteps = () => {
+        const active: number[] = [0];
         if (serviceTypes.includes('structural-architectural')) {
-            let structuralTotal = 6;
-            if (!showsDesignQ) structuralTotal -= 3;
-            if (skippableListStep) structuralTotal -= 1;
-            total += structuralTotal;
+            active.push(1);
+            if (formData.designerOption !== 'design') active.push(2);
+            active.push(3);
+            if (showsDesignQ) {
+                active.push(4, 5, 6, 7);
+            }
         }
         if (serviceTypes.includes('interior')) {
-            total += 3; // Property, Req, Schedule
+            active.push(8, 9, 10);
         }
-        total += 2; // Extra 1 for booking schedule vs review
-        return total;
+        active.push(11);
+        if (!skippableListStep) active.push(12);
+        active.push(13, 14);
+        return active;
     };
 
-    const getVisualStep = () => {
-        let visual = 0;
-        if (step === 0) return 1;
-
-        visual = 2; // Step 0 is step 1
-        if (step >= 1 && step <= 7) {
-
-            let structuralVisual = step;
-            if (!showsDesignQ && step > 2) structuralVisual -= 3;
-            if (skippableListStep && step > 6) structuralVisual -= 1;
-            return visual + structuralVisual - 1;
-        }
-
-        if (serviceTypes.includes('structural-architectural')) {
-            let structuralSteps = 6;
-            if (!showsDesignQ) structuralSteps -= 3;
-            if (skippableListStep) structuralSteps -= 1;
-            visual += structuralSteps;
-        }
-
-        if (step >= 8 && step <= 11) {
-            return visual + (step - 8);
-        }
-
-        if (serviceTypes.includes('interior')) {
-            visual += 3;
-        }
-
-        if (step === 12) return visual;
-        if (step === 13) return visual + 1;
-
-        return visual;
-    };
-
-    const visualStep = getVisualStep();
-    const totalSteps = getDynamicTotalSteps();
+    const activeSteps = getActiveSteps();
+    const totalSteps = activeSteps.length;
+    const visualStep = activeSteps.indexOf(step) + 1;
 
     const timeSlots = [
         "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
@@ -453,858 +658,706 @@ function DesignBookingWizard() {
             </MainLayout>
         );
     }
-
-    // --- STRUCTURAL & ARCHITECTURAL ---
-    if (step >= 1 && step <= 7) {
-        let showsApprovalQ = formData.designerOption === 'approval' || formData.designerOption === 'both';
-
-        let visualStep = step;
-        if (!showsDesignQ && step > 2) visualStep -= 3;
-        if (skippableListStep && step > 6) visualStep -= 1;
-        // Adjust visual step for review if schedule is inserted
-        if (step === 9) visualStep = getDynamicTotalSteps();
-
-        if (step === 1) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step1-${lang}`}
-                        lang={lang}
-                        title={typeof t.findDesignerTitle === 'string' ? t.findDesignerTitle : "Find a Designer"}
-                        description={typeof t.findDesignerDesc === 'string' ? t.findDesignerDesc : "Pick how you'd like to find your structural expert."}
-                        currentStep={visualStep - 1}
-                        totalSteps={totalSteps}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                        canNext={!!formData.designerOption}
-                    >
-                        <RadioCardGroup
-                            options={[
-                                { id: 'approval', label: t.buildingApproval, icon: FileText, description: t.buildingApprovalDesc },
-                                { id: 'design', label: t.buildingDesign, icon: Building2, description: t.buildingDesignDesc },
-                                { id: 'both', label: t.bothApprovalDesign, icon: CheckSquare, description: t.bothApprovalDesignDesc },
-                            ]}
-                            selected={formData.designerOption}
-                            onChange={(id) => updateData('designerOption', id)}
-                        />
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
-
-        if (step === 2) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step2-${lang}`}
-                        lang={lang}
-                        title={typeof t.docChecklistTitle === 'string' ? t.docChecklistTitle : "Documents"}
-                        description={typeof t.docChecklistDesc === 'string' ? t.docChecklistDesc : "Help us understand your project better."}
-                        currentStep={visualStep - 1}
-                        totalSteps={totalSteps}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                        canNext={true}
-                    >
-                        <div className="space-y-8">
-                            {showsApprovalQ && (
-                                <div className="space-y-4">
-                                    <Label className="text-lg font-bold block text-primary-900 border-b pb-2">{t.approvalDocs}</Label>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasDeed ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasDeed', !formData.hasDeed)}>
-                                            <Checkbox checked={formData.hasDeed} className="mt-1" />
-                                            <div>
-                                                <span className="font-bold text-sm block">{t.deedDoc}</span>
-                                                <span className="text-xs text-neutral-500">{t.deedDocDesc}</span>
-                                            </div>
-                                        </div>
-                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasSurveyMap ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasSurveyMap', !formData.hasSurveyMap)}>
-                                            <Checkbox checked={formData.hasSurveyMap} className="mt-1" />
-                                            <div>
-                                                <span className="font-bold text-sm block">{t.surveyMap}</span>
-                                                <span className="text-xs text-neutral-500">{t.surveyMapDesc}</span>
-                                            </div>
-                                        </div>
-                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasMutation ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasMutation', !formData.hasMutation)}>
-                                            <Checkbox checked={formData.hasMutation} className="mt-1" />
-                                            <div>
-                                                <span className="font-bold text-sm block">{t.mutation}</span>
-                                                <span className="text-xs text-neutral-500">{t.mutationDesc}</span>
-                                            </div>
-                                        </div>
-                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasTax ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasTax', !formData.hasTax)}>
-                                            <Checkbox checked={formData.hasTax} className="mt-1" />
-                                            <div>
-                                                <span className="font-bold text-sm block">{t.tax}</span>
-                                                <span className="text-xs text-neutral-500">{t.taxDesc}</span>
-                                            </div>
-                                        </div>
-                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasNID ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasNID', !formData.hasNID)}>
-                                            <Checkbox checked={formData.hasNID} className="mt-1" />
-                                            <div>
-                                                <span className="font-bold text-sm block">{t.nid}</span>
-                                                <span className="text-xs text-neutral-500">{t.nidDesc}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {showsDesignQ && (
-                                <div className="space-y-4">
-                                    <Label className="text-lg font-bold block text-primary-900 border-b pb-2">{t.designDocs}</Label>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasLandPermit ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasLandPermit', !formData.hasLandPermit)}>
-                                            <Checkbox checked={formData.hasLandPermit} className="mt-1" />
-                                            <div>
-                                                <span className="font-bold text-sm block">{t.landPermit}</span>
-                                                <span className="text-xs text-neutral-500">{t.landPermitDesc}</span>
-                                            </div>
-                                        </div>
-                                        <div className={`border rounded-xl p-4 flex items-start gap-4 cursor-pointer transition-all ${formData.hasBuildingApproval ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'}`} onClick={() => updateData('hasBuildingApproval', !formData.hasBuildingApproval)}>
-                                            <Checkbox checked={formData.hasBuildingApproval} className="mt-1" />
-                                            <div>
-                                                <span className="font-bold text-sm block">{t.buildingApprovalDoc}</span>
-                                                <span className="text-xs text-neutral-500">{t.buildingApprovalDocDesc}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
-
-        if (step === 3 && showsDesignQ) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step3-${lang}`}
-                        lang={lang}
-                        title={typeof t.spaceLayoutTitle === 'string' ? t.spaceLayoutTitle : "Layout"}
-                        description={typeof t.spaceLayoutDesc === 'string' ? t.spaceLayoutDesc : "Space and layout details."}
-                        currentStep={visualStep - 1}
-                        totalSteps={totalSteps}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                        canNext={!!formData.landAreaKatha && !!formData.initialFloors}
-                    >
-                        <div className="max-w-2xl mx-auto space-y-8">
-                            {/* QUESTIONS grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                                {/* Q1: Land Area */}
-                                <div className="space-y-3">
-                                    <Label className="font-bold text-neutral-700">{t.landAreaQ}</Label>
-                                    <Input type="number" placeholder="e.g. 5" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.landAreaKatha} onChange={(e) => updateData('landAreaKatha', e.target.value)} />
-                                </div>
-                                {/* Q3: Initial floors */}
-                                <div className="space-y-3">
-                                    <Label className="font-bold text-neutral-700">{t.floorsQ}</Label>
-                                    <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.initialFloors} onChange={(e) => updateData('initialFloors', e.target.value)} />
-                                </div>
-                            </div>
-
-                            <div className="border-t border-neutral-200/60 pt-6 mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div className="space-y-3 text-left">
-                                    <Label className="font-bold text-neutral-700">{t.unitsQ}</Label>
-                                    <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.unitsPerFloor} onChange={(e) => updateData('unitsPerFloor', e.target.value)} />
-                                </div>
-                                <div className="space-y-3 text-left">
-                                    <Label className="font-bold text-neutral-700">{t.bedsQ}</Label>
-                                    <Input type="number" placeholder="e.g. 3" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.bedroomsPerUnit} onChange={(e) => updateData('bedroomsPerUnit', e.target.value)} />
-                                </div>
-                                <div className="space-y-3 text-left">
-                                    <Label className="font-bold text-neutral-700">{t.bathsQ}</Label>
-                                    <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.bathroomsPerUnit} onChange={(e) => updateData('bathroomsPerUnit', e.target.value)} />
-                                </div>
-                                <div className="space-y-3 text-left">
-                                    <Label className="font-bold text-neutral-700">{t.drawingQ}</Label>
-                                    <Input type="number" placeholder="e.g. 1" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.drawingRoomPerUnit} onChange={(e) => updateData('drawingRoomPerUnit', e.target.value)} />
-                                </div>
-                                <div className="space-y-3 text-left">
-                                    <Label className="font-bold text-neutral-700">{t.kitchenQ}</Label>
-                                    <Input type="number" placeholder="e.g. 1" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.kitchenPerUnit} onChange={(e) => updateData('kitchenPerUnit', e.target.value)} />
-                                </div>
-                                <div className="space-y-3 text-left">
-                                    <Label className="font-bold text-neutral-700">{t.balconyQ}</Label>
-                                    <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.balconyPerUnit} onChange={(e) => updateData('balconyPerUnit', e.target.value)} />
-                                </div>
-                                <div className="space-y-3 text-left sm:col-span-2 lg:col-span-3">
-                                    <Label className="font-bold text-neutral-700">{t.othersQ}</Label>
-                                    <Input type="text" placeholder="e.g. Dining, Family living" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.othersPerUnit} onChange={(e) => updateData('othersPerUnit', e.target.value)} />
-                                </div>
-                            </div>
-                        </div>
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
-
-        if (step === 4 && showsDesignQ) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step4-${lang}`}
-                        lang={lang}
-                        title={typeof t.plotFeaturesTitle === 'string' ? t.plotFeaturesTitle : "Plot Features"}
-                        description={typeof t.plotFeaturesDesc === 'string' ? t.plotFeaturesDesc : "Tell us about your land."}
-                        currentStep={visualStep - 1}
-                        totalSteps={totalSteps}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                        canNext={true}
-                    >
-                        <div className="max-w-3xl mx-auto space-y-10">
-                            {/* Q2: Orientation check */}
-                            <div className="space-y-4">
-                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">{t.orientationQ}</Label>
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                    {(['North', 'South', 'East', 'West'] as const).map(opt => (
-                                        <div key={opt} className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all ${formData.plotOrientation.includes(opt) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('plotOrientation', opt)}>
-                                            <Checkbox checked={formData.plotOrientation.includes(opt)} className="mt-0.5" />
-                                            <span className="text-sm font-bold">{t[opt as keyof typeof t] || opt}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Q6: Special zones */}
-                            <div className="space-y-4">
-                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">{t.specialZonesQ}</Label>
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                    {(['Prayer room', 'Home Office', "Maid's room", 'Parking'] as const).map(opt => (
-                                        <div key={opt} className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all ${formData.specialZones.includes(opt) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('specialZones', opt)}>
-                                            <Checkbox checked={formData.specialZones.includes(opt)} className="mt-0.5" />
-                                            <span className="text-sm font-bold">{t[opt as keyof typeof t] || opt}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Q7: Soil Test */}
-                            <div className="space-y-4 pt-4">
-                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">{t.soilTestQ}</Label>
-                                <div className="flex gap-4 max-w-md">
-                                    <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-4 cursor-pointer transition-all ${formData.soilTest === 'Yes' ? 'bg-primary-600 text-white border-primary-600 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => updateData('soilTest', 'Yes')}>{t.yes}</div>
-                                    <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-4 cursor-pointer transition-all ${formData.soilTest === 'No' ? 'bg-primary-600 text-white border-primary-600 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => updateData('soilTest', 'No')}>{t.no}</div>
-                                </div>
-                            </div>
-
-                            {/* Q8: Features */}
-                            <div className="space-y-4 pt-4">
-                                <Label className="text-lg font-bold text-neutral-800 border-b pb-2 block">{t.roofFeaturesQ}</Label>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                    {(['Roof garden', 'Swimming pool'] as const).map(opt => (
-                                        <div key={opt} className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all ${formData.roofFeatures.includes(opt) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('roofFeatures', opt)}>
-                                            <Checkbox checked={formData.roofFeatures.includes(opt)} className="mt-0.5" />
-                                            <span className="text-sm font-bold">{t[opt as keyof typeof t] || opt}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                <p className="text-xs text-neutral-500 font-medium">{t.requiresLoad}</p>
-                            </div>
-                        </div>
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
-
-        if (step === 5 && showsDesignQ) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step5-${lang}`}
-                        lang={lang}
-                        title={typeof t.aestheticsTitle === 'string' ? t.aestheticsTitle : "Design Aesthetics"}
-                        description={typeof t.aestheticsDesc === 'string' ? t.aestheticsDesc : "Choose the visual vibe for your building design."}
-                        currentStep={visualStep - 1}
-                        totalSteps={totalSteps}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                        canNext={!!formData.structuralVibe}
-                    >
-                        <div className="space-y-4">
-                            {/* Q9: Vibe */}
-                            <div className="space-y-4 block">
-                                <RadioCardGroup
-                                    options={getVibeOptions(lang)}
-                                    selected={formData.structuralVibe}
-                                    onChange={(id) => updateData('structuralVibe', id)}
-                                />
-                            </div>
-
-                        </div>
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
-
-        if (step === 6) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step6-${lang}`}
-                        lang={lang}
-                        title={typeof t.chooseRouteTitle === 'string' ? t.chooseRouteTitle : "Choose Designer Route"}
-                        description={typeof t.chooseRouteDesc === 'string' ? t.chooseRouteDesc : "How would you like to proceed with your designer?"}
-                        currentStep={visualStep - 1}
-                        totalSteps={totalSteps}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                        canNext={!!formData.designerSelectionType}
-                    >
-                        <RadioCardGroup
-                            options={[
-                                { id: 'ghorbari', label: t.suggestedOption, icon: CheckCircle2, description: t.suggestedOptionDesc },
-                                { id: 'list', label: t.listOption, icon: UserCircle, description: t.listOptionDesc },
-                            ]}
-                            selected={formData.designerSelectionType}
-                            onChange={(id) => updateData('designerSelectionType', id)}
-                        />
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
-
-        if (step === 7) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step7-${lang}`}
-                        lang={lang}
-                        title={typeof t.selectDesignerTitle === 'string' ? t.selectDesignerTitle : "Select Designer"}
-                        description={typeof t.selectDesignerDesc === 'string' ? t.selectDesignerDesc : "Pick a professional for your project."}
-                        currentStep={visualStep}
-                        totalSteps={getDynamicTotalSteps()}
-                        onNext={() => setStep(8)}
-                        onBack={() => setStep(6)}
-                        canNext={!!formData.selectedDesignerId}
-                    >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mx-auto px-4 sm:px-0">
-                            {designers.length > 0 ? (
-                                designers.map((designer: any) => {
-                                    const isSelected = formData.selectedDesignerId === designer.id;
-                                    // Use a placeholder visual if no portfolio URL exists
-                                    const coverImage = designer.portfolio_url || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=800';
-                                    const rating = designer.rating || "4.9";
-                                    const basePrice = designer.starting_price || (designer.hasDesignServices ? 50000 : 25000);
-
-                                    return (
-                                        <div
-                                            key={designer.id}
-                                            onClick={() => updateData('selectedDesignerId', designer.id)}
-                                            className={`relative group h-full cursor-pointer transition-transform duration-300 hover:-translate-y-2 ${isSelected ? 'ring-4 ring-primary-600 rounded-xl overflow-hidden' : ''}`}
-                                        >
-                                            <Card className={`border-neutral-200 shadow-lg overflow-hidden h-full flex flex-col ${isSelected ? 'border-primary-600 bg-primary-50/30' : 'border-none'}`}>
-                                                <div className="relative h-[250px] w-full overflow-hidden">
-                                                    <img
-                                                        src={coverImage}
-                                                        alt={designer.company_name || 'Designer Portfolio'}
-                                                        className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
-                                                    />
-                                                    <div className="absolute top-4 left-4 flex flex-wrap gap-2 pr-4">
-                                                        {(designer.specializations || []).slice(0, 2).map((tag: string) => (
-                                                            <span key={String(tag)} className="bg-white text-neutral-900 text-[10px] font-black px-3 py-1.5 rounded-md uppercase tracking-wide shadow-sm">
-                                                                {String(tag)}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                <div className="p-6 flex flex-col flex-grow">
-                                                    <div className="flex justify-between items-start mb-2 gap-3">
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-1.5">
-                                                                <Link
-                                                                    href={`/partner/${designer.user_id}`}
-                                                                    target="_blank"
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                    className="shrink-0"
-                                                                >
-                                                                    <div className="w-5 h-5 rounded-full bg-neutral-200 overflow-hidden relative shrink-0">
-                                                                        {designer.profile?.avatar_url ? (
-                                                                            <img src={designer.profile.avatar_url} alt={designer.profile.full_name} className="object-cover w-full h-full" />
-                                                                        ) : (
-                                                                            <UserCircle className="w-3 h-3 text-neutral-400 absolute inset-0 m-auto" />
-                                                                        )}
-                                                                    </div>
-                                                                </Link>
-                                                                <h3 className="text-[16px] md:text-lg font-black text-neutral-900 uppercase tracking-tight truncate">
-                                                                    <Link
-                                                                        href={`/partner/${designer.user_id}`}
-                                                                        target="_blank"
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                        className="hover:text-primary-600 transition-colors"
-                                                                    >
-                                                                        {designer.company_name || designer.contact_person_name}
-                                                                    </Link>
-                                                                </h3>
-                                                            </div>
-                                                            <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest pl-7">
-                                                                {designer.experience_years ? `${designer.experience_years} ${t.yearsExp}` : t.verifiedExpert}
-                                                            </p>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 bg-neutral-50 px-2.5 py-1.5 rounded-lg shrink-0">
-                                                            <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-                                                            <span className="font-black text-[15px] tracking-tight">{rating}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="mt-6 pt-5 border-t border-neutral-100 flex items-center justify-between gap-4 mt-auto">
-                                                        <div>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">{t.startingFrom}</p>
-                                                            <div className="flex items-center gap-0.5">
-                                                                <span className="font-bold text-base text-neutral-900 mt-0.5">৳</span>
-                                                                <span className="font-black text-2xl text-neutral-900 tracking-tight">
-                                                                    {basePrice.toLocaleString()}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <Button
-                                                            className={`rounded-xl px-6 font-black uppercase tracking-wider text-xs h-12 transition-all shrink-0 ${isSelected
-                                                                ? 'bg-primary-600 hover:bg-primary-700 text-white'
-                                                                : 'bg-black hover:bg-neutral-800 text-white'
-                                                                }`}
-                                                        >
-                                                            {isSelected ? t.selected : t.bookNow}
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </Card>
-                                        </div>
-                                    );
-                                })
-                            ) : (
-                                <div className="col-span-full py-12 text-center text-neutral-500 bg-white rounded-3xl border border-dashed border-neutral-200">
-                                    <UserCircle className="w-12 h-12 mx-auto text-neutral-300 mb-3" />
-                                    <p className="font-bold text-lg">{t.noDesigners}</p>
-                                    <p className="text-sm">{t.noDesignersDesc}</p>
-                                </div>
-                            )}
-                        </div>
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
-
-        if (step === 12) {
-            return (
-                <MainLayout>
-                    {renderScheduleStep(visualStep - 1, totalSteps, nextStep, prevStep)}
-                </MainLayout>
-            );
-        }
-
-        if (step === 13) {
-            let price = 0;
-            if (formData.designerOption === 'both') price = 80000;
-            else if (formData.designerOption === 'design') price = 50000;
-            else if (formData.designerOption === 'approval') price = 30000;
-
-            if (serviceTypes.includes('interior')) {
-                price += 20000;
-            }
-
-            const selectedDesigner = designers.find((d: any) => d.id === formData.selectedDesignerId);
-            const providerName = formData.designerSelectionType === 'ghorbari' ? 'Ghorbari Assigned Expert' : (selectedDesigner?.company_name || selectedDesigner?.contact_person_name || 'Selected Designer');
-
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step-review-${lang}`}
-                        lang={lang}
-                        title={t.reviewTitle}
-                        description={t.reviewDesc}
-                        currentStep={visualStep - 1}
-                        totalSteps={totalSteps}
-                        onNext={handleSubmit}
-                        onBack={prevStep}
-                        isLastStep
-                        canNext={true}
-                        nextLabel={loading ? t.generatingReq : t.completeBooking}
-                    >
-                        <div className="bg-white rounded-[16px] border border-neutral-300 shadow-sm overflow-hidden text-left mx-auto max-w-2xl mt-4">
-                            {/* Inner Header Section */}
-                            <div className="bg-[#f3fbfa] p-8 border-b border-neutral-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                                <div>
-                                    <h3 className="text-[22px] font-black text-neutral-900 tracking-tight">{t.tentativeQuote}</h3>
-                                    <p className="text-[13px] font-medium text-neutral-600 mt-2">{t.statusWait}</p>
-                                </div>
-                                <div className="text-left md:text-right">
-                                    <div className="flex items-center md:justify-end gap-1 font-black text-[32px] text-[#0a1b3d] leading-none">
-                                        <span className="text-[26px]">৳</span> {price.toLocaleString()}
-                                    </div>
-                                    <p className="text-[11px] font-black tracking-widest text-[#0a1b3d]/70 uppercase mt-2">{t.startingPrice}</p>
-                                </div>
-                            </div>
-
-                            {/* Body Section */}
-                            <div className="p-8 space-y-8 bg-white">
-
-                                {/* Service Details Block */}
-                                <div className="space-y-1">
-                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">{t.serviceDetails}</h4>
-
-                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
-                                        <span className="text-[16px] font-bold text-neutral-700">{t.serviceArea}</span>
-                                        <span className="text-[16px] font-black text-neutral-900 capitalize">
-                                            {serviceTypes.map(s => s === 'structural-architectural' ? 'Structural' : 'Interior').join(', ')}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
-                                        <span className="text-[16px] font-bold text-neutral-700">{t.assignedProvider}</span>
-                                        {selectedDesigner ? (
-                                            <Link
-                                                href={`/partners/${selectedDesigner.id}`}
-                                                target="_blank"
-                                                className="text-[16px] font-black text-primary-600 hover:underline"
-                                            >
-                                                {providerName}
-                                            </Link>
-                                        ) : (
-                                            <span className="text-[16px] font-black text-neutral-900">{providerName}</span>
-                                        )}
-                                    </div>
-
-                                    <div className="flex justify-between items-center py-5 border-b border-neutral-200/70">
-                                        <span className="text-[16px] font-bold text-neutral-700">{t.prefDateLabel} & {t.prefTimeLabel}</span>
-                                        <span className="text-[16px] font-black text-neutral-900">{String(formData.preferredDate)} | {String(formData.preferredTime)}</span>
-                                    </div>
-                                </div>
-
-                                {/* Documents Ready Block */}
-                                <div className="pt-2">
-                                    <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-5">{t.docsReady}</h4>
-
-                                    <div className="flex flex-wrap gap-2.5">
-                                        {formData.hasDeed && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Deed</span>}
-                                        {formData.hasSurveyMap && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Survey Map</span>}
-                                        {formData.hasMutation && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Mutation</span>}
-                                        {formData.hasTax && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Tax</span>}
-                                        {formData.hasNID && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">NID</span>}
-                                        {formData.hasLandPermit && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Land Permit</span>}
-                                        {formData.hasBuildingApproval && <span className="px-4 py-1.5 bg-[#effdf5] text-[#00a651] rounded-full font-bold text-[13px] border border-[#d6f6e5]">Building Approval</span>}
-                                        {(!formData.hasDeed && !formData.hasSurveyMap && !formData.hasMutation && !formData.hasTax && !formData.hasNID && !formData.hasLandPermit && !formData.hasBuildingApproval) && (
-                                            <span className="text-[13px] text-neutral-400 italic font-medium px-2 py-1">{t.noDocs}</span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Structural Requirements Block */}
-                                {showsDesignQ && (
-                                    <div className="pt-6 border-t border-neutral-200/70 mt-6">
-                                        <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">{t.projectReqs}</h4>
-                                        <div className="grid grid-cols-2 gap-y-5 gap-x-6">
-                                            <div>
-                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.landArea}</p>
-                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">{String(formData.landAreaKatha || '-')} {t.katha}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.initialFloors}</p>
-                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">{String(formData.initialFloors || '-')}</p>
-                                            </div>
-                                            <div className="col-span-2 mt-4 pt-4 border-t border-neutral-100">
-                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide mb-3">{t.layoutPerUnit}</p>
-                                                <div className="flex flex-wrap gap-2 text-[13px] font-bold text-neutral-800">
-                                                    {formData.unitsPerFloor && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.unitsPerFloor)} {t.unit}/floor</span>}
-                                                    {formData.bedroomsPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.bedroomsPerUnit)} {t.bed}</span>}
-                                                    {formData.bathroomsPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.bathroomsPerUnit)} {t.bath}</span>}
-                                                    {formData.drawingRoomPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.drawingRoomPerUnit)} {t.drawing}</span>}
-                                                    {formData.kitchenPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.kitchenPerUnit)} {t.kitchen}</span>}
-                                                    {formData.balconyPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.balconyPerUnit)} {t.balcony}</span>}
-                                                    {formData.othersPerUnit && <span className="bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200 whitespace-nowrap">{String(formData.othersPerUnit)}</span>}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.soilTest}</p>
-                                                <p className="text-[14px] font-black text-neutral-900 mt-0.5">
-                                                    {typeof t[(formData.soilTest || '') as keyof typeof t] === 'string' ? t[(formData.soilTest || '') as keyof typeof t] : (formData.soilTest || '-')}
-                                                </p>
-                                            </div>
-                                            {(formData.plotOrientation.length > 0 || formData.specialZones.length > 0 || formData.roofFeatures.length > 0) && (
-                                                <div className="col-span-2">
-                                                    <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wide">{t.featuresZones}</p>
-                                                    <div className="flex flex-wrap gap-2 mt-1.5">
-                                                        {[...formData.plotOrientation, ...formData.specialZones, ...formData.roofFeatures].map(tag => (
-                                                            <span key={String(tag)} className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded-md font-bold text-[11px] uppercase tracking-wide">
-                                                                {typeof t[tag as keyof typeof t] === 'string' ? t[tag as keyof typeof t] : String(tag)}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Interior Specific Requirements */}
-                                {serviceTypes.includes('interior') && (
-                                    <div className="pt-6 border-t border-neutral-200/70 mt-6">
-                                        <h4 className="text-[13px] font-black text-neutral-400 uppercase tracking-widest mb-4">{t.interiorService} Details</h4>
-                                        <div className="grid grid-cols-1 gap-y-4">
-                                            {formData.propertyType === 'Full building' && (
-                                                <p className="text-sm font-bold text-neutral-800">{String(formData.houseType)} house, {String(formData.intFloors)} floors, {String(formData.intUnitsPerFloor)} units each.</p>
-                                            )}
-                                            {formData.propertyType === 'Full Apartment' && (
-                                                <p className="text-sm font-bold text-neutral-800">{String(formData.aptSize)} sqft Apartment, {String(formData.aptRooms)} rooms.</p>
-                                            )}
-                                            {formData.propertyType === 'Specific Area' && (
-                                                <p className="text-sm font-bold text-neutral-800">{String(formData.specificAreaType)} ({String(formData.bedRoomType) || 'N/A'}), {String(formData.roomSize)} sqft - {String(formData.designScope)}.</p>
-                                            )}
-                                            {formData.specificInstruction && (
-                                                <p className="text-xs text-neutral-600 mt-2 italic">Instruction: {String(formData.specificInstruction)}</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
+    if (step === 1) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step1-${lang}`}
+                    lang={lang}
+                    title={t.findDesignerTitle}
+                    description={t.findDesignerDesc}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                    canNext={!!formData.designerOption}
+                >
+                    <RadioCardGroup
+                        options={[
+                            { id: 'approval', label: t.buildingApproval, icon: CheckCircle2, description: t.buildingApprovalDesc },
+                            { id: 'design', label: t.buildingDesign, icon: PaintBucket, description: t.buildingDesignDesc },
+                            { id: 'both', label: t.bothApprovalDesign, icon: Ruler, description: t.bothApprovalDesignDesc },
+                        ]}
+                        selected={formData.designerOption}
+                        onChange={(id) => updateData('designerOption', id)}
+                    />
+                </WizardStep>
+            </MainLayout>
+        );
     }
 
-    // --- INTERIOR DESIGN ---
-    if (step >= 8 && step <= 11) {
-        if (step === 8) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step8-int-${lang}`}
-                        lang={lang}
-                        title={typeof t.startJourneyTitle === 'string' ? t.startJourneyTitle : "Start Your Design Journey"}
-                        description={typeof t.startJourneyDesc === 'string' ? t.startJourneyDesc : "Select the type of design service you need to get started."}
-                        currentStep={visualStep - 1}
-                        totalSteps={totalSteps}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                        canNext={!!formData.propertyType}
-                    >
-                        <div className="space-y-8">
-                            <div>
-                                <Label className="text-base font-bold mb-4 block text-neutral-800">What are we designing?</Label>
-                                <RadioCardGroup
-                                    options={[
-                                        { id: 'Full building', label: t.fullBuilding || 'Full Building', icon: Building2 },
-                                        { id: 'Full Apartment', label: t.fullApt || 'Full Apartment', icon: Home },
-                                        { id: 'Specific Area', label: t.specificArea || 'Specific Area', icon: BedDouble },
-                                    ]}
-                                    selected={formData.propertyType}
-                                    onChange={(id) => updateData('propertyType', id)}
-                                    columns={3}
+    if (step === 2) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step2-${lang}`}
+                    lang={lang}
+                    title={t.docChecklistTitle}
+                    description={t.docChecklistDesc}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {[
+                            { id: 'hasDeed', label: t.deedDoc },
+                            { id: 'hasSurveyMap', label: t.surveyMap },
+                            { id: 'hasMutation', label: t.mutation },
+                            { id: 'hasTax', label: t.tax },
+                            { id: 'hasNID', label: t.nid },
+                            { id: 'hasLandPermit', label: t.landPermit },
+                            { id: 'hasBuildingApproval', label: t.buildingApprovalDoc },
+                        ].map((doc) => (
+                            <div
+                                key={doc.id}
+                                className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${formData[doc.id as keyof typeof formData] ? 'bg-primary-50 border-primary-600' : 'hover:bg-neutral-50'
+                                    }`}
+                                onClick={() => updateData(doc.id as any, !formData[doc.id as keyof typeof formData])}
+                            >
+                                <Checkbox checked={!!formData[doc.id as keyof typeof formData]} />
+                                <span className={`text-sm font-bold ${formData[doc.id as keyof typeof formData] ? 'text-primary-900' : 'text-neutral-700'}`}>{doc.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                </WizardStep>
+            </MainLayout>
+        );
+    }
+
+    if (step === 3) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step3-${lang}`}
+                    lang={lang}
+                    title={(t as any).uploadDocsTitle || "Upload Documents"}
+                    description={(t as any).uploadDocsDesc || "Please upload copies of the documents you've checked."}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                >
+                    <div className="space-y-6">
+                        <div className="border-2 border-dashed border-neutral-300 rounded-3xl p-12 text-center bg-neutral-50/50 hover:bg-neutral-50 transition-colors cursor-pointer group">
+                            <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                <FileText className="w-8 h-8 text-primary-600" />
+                            </div>
+                            <h4 className="font-black text-neutral-900 mb-1 uppercase tracking-wider text-sm">UPLOAD DOCUMENTS</h4>
+                            <p className="text-neutral-500 text-xs font-bold">Max file size: 10MB</p>
+                            <Input type="file" multiple className="hidden" />
+                        </div>
+                        <p className="text-center text-xs font-bold text-neutral-400 italic">Click to browse or drag and drop files here</p>
+                    </div>
+                </WizardStep>
+            </MainLayout>
+        );
+    }
+
+    if (step === 4) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step4-land-${lang}`}
+                    lang={lang}
+                    title={t.spaceLayoutTitle}
+                    description={t.spaceLayoutDesc}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                    canNext={!!(formData.landAreaInput && formData.landAreaUnit && formData.initialFloors && formData.numberOfLayouts)}
+                >
+                    <div className="max-w-2xl mx-auto space-y-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div className="space-y-4">
+                                <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.landAreaQ}</Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="number"
+                                        placeholder="e.g. 5"
+                                        className="h-14 bg-neutral-50/50 border-neutral-200 text-lg font-bold px-6 rounded-2xl"
+                                        value={formData.landAreaInput}
+                                        onChange={(e) => updateData('landAreaInput', e.target.value)}
+                                    />
+                                    <Select value={formData.landAreaUnit} onValueChange={(v) => updateData('landAreaUnit', v)}>
+                                        <SelectTrigger className="w-[140px] h-14 bg-neutral-50/50 border-neutral-200 font-bold rounded-2xl">
+                                            <SelectValue placeholder="Unit" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Katha">Katha</SelectItem>
+                                            <SelectItem value="sqft">sqft</SelectItem>
+                                            <SelectItem value="sqmeter">sqmeter</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.floorsQ}</Label>
+                                <Input
+                                    type="number"
+                                    placeholder="e.g. 2"
+                                    className="h-14 bg-neutral-50/50 border-neutral-200 text-lg font-bold px-6 rounded-2xl"
+                                    value={formData.initialFloors}
+                                    onChange={(e) => updateData('initialFloors', e.target.value)}
                                 />
                             </div>
+                            <div className="space-y-4 md:col-span-2 pt-6 border-t border-neutral-100">
+                                <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.numLayoutsQ}</Label>
+                                <div className="max-w-xs">
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        max="10"
+                                        placeholder="e.g. 1"
+                                        className="h-14 bg-neutral-50/50 border-neutral-200 text-lg font-bold px-6 rounded-2xl"
+                                        value={formData.numberOfLayouts}
+                                        onChange={(e) => {
+                                            updateData('numberOfLayouts', e.target.value);
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         </div>
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
+                    </div>
+                </WizardStep>
+            </MainLayout>
+        );
+    }
 
-        if (step === 9) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step9-int-${lang}`}
-                        lang={lang}
-                        title={typeof t.projectReqs === 'string' ? t.projectReqs : "Project Requirements"}
-                        description={typeof t.spaceLayoutDesc === 'string' ? t.spaceLayoutDesc : "Tell us about the space and requirements."}
-                        currentStep={visualStep - 1}
-                        totalSteps={totalSteps}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                        canNext={
-                            (formData.propertyType === 'Full building' && !!formData.houseType && !!formData.intFloors && !!formData.intUnitsPerFloor && !!formData.intAreaPerUnit) ||
-                            (formData.propertyType === 'Full Apartment' && !!formData.aptSize && !!formData.aptRooms) ||
-                            (formData.propertyType === 'Specific Area' && !!formData.specificAreaType && (formData.specificAreaType !== 'Bed Room' || !!formData.bedRoomType) && !!formData.designScope && !!formData.roomSize)
-                        }
-                    >
-                        <div className="space-y-8">
-                            {formData.propertyType === 'Full building' && (
-                                <>
-                                    <div>
-                                        <Label className="text-base font-bold mb-4 block text-neutral-800">{t.typeOfHouse || "Type of House"}</Label>
+    if (step === 5) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step5-layouts-${lang}`}
+                    lang={lang}
+                    title={t.numLayoutsQ || "How Many Different Layouts?"}
+                    description={t.spaceLayoutDesc}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                >
+                    <div className="max-w-4xl mx-auto space-y-8">
+                        <Tabs defaultValue="1" className="w-full">
+                            <TabsList className="grid grid-cols-4 mb-8 bg-neutral-100 p-1 rounded-xl">
+                                {formData.layoutsData.map((layout) => (
+                                    <TabsTrigger 
+                                        key={layout.id} 
+                                        value={String(layout.id)}
+                                        className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold text-xs py-2.5"
+                                    >
+                                        {t.layoutTab} {layout.id}
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
+                            {formData.layoutsData.map((layout) => (
+                                <TabsContent key={layout.id} value={String(layout.id)} className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm space-y-6">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100">
+                                            <div className="space-y-1">
+                                                <h3 className="font-bold text-lg text-neutral-800">{t.layoutTab} {layout.id} Configuration</h3>
+                                                <p className="text-sm text-neutral-500">Define use and structure for this layout.</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 bg-neutral-50 p-1.5 rounded-lg border border-neutral-200">
+                                                <Label className="text-xs font-bold px-2">{t.garageQ}</Label>
+                                                <div className="flex gap-1">
+                                                    <Button 
+                                                        variant={layout.isGarage === 'yes' ? 'default' : 'outline'} 
+                                                        size="sm" 
+                                                        className={`h-8 px-4 text-xs font-bold rounded-md ${layout.isGarage === 'yes' ? 'bg-primary-900 text-white' : 'text-neutral-500'}`}
+                                                        onClick={() => updateLayoutData(layout.id, 'isGarage', 'yes')}
+                                                    >
+                                                        {t.yes}
+                                                    </Button>
+                                                    <Button 
+                                                        variant={layout.isGarage === 'no' ? 'default' : 'outline'} 
+                                                        size="sm" 
+                                                        className={`h-8 px-4 text-xs font-bold rounded-md ${layout.isGarage === 'no' ? 'bg-primary-900 text-white' : 'text-neutral-500'}`}
+                                                        onClick={() => updateLayoutData(layout.id, 'isGarage', 'no')}
+                                                    >
+                                                        {t.no}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {layout.isGarage === 'no' && (
+                                            <>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="space-y-3">
+                                                        <Label className="font-bold text-neutral-700">{t.numUnitsQ}</Label>
+                                                        <Input 
+                                                            type="number" 
+                                                            className="h-12 bg-neutral-50/50 border-neutral-200" 
+                                                            value={layout.numberOfUnits} 
+                                                            onChange={(e) => handleNumUnitsChange(layout.id, e.target.value)} 
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <Label className="font-bold text-neutral-700">{t.identicalUnitsQ}</Label>
+                                                        <div className="flex gap-4">
+                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'yes' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'}`} onClick={() => updateLayoutData(layout.id, 'unitsAreIdentical', 'yes')}>{t.yes}</div>
+                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'no' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'}`} onClick={() => updateLayoutData(layout.id, 'unitsAreIdentical', 'no')}>{t.no}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-8">
+                                                    {layout.unitsAreIdentical === 'yes' ? (
+                                                        <UnitInputs 
+                                                            layoutId={layout.id} 
+                                                            unit={layout.unitDetails[0]} 
+                                                            updateFn={updateUnitDetail} 
+                                                            t={t} 
+                                                            title={`${t.unitTab} Details (All ${layout.numberOfUnits} units)`}
+                                                        />
+                                                    ) : (
+                                                        <div className="space-y-12">
+                                                            {layout.unitDetails.map((unit, idx) => (
+                                                                <UnitInputs 
+                                                                    key={unit.unitId}
+                                                                    layoutId={layout.id} 
+                                                                    unit={unit} 
+                                                                    updateFn={updateUnitDetail} 
+                                                                    t={t} 
+                                                                    title={`${t.unitTab} ${idx + 1} Details`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </TabsContent>
+                            ))}
+                        </Tabs>
+                    </div>
+                </WizardStep>
+            </MainLayout>
+        );
+    }
+
+    if (step === 6) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step6-plot-${lang}`}
+                    lang={lang}
+                    title={t.plotFeaturesTitle || "Plot Features"}
+                    description={t.plotFeaturesDesc || "Tell us about your land."}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                >
+                    <div className="max-w-3xl mx-auto space-y-12">
+                        <div className="space-y-4">
+                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
+                                <MapIcon className="w-4 h-4" /> {t.orientationQ}
+                            </Label>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                {(['North', 'South', 'East', 'West'] as const).map(opt => (
+                                    <div key={opt} className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all ${formData.plotOrientation?.includes(opt) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('plotOrientation', opt)}>
+                                        <Checkbox checked={formData.plotOrientation?.includes(opt)} />
+                                        <span className="text-sm font-bold">{t[opt as keyof typeof t] || opt}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
+                                <CheckSquare className="w-4 h-4" /> {t.soilTestQ}
+                            </Label>
+                            <div className="flex gap-4 max-w-md">
+                                <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-4 cursor-pointer transition-all ${formData.soilTest === 'Yes' ? 'bg-primary-900 text-white border-primary-900 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => updateData('soilTest', 'Yes')}>{t.yes}</div>
+                                <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-4 cursor-pointer transition-all ${formData.soilTest === 'No' ? 'bg-primary-900 text-white border-primary-900 shadow-md' : 'hover:bg-neutral-50 text-neutral-700'}`} onClick={() => updateData('soilTest', 'No')}>{t.no}</div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
+                                <Waves className="w-4 h-4" /> {t.roofFeaturesQ}
+                            </Label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                {(['Roof garden', 'Swimming pool'] as const).map(opt => (
+                                    <div key={opt} className={`border rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all ${formData.roofFeatures?.includes(opt) ? 'bg-primary-50 border-primary-600 shadow-sm' : 'hover:bg-neutral-50'}`} onClick={() => toggleArrayItem('roofFeatures', opt)}>
+                                        <Checkbox checked={formData.roofFeatures?.includes(opt)} />
+                                        <span className="text-sm font-bold">{t[opt as keyof typeof t] || opt}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-xs text-neutral-500 font-medium">{t.requiresLoad}</p>
+                        </div>
+                    </div>
+                </WizardStep>
+            </MainLayout>
+        );
+    }
+
+    if (step === 7) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step7-struct-vibe-${lang}`}
+                    lang={lang}
+                    title={t.aestheticsTitle}
+                    description={t.aestheticsDesc}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                >
+                    <RadioCardGroup
+                        options={getVibeOptions(lang)}
+                        selected={formData.structuralVibe}
+                        onChange={(id) => updateData('structuralVibe', id)}
+                        columns={2}
+                    />
+                </WizardStep>
+            </MainLayout>
+        );
+    }
+
+    if (step === 8) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step8-property-type-${lang}`}
+                    lang={lang}
+                    title={t.propertyType || "Property Type"}
+                    description={t.startJourneyDesc}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                    canNext={!!formData.propertyType}
+                >
+                    <RadioCardGroup
+                        options={[
+                            { id: 'Full building', label: t.fullBuilding, icon: Building2 },
+                            { id: 'Full Apartment', label: t.fullApt, icon: Home },
+                            { id: 'Specific Area', label: t.specificArea, icon: BedDouble },
+                        ]}
+                        selected={formData.propertyType}
+                        onChange={(id) => updateData('propertyType', id)}
+                        columns={3}
+                    />
+                </WizardStep>
+            </MainLayout>
+        );
+    }
+
+    if (step === 9) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step9-int-reqs-${lang}`}
+                    lang={lang}
+                    title={t.projectReqs}
+                    description={t.spaceLayoutDesc}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                >
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        {formData.propertyType === 'Full building' && (
+                            <div className="space-y-8">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="space-y-3">
+                                        <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.typeOfHouse}</Label>
                                         <RadioCardGroup
                                             options={[
-                                                { id: 'Duplex', label: t.duplex || 'Duplex' },
-                                                { id: 'Multistoried', label: t.multistoried || 'Multistoried' },
+                                                { id: 'Duplex', label: t.duplex },
+                                                { id: 'Multistoried', label: t.multistoried },
                                             ]}
                                             selected={formData.houseType}
                                             onChange={(id) => updateData('houseType', id)}
                                             columns={2}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-neutral-100">
-                                        <div className="space-y-3">
-                                            <Label className="font-bold text-neutral-700">{t.numFloors || "Number of floor"}</Label>
-                                            <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.intFloors} onChange={(e) => updateData('intFloors', e.target.value)} />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <Label className="font-bold text-neutral-700">{t.unitsEachFloor || "Unit Each Floor"}</Label>
-                                            <Input type="number" placeholder="e.g. 2" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.intUnitsPerFloor} onChange={(e) => updateData('intUnitsPerFloor', e.target.value)} />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <Label className="font-bold text-neutral-700">{t.areaEachUnit || "Area Each Unit"}</Label>
-                                            <Input type="number" placeholder="e.g. 1500 sqft" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.intAreaPerUnit} onChange={(e) => updateData('intAreaPerUnit', e.target.value)} />
-                                        </div>
+                                    <div className="space-y-3">
+                                        <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.numFloors}</Label>
+                                        <Input type="number" placeholder="2" className="h-12 rounded-xl" value={formData.intFloors} onChange={(e) => updateData('intFloors', e.target.value)} />
                                     </div>
-                                </>
-                            )}
-
-                            {formData.propertyType === 'Full Apartment' && (
-                                <>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                        <div className="space-y-3">
-                                            <Label className="font-bold text-neutral-700">{t.aptSize || "Apartment Size"}</Label>
-                                            <Input type="number" placeholder="e.g. 1200 sqft" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.aptSize} onChange={(e) => updateData('aptSize', e.target.value)} />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <Label className="font-bold text-neutral-700">{t.noOfRoom || "No of Room"}</Label>
-                                            <Input type="number" placeholder="e.g. 3" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.aptRooms} onChange={(e) => updateData('aptRooms', e.target.value)} />
-                                        </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="space-y-3">
+                                        <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.unitsEachFloor}</Label>
+                                        <Input type="number" placeholder="2" className="h-12 rounded-xl" value={formData.intUnitsPerFloor} onChange={(e) => updateData('intUnitsPerFloor', e.target.value)} />
                                     </div>
-                                    <div className="space-y-3 pt-4 border-t border-neutral-100">
-                                        <Label className="font-bold text-neutral-700">{t.inspiration || "Inspiration (attachment image or pdf)"}</Label>
-                                        <Input type="file" accept="image/*,.pdf" className="h-12 flex items-center bg-neutral-50/50 border-neutral-200 file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-[#effdf5] file:text-[#00a651] hover:file:bg-[#d6f6e5] cursor-pointer" onChange={(e) => updateData('aptInspiration', e.target.files?.[0] || null)} />
+                                    <div className="space-y-3">
+                                        <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.areaEachUnit}</Label>
+                                        <Input type="number" placeholder="1500" className="h-12 rounded-xl" value={formData.intAreaPerUnit} onChange={(e) => updateData('intAreaPerUnit', e.target.value)} />
                                     </div>
-                                </>
-                            )}
-
-                            {formData.propertyType === 'Specific Area' && (
-                                <>
-                                    <div>
-                                        <Label className="text-base font-bold mb-4 block text-neutral-800">{t.specificArea || "Select Area"}</Label>
+                                </div>
+                            </div>
+                        )}
+                        {formData.propertyType === 'Full Apartment' && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="space-y-3">
+                                    <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.aptSize}</Label>
+                                    <Input type="number" placeholder="1200" className="h-12 rounded-xl" value={formData.aptSize} onChange={(e) => updateData('aptSize', e.target.value)} />
+                                </div>
+                                <div className="space-y-3">
+                                    <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.noOfRoom}</Label>
+                                    <Input type="number" placeholder="3" className="h-12 rounded-xl" value={formData.aptRooms} onChange={(e) => updateData('aptRooms', e.target.value)} />
+                                </div>
+                            </div>
+                        )}
+                        {formData.propertyType === 'Specific Area' && (
+                            <div className="space-y-8">
+                                <div className="space-y-3">
+                                    <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.specificArea}</Label>
+                                    <RadioCardGroup
+                                        options={[
+                                            { id: 'Living Room', label: t.livingRoom },
+                                            { id: 'Drawing Room', label: t.drawingRoom },
+                                            { id: 'Bed Room', label: t.bedRoom },
+                                            { id: 'Bath Room', label: t.bathRoom },
+                                            { id: 'Kitchen', label: t.kitchen },
+                                            { id: 'Balcony', label: t.balcony },
+                                            { id: 'Rooftop', label: t.rooftop },
+                                            { id: 'Entrance', label: t.entrance },
+                                        ]}
+                                        selected={formData.specificAreaType}
+                                        onChange={(id) => updateData('specificAreaType', id)}
+                                        columns={4}
+                                    />
+                                </div>
+                                {formData.specificAreaType === 'Bed Room' && (
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                        <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">Bedroom Type</Label>
                                         <RadioCardGroup
                                             options={[
-                                                { id: 'Living Room', label: t.livingRoom || 'Living Room' },
-                                                { id: 'Drawing Room', label: t.drawingRoom || 'Drawing Room' },
-                                                { id: 'Bed Room', label: t.bedRoom || 'Bed Room' },
-                                                { id: 'Bath Room', label: t.bathRoom || 'Bath Room' },
-                                                { id: 'Kitchen', label: t.kitchen || 'Kitchen' },
-                                                { id: 'Balcony', label: t.balcony || 'Balcony' },
-                                                { id: 'Rooftop', label: t.rooftop || 'Rooftop' },
-                                                { id: 'Entrance', label: t.entrance || 'Entrance' },
+                                                { id: 'Master Bedroom', label: t.masterBed },
+                                                { id: 'General Bedroom', label: t.generalBed },
+                                                { id: 'Welcome Newborn', label: t.welcomeNewborn },
+                                                { id: 'Teenagers Special', label: t.teenagersSpecial },
+                                                { id: 'Children Bedroom', label: t.childrenBed },
                                             ]}
-                                            selected={formData.specificAreaType}
-                                            onChange={(id) => updateData('specificAreaType', id)}
-                                            columns={4}
+                                            selected={formData.bedRoomType}
+                                            onChange={(id) => updateData('bedRoomType', id)}
+                                            columns={3}
                                         />
                                     </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </WizardStep>
+            </MainLayout>
+        );
+    }
 
-                                    {formData.specificAreaType === 'Bed Room' && (
-                                        <div className="pt-4 border-t border-neutral-100">
-                                            <Label className="text-base font-bold mb-4 block text-neutral-800">{t.bedRoom || "Select Bedroom Type"}</Label>
-                                            <RadioCardGroup
-                                                options={[
-                                                    { id: 'Master Bedroom', label: t.masterBed || 'Master Bedroom' },
-                                                    { id: 'General Bedroom', label: t.generalBed || 'General Bedroom' },
-                                                    { id: 'Welcome Newborn', label: t.welcomeNewborn || 'Welcome Newborn' },
-                                                    { id: 'Teenagers Special', label: t.teenagersSpecial || 'Teenagers Special' },
-                                                    { id: 'Children Bedroom', label: t.childrenBed || 'Children Bedroom' },
-                                                ]}
-                                                selected={formData.bedRoomType}
-                                                onChange={(id) => updateData('bedRoomType', id)}
-                                                columns={3}
-                                            />
-                                        </div>
-                                    )}
+    if (step === 10) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step10-int-vibe-${lang}`}
+                    lang={lang}
+                    title={t.aestheticsTitle}
+                    description={t.aestheticsDesc}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                >
+                    <RadioCardGroup
+                        options={getVibeOptions(lang)}
+                        selected={formData.structuralVibe}
+                        onChange={(id) => updateData('structuralVibe', id)}
+                        columns={2}
+                    />
+                </WizardStep>
+            </MainLayout>
+        );
+    }
 
-                                    {(formData.specificAreaType && (formData.specificAreaType !== 'Bed Room' || formData.bedRoomType)) && (
-                                        <div className="pt-4 border-t border-neutral-100 space-y-8">
-                                            <div>
-                                                <Label className="text-base font-bold mb-4 block text-neutral-800">Design Scope</Label>
-                                                <RadioCardGroup
-                                                    options={[
-                                                        { id: 'Entire New Design', label: t.entireNewDesign || 'Entire New Design' },
-                                                        { id: 'Specific Renovation', label: t.specificRenovation || 'Specific Renovation' },
-                                                    ]}
-                                                    selected={formData.designScope}
-                                                    onChange={(id) => updateData('designScope', id)}
-                                                    columns={2}
-                                                />
-                                            </div>
+    if (step === 11) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step11-route-${lang}`}
+                    lang={lang}
+                    title={t.chooseRouteTitle}
+                    description={t.chooseRouteDesc}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                    canNext={!!formData.designerSelectionType}
+                >
+                    <RadioCardGroup
+                        options={[
+                            { id: 'ghorbari', label: t.suggestedOption, icon: CheckCircle2, description: t.suggestedOptionDesc },
+                            { id: 'list', label: t.listOption, icon: UserCircle, description: t.listOptionDesc },
+                        ]}
+                        selected={formData.designerSelectionType}
+                        onChange={(id) => updateData('designerSelectionType', id)}
+                    />
+                </WizardStep>
+            </MainLayout>
+        );
+    }
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                                <div className="space-y-3">
-                                                    <Label className="font-bold text-neutral-700">{t.roomSize || "Room Size"}</Label>
-                                                    <Input type="number" placeholder="e.g. 150 sqft" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.roomSize} onChange={(e) => updateData('roomSize', e.target.value)} />
-                                                </div>
-                                                <div className="space-y-3">
-                                                    <Label className="font-bold text-neutral-700">{t.anyInstruction || "Any specific instruction"}</Label>
-                                                    <Input type="text" placeholder="e.g. Keep it minimal" className="h-12 bg-neutral-50/50 border-neutral-200" value={formData.specificInstruction} onChange={(e) => updateData('specificInstruction', e.target.value)} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
+    if (step === 12) {
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step12-list-${lang}`}
+                    lang={lang}
+                    title={t.selectDesignerTitle}
+                    description={t.selectDesignerDesc}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                    canNext={!!formData.selectedDesignerId}
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {designers.length === 0 && (
+                            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+                                <UserCircle className="w-16 h-16 text-neutral-200 mb-4" />
+                                <p className="font-black text-neutral-400 uppercase tracking-widest text-sm">No designers available</p>
+                                <p className="text-neutral-400 text-xs mt-2">Please go back and let Ghorbari suggest an expert for you.</p>
+                            </div>
+                        )}
+                        {designers.map((designer) => (
+                            <div
+                                key={designer.id}
+                                onClick={() => updateData('selectedDesignerId', designer.id)}
+                                className={`group p-6 border-2 rounded-3xl cursor-pointer transition-all duration-300 ${
+                                    formData.selectedDesignerId === designer.id
+                                        ? 'bg-primary-50 border-primary-600 shadow-xl'
+                                        : 'bg-white border-neutral-100 hover:border-primary-200'
+                                }`}
+                            >
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="w-16 h-16 bg-neutral-100 rounded-2xl flex items-center justify-center overflow-hidden">
+                                        {designer.profile?.avatar_url ? (
+                                            <img src={designer.profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <UserCircle className="w-10 h-10 text-neutral-300" />
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200">
+                                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                                        <span className="text-xs font-black text-amber-700">{designer.average_rating || '4.8'}</span>
+                                    </div>
+                                </div>
 
-        if (step === 10) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step10-int-${lang}`}
-                        lang={lang}
-                        title={t.aestheticsTitle || "Design Aesthetics"}
-                        description={t.aestheticsDesc || "Choose the visual vibe for your building design."}
-                        currentStep={visualStep - 1}
-                        totalSteps={totalSteps}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                        canNext={!!formData.structuralVibe}
-                    >
-                        <div className="space-y-8">
-                            <div>
-                                <Label className="text-base font-bold mb-4 block text-neutral-800">Choose Style</Label>
-                                <RadioCardGroup
-                                    options={getVibeOptions(lang)}
-                                    selected={formData.structuralVibe}
-                                    onChange={(id) => updateData('structuralVibe', id)}
-                                    columns={2}
-                                />
+                                {/* Clickable name — opens partner profile in new tab */}
+                                <Link
+                                    href={`/partner/${designer.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="group/name inline-flex items-start gap-1.5"
+                                >
+                                    <h3 className="font-black text-neutral-900 text-lg uppercase tracking-tight group-hover/name:text-primary-600 transition-colors leading-tight">
+                                        {designer.company_name}
+                                    </h3>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 mt-1 text-neutral-400 group-hover/name:text-primary-500 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                </Link>
+
+                                <p className="text-[10px] font-black text-neutral-400 mt-2 uppercase tracking-widest">
+                                    {designer.experience_years} {t.yearsExp}
+                                </p>
+                                <div className="mt-6 pt-4 border-t border-neutral-100 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">{t.startingFrom}</p>
+                                        <p className="text-xl font-black text-neutral-900">৳{designer.base_consultation_fee?.toLocaleString() || '5,000'}</p>
+                                    </div>
+                                    <Button variant={formData.selectedDesignerId === designer.id ? 'default' : 'outline'} className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest">
+                                        {formData.selectedDesignerId === designer.id ? t.selected : t.bookNow}
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </WizardStep>
+            </MainLayout>
+        );
+    }
+
+    if (step === 13) {
+        return (
+            <MainLayout>
+                {renderScheduleStep(visualStep - 1, totalSteps, nextStep, prevStep)}
+            </MainLayout>
+        );
+    }
+
+    if (step === 14) {
+        const selectedDesigner = designers.find(d => d.id === formData.selectedDesignerId);
+        const providerName = formData.designerSelectionType === 'ghorbari' ? t.suggestedOption : (selectedDesigner?.company_name || '-');
+        const price = formData.designerOption === 'both' ? 80000 : (formData.designerOption === 'design' ? 50000 : 30000);
+
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step14-review-${lang}`}
+                    lang={lang}
+                    title={t.reviewTitle}
+                    description={t.reviewDesc}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={handleSubmit}
+                    onBack={prevStep}
+                    isLastStep
+                    canNext={!loading}
+                    nextLabel={loading ? t.generatingReq : t.completeBooking}
+                >
+                    <div className="max-w-2xl mx-auto">
+                        <div className="bg-white rounded-3xl border-2 border-neutral-100 p-8 shadow-xl">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10 pb-8 border-b border-neutral-100">
+                                <div>
+                                    <h3 className="text-2xl font-black text-neutral-900 mb-1 uppercase tracking-tight">{t.tentativeQuote}</h3>
+                                    <p className="text-sm font-bold text-neutral-400">{t.statusWait}</p>
+                                </div>
+                                <div className="text-left sm:text-right">
+                                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">{t.startingPrice}</p>
+                                    <p className="text-4xl font-black text-primary-600 tracking-tight">৳{price.toLocaleString()}</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2">{t.serviceArea}</p>
+                                        <p className="text-sm font-black text-neutral-900 uppercase tracking-tight">
+                                            {serviceTypes.map(s => {
+                                                if (s === 'structural-architectural') return t.structuralService;
+                                                if (s === 'interior') return t.interiorService;
+                                                return s;
+                                            }).join(" & ")}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2">{t.assignedProvider}</p>
+                                        <p className="text-sm font-black text-neutral-900 uppercase tracking-tight">{providerName}</p>
+                                    </div>
+                                </div>
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2">Consultation Schedule</p>
+                                        <p className="text-sm font-black text-neutral-900 uppercase tracking-tight">
+                                            {formData.preferredDate} at {formData.preferredTime}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
-
-        if (step === 11) {
-            return (
-                <MainLayout>
-                    <WizardStep
-                        key={`step11-int-${lang}`}
-                        lang={lang}
-                        title={typeof t.chooseRouteTitle === 'string' ? t.chooseRouteTitle : "Choose Designer Route"}
-                        description={typeof t.chooseRouteDesc === 'string' ? t.chooseRouteDesc : "How would you like to proceed with your designer?"}
-                        currentStep={visualStep - 1}
-                        totalSteps={totalSteps}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                        canNext={!!formData.designerSelectionType}
-                    >
-                        <div className="space-y-8">
-                            <RadioCardGroup
-                                options={[
-                                    { id: 'ghorbari', label: t.suggestedOption, description: t.suggestedOptionDesc, icon: UserCircle },
-                                    { id: 'list', label: t.listOption, description: t.listOptionDesc, icon: Star },
-                                ]}
-                                selected={formData.designerSelectionType}
-                                onChange={(id) => updateData('designerSelectionType', id)}
-                                columns={2}
-                            />
-                        </div>
-                    </WizardStep>
-                </MainLayout>
-            );
-        }
+                    </div>
+                </WizardStep>
+            </MainLayout>
+        );
     }
 
     return null;

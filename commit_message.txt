@@ -1,0 +1,14 @@
+feat: structural design wizard overhaul & partner profile fix
+
+- Redesigned 15-step structural & architectural booking wizard with CMS-driven bilingual content
+- Added document checklist (Step 2) before document upload (Step 3) for all design tracks
+- Fixed wizard step navigation: all paths now flow through doc checklist before upload
+- Removed Framer Motion gesture hooks (whileHover/whileTap) from WizardFormComponents to fix React infinite update loop
+- Fixed WizardStep: wrapped motion.div in AnimatePresence mode=wait for correct exit animations
+- Fixed designer list: removed is_active / verification_status filters so registered partners show up
+- Made partner company name clickable link (opens /partner/[id] in new tab) with external link icon
+- Fixed 404 on /partner/[id]: sellerService now resolves designers by designers.id directly (not just user_id)
+- Expanded CMS Workflow editor for Building Design Journey with bilingual field management for all 6 steps
+- Added Ruler and PaintBucket icon imports to fix CMS ReferenceError
+- Hero section text size adjusted to match design spec
+- Mobile app: design booking wizard and translations updated to match web flow

@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { LucideIcon, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -35,13 +34,12 @@ export function RadioCardGroup({ options, selected, onChange, columns = 3, showC
                 const Icon = option.icon;
 
                 return (
-                    <motion.div
+                    <div
                         key={option.id}
-                        whileHover={{ y: -2 }}
-                        whileTap={{ scale: 0.98 }}
                         onClick={() => onChange(option.id)}
                         className={cn(
                             "relative cursor-pointer rounded-2xl border-2 p-6 transition-all duration-200 flex flex-col items-center text-center gap-3",
+                            "hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]",
                             isSelected
                                 ? "border-primary-600 bg-primary-50/50 shadow-md ring-2 ring-primary-200 ring-offset-2"
                                 : "border-neutral-100 bg-white hover:border-sidebar-200 hover:shadow-sm"
@@ -57,7 +55,6 @@ export function RadioCardGroup({ options, selected, onChange, columns = 3, showC
 
                         {option.image ? (
                             <div className="w-full aspect-square rounded-xl overflow-hidden mb-2 relative bg-neutral-100">
-                                {/* Placeholder for Next.js Image - simple div for now */}
                                 <div
                                     className="absolute inset-0 bg-cover bg-center"
                                     style={{ backgroundImage: `url(${option.image})` }}
@@ -81,7 +78,7 @@ export function RadioCardGroup({ options, selected, onChange, columns = 3, showC
                                 <p className="text-xs text-neutral-500 mt-1 font-medium">{option.description}</p>
                             )}
                         </div>
-                    </motion.div>
+                    </div>
                 );
             })}
         </div>

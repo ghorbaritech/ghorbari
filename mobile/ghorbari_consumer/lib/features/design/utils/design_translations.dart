@@ -35,6 +35,8 @@ class DesignTranslations {
       'landPermitDesc': 'Permission to build on land',
       'buildingApprovalDoc': 'Existing Approval',
       'buildingApprovalDocDesc': 'Any past approvals',
+      'approvalRequiredTitle': 'Required Approvals',
+      'approvalRequiredDesc': 'Which Approval is required?',
       
       'spaceLayoutTitle': 'Layout',
       'spaceLayoutDesc': 'Space and layout details.',
@@ -187,6 +189,8 @@ class DesignTranslations {
       'landPermitDesc': 'জমিতে নির্মাণের অনুমতি',
       'buildingApprovalDoc': 'বিদ্যমান অনুমোদন',
       'buildingApprovalDocDesc': 'যেকোন অতীত অনুমোদন',
+      'approvalRequiredTitle': 'প্রয়োজনীয় অনুমোদন',
+      'approvalRequiredDesc': 'কোন অনুমোদন প্রয়োজন?',
       
       'spaceLayoutTitle': 'লেআউট',
       'spaceLayoutDesc': 'স্থান এবং লেআউট বিশদ।',
