@@ -42,32 +42,58 @@ class HeroData extends Equatable {
 
 class HeroSlide extends Equatable {
   final String title;
+  final String? titleBn;
+  final String? subtitle;
+  final String? subtitleBn;
   final String? description;
+  final String? descriptionBn;
   final String? image;
   final String? buttonText;
   final String? link;
+  final String? overlayColor;
 
   const HeroSlide({
     required this.title,
+    this.titleBn,
+    this.subtitle,
+    this.subtitleBn,
     this.description,
+    this.descriptionBn,
     this.image,
     this.buttonText,
     this.link,
+    this.overlayColor,
   });
 
   factory HeroSlide.fromJson(dynamic json) {
     final map = Map<String, dynamic>.from(json);
     return HeroSlide(
-      title: map['title'] ?? '',
-      description: map['description'],
-      image: map['image'] ?? map['imageUrl'],
-      buttonText: map['buttonText'] ?? map['button_text'],
-      link: map['link'] ?? map['cta_link'],
+      title: map['title']?.toString() ?? '',
+      titleBn: map['titleBn']?.toString() ?? map['title_bn']?.toString(),
+      subtitle: map['subtitle']?.toString(),
+      subtitleBn: map['subtitleBn']?.toString() ?? map['subtitle_bn']?.toString(),
+      description: map['description']?.toString(),
+      descriptionBn: map['descriptionBn']?.toString() ?? map['description_bn']?.toString(),
+      image: map['image']?.toString() ?? map['imageUrl']?.toString(),
+      buttonText: map['buttonText']?.toString() ?? map['button_text']?.toString(),
+      link: map['link']?.toString() ?? map['cta_link']?.toString(),
+      overlayColor: map['overlay_color']?.toString() ?? map['color']?.toString(),
     );
   }
 
   @override
-  List<Object?> get props => [title, description, image, buttonText, link];
+  List<Object?> get props => [
+        title,
+        titleBn,
+        subtitle,
+        subtitleBn,
+        description,
+        descriptionBn,
+        image,
+        buttonText,
+        link,
+        overlayColor
+      ];
 }
 
 class CMSCategorySection extends Equatable {
@@ -142,11 +168,41 @@ class CMSProductSection extends Equatable {
     return CMSProductSection(
       id: map['id']?.toString() ?? '',
       title: map['title']?.toString() ?? '',
-      categoryId: map['category_id']?.toString(),
+      categoryId: map['category_id']?.toString() ?? map['category_source']?.toString(),
       bgStyle: map['bg_style']?.toString(),
     );
   }
 
   @override
   List<Object?> get props => [id, title, categoryId, bgStyle];
+}
+
+class CMSPageLayoutItem extends Equatable {
+  final String id;
+  final String type;
+  final String dataKey;
+  final bool hidden;
+  final String? title;
+
+  const CMSPageLayoutItem({
+    required this.id,
+    required this.type,
+    required this.dataKey,
+    required this.hidden,
+    this.title,
+  });
+
+  factory CMSPageLayoutItem.fromJson(dynamic json) {
+    final map = Map<String, dynamic>.from(json);
+    return CMSPageLayoutItem(
+      id: map['id']?.toString() ?? '',
+      type: map['type']?.toString() ?? '',
+      dataKey: map['data_key']?.toString() ?? '',
+      hidden: map['hidden'] == true,
+      title: map['title']?.toString(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, type, dataKey, hidden, title];
 }

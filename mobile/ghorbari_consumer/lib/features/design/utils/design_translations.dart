@@ -152,7 +152,11 @@ class DesignTranslations {
       'continue_btn': 'Continue',
       'back_btn': 'Back',
       'katha': 'Katha',
-      'soilTest': 'Soil Test'
+      'soilTest': 'Soil Test',
+      'uploadDocsTitle': 'Upload Documents',
+      'uploadDocsDesc': 'Upload photos or PDFs of your documents.',
+      'numLayoutsQ': 'Number of Layouts',
+      'propertyType': 'Property Type'
     },
     'bn': {
       'startJourneyTitle': 'আপনার ডিজাইন যাত্রা শুরু করুন',
@@ -306,7 +310,11 @@ class DesignTranslations {
       'continue_btn': 'চালিয়ে যান',
       'back_btn': 'ফিরে যান',
       'katha': 'কাঠা',
-      'soilTest': 'মাটি পরীক্ষা'
+      'soilTest': 'মাটি পরীক্ষা',
+      'uploadDocsTitle': 'নথিপত্র আপলোড',
+      'uploadDocsDesc': 'আপনার নথিপত্রের ফটো বা পিডিএফ আপলোড করুন।',
+      'numLayoutsQ': 'লেআউটের সংখ্যা',
+      'propertyType': 'প্রপার্টির ধরন'
     }
   };
 

@@ -111,66 +111,97 @@ class _HomeScreenState extends State<HomeScreen> {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
-    List<Widget> sections = [];
-    try {
-      final content = state.cmsContent.data;
-      if (content.isEmpty) {
-        return const SliverToBoxAdapter(
-            child: Center(
-                child: Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text('No CMS Content found'))));
-      }
+    final content = state.cmsContent.data;
+    if (content.isEmpty) {
+      return const SliverToBoxAdapter(
+          child: Center(
+              child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text('No CMS Content found'))));
+    }
 
-      print(
-          'DEBUG: Building HomeScreen sections for keys: ${content.keys.join(", ")}');
-
-      // 0. Hero Section
-      sections.add(_buildHeroSlider(content['hero_section']));
-
-      // 1. Featured Categories
-      if (content['featured_categories'] != null) {
-        sections.add(_buildFeaturedCategories(
-            CMSCategorySection.fromJson(content['featured_categories'])));
-      }
-
-      // 2. Design & Planning
-      sections.add(_buildDesignServicesSection(
-        content['design_display_config'],
-        state,
-      ));
-
-      // 3. Product Sections
+    // Parse Layout
+    List<CMSPageLayoutItem> layout = [];
+    if (content['page_layout'] is List) {
+      layout = (content['page_layout'] as List)
+          .map((i) => CMSPageLayoutItem.fromJson(i))
+          .toList();
+    } else {
+      // Fallback layout if missing
+      layout = [
+        const CMSPageLayoutItem(id: '1', type: 'HeroSlider', dataKey: 'hero_section', hidden: false),
+        const CMSPageLayoutItem(id: '2', type: 'IconSlider', dataKey: 'featured_categories', hidden: false),
+        const CMSPageLayoutItem(id: '3', type: 'DesignServices', dataKey: 'design_display_config', hidden: false),
+        const CMSPageLayoutItem(id: '4', type: 'PromoBanners', dataKey: 'promo_banners', hidden: false),
+      ];
+      // Add product sections
       if (content['product_sections'] is List) {
-        for (var sectionData in content['product_sections']) {
-          sections.add(_buildProductSection(CMSProductSection.fromJson(sectionData), state));
+        final pSecs = content['product_sections'] as List;
+        for (int i = 0; i < pSecs.length; i++) {
+          layout.add(CMSPageLayoutItem(id: 'p_$i', type: 'CategoryShowcase', dataKey: 'product_sections[$i]', hidden: false));
         }
       }
-
-      // 4. Service Sections
+      // Add service sections
       if (content['service_sections'] is List) {
-        for (var section in content['service_sections']) {
-          sections
-              .add(_buildServiceSection(CMSProductSection.fromJson(section)));
+        final sSecs = content['service_sections'] as List;
+        for (int i = 0; i < sSecs.length; i++) {
+          layout.add(CMSPageLayoutItem(id: 's_$i', type: 'ServiceShowcase', dataKey: 'service_sections[$i]', hidden: false));
         }
       }
+    }
 
-      // 5. Promo Banners
-      if (content['promo_banners'] != null) {
-        sections.add(_buildPromoBanner(content['promo_banners']));
+    List<Widget> sections = [];
+    for (var item in layout) {
+      if (item.hidden) continue;
+
+      switch (item.type) {
+        case 'HeroSlider':
+          sections.add(_buildHeroSlider(content[item.dataKey]));
+          break;
+        case 'IconSlider':
+          if (content[item.dataKey] != null) {
+            sections.add(_buildFeaturedCategories(CMSCategorySection.fromJson(content[item.dataKey])));
+          }
+          break;
+        case 'DesignServices':
+          sections.add(_buildDesignServicesSection(content[item.dataKey], state));
+          break;
+        case 'PromoBanners':
+        case 'ThreeSliderBanner':
+          if (content[item.dataKey] != null) {
+            sections.add(_buildPromoBanner(content[item.dataKey]));
+          }
+          break;
+        case 'CategoryShowcase':
+          dynamic secData;
+          if (item.dataKey.startsWith('product_sections[')) {
+             final idx = int.tryParse(item.dataKey.replaceAll(RegExp(r'[^0-9]'), ''));
+             if (idx != null && content['product_sections'] is List && idx < (content['product_sections'] as List).length) {
+               secData = content['product_sections'][idx];
+             }
+          } else {
+            secData = content[item.dataKey];
+          }
+          if (secData != null) {
+            sections.add(_buildProductSection(CMSProductSection.fromJson(secData), state));
+          }
+          break;
+        case 'ServiceShowcase':
+        case 'ServiceShowcaseOld':
+          dynamic secData;
+          if (item.dataKey.startsWith('service_sections[')) {
+             final idx = int.tryParse(item.dataKey.replaceAll(RegExp(r'[^0-9]'), ''));
+             if (idx != null && content['service_sections'] is List && idx < (content['service_sections'] as List).length) {
+               secData = content['service_sections'][idx];
+             }
+          } else {
+            secData = content[item.dataKey];
+          }
+          if (secData != null) {
+            sections.add(_buildServiceSection(CMSProductSection.fromJson(secData)));
+          }
+          break;
       }
-
-      print('DEBUG: HomeScreen built ${sections.length} sections');
-    } catch (e, stackTrace) {
-      print('DEBUG: Error building sections: $e\n$stackTrace');
-      return SliverToBoxAdapter(
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          color: Colors.red.shade100,
-          child: Text('Content Error: $e',
-              style: const TextStyle(color: Colors.red)),
-        ),
-      );
     }
 
     return SliverList(
@@ -314,29 +345,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeroSlider(dynamic rawHeroData) {
-    final List<Map<String, dynamic>> defaultSlides = [
-      {
-        'title': 'নির্মাণ\nমার্কেটপ্লেস',
-        'subtitle': 'আপনার সাইটে প্রিমিয়াম সাপ্লাই ডেলিভারি নিন।',
-        'image': 'assets/images/hero-materials.png',
-        'color': const Color(0xFFEB6841),
-        'badge': 'GHORBARI',
-      },
-      {
-        'title': 'স্থাপত্য ও ভবন ডিজাইন',
-        'subtitle': 'আপনার স্বপ্নের বাড়ির নকশা করুন।',
-        'image': 'assets/images/hero-design.png',
-        'color': const Color(0xFF15803D),
-        'badge': 'DESIGN',
-      },
-      {
-        'title': 'যাচাইকৃত প্রকৌশলী',
-        'subtitle': 'অভিজ্ঞ ইঞ্জিনিয়ার দিয়ে তদারকি করুন।',
-        'image': 'assets/images/hero-services.png',
-        'color': const Color(0xFF00356B),
-        'badge': 'SERVICES',
-      },
-    ];
+    if (rawHeroData == null) return const SizedBox.shrink();
+
+    final hero = HeroData.fromJson(rawHeroData);
+    final isBn = context.locale.languageCode == 'bn';
 
     return Container(
       height: 180,
@@ -349,13 +361,27 @@ class _HomeScreenState extends State<HomeScreen> {
           autoPlay: true,
           autoPlayInterval: const Duration(seconds: 5),
         ),
-        items: defaultSlides.map((slide) {
+        items: hero.slides.map((slide) {
+          final title = (isBn && slide.titleBn != null && slide.titleBn!.isNotEmpty) ? slide.titleBn! : slide.title;
+          final subtitle = (isBn && slide.subtitleBn != null && slide.subtitleBn!.isNotEmpty) ? slide.subtitleBn! : slide.subtitle;
+          final description = (isBn && slide.descriptionBn != null && slide.descriptionBn!.isNotEmpty) ? slide.descriptionBn! : (slide.description ?? '');
+
+          Color bgColor = const Color(0xFF0F172A);
+          if (slide.overlayColor != null) {
+            try {
+              final colorStr = slide.overlayColor!.replaceAll('#', '');
+              bgColor = Color(int.parse('FF$colorStr', radix: 16));
+            } catch (e) {
+              // fallback
+            }
+          }
+
           return PointerInterceptor(
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: slide['color'] as Color,
+                color: bgColor,
               ),
               clipBehavior: Clip.antiAlias,
               child: Row(
@@ -370,7 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (slide['badge'] != null)
+                          if (subtitle != null && subtitle.isNotEmpty)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 2),
@@ -379,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                slide['badge']!,
+                                subtitle,
                                 style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,
@@ -389,7 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 8),
                           Flexible(
                             child: Text(
-                              slide['title']!,
+                              title,
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
@@ -400,31 +426,27 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Flexible(
-                            child: Text(
-                              slide['subtitle']!,
-                              style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 11),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                          if (description.isNotEmpty)
+                            Flexible(
+                              child: Text(
+                                description,
+                                style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 11),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
                           const SizedBox(height: 12),
                           GestureDetector(
                             onTap: () {
-                              if (slide['badge'] == 'DESIGN') {
-                                if (widget.onNavigateToTab != null) {
-                                  widget.onNavigateToTab!(1);
-                                }
-                              } else if (slide['badge'] == 'SERVICES') {
-                                if (widget.onNavigateToTab != null) {
-                                  widget.onNavigateToTab!(2);
-                                }
-                              } else {
-                                if (widget.onNavigateToTab != null) {
-                                  widget.onNavigateToTab!(3);
-                                }
+                              final link = slide.link?.toLowerCase() ?? '';
+                              if (link.contains('design')) {
+                                widget.onNavigateToTab?.call(1);
+                              } else if (link.contains('service')) {
+                                widget.onNavigateToTab?.call(2);
+                              } else if (link.contains('product')) {
+                                widget.onNavigateToTab?.call(3);
                               }
                             },
                             child: Container(
@@ -433,10 +455,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(20)),
-                              child: const Text(
-                                'আরও জানুন',
+                              child: Text(
+                                isBn ? 'আরও জানুন' : 'Learn More',
                                 style: TextStyle(
-                                    color: Color(0xFFE7623F),
+                                    color: bgColor,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold),
                               ),
@@ -446,17 +468,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  Expanded(
-                    flex: 2,
-                    child: Hero(
-                      tag: 'hero_image_${slide['title']}',
-                      child: Image.asset(
-                        slide['image']!,
-                        fit: BoxFit.contain,
-                        alignment: Alignment.centerRight,
+                  if (slide.image != null)
+                    Expanded(
+                      flex: 2,
+                      child: Hero(
+                        tag: 'hero_image_${slide.title}',
+                        child: slide.image!.startsWith('http')
+                            ? CachedNetworkImage(imageUrl: slide.image!, fit: BoxFit.contain, alignment: Alignment.centerRight)
+                            : Image.asset(
+                                slide.image!.startsWith('/') ? 'assets/images${slide.image}' : slide.image!,
+                                fit: BoxFit.contain,
+                                alignment: Alignment.centerRight,
+                                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                              ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -858,32 +884,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPromoBanner(dynamic promoData) {
-    final List<Map<String, dynamic>> banners = [
-      {
-        'title': 'Expert-Selected,\nfast delivered',
-        'subtitle': 'Quality Guarantee',
-        'badge': 'Top Picks',
-        'image':
-            'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600&h=400&fit=crop',
-        'color': const Color(0xFF0F172A),
-      },
-      {
-        'title': 'The one app\nfor everything',
-        'subtitle': 'Price alerts and offers',
-        'badge': 'New',
-        'image':
-            'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&h=400&fit=crop',
-        'color': const Color(0xFFC2410C),
-      },
-      {
-        'title': 'The ones\nyou love',
-        'subtitle': 'Trusted and durable',
-        'badge': 'Best Value',
-        'image':
-            'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&h=400&fit=crop',
-        'color': const Color(0xFF14532D),
-      },
-    ];
+    if (promoData == null) return const SizedBox.shrink();
+
+    List<dynamic> rawItems = [];
+    if (promoData is List) {
+      rawItems = promoData;
+    } else if (promoData is Map && promoData['items'] is List) {
+      rawItems = promoData['items'];
+    }
+
+    if (rawItems.isEmpty) return const SizedBox.shrink();
+
+    final List<HeroSlide> banners = rawItems.map((i) => HeroSlide.fromJson(i)).toList();
+    final isBn = context.locale.languageCode == 'bn';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -907,68 +920,81 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: banners.length,
             itemBuilder: (context, index) {
               final banner = banners[index];
+              final title = (isBn && banner.titleBn != null && banner.titleBn!.isNotEmpty) ? banner.titleBn! : banner.title;
+              final subtitle = (isBn && banner.subtitleBn != null && banner.subtitleBn!.isNotEmpty) ? banner.subtitleBn! : banner.subtitle;
+              final badge = (isBn && banner.descriptionBn != null && banner.descriptionBn!.isNotEmpty) ? banner.descriptionBn! : (banner.description ?? '');
+
+              Color bgColor = const Color(0xFF0F172A);
+              if (banner.overlayColor != null) {
+                try {
+                  final colorStr = banner.overlayColor!.replaceAll('#', '');
+                  bgColor = Color(int.parse('FF$colorStr', radix: 16));
+                } catch (e) {
+                  // Fallback colors for variation
+                  final colors = [const Color(0xFF0F172A), const Color(0xFFC2410C), const Color(0xFF14532D)];
+                  bgColor = colors[index % colors.length];
+                }
+              }
+
               return Container(
                 width: 300,
                 margin: const EdgeInsets.only(right: 12),
                 decoration: BoxDecoration(
-                  color: banner['color'] as Color,
+                  color: bgColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Stack(
                   children: [
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: 150,
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: CachedNetworkImage(
-                              imageUrl: banner['image']!,
-                              fit: BoxFit.cover,
-                              color: Colors.black.withOpacity(0.3),
-                              colorBlendMode: BlendMode.darken,
-                              errorWidget: (context, url, err) => Container(
-                                color: banner['color'] as Color,
-                                child: const Center(
-                                  child: Icon(Icons.image_not_supported, color: Colors.white, size: 48),
+                    if (banner.image != null)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 150,
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: CachedNetworkImage(
+                                imageUrl: banner.image!.startsWith('http') 
+                                    ? banner.image! 
+                                    : 'https://ghorbari.tech${banner.image!.startsWith('/') ? '' : '/'}${banner.image}',
+                                fit: BoxFit.cover,
+                                color: Colors.black.withOpacity(0.3),
+                                colorBlendMode: BlendMode.darken,
+                                errorWidget: (context, url, err) => Container(
+                                  color: bgColor,
+                                  child: const Center(
+                                    child: Icon(Icons.image_not_supported, color: Colors.white, size: 48),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  (banner['color'] as Color),
-                                  (banner['color'] as Color).withOpacity(0)
-                                ],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    bgColor,
+                                    bgColor.withOpacity(0)
+                                  ],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
                     GestureDetector(
                       onTap: () {
-                        final categoryName =
-                            banner['title'].toString().contains('Expert')
-                                ? 'Construction Materials'
-                                : 'New Offers';
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => CategoryListingScreen(
-                                    category: Category(
-                                        id: 'promo_${index}',
-                                        name: categoryName,
-                                        slug: 'promo',
-                                        type: 'product',
-                                        level: 0))));
+                        final link = banner.link?.toLowerCase() ?? '';
+                        if (link.contains('design')) {
+                           widget.onNavigateToTab?.call(1);
+                        } else if (link.contains('service')) {
+                           widget.onNavigateToTab?.call(2);
+                        } else {
+                           widget.onNavigateToTab?.call(3);
+                        }
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(20),
@@ -976,37 +1002,45 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(20),
+                            if (badge.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  badge,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold),
+                                ),
                               ),
-                              child: Text(
-                                banner['badge']!,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
                             const SizedBox(height: 12),
                             Text(
-                              banner['title']!,
+                              title,
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
                                   height: 1.1),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              banner['subtitle']!,
-                              style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 12),
-                            ),
+                            if (subtitle != null && subtitle.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(
+                                  subtitle,
+                                  style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: 12),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                             const SizedBox(height: 16),
                             Row(
                               children: [
@@ -1015,8 +1049,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                         color: Colors.white,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold)),
-                                SizedBox(width: 4),
-                                Icon(Icons.arrow_forward,
+                                const SizedBox(width: 4),
+                                const Icon(Icons.arrow_forward,
                                     color: Colors.white, size: 14),
                               ],
                             ),
