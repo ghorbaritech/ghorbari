@@ -14,6 +14,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { SearchOverlay } from "../search/SearchOverlay";
 import { CartDrawer } from "../cart/CartDrawer";
 import { MegaMenu } from "./MegaMenu";
+import { CalculatorDropdown } from "./CalculatorDropdown";
 
 export function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -294,7 +295,7 @@ export function Navbar() {
 
             <CartDrawer isOpen={isDrawerOpen} onClose={() => closeDrawer()} />
 
-            <div className="border-b hidden md:block overflow-x-auto no-scrollbar">
+            <div className="border-b hidden md:block overflow-visible no-scrollbar">
                 <div className="section-container">
                     <nav className="flex items-center gap-10 h-12 text-[12px] font-bold text-neutral-700 uppercase tracking-wide whitespace-nowrap">
                         <MegaMenu language={language} />
@@ -304,12 +305,7 @@ export function Navbar() {
                         >
                             {t.nav_design_planning}
                         </Link>
-                        <Link
-                            href="/tools/cost-calculator"
-                            className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
-                        >
-                            {t.nav_cost_calculator}
-                        </Link>
+                        <CalculatorDropdown language={language} t={t} />
                         <Link
                             href="/products"
                             className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
