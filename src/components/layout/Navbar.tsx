@@ -305,6 +305,12 @@ export function Navbar() {
                             {t.nav_design_planning}
                         </Link>
                         <Link
+                            href="/tools/cost-calculator"
+                            className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
+                        >
+                            {t.nav_cost_calculator}
+                        </Link>
+                        <Link
                             href="/products"
                             className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
                         >
@@ -358,6 +364,9 @@ export function Navbar() {
                             </Link>
                             <Link href="/services/design/book" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between py-2 border-b">
                                 {t.nav_design_planning} <ArrowRight className="w-4 h-4 text-neutral-300" />
+                            </Link>
+                            <Link href="/tools/cost-calculator" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between py-2 border-b">
+                                {t.nav_cost_calculator} <ArrowRight className="w-4 h-4 text-neutral-300" />
                             </Link>
                             <Link href="/products" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between py-2 border-b">
                                 {t.nav_marketplace} <ArrowRight className="w-4 h-4 text-neutral-300" />

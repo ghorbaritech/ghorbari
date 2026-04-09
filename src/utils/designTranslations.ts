@@ -152,7 +152,28 @@ export const designTranslations = {
         scheduleDesc: "When should the designer or our admin contact you?",
         prefDateLabel: "Preferred Date",
         prefTimeLabel: "Preferred Time Slot",
-        alertSchedule: "Please select a preferred date and time slot."
+        alertSchedule: "Please select a preferred date and time slot.",
+
+        // Construction Cost Calculator
+        nav_cost_calculator: "Cost Calculator",
+        calc_title: "Construction Cost Calculator",
+        calc_subtitle: "Get an instant estimate for your dream project using our intelligent sizing engine.",
+        calc_area: "Total Area (sq.ft)",
+        calc_floors: "Number of Floors",
+        calc_quality: "Material Quality",
+        calc_budget: "Budget",
+        calc_standard: "Standard",
+        calc_premium: "Premium",
+        calc_luxury: "Luxury",
+        calc_total: "Estimated Total",
+        calc_breakdown: "Cost Breakdown",
+        calc_civil: "Civil Works",
+        calc_finishing: "Finishing",
+        calc_mep: "Electrical & Plumbing",
+        calc_contingency: "Contingency",
+        calc_per_sqft: "Estimated per sq.ft",
+        calc_book_consultation: "Book a Consultation",
+        calc_download_report: "Download Report"
     },
     bn: {
         startJourneyTitle: "আপনার ডিজাইনের যাত্রা শুরু করুন",
@@ -307,6 +328,27 @@ export const designTranslations = {
         scheduleDesc: "ডিজাইনার বা আমাদের অ্যাডমিন কখন আপনার সাথে যোগাযোগ করবেন?",
         prefDateLabel: "পছন্দের তারিখ",
         prefTimeLabel: "পছন্দের সময়",
-        alertSchedule: "অনুগ্রহ করে একটি পছন্দের তারিখ এবং সময় নির্বাচন করুন।"
+        alertSchedule: "অনুগ্রহ করে একটি পছন্দের তারিখ এবং সময় নির্বাচন করুন।",
+
+        // Construction Cost Calculator
+        nav_cost_calculator: "খরচ ক্যালকুলেটর",
+        calc_title: "নির্মাণ খরচ ক্যালকুলেটর",
+        calc_subtitle: "আমাদের ইন্টেলিজেন্ট ইঞ্জিন ব্যবহার করে আপনার স্বপ্নের প্রজেক্টের জন্য তৎক্ষণাৎ নির্মাণ ব্যয়ের ধারণা পান।",
+        calc_area: "মোট এরিয়া (বর্গফুট)",
+        calc_floors: "তলার সংখ্যা",
+        calc_quality: "নির্মাণ সামগ্রীর মান",
+        calc_budget: "বাজেট",
+        calc_standard: "স্ট্যান্ডার্ড",
+        calc_premium: "প্রিমিয়াম",
+        calc_luxury: "লাক্সারি",
+        calc_total: "সম্ভাব্য মোট ব্যয়",
+        calc_breakdown: "খরচের বিস্তারিত বিবরণ",
+        calc_civil: "সিভিল কাজসমূহ",
+        calc_finishing: "ফিনিশিং কাজসমূহ",
+        calc_mep: "বৈদ্যুতিক ও প্লাম্বিং",
+        calc_contingency: "আনুষঙ্গিক ব্যয়",
+        calc_per_sqft: "প্রতি বর্গফুট সম্ভাব্য ব্যয়",
+        calc_book_consultation: "পরামর্শ নিন",
+        calc_download_report: "রিপোর্ট ডাউনলোড করুন"
     }
 };

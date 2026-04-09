@@ -102,45 +102,73 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
       contentMap[item['section_key']] = item['content'];
     }
 
-    // Enrich featured_categories
-    final dynamic rawFeatured = contentMap['featured_categories'];
-    List<dynamic> itemsToEnrich = [];
-
-    if (rawFeatured is List) {
-      itemsToEnrich = rawFeatured;
-    } else if (rawFeatured != null && rawFeatured['items'] is List) {
-      itemsToEnrich = rawFeatured['items'];
-    }
-
-    if (itemsToEnrich.isNotEmpty) {
-      final List<String> ids = itemsToEnrich
-          .map((i) => (i['id'] as String))
+    // Helper function for category enrichment
+    Future<List<dynamic>> enrichItems(List<dynamic> items) async {
+       if (items.isEmpty) return items;
+       final List<String> ids = items
+          .map((i) => (i is Map ? i['id'] : i)?.toString())
+          .where((id) => id != null)
+          .cast<String>()
           .toList();
       
+      if (ids.isEmpty) return items;
+
       final List<dynamic> categoriesResponse = await SupabaseService.from('product_categories')
-          .select('id, name, name_bn, icon, icon_url, type, slug')
+          .select('id, name, name_bn, icon, icon_url, type, slug, metadata')
           .filter('id', 'in', ids);
       
-       final enrichedItems = itemsToEnrich.map((item) {
-        final matches = categoriesResponse.where((c) => c['id'] == item['id']).toList();
+       return items.map((item) {
+        final itemId = item is Map ? item['id'] : item;
+        final matches = categoriesResponse.where((c) => c['id'] == itemId).toList();
         final freshCat = matches.isNotEmpty ? matches.first : null;
         if (freshCat != null) {
-          return {
-            ...item,
-            'name': freshCat['name'],
-            'name_bn': freshCat['name_bn'],
-            'icon': freshCat['icon_url'] ?? freshCat['icon'] ?? item['icon'],
-            'type': freshCat['type'],
-            'slug': freshCat['slug'],
-          };
+          if (item is Map) {
+            return {
+              ...item,
+              'name': freshCat['name'],
+              'name_bn': freshCat['name_bn'],
+              'icon': freshCat['icon_url'] ?? freshCat['icon'] ?? item['icon'],
+              'type': freshCat['type'],
+              'slug': freshCat['slug'],
+              'metadata': freshCat['metadata'],
+            };
+          } else {
+             return {
+              'id': freshCat['id'],
+              'name': freshCat['name'],
+              'name_bn': freshCat['name_bn'],
+              'icon': freshCat['icon_url'] ?? freshCat['icon'],
+              'type': freshCat['type'],
+              'slug': freshCat['slug'],
+              'metadata': freshCat['metadata'],
+             };
+          }
         }
         return item;
       }).toList();
+    }
 
+    // 1. Enrich featured_categories
+    final dynamic rawFeatured = contentMap['featured_categories'];
+    if (rawFeatured != null) {
       if (rawFeatured is List) {
-        contentMap['featured_categories'] = enrichedItems;
-      } else if (rawFeatured != null) {
-        contentMap['featured_categories']['items'] = enrichedItems;
+        contentMap['featured_categories'] = await enrichItems(rawFeatured);
+      } else if (rawFeatured['items'] is List) {
+        contentMap['featured_categories']['items'] = await enrichItems(rawFeatured['items']);
+      }
+    }
+
+    // 2. Enrich design_display_config (NEW)
+    final dynamic rawDesign = contentMap['design_display_config'];
+    if (rawDesign != null && rawDesign['selected_ids'] is List) {
+       contentMap['design_display_config']['items'] = await enrichItems(rawDesign['selected_ids']);
+    }
+
+    print("DEBUG: CMS CONTENT KEYS: ${contentMap.keys.toList()}");
+    if (contentMap['page_layout'] is List) {
+      final layout = contentMap['page_layout'] as List;
+      for (var item in layout) {
+        print("DEBUG: LAYOUT ITEM: type=${item['type']}, key=${item['data_key']}, hidden=${item['hidden']}");
       }
     }
 

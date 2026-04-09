@@ -33,13 +33,18 @@ dependencies:
   injectable: ^2.3.2
   shared_preferences: ^2.2.2
   intl: ^0.20.2
-  pointer_interceptor: ^0.10.1+2
-  
-  # Phase 3 Enhancements
-  geolocator: ^13.0.1
-  speech_to_text: ^7.0.0
-  flutter_tts: ^4.2.2
-  image_picker: ^1.1.2
+  # Phase 3 Enhancements (Temporarily disabled for web unblocking)
+  # geolocator: ^13.0.1
+  # speech_to_text: ^7.0.0
+  # flutter_tts: ^4.2.2
+  # image_picker: ^1.1.2
+  # pointer_interceptor: ^0.10.1+2
+
+dependency_overrides:
+  objective_c:
+    path: libs/objective_c_mock
+  native_toolchain_c:
+    path: libs/native_toolchain_c_mock
 
 dev_dependencies:
   flutter_test:

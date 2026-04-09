@@ -26,10 +26,11 @@ class HeroData extends Equatable {
   });
 
   factory HeroData.fromJson(dynamic json) {
-    final map = Map<String, dynamic>.from(json);
+    if (json == null) return const HeroData(title: '', slides: []);
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
     return HeroData(
-      title: map['title'] ?? '',
-      subtitle: map['subtitle'],
+      title: map['title']?.toString() ?? '',
+      subtitle: map['subtitle']?.toString(),
       slides: (map['items'] as List? ?? [])
           .map((i) => HeroSlide.fromJson(i))
           .toList(),
@@ -66,7 +67,8 @@ class HeroSlide extends Equatable {
   });
 
   factory HeroSlide.fromJson(dynamic json) {
-    final map = Map<String, dynamic>.from(json);
+    if (json == null) return const HeroSlide(title: '');
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
     return HeroSlide(
       title: map['title']?.toString() ?? '',
       titleBn: map['titleBn']?.toString() ?? map['title_bn']?.toString(),
@@ -103,14 +105,16 @@ class CMSCategorySection extends Equatable {
   const CMSCategorySection({this.title, required this.items});
 
   factory CMSCategorySection.fromJson(dynamic json) {
+    if (json == null) return const CMSCategorySection(items: []);
     if (json is List) {
       return CMSCategorySection(
         items: json.map((i) => CMSCategoryItem.fromJson(i)).toList(),
       );
     }
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
     return CMSCategorySection(
-      title: json['title'],
-      items: (json['items'] as List? ?? [])
+      title: map['title']?.toString(),
+      items: (map['items'] as List? ?? [])
           .map((i) => CMSCategoryItem.fromJson(i))
           .toList(),
     );
@@ -136,7 +140,8 @@ class CMSCategoryItem extends Equatable {
   });
 
   factory CMSCategoryItem.fromJson(dynamic json) {
-    final map = Map<String, dynamic>.from(json);
+    if (json == null) return const CMSCategoryItem(id: '', name: '');
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
     return CMSCategoryItem(
       id: map['id']?.toString() ?? '',
       name: map['name']?.toString() ?? '',
@@ -164,7 +169,8 @@ class CMSProductSection extends Equatable {
   });
 
   factory CMSProductSection.fromJson(dynamic json) {
-    final map = Map<String, dynamic>.from(json);
+    if (json == null) return const CMSProductSection(id: '', title: '');
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
     return CMSProductSection(
       id: map['id']?.toString() ?? '',
       title: map['title']?.toString() ?? '',
@@ -193,7 +199,8 @@ class CMSPageLayoutItem extends Equatable {
   });
 
   factory CMSPageLayoutItem.fromJson(dynamic json) {
-    final map = Map<String, dynamic>.from(json);
+    if (json == null) return const CMSPageLayoutItem(id: '', type: '', dataKey: '', hidden: true);
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
     return CMSPageLayoutItem(
       id: map['id']?.toString() ?? '',
       type: map['type']?.toString() ?? '',
@@ -205,4 +212,184 @@ class CMSPageLayoutItem extends Equatable {
 
   @override
   List<Object?> get props => [id, type, dataKey, hidden, title];
+}
+
+class SingleSliderData extends Equatable {
+  final String title;
+  final List<HeroSlide> items;
+
+  const SingleSliderData({required this.title, required this.items});
+
+  factory SingleSliderData.fromJson(dynamic json) {
+    if (json == null) return const SingleSliderData(title: '', items: []);
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
+    return SingleSliderData(
+      title: map['title']?.toString() ?? '',
+      items: (map['items'] as List? ?? [])
+          .map((i) => HeroSlide.fromJson(i))
+          .toList(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [title, items];
+}
+
+class MovingIconData extends Equatable {
+  final String title;
+  final List<CMSCategoryItem> items;
+
+  const MovingIconData({required this.title, required this.items});
+
+  factory MovingIconData.fromJson(dynamic json) {
+    if (json == null) return const MovingIconData(title: '', items: []);
+    if (json is List) {
+      return MovingIconData(
+        title: '',
+        items: json.map((i) => CMSCategoryItem.fromJson(i)).toList(),
+      );
+    }
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
+    return MovingIconData(
+      title: map['title']?.toString() ?? '',
+      items: (map['items'] as List? ?? [])
+          .map((i) => CMSCategoryItem.fromJson(i))
+          .toList(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [title, items];
+}
+
+class InfoCardData extends Equatable {
+  final String title;
+  final List<InfoCardItem> items;
+
+  const InfoCardData({required this.title, required this.items});
+
+  factory InfoCardData.fromJson(dynamic json) {
+    if (json == null) return const InfoCardData(title: '', items: []);
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
+    return InfoCardData(
+      title: map['title']?.toString() ?? '',
+      items: (map['items'] as List? ?? [])
+          .map((i) => InfoCardItem.fromJson(i))
+          .toList(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [title, items];
+}
+
+class InfoCardItem extends Equatable {
+  final String label;
+  final String? subtitle;
+  final String? icon;
+
+  const InfoCardItem({required this.label, this.subtitle, this.icon});
+
+  factory InfoCardItem.fromJson(dynamic json) {
+    if (json == null) return const InfoCardItem(label: '');
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
+    return InfoCardItem(
+      label: map['label']?.toString() ?? '',
+      subtitle: map['subtitle']?.toString(),
+      icon: map['icon']?.toString(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [label, subtitle, icon];
+}
+
+class BlogData extends Equatable {
+  final String title;
+  final List<BlogItem> items;
+
+  const BlogData({required this.title, required this.items});
+
+  factory BlogData.fromJson(dynamic json) {
+    if (json == null) return const BlogData(title: '', items: []);
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
+    return BlogData(
+      title: map['title']?.toString() ?? '',
+      items: (map['items'] as List? ?? [])
+          .map((i) => BlogItem.fromJson(i))
+          .toList(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [title, items];
+}
+
+class BlogItem extends Equatable {
+  final String title;
+  final String? subtitle;
+  final String? image;
+  final String? date;
+  final String? link;
+
+  const BlogItem({required this.title, this.subtitle, this.image, this.date, this.link});
+
+  factory BlogItem.fromJson(dynamic json) {
+    if (json == null) return const BlogItem(title: '');
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
+    return BlogItem(
+      title: map['title']?.toString() ?? '',
+      subtitle: map['subtitle']?.toString(),
+      image: map['image']?.toString() ?? map['image_url']?.toString(),
+      date: map['date']?.toString(),
+      link: map['link']?.toString(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [title, subtitle, image, date, link];
+}
+
+class TestimonialData extends Equatable {
+  final String title;
+  final List<TestimonialItem> items;
+
+  const TestimonialData({required this.title, required this.items});
+
+  factory TestimonialData.fromJson(dynamic json) {
+    if (json == null) return const TestimonialData(title: '', items: []);
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
+    return TestimonialData(
+      title: map['title']?.toString() ?? '',
+      items: (map['items'] as List? ?? [])
+          .map((i) => TestimonialItem.fromJson(i))
+          .toList(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [title, items];
+}
+
+class TestimonialItem extends Equatable {
+  final String name;
+  final String? role;
+  final String content;
+  final String? avatar;
+
+  const TestimonialItem({required this.name, this.role, required this.content, this.avatar});
+
+  factory TestimonialItem.fromJson(dynamic json) {
+    if (json == null) return const TestimonialItem(name: '', content: '');
+    final map = Map<String, dynamic>.from(json is Map ? json : {});
+    return TestimonialItem(
+      name: map['name']?.toString() ?? '',
+      role: map['role']?.toString(),
+      content: map['content']?.toString() ?? '',
+      avatar: map['avatar']?.toString() ?? map['image_url']?.toString(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [name, role, content, avatar];
 }

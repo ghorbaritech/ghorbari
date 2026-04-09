@@ -5,7 +5,7 @@ import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketp
 import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_state.dart';
 import 'package:ghorbari_consumer/features/services/presentation/widgets/service_card.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:pointer_interceptor/pointer_interceptor.dart';
+// import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:ghorbari_consumer/shared/models/service_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -368,116 +368,114 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
           autoPlayInterval: const Duration(seconds: 4),
         ),
         items: banners.map((slide) {
-          return PointerInterceptor(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: slide['color'] as Color,
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Stack(
-                children: [
-                   // Background Image overlay
-                   Positioned(
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: 150,
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: slide['isNetwork'] == true
-                                ? Image.network(
-                                    slide['image']!,
-                                    fit: BoxFit.cover,
-                                    color: Colors.black.withOpacity(0.3),
-                                    colorBlendMode: BlendMode.darken,
-                                    errorBuilder: (context, error, stackTrace) => Container(
-                                      color: slide['color'],
-                                      child: const Center(
-                                        child: Icon(Icons.image_not_supported, color: Colors.white, size: 48),
-                                      ),
-                                    ),
-                                  )
-                                : Image.asset(
-                                    slide['image']!,
-                                    fit: BoxFit.cover,
-                                    color: Colors.black.withOpacity(0.3),
-                                    colorBlendMode: BlendMode.darken,
-                                    errorBuilder: (context, error, stackTrace) => Container(
-                                      color: slide['color'],
-                                      child: const Center(
-                                        child: Icon(Icons.image_not_supported, color: Colors.white, size: 48),
-                                      ),
+          return Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: slide['color'] as Color,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
+                 // Background Image overlay
+                 Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 150,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: slide['isNetwork'] == true
+                              ? Image.network(
+                                  slide['image']!,
+                                  fit: BoxFit.cover,
+                                  color: Colors.black.withOpacity(0.3),
+                                  colorBlendMode: BlendMode.darken,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: slide['color'],
+                                    child: const Center(
+                                      child: Icon(Icons.image_not_supported, color: Colors.white, size: 48),
                                     ),
                                   ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  (slide['color'] as Color),
-                                  (slide['color'] as Color).withOpacity(0)
-                                ],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  
-                  // Content
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                                )
+                              : Image.asset(
+                                  slide['image']!,
+                                  fit: BoxFit.cover,
+                                  color: Colors.black.withOpacity(0.3),
+                                  colorBlendMode: BlendMode.darken,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: slide['color'],
+                                    child: const Center(
+                                      child: Icon(Icons.image_not_supported, color: Colors.white, size: 48),
+                                    ),
+                                  ),
+                                ),
+                        ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            slide['badge']!,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          slide['title']!,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.5,
-                          child: Text(
-                            slide['subtitle']!,
-                            style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 10),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            gradient: LinearGradient(
+                              colors: [
+                                (slide['color'] as Color),
+                                (slide['color'] as Color).withOpacity(0)
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                
+                // Content
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          slide['badge']!,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        slide['title']!,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            height: 1.2),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.5,
+                        child: Text(
+                          slide['subtitle']!,
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 10),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           );
         }).toList(),

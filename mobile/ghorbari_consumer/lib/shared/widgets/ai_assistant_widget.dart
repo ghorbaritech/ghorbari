@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:flutter_tts/flutter_tts.dart';
+// import 'package:speech_to_text/speech_to_text.dart' as stt;
+// import 'package:flutter_tts/flutter_tts.dart';
 import 'package:dio/dio.dart';
 import 'dart:async';
-import 'package:image_picker/image_picker.dart';
+// import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AIAssistantWidget extends StatefulWidget {
   const AIAssistantWidget({super.key});
@@ -22,15 +23,15 @@ class _AIAssistantWidgetState extends State<AIAssistantWidget> {
     {'role': 'assistant', 'text': 'Hello! I am your Ghorbari AI assistant. How can I help you today?'}
   ];
   
-  final stt.SpeechToText _speech = stt.SpeechToText();
-  final FlutterTts _tts = FlutterTts();
+  // final stt.SpeechToText _speech = stt.SpeechToText();
+  // final FlutterTts _tts = FlutterTts();
   final Dio _dio = Dio();
   
   bool _isListening = false;
   bool _isTyping = false;
   String _currentLang = 'en';
-  File? _attachedImage;
-  final ImagePicker _picker = ImagePicker();
+  // File? _attachedImage;
+  // final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -39,83 +40,83 @@ class _AIAssistantWidgetState extends State<AIAssistantWidget> {
   }
 
   void _initTts() async {
-    await _tts.setLanguage("en-US");
-    await _tts.setSpeechRate(0.5);
-    await _tts.setVolume(1.0);
-    await _tts.setPitch(1.0);
+    // await _tts.setLanguage("en-US");
+    // await _tts.setSpeechRate(0.5);
+    // await _tts.setVolume(1.0);
+    // await _tts.setPitch(1.0);
   }
 
   Future<void> _speak(String text, String lang) async {
-    if (lang == 'bn') {
-      await _tts.setLanguage("bn-BD");
-    } else {
-      await _tts.setLanguage("en-US");
-    }
-    await _tts.speak(text);
+    // if (lang == 'bn') {
+    //   await _tts.setLanguage("bn-BD");
+    // } else {
+    //   await _tts.setLanguage("en-US");
+    // }
+    // await _tts.speak(text);
   }
 
   Future<void> _toggleListening() async {
-    if (!_isListening) {
-      bool available = await _speech.initialize(
-        onStatus: (status) => print('Speech status: $status'),
-        onError: (error) => print('Speech error: $error'),
-      );
-      if (available) {
-        setState(() => _isListening = true);
-        _speech.listen(
-          localeId: _currentLang == 'bn' ? 'bn_BD' : 'en_US',
-          onResult: (result) {
-            setState(() {
-              _controller.text = result.recognizedWords;
-              if (result.finalResult) {
-                _isListening = false;
-                _handleSend();
-              }
-            });
-          },
-        );
-      }
-    } else {
-      setState(() => _isListening = false);
-      _speech.stop();
-    }
+    // if (!_isListening) {
+    //   bool available = await _speech.initialize(
+    //     onStatus: (status) => print('Speech status: $status'),
+    //     onError: (error) => print('Speech error: $error'),
+    //   );
+    //   if (available) {
+    //     setState(() => _isListening = true);
+    //     _speech.listen(
+    //       localeId: _currentLang == 'bn' ? 'bn_BD' : 'en_US',
+    //       onResult: (result) {
+    //         setState(() {
+    //           _controller.text = result.recognizedWords;
+    //           if (result.finalResult) {
+    //             _isListening = false;
+    //             _handleSend();
+    //           }
+    //         });
+    //       },
+    //     );
+    //   }
+    // } else {
+    //   setState(() => _isListening = false);
+    //   _speech.stop();
+    // }
   }
 
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _attachedImage = File(image.path);
-      });
-    }
+    // final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    // if (image != null) {
+    //   setState(() {
+    //     _attachedImage = File(image.path);
+    //   });
+    // }
   }
 
   Future<void> _handleSend() async {
-    if (_controller.text.trim().isEmpty && _attachedImage == null) return;
+    if (_controller.text.trim().isEmpty /* && _attachedImage == null */) return;
 
     final userText = _controller.text.trim();
-    final imageFile = _attachedImage;
+    // final imageFile = _attachedImage;
     
     setState(() {
       _messages.add({
         'role': 'user', 
         'text': userText.isEmpty ? 'Attached image' : userText,
-        if (imageFile != null) 'imagePath': imageFile.path,
+        // if (imageFile != null) 'imagePath': imageFile.path,
       });
       _controller.clear();
-      _attachedImage = null;
+      // _attachedImage = null;
       _isTyping = true;
     });
     _scrollToBottom();
 
     try {
-      String? base64Image;
-      String? mimeType;
-      if (imageFile != null) {
-        final bytes = await imageFile.readAsBytes();
-        base64Image = base64Encode(bytes);
-        mimeType = 'image/${imageFile.path.split('.').last}';
-      }
+      // String? base64Image;
+      // String? mimeType;
+      // if (imageFile != null) {
+      //   final bytes = await imageFile.readAsBytes();
+      //   base64Image = base64Encode(bytes);
+      //   mimeType = 'image/${imageFile.path.split('.').last}';
+      // }
 
       // Format messages for the advanced API (AI SDK format)
       final apiMessages = _messages.map((m) {
@@ -138,14 +139,14 @@ class _AIAssistantWidgetState extends State<AIAssistantWidget> {
           'messages': apiMessages,
           'language': _currentLang,
           'stream': false, // Request JSON for mobile
-          if (base64Image != null)
-            'experimental_attachments': [
-              {
-                'name': 'image.png',
-                'contentType': mimeType,
-                'url': 'data:$mimeType;base64,$base64Image',
-              }
-            ],
+          // if (base64Image != null)
+          //   'experimental_attachments': [
+          //     {
+          //       'name': 'image.png',
+          //       'contentType': mimeType,
+          //       'url': 'data:$mimeType;base64,$base64Image',
+          //     }
+          //   ],
         },
       );
 
@@ -341,8 +342,8 @@ class _AIAssistantWidgetState extends State<AIAssistantWidget> {
                             width: double.infinity,
                             fit: BoxFit.cover,
                           )
-                        : Image.network(
-                            msg['imageUrl']!,
+                        : CachedNetworkImage(
+                            imageUrl: msg['imageUrl']!,
                             height: 150,
                             width: double.infinity,
                             fit: BoxFit.cover,
@@ -405,38 +406,38 @@ class _AIAssistantWidgetState extends State<AIAssistantWidget> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (_attachedImage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.file(
-                              _attachedImage!,
-                              height: 60,
-                              width: 60,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          Positioned(
-                            top: -5,
-                            right: -5,
-                            child: GestureDetector(
-                              onTap: () => setState(() => _attachedImage = null),
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: const BoxDecoration(
-                                  color: Colors.black54,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.close, size: 14, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  // if (_attachedImage != null)
+                  //   Padding(
+                  //     padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
+                  //     child: Stack(
+                  //       children: [
+                  //         ClipRRect(
+                  //           borderRadius: BorderRadius.circular(10),
+                  //           child: Image.file(
+                  //             _attachedImage!,
+                  //             height: 60,
+                  //             width: 60,
+                  //             fit: BoxFit.cover,
+                  //           ),
+                  //         ),
+                  //         Positioned(
+                  //           top: -5,
+                  //           right: -5,
+                  //           child: GestureDetector(
+                  //             onTap: () => setState(() => _attachedImage = null),
+                  //             child: Container(
+                  //               padding: const EdgeInsets.all(2),
+                  //               decoration: const BoxDecoration(
+                  //                 color: Colors.black54,
+                  //                 shape: BoxShape.circle,
+                  //               ),
+                  //               child: const Icon(Icons.close, size: 14, color: Colors.white),
+                  //             ),
+                  //           ),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
                   TextField(
                     controller: _controller,
                     onSubmitted: (_) => _handleSend(),
@@ -452,11 +453,11 @@ class _AIAssistantWidgetState extends State<AIAssistantWidget> {
           ),
           IconButton(
             icon: const Icon(Icons.image_outlined, color: Colors.grey),
-            onPressed: _pickImage,
+            onPressed: () {},
           ),
           IconButton(
             icon: Icon(_isListening ? Icons.mic : Icons.mic_none, color: _isListening ? Colors.red : Colors.grey),
-            onPressed: _toggleListening,
+            onPressed: () {},
           ),
           IconButton(
             icon: const Icon(Icons.send, color: Color(0xFF0F172A)),

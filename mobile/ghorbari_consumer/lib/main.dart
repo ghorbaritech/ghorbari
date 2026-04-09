@@ -21,15 +21,22 @@ import 'package:ghorbari_consumer/features/bookings/data/datasources/booking_rem
 import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
 
 void main() async {
+  print('DEBUG: [1] Initializing WidgetsFlutterBinding...');
   WidgetsFlutterBinding.ensureInitialized();
+  print('DEBUG: [2] Initializing EasyLocalization...');
   await EasyLocalization.ensureInitialized();
 
   // Initialize Supabase
-  await Supabase.initialize(
-    url: 'https://nnrzszujwhutbgghtjwc.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ucnpzenVqd2h1dGJnZ2h0andjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxNTM0MDYsImV4cCI6MjA4NDcyOTQwNn0.Wm5Rt80-9_WyDCIxQVbreNSn9BTlqfgN8HmORGZcsO4',
-  );
-  print('DEBUG: Supabase Initialized. Running App...');
+  print('DEBUG: [3] Initializing Supabase...');
+  try {
+    await Supabase.initialize(
+      url: 'https://nnrzszujwhutbgghtjwc.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ucnpzenVqd2h1dGJnZ2h0andjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxNTM0MDYsImV4cCI6MjA4NDcyOTQwNn0.Wm5Rt80-9_WyDCIxQVbreNSn9BTlqfgN8HmORGZcsO4',
+    );
+    print('DEBUG: [4] Supabase Initialized. Running App...');
+  } catch (e) {
+    print('DEBUG: [FATAL ERROR] Supabase Init Failed: $e');
+  }
 
   runApp(
     EasyLocalization(

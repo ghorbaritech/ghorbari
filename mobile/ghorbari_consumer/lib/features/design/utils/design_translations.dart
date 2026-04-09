@@ -156,7 +156,13 @@ class DesignTranslations {
       'uploadDocsTitle': 'Upload Documents',
       'uploadDocsDesc': 'Upload photos or PDFs of your documents.',
       'numLayoutsQ': 'Number of Layouts',
-      'propertyType': 'Property Type'
+      'propertyType': 'Property Type',
+      'layoutTab': 'Layout',
+      'unitTab': 'Unit',
+      'numUnitsQ': 'Number of Units',
+      'identicalUnitsQ': 'Are all units identical?',
+      'garageQ': 'Include Garage?',
+      'layoutConfigDesc': 'Define structure and units for this layout.'
     },
     'bn': {
       'startJourneyTitle': 'আপনার ডিজাইন যাত্রা শুরু করুন',
@@ -314,7 +320,13 @@ class DesignTranslations {
       'uploadDocsTitle': 'নথিপত্র আপলোড',
       'uploadDocsDesc': 'আপনার নথিপত্রের ফটো বা পিডিএফ আপলোড করুন।',
       'numLayoutsQ': 'লেআউটের সংখ্যা',
-      'propertyType': 'প্রপার্টির ধরন'
+      'propertyType': 'প্রপার্টির ধরন',
+      'layoutTab': 'লেআউট',
+      'unitTab': 'ইউনিট',
+      'numUnitsQ': 'ইউনিটের সংখ্যা',
+      'identicalUnitsQ': 'সব ইউনিট কি একরকম?',
+      'garageQ': 'গ্যারেজ কি অন্তর্ভুক্ত?',
+      'layoutConfigDesc': 'এই লেআউটের জন্য গঠন এবং ইউনিট নির্ধারণ করুন।'
     }
   };
 

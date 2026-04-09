@@ -68,6 +68,19 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
   String structuralVibe = '';
   String soilTest = '';
   List<String> roofFeatures = [];
+  
+  // Expanded Layout Data (matches web Step 5)
+  List<Map<String, dynamic>> layoutsData = [
+    {
+      'id': 1,
+      'isGarage': 'no',
+      'numberOfUnits': '1',
+      'unitsAreIdentical': 'yes',
+      'unitDetails': {
+        'beds': '', 'baths': '', 'drawing': '', 'kitchen': '', 'balcony': '', 'others': ''
+      }
+    }
+  ];
 
   String designerSelectionType = ''; // 'ghorbari' | 'list'
   String? selectedDesignerId;
@@ -137,7 +150,7 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
     final List<int> active = [0];
     if (serviceTypes.contains('structural-architectural')) {
       active.addAll([1, 2, 3]); // designer option, doc checklist, upload docs
-      if (showsDesignQ) active.addAll([4, 5, 6]); // layout, plot, aesthetics
+      if (showsDesignQ) active.addAll([4, 45, 5, 6]); // layout, layout-details (4.5/5), plot, aesthetics
       active.add(7); // choose route
       if (!skippableListStep) active.add(8); // designer list
     }
@@ -184,7 +197,9 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
           step = 7; // Jump to designer route
         }
       } else if (step == 4) {
-        step = 5;
+        step = 45; // Move to detailed layout (web Step 5)
+      } else if (step == 45) {
+        step = 5; // Move to Plot features
       } else if (step == 5) {
         step = 6;
       } else if (step == 6) {
@@ -239,8 +254,10 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
         step = 2;
       } else if (step == 4) {
         step = 3;
-      } else if (step == 5) {
+      } else if (step == 45) {
         step = 4;
+      } else if (step == 5) {
+        step = 45;
       } else if (step == 6) {
         step = 5;
       } else if (step == 7) {
@@ -335,6 +352,7 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
         'structuralVibe': structuralVibe,
         'soilTest': soilTest,
         'roofFeatures': roofFeatures,
+        'layoutsData': layoutsData, // Send the detailed layout config
         'designerSelectionType': designerSelectionType,
         'selectedDesignerId': selectedDesignerId,
         'propertyType': propertyType,
@@ -492,9 +510,9 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(tr('docChecklistTitle'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(tr('approvalRequiredTitle'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text(tr('docChecklistDesc'), style: TextStyle(color: Colors.grey.shade600)),
+          Text(tr('approvalRequiredDesc'), style: TextStyle(color: Colors.grey.shade600)),
           const SizedBox(height: 32),
           _buildDocCheckItem(tr('deedDoc'), tr('deedDocDesc'), hasDeed, (v) => setState(() => hasDeed = v), primaryColor),
           _buildDocCheckItem(tr('surveyMap'), tr('surveyMapDesc'), hasSurveyMap, (v) => setState(() => hasSurveyMap = v), primaryColor),
@@ -607,18 +625,114 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
           ),
           const SizedBox(height: 24),
           _buildTextField(tr('floorsQ'), initialFloors, (v) => setState(() => initialFloors = v), keyboardType: TextInputType.number),
-          _buildTextField(tr('numLayoutsQ'), numberOfLayouts, (v) => setState(() => numberOfLayouts = v), keyboardType: TextInputType.number),
-          const Divider(height: 40),
-          Text(tr('unitsQ'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          _buildTextField(tr('unitsQ'), unitsPerFloor, (v) => setState(() => unitsPerFloor = v), keyboardType: TextInputType.number),
-          _buildTextField(tr('bedsQ'), bedroomsPerUnit, (v) => setState(() => bedroomsPerUnit = v), keyboardType: TextInputType.number),
-          _buildTextField(tr('bathsQ'), bathroomsPerUnit, (v) => setState(() => bathroomsPerUnit = v), keyboardType: TextInputType.number),
-          _buildTextField(tr('drawingQ'), drawingRoomPerUnit, (v) => setState(() => drawingRoomPerUnit = v), keyboardType: TextInputType.number),
-          _buildTextField(tr('kitchenQ'), kitchenPerUnit, (v) => setState(() => kitchenPerUnit = v), keyboardType: TextInputType.number),
-          _buildTextField(tr('balconyQ'), balconyPerUnit, (v) => setState(() => balconyPerUnit = v), keyboardType: TextInputType.number),
-          _buildTextField(tr('othersQ'), othersPerUnit, (v) => setState(() => othersPerUnit = v)),
+          _buildTextField(tr('numLayoutsQ'), numberOfLayouts, (v) => setState(() {
+            numberOfLayouts = v;
+            // Recalculate layoutsData
+            final count = int.tryParse(v) ?? 1;
+            if (count > 0 && count != layoutsData.length) {
+              if (count > layoutsData.length) {
+                for (int i = layoutsData.length; i < count; i++) {
+                  layoutsData.add({
+                    'id': i + 1,
+                    'isGarage': 'no',
+                    'numberOfUnits': '1',
+                    'unitsAreIdentical': 'yes',
+                    'unitDetails': {
+                      'beds': '', 'baths': '', 'drawing': '', 'kitchen': '', 'balcony': '', 'others': ''
+                    }
+                  });
+                }
+              } else {
+                layoutsData = layoutsData.sublist(0, count);
+              }
+            }
+          }), keyboardType: TextInputType.number),
         ],
+      );
+    }
+
+    // ── Step 4.5/5: Detailed Layout Configuration (matches web) ────────────────
+    if (step == 45) {
+      return DefaultTabController(
+        length: layoutsData.length,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(tr('numLayoutsQ'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(tr('layoutConfigDesc'), style: TextStyle(color: Colors.grey.shade600)),
+            const SizedBox(height: 24),
+            TabBar(
+              isScrollable: layoutsData.length > 3,
+              labelColor: primaryColor,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: primaryColor,
+              tabs: layoutsData.map((l) => Tab(text: '${tr('layoutTab')} ${l['id']}')).toList(),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 500, // Reasonable height for inner scrollable area
+              child: TabBarView(
+                children: layoutsData.map((layout) {
+                  return SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('${tr('layoutTab')} ${layout['id']} Configuration', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              Row(
+                                children: [
+                                  Text(tr('garageQ'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  const SizedBox(width: 8),
+                                  Switch(
+                                    value: layout['isGarage'] == 'yes',
+                                    onChanged: (v) => setState(() => layout['isGarage'] = v ? 'yes' : 'no'),
+                                    activeColor: primaryColor,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          if (layout['isGarage'] == 'no') ...[
+                            _buildTextField(tr('numUnitsQ'), layout['numberOfUnits'], (v) => setState(() => layout['numberOfUnits'] = v), keyboardType: TextInputType.number),
+                            const SizedBox(height: 16),
+                            Text(tr('identicalUnitsQ'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            RadioCardGroup(
+                              options: [
+                                RadioCardOption(id: 'yes', label: tr('yes')),
+                                RadioCardOption(id: 'no', label: tr('no')),
+                              ],
+                              selectedId: layout['unitsAreIdentical'],
+                              onChanged: (v) => setState(() => layout['unitsAreIdentical'] = v),
+                              columns: 2,
+                            ),
+                            const SizedBox(height: 24),
+                            if (layout['unitsAreIdentical'] == 'yes') ...[
+                              _buildUnitInputs('${tr('unitTab')} Details (All ${layout['numberOfUnits']} units)', layout['unitDetails'], tr),
+                            ] else ...[
+                              // For simplicity in mobile, we show one detail block but explain it applies per unit
+                              // or we could iterate if numberOfUnits is small.
+                              // Web does it for all.
+                              const Text('Please define specifications for unit types:', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13)),
+                              const SizedBox(height: 12),
+                              _buildUnitInputs('${tr('unitTab')} 1 Details', layout['unitDetails'], tr),
+                            ],
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -1113,6 +1227,34 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
     );
   }
 
+  Widget _buildUnitInputs(String title, Map<String, dynamic> unit, String Function(String) tr) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF475569))),
+        ),
+        _buildTextField(tr('bedsQ'), unit['beds'], (v) => setState(() => unit['beds'] = v), keyboardType: TextInputType.number),
+        _buildTextField(tr('bathsQ'), unit['baths'], (v) => setState(() => unit['baths'] = v), keyboardType: TextInputType.number),
+        Row(
+          children: [
+            Expanded(child: _buildTextField(tr('drawingQ'), unit['drawing'], (v) => setState(() => unit['drawing'] = v), keyboardType: TextInputType.number)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildTextField(tr('kitchenQ'), unit['kitchen'], (v) => setState(() => unit['kitchen'] = v), keyboardType: TextInputType.number)),
+          ],
+        ),
+        Row(
+          children: [
+            Expanded(child: _buildTextField(tr('balconyQ'), unit['balcony'], (v) => setState(() => unit['balcony'] = v), keyboardType: TextInputType.number)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildTextField(tr('othersQ'), unit['others'], (v) => setState(() => unit['others'] = v))),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _reviewRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1162,6 +1304,7 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
       case 2:  canNext = true; break; // Checklist — always can continue
       case 3:  canNext = true; break; // Upload docs — optional
       case 4:  canNext = landAreaInput.isNotEmpty && initialFloors.isNotEmpty; break;
+      case 45: canNext = true; break; // Detailed layout configurator
       case 5:  canNext = true; break; // Plot features optional
       case 6:  canNext = structuralVibe.isNotEmpty; break;
       case 7:  canNext = designerSelectionType.isNotEmpty; break;

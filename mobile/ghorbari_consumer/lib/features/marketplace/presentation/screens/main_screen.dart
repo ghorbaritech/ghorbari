@@ -12,6 +12,7 @@ import 'package:ghorbari_consumer/features/design/presentation/screens/design_st
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/orders_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/profile_screen.dart';
 import 'package:ghorbari_consumer/features/marketplace/presentation/screens/messages_screen.dart';
+import 'package:ghorbari_consumer/features/tools/presentation/screens/cost_calculator_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -141,6 +142,17 @@ class _MainScreenState extends State<MainScreen> {
                                 MaterialPageRoute(builder: (context) => const OrdersScreen()),
                               );
                           }
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.calculate_outlined),
+                      title: Text('nav_cost_calculator'.tr()),
+                      onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const CostCalculatorScreen()),
+                          );
                       },
                     ),
                     ListTile(
