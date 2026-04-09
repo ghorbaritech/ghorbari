@@ -42,6 +42,18 @@ const UNIT_CONVERSION = {
     decimal: 435.6
 };
 
+const MATERIAL_RATES = {
+    cement: 540,
+    steel: 93,
+    bricks: 14,
+    sand: 65,
+    stone: 230,
+    tiles: 150,
+    paint: 650,
+    fittings: 800,
+    fixtures: 4500,
+};
+
 export default function CostCalculator() {
     const { t, language } = useLanguage();
     const isBN = language === 'BN';
@@ -102,11 +114,10 @@ export default function CostCalculator() {
     }, [inputValue, unit, floors, quality, location, foundation]);
 
     const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat(isBN ? 'bn-BD' : 'en-BD', {
-            style: 'currency',
-            currency: 'BDT',
+        const formatted = new Intl.NumberFormat(isBN ? 'bn-BD' : 'en-BD', {
             maximumFractionDigits: 0
         }).format(val);
+        return `${formatted}৳`; // Align with production style: symbol always at end
     };
 
     return (
@@ -379,11 +390,11 @@ export default function CostCalculator() {
                                                 icon: HardHat, 
                                                 percent: 42,
                                                 items: [
-                                                    { name: t.calc_mat_cement, val: results.materials.cement, unit: t.unit_bags },
-                                                    { name: t.calc_mat_steel, val: results.materials.steel, unit: t.unit_kg },
-                                                    { name: t.calc_mat_bricks, val: results.materials.bricks, unit: t.unit_pcs },
-                                                    { name: t.calc_mat_sand, val: results.materials.sand, unit: t.unit_cft },
-                                                    { name: t.calc_mat_stone, val: results.materials.stone, unit: t.unit_cft },
+                                                    { name: t.calc_mat_cement, val: results.materials.cement, unit: t.unit_bags, key: 'cement' },
+                                                    { name: t.calc_mat_steel, val: results.materials.steel, unit: t.unit_kg, key: 'steel' },
+                                                    { name: t.calc_mat_bricks, val: results.materials.bricks, unit: t.unit_pcs, key: 'bricks' },
+                                                    { name: t.calc_mat_sand, val: results.materials.sand, unit: t.unit_cft, key: 'sand' },
+                                                    { name: t.calc_mat_stone, val: results.materials.stone, unit: t.unit_cft, key: 'stone' },
                                                 ]
                                             },
                                             { 
@@ -393,8 +404,8 @@ export default function CostCalculator() {
                                                 icon: Sparkles, 
                                                 percent: 33,
                                                 items: [
-                                                    { name: t.calc_mat_tiles, val: results.materials.tiles, unit: t.unit_sqft },
-                                                    { name: t.calc_mat_paint, val: results.materials.paint, unit: t.unit_ltr },
+                                                    { name: t.calc_mat_tiles, val: results.materials.tiles, unit: t.unit_sqft, key: 'tiles' },
+                                                    { name: t.calc_mat_paint, val: results.materials.paint, unit: t.unit_ltr, key: 'paint' },
                                                 ]
                                             },
                                             { 
@@ -404,8 +415,8 @@ export default function CostCalculator() {
                                                 icon: Zap, 
                                                 percent: 15,
                                                 items: [
-                                                    { name: t.calc_mat_fittings, val: results.materials.fittings, unit: t.unit_points },
-                                                    { name: t.calc_mat_fixtures, val: results.materials.fixtures, unit: t.unit_pcs },
+                                                    { name: t.calc_mat_fittings, val: results.materials.fittings, unit: t.unit_points, key: 'fittings' },
+                                                    { name: t.calc_mat_fixtures, val: results.materials.fixtures, unit: t.unit_pcs, key: 'fixtures' },
                                                 ]
                                             },
                                             { 
@@ -433,8 +444,15 @@ export default function CostCalculator() {
                                                 </div>
                                                 <div className="space-y-1.5 pt-1">
                                                     {item.items.map((sub, sIdx) => (
-                                                        <div key={sIdx} className="flex justify-between text-[11px] border-b border-white/5 pb-1 last:border-0">
-                                                            <span className="text-neutral-400">{sub.name}</span>
+                                                        <div key={sIdx} className="flex justify-between items-center text-[11px] border-b border-white/5 pb-1 last:border-0 group/item">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-neutral-400 font-medium">{sub.name}</span>
+                                                                {sub.key && MATERIAL_RATES[sub.key as keyof typeof MATERIAL_RATES] && (
+                                                                    <span className="text-[10px] text-primary-300 font-bold">
+                                                                        @{formatCurrency(MATERIAL_RATES[sub.key as keyof typeof MATERIAL_RATES])}/{sub.unit}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             <span className="font-bold text-white">
                                                                 {Math.round(sub.val).toLocaleString(isBN ? 'bn-BD' : 'en-US')} {sub.unit}
                                                             </span>

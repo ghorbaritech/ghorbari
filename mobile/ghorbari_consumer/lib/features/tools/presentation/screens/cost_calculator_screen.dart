@@ -254,6 +254,7 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
 
   Widget _buildResultsCard(double total, double perSqft, Map<String, double> breakdown, Map<String, double> materials) {
     final currencyFormat = NumberFormat.currency(locale: context.locale.toString(), symbol: '৳ ', decimalDigits: 0);
+    final rates = ConstructionCalculatorLogic.getMaterialRates();
     
     return Container(
       width: double.infinity,
@@ -304,9 +305,11 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
             0.42, 
             Colors.blue,
             items: [
-              '${'calc_mat_cement'.tr()}: ${materials['cement']!.round()} ${'unit_bags'.tr()}',
-              '${'calc_mat_steel'.tr()}: ${materials['steel']!.round()} ${'unit_kg'.tr()}',
-              '${'calc_mat_bricks'.tr()}: ${materials['bricks']!.round()} ${'unit_pcs'.tr()}',
+              '${'calc_mat_cement'.tr()}: ${materials['cement']!.round()} ${'unit_bags'.tr()} @ ৳${rates['cement']}',
+              '${'calc_mat_steel'.tr()}: ${materials['steel']!.round()} ${'unit_kg'.tr()} @ ৳${rates['steel']}',
+              '${'calc_mat_bricks'.tr()}: ${materials['bricks']!.round()} ${'unit_pcs'.tr()} @ ৳${rates['bricks']}',
+              '${'calc_mat_sand'.tr()}: ${materials['sand']!.round()} ${'unit_cft'.tr()} @ ৳${rates['sand']}',
+              '${'calc_mat_stone'.tr()}: ${materials['stone']!.round()} ${'unit_cft'.tr()} @ ৳${rates['stone']}',
             ],
           ),
           _buildBreakdownItem(
@@ -315,8 +318,8 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
             0.33, 
             Colors.emerald,
             items: [
-              '${'calc_mat_tiles'.tr()}: ${materials['tiles']!.round()} ${'unit_sqft'.tr()}',
-              '${'calc_mat_paint'.tr()}: ${materials['paint']!.round()} ${'unit_ltr'.tr()}',
+              '${'calc_mat_tiles'.tr()}: ${materials['tiles']!.round()} ${'unit_sqft'.tr()} @ ৳${rates['tiles']}',
+              '${'calc_mat_paint'.tr()}: ${materials['paint']!.round()} ${'unit_ltr'.tr()} @ ৳${rates['paint']}',
             ],
           ),
           _buildBreakdownItem(
@@ -325,8 +328,8 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
             0.15, 
             Colors.orange,
             items: [
-              '${'calc_mat_fittings'.tr()}: ${materials['fittings']!.round()} ${'unit_points'.tr()}',
-              '${'calc_mat_fixtures'.tr()}: ${materials['fixtures']!.round()} ${'unit_pcs'.tr()}',
+              '${'calc_mat_fittings'.tr()}: ${materials['fittings']!.round()} ${'unit_points'.tr()} @ ৳${rates['fittings']}',
+              '${'calc_mat_fixtures'.tr()}: ${materials['fixtures']!.round()} ${'unit_pcs'.tr()} @ ৳${rates['fixtures']}',
             ],
           ),
           _buildBreakdownItem(

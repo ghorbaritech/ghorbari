@@ -79,4 +79,18 @@ class ConstructionCalculatorLogic {
       'fixtures': totalArea / 150,
     };
   }
+
+  static Map<String, int> getMaterialRates() {
+    return {
+      'cement': 540,
+      'steel': 93,
+      'bricks': 14,
+      'sand': 65,
+      'stone': 230,
+      'tiles': 150,
+      'paint': 650,
+      'fittings': 800,
+      'fixtures': 4500,
+    };
+  }
 }
