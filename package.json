@@ -59,7 +59,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "kill-port": "^2.0.1",
-    "pg": "^8.19.0",
+    "pg": "^8.20.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
