@@ -386,7 +386,7 @@ export const translations = {
         footer_contact: "যোগাযোগ করুন",
         footer_faqs: "জিজ্ঞাসিত প্রশ্ন",
         footer_guidelines: "নির্দেশিকা",
-        footer_rights: "ঘরবাড়ি প্ল্যাটফর্ম। শ্রেষ্ঠত্বের জন্য প্রকৌশল।",
+        footer_rights: "ডালানকোঠা প্ল্যাটফর্ম। শ্রেষ্ঠত্বের জন্য প্রকৌশল।",
         footer_privacy: "গোপনীয়তা",
         footer_cookies: "কুকিজ",
         footer_security: "নিরাপত্তা",
@@ -630,7 +630,7 @@ export const translations = {
         calc_int_item_kitchen_desc: "সম্পূর্ণ মডুলার কিচেন সেটআপ",
         calc_int_item_decor_desc: "টিভি ইউনিট, ফোয়ার, ডেকোরেশন",
         calc_int_disclaimer: "*প্রকল্পের অবস্থাভেদে খরচ পরিবর্তিত হতে পারে",
-        calc_int_quality_tag: "ঘরবাড়ি কোয়ালিটি নিশ্চয়তা",
+        calc_int_quality_tag: "ডালানকোঠা কোয়ালিটি নিশ্চয়তা",
         calc_int_quality_desc: "আমরা শুধুমাত্র গ্রেড-এ যাচাইকৃত উপকরণ ব্যবহার করি। প্রতিটি ইন্টেরিয়র প্যাকেজে থাকছে হার্ডওয়্যারের উপর ১০ বছরের ওয়ারেন্টি।",
     }
 };
