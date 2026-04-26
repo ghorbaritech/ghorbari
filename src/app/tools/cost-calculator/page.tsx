@@ -5,10 +5,10 @@ import { Footer } from '@/components/layout/Footer';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Construction Cost Calculator | Ghorbari',
-    description: 'Estimate your building construction cost instantly with Ghorbari intelligent cost calculator. Get detailed breakdown for civil, finishing, and MEP works.',
+    title: 'Construction Cost Calculator | Dalankotha',
+    description: 'Estimate your building construction cost instantly with Dalankotha intelligent cost calculator. Get detailed breakdown for civil, finishing, and MEP works.',
     openGraph: {
-        title: 'Construction Cost Calculator | Ghorbari',
+        title: 'Construction Cost Calculator | Dalankotha',
         description: 'Instant construction cost estimation for your dream home in Bangladesh.',
         images: ['/og-calculator.jpg'], // Should exist or fall back to default
     }

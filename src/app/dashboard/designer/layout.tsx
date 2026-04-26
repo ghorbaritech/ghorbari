@@ -32,7 +32,7 @@ export default function DesignerDashboardLayout({ children }: { children: React.
                             </Link>
                             <LogoutButton
                                 className="w-full text-red-600 hover:bg-red-50"
-                                redirectPath="/login"
+                                redirectPath="/partner"
                             />
                         </nav>
                     </div>

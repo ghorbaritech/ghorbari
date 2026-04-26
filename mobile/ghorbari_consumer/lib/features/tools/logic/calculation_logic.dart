@@ -94,3 +94,63 @@ class ConstructionCalculatorLogic {
     };
   }
 }
+
+class InteriorCalculatorLogic {
+  static const double baseInteriorRate = 1800.0; // Base BDT per sqft for standard interior
+
+  static double qualityMultiplier(QualityTier tier) {
+    switch (tier) {
+      case QualityTier.budget:
+        return 0.75;
+      case QualityTier.standard:
+        return 1.0;
+      case QualityTier.premium:
+        return 1.4;
+      case QualityTier.luxury:
+        return 2.2;
+    }
+  }
+
+  static double calculateTotal(
+    double areaSqft,
+    QualityTier quality,
+    ProjectLocation location,
+  ) {
+    final qMultiplier = qualityMultiplier(quality);
+    final lMultiplier = location == ProjectLocation.dhaka ? 1.05 : 1.0;
+    
+    return areaSqft * baseInteriorRate * qMultiplier * lMultiplier;
+  }
+
+  static Map<String, double> getBreakdown(double total) {
+    return {
+      'woodwork': total * 0.45,
+      'finishing': total * 0.25,
+      'ceiling': total * 0.15,
+      'lighting': total * 0.10,
+      'contingency': total * 0.05,
+    };
+  }
+
+  static Map<String, double> getMaterialEstimation(double areaSqft, QualityTier quality) {
+    final qMod = quality == QualityTier.luxury ? 1.2 : 1.0;
+    
+    return {
+      'tiles': areaSqft * 1.1,
+      'paint': areaSqft * 0.12,
+      'board': (areaSqft / 32) * qMod, // 8x4 sheets
+      'ceiling_sqft': areaSqft * 0.6, // Partial ceiling coverage estimate
+      'lights': areaSqft / 25,
+    };
+  }
+
+  static Map<String, int> getMaterialRates() {
+    return {
+      'tiles': 180,
+      'paint': 750,
+      'board': 3200,
+      'ceiling_sqft': 120,
+      'lights': 850,
+    };
+  }
+}

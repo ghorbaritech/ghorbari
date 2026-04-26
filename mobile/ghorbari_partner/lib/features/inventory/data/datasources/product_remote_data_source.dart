@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ghorbari_partner/core/network/supabase_service.dart';
-import 'package:ghorbari_partner/shared/models/product.dart';
+import 'package:dalankotha_partner/core/network/supabase_service.dart';
+import 'package:dalankotha_partner/shared/models/product.dart';
 
 abstract class ProductRemoteDataSource {
   Future<List<Product>> getPartnerProducts(String partnerId);

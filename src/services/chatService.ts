@@ -103,7 +103,7 @@ export function subscribeToMessages(conversationId: string, callback: (msg: Mess
                 table: 'messages',
                 filter: `conversation_id=eq.${conversationId}`
             },
-            (payload: any) => {
+            (payload: Record<string, unknown>) => {
                 callback(payload.new as Message);
             }
         )

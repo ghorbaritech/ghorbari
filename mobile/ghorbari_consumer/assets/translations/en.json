@@ -1,5 +1,5 @@
 {
-  "app_title": "Ghorbari",
+  "app_title": "Dalankotha",
   "app_subtitle": "Quality Construction Ecosystem",
   "login": "Login",
   "signup": "Sign Up",
@@ -49,7 +49,7 @@
   "design_and_planning": "Design & Planning",
   "our_current_deals": "Our current deals",
   "explore": "Explore",
-  "ghorbari_services": "GHORBARI Services",
+  "Dalankotha_services": "Dalankotha Services",
   "all_services": "All Services",
   "services_found": "Services Found",
   "no_services_found": "No services match your filters.",
@@ -119,5 +119,13 @@
   "unit_cft": "Cft",
   "unit_ltr": "Ltr",
   "unit_sqft": "Sq.ft",
-  "unit_points": "Points"
+  "unit_points": "Points",
+  "calc_mode_building": "Building",
+  "calc_mode_interior": "Interior",
+  "calc_woodwork": "Woodwork & Cabinets",
+  "calc_ceiling": "False Ceiling",
+  "calc_lighting": "Lighting & Electrical",
+  "calc_mat_board": "Boards / Wood",
+  "calc_mat_ceiling": "Ceiling Boards",
+  "unit_sheets": "Sheets"
 }

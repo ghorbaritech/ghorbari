@@ -1,6 +1,6 @@
 "use client";
 
-import { useServiceCart } from "@/context/ServiceCartContext";
+import { useServiceCart } from "@/store/unifiedCartStore";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { X, ShoppingBag } from "lucide-react";

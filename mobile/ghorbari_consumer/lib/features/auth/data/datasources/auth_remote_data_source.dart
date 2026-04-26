@@ -1,6 +1,6 @@
-import 'package:ghorbari_consumer/core/network/supabase_service.dart';
+import 'package:Dalankotha_consumer/core/network/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as import_supabase;
-import 'package:ghorbari_consumer/features/auth/data/models/user_model.dart';
+import 'package:Dalankotha_consumer/features/auth/data/models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> signIn(String email, String password);

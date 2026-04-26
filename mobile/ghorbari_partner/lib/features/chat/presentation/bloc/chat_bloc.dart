@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:ghorbari_partner/shared/models/chat.dart';
-import 'package:ghorbari_partner/features/chat/data/datasources/chat_remote_data_source.dart';
+import 'package:dalankotha_partner/shared/models/chat.dart';
+import 'package:dalankotha_partner/features/chat/data/datasources/chat_remote_data_source.dart';
 
 // Events
 abstract class ChatEvent extends Equatable {

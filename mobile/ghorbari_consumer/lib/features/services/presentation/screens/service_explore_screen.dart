@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_bloc.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_state.dart';
-import 'package:ghorbari_consumer/features/services/presentation/widgets/service_card.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/bloc/marketplace_bloc.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/bloc/marketplace_state.dart';
+import 'package:Dalankotha_consumer/features/services/presentation/widgets/service_card.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 // import 'package:pointer_interceptor/pointer_interceptor.dart';
-import 'package:ghorbari_consumer/shared/models/service_item.dart';
+import 'package:Dalankotha_consumer/shared/models/service_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -27,7 +27,7 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('ghorbari_services'.tr(),
+        title: Text('dalankotha_services'.tr(),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF0F172A),
@@ -274,7 +274,7 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
                         final unit = cat.metadata?['unit'] ?? 'hr';
                         
                         String? icon;
-                        final String webBaseUrl = kIsWeb ? 'https://ghorbari.tech' : 'https://ghorbari.tech';
+                        final String webBaseUrl = kIsWeb ? 'https://dalankotha.tech' : 'https://dalankotha.tech';
                         
                         if (cat.icon != null && cat.icon!.isNotEmpty) {
                           if (cat.icon!.startsWith('http')) {
@@ -309,7 +309,7 @@ class _ServiceExploreScreenState extends State<ServiceExploreScreen> {
                            rating: 4.8,
                            imageUrl: icon ?? '',
                            categoryId: cat.parentId ?? cat.id,
-                           providerId: 'provider_ghorbari',
+                           providerId: 'provider_dalankotha',
                         );
                         
                         return ServiceCard(

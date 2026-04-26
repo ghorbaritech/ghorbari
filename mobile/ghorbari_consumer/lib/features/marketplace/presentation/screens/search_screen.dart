@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:ghorbari_consumer/core/utils/search_service.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/product_details_screen.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/category_listing_screen.dart';
-import 'package:ghorbari_consumer/shared/models/product.dart';
-import 'package:ghorbari_consumer/shared/models/category.dart';
+import 'package:Dalankotha_consumer/core/utils/search_service.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/product_details_screen.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/category_listing_screen.dart';
+import 'package:Dalankotha_consumer/shared/models/product.dart';
+import 'package:Dalankotha_consumer/shared/models/category.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 // Removed missing localization_utils import

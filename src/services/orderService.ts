@@ -53,7 +53,7 @@ export interface Order {
     vat_amount: number;
     platform_fee: number;
     status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-    items: any[];
+    items: Record<string, unknown>[];
     shipping_address: string;
     customer_name: string;
     customer_email: string;

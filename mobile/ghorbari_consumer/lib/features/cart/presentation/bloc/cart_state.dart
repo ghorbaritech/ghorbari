@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:ghorbari_consumer/shared/models/cart_item.dart';
+import 'package:Dalankotha_consumer/shared/models/cart_item.dart';
 
 class CartState extends Equatable {
   final List<CartItem> items;

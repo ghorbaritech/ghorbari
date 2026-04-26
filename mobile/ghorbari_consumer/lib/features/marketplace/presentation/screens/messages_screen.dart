@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
+import 'package:Dalankotha_consumer/core/theme/Dalankotha_theme.dart';
 
 class MessagesScreen extends StatelessWidget {
   const MessagesScreen({super.key});
@@ -42,7 +42,7 @@ class MessagesScreen extends StatelessWidget {
                   icon: const Icon(Icons.chat_bubble_outline),
                   label: const Text('Start New Conversation'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: GhorbariTheme.primaryBlue,
+                    backgroundColor: DalankothaTheme.primaryBlue,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),

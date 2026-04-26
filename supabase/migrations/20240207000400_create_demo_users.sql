@@ -1,12 +1,12 @@
--- GHORBARI SUPER FIX & DEMO ACCOUNTS
+-- Dalankotha SUPER FIX & DEMO ACCOUNTS
 -- Run this entire script in your Supabase SQL Editor
 
 -- 1. ENABLE EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- 2. CLEANUP EXISTING DEMO DATA (Avoids constraint conflicts)
-DELETE FROM public.profiles WHERE email IN ('admin@ghorbari.com', 'retailer@ghorbari.com');
-DELETE FROM auth.users WHERE email IN ('admin@ghorbari.com', 'retailer@ghorbari.com');
+DELETE FROM public.profiles WHERE email IN ('admin@Dalankotha.com', 'retailer@Dalankotha.com');
+DELETE FROM auth.users WHERE email IN ('admin@Dalankotha.com', 'retailer@Dalankotha.com');
 
 -- 3. ENSURE TABLE IS CORRECT
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS address TEXT;
@@ -36,7 +36,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 5. CREATE ADMIN ACCOUNT
--- Email: admin@ghorbari.com
+-- Email: admin@Dalankotha.com
 -- Password: password123
 INSERT INTO auth.users (
     instance_id, id, aud, role, email, encrypted_password, 
@@ -49,7 +49,7 @@ VALUES (
     gen_random_uuid(),
     'authenticated',
     'authenticated',
-    'admin@ghorbari.com',
+    'admin@Dalankotha.com',
     crypt('password123', gen_salt('bf')),
     NOW(),
     NULL,
@@ -65,7 +65,7 @@ VALUES (
 );
 
 -- 6. CREATE RETAILER ACCOUNT
--- Email: retailer@ghorbari.com
+-- Email: retailer@Dalankotha.com
 -- Password: password123
 INSERT INTO auth.users (
     instance_id, id, aud, role, email, encrypted_password, 
@@ -78,7 +78,7 @@ VALUES (
     gen_random_uuid(),
     'authenticated',
     'authenticated',
-    'retailer@ghorbari.com',
+    'retailer@Dalankotha.com',
     crypt('password123', gen_salt('bf')),
     NOW(),
     NULL,
@@ -94,17 +94,17 @@ VALUES (
 );
 
 -- 7. MANUALLY FIX ROLES (In case trigger didn't catch the metadata role)
-UPDATE public.profiles SET role = 'admin' WHERE email = 'admin@ghorbari.com';
-UPDATE public.profiles SET role = 'seller' WHERE email = 'retailer@ghorbari.com';
+UPDATE public.profiles SET role = 'admin' WHERE email = 'admin@Dalankotha.com';
+UPDATE public.profiles SET role = 'seller' WHERE email = 'retailer@Dalankotha.com';
 
 -- 8. CREATE SELLER RECORD FOR RETAILER
 INSERT INTO public.sellers (id, user_id, business_name, verification_status, is_active)
 SELECT 
     gen_random_uuid(),
     id,
-    'Ghorbari Demo Store',
+    'Dalankotha Demo Store',
     'verified',
     true
 FROM public.profiles 
-WHERE email = 'retailer@ghorbari.com'
+WHERE email = 'retailer@Dalankotha.com'
 ON CONFLICT DO NOTHING;

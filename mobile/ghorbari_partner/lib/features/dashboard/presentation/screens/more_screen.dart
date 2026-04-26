@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_event.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_partner/features/finance/presentation/screens/finance_screen.dart';
-import 'package:ghorbari_partner/features/marketing/presentation/screens/campaigns_screen.dart';
-import 'package:ghorbari_partner/features/support/presentation/screens/support_screen.dart';
-import 'package:ghorbari_partner/features/settings/presentation/screens/settings_screen.dart';
-import 'package:ghorbari_partner/main.dart'; // For Branding widget
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_event.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_state.dart';
+import 'package:dalankotha_partner/features/finance/presentation/screens/finance_screen.dart';
+import 'package:dalankotha_partner/features/marketing/presentation/screens/campaigns_screen.dart';
+import 'package:dalankotha_partner/features/support/presentation/screens/support_screen.dart';
+import 'package:dalankotha_partner/features/settings/presentation/screens/settings_screen.dart';
+import 'package:dalankotha_partner/main.dart'; // For Branding widget
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -17,7 +17,7 @@ class MoreScreen extends StatelessWidget {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         String businessName = 'Retail Partner';
-        String email = 'partner@ghorbari.com';
+        String email = 'partner@dalankotha.com';
         if (state is AuthAuthenticated) {
           businessName = state.partner.profile?.businessName ?? businessName;
           email = state.partner.email ?? email;

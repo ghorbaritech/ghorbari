@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:ghorbari_partner/shared/models/product.dart';
-import 'package:ghorbari_partner/features/inventory/data/datasources/product_remote_data_source.dart';
+import 'package:dalankotha_partner/shared/models/product.dart';
+import 'package:dalankotha_partner/features/inventory/data/datasources/product_remote_data_source.dart';
 
 // Events
 abstract class InventoryEvent extends Equatable {

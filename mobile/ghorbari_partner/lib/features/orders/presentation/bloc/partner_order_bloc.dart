@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_partner/features/orders/domain/repositories/partner_order_repository.dart';
-import 'package:ghorbari_partner/features/orders/presentation/bloc/partner_order_event.dart';
-import 'package:ghorbari_partner/features/orders/presentation/bloc/partner_order_state.dart';
+import 'package:dalankotha_partner/features/orders/domain/repositories/partner_order_repository.dart';
+import 'package:dalankotha_partner/features/orders/presentation/bloc/partner_order_event.dart';
+import 'package:dalankotha_partner/features/orders/presentation/bloc/partner_order_state.dart';
 
 class PartnerOrderBloc extends Bloc<PartnerOrderEvent, PartnerOrderState> {
   final PartnerOrderRepository repository;

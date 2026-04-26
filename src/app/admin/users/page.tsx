@@ -17,11 +17,20 @@ import {
     Search,
     Edit2,
     X,
-    Users
+    Users,
+    FileCheck,
+    FileSignature,
+    Save,
+    Printer,
+    ExternalLink
 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import PartnerOnboardingForm from '@/components/forms/PartnerOnboardingForm'
-import { getUsers, getPartners, updateUserProfile, getCategories } from '@/app/admin/onboarding/actions'
+import UserCreationForm from '@/components/forms/UserCreationForm'
+import { getUsers, getPartners, updateUserProfile, getCategories, verifyPartner, rejectPartner } from '@/app/admin/onboarding/actions'
+import { getContractByPartnerId } from '@/app/admin/legal/actions'
+import ContractReviewDialog from '@/components/legal/ContractReviewDialog'
+import { createClient } from '@/utils/supabase/client'
 
 export default function UserManagementPage() {
     const [loading, setLoading] = useState(false)
@@ -34,11 +43,21 @@ export default function UserManagementPage() {
     const [categories, setCategories] = useState<any[]>([])
     const [searchTerm, setSearchTerm] = useState('')
 
-    // Editing state
+    // Editing & Creation state
     const [editingAccount, setEditingAccount] = useState<any | null>(null)
+    const [isCreating, setIsCreating] = useState(false)
+    const [createRole, setCreateRole] = useState<'customer' | 'partner'>('customer')
     const [activeTab, setActiveTab] = useState<'customer' | 'retailer'>('customer')
 
+    const [adminId, setAdminId] = useState<string | null>(null)
+    const [activeContractId, setActiveContractId] = useState<string | null>(null)
+    const [isContractDialogOpen, setIsContractDialogOpen] = useState(false)
+
     const refreshData = useCallback(async () => {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) setAdminId(user.id)
+
         const [uData, pData, cData] = await Promise.all([getUsers(), getPartners(), getCategories()])
         setUsers(uData)
         setPartners(pData)
@@ -49,14 +68,60 @@ export default function UserManagementPage() {
         refreshData()
     }, [refreshData])
 
-    const handleCreateUser = useCallback(async (e: React.FormEvent<HTMLFormElement>, role: 'customer' | 'seller') => {
-        e.preventDefault()
+    useEffect(() => {
+        if (editingAccount && activeTab === 'retailer') {
+            getContractByPartnerId(editingAccount.id).then(id => {
+                setActiveContractId(id)
+            })
+        } else {
+            setActiveContractId(null)
+        }
+    }, [editingAccount, activeTab])
+
+    const handleVerify = async (userId: string) => {
+        if (!adminId) return
+        setLoading(true)
+        const res = await verifyPartner(userId, adminId)
+        if (res.success) {
+            setSuccess('Partner verified successfully!')
+            refreshData()
+            setEditingAccount(null)
+        } else {
+            setError(res.error || 'Verification failed')
+        }
+        setLoading(false)
+    }
+
+    const handleReject = async (userId: string) => {
+        if (!adminId) return
+        const reason = prompt('Enter rejection reason:')
+        if (!reason) return
+        
+        setLoading(true)
+        const res = await rejectPartner(userId, adminId, reason)
+        if (res.success) {
+            setSuccess('Partner application rejected.')
+            refreshData()
+            setEditingAccount(null)
+        } else {
+            setError(res.error || 'Operation failed')
+        }
+        setLoading(false)
+    }
+
+    const handleCreateUser = useCallback(async (arg: React.FormEvent<HTMLFormElement> | any, role: 'customer' | 'seller') => {
+        if (arg?.preventDefault) arg.preventDefault()
         setLoading(true)
         setSuccess(null)
         setError(null)
 
-        const formData = new FormData(e.currentTarget)
-        const data = Object.fromEntries(formData.entries())
+        let data: any = {}
+        if (arg?.currentTarget) {
+            const formData = new FormData(arg.currentTarget)
+            data = Object.fromEntries(formData.entries())
+        } else {
+            data = arg
+        }
 
         try {
             if (editingAccount && role === 'customer') {
@@ -96,20 +161,31 @@ export default function UserManagementPage() {
     }, [partners, searchTerm])
 
     const handleSelectAccount = useCallback((acc: any) => {
-        // If they select from users list, check if this user is actually a partner
+        // Find existing partner data if available
         const partnerData = partners.find(p => p.id === acc.id)
         const finalAcc = partnerData || acc
 
-        setEditingAccount(finalAcc)
-        setSearchTerm('')
-
-        // Switch tab based on whether it's a partner
+        // Switch tab first to prepare the UI container
         const isPartner = !!partnerData
         setActiveTab(isPartner ? 'retailer' : 'customer')
+        
+        // Then set the account to trigger the form mount/load
+        // Use a small timeout if needed to let the Tab transition start
+        setEditingAccount(finalAcc)
+        setSearchTerm('')
     }, [partners])
 
+    // Memoize the onCancel handler to be stable across renders
+    const handleCancelEdit = useCallback(() => {
+        setEditingAccount(null)
+    }, [])
+
+    const handleCancelCreate = useCallback(() => {
+        setIsCreating(false)
+    }, [])
+
     return (
-        <div className="max-w-7xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+        <div className="max-w-7xl mx-auto space-y-12 pb-20">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="space-y-2">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-black uppercase tracking-widest">
@@ -122,14 +198,26 @@ export default function UserManagementPage() {
                     <p className="text-neutral-400 font-medium">Manage and provision accounts for partners and customers.</p>
                 </div>
 
-                <div className="w-full md:w-96 relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 group-focus-within:text-blue-400 transition-colors" />
-                    <Input
-                        placeholder="Search users..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="h-12 pl-12 rounded-2xl border-neutral-800 bg-neutral-900/50 backdrop-blur-sm focus:bg-neutral-900 text-white placeholder:text-neutral-500 transition-all shadow-xl"
-                    />
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                    <div className="w-full md:w-80 relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 group-focus-within:text-blue-400 transition-colors" />
+                        <Input
+                            placeholder="Search users..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="h-12 pl-12 rounded-2xl border-neutral-800 bg-neutral-900/50 backdrop-blur-sm focus:bg-neutral-900 text-white placeholder:text-neutral-500 transition-all shadow-xl"
+                        />
+                    </div>
+                    <Button 
+                        onClick={() => {
+                            setIsCreating(true)
+                            setEditingAccount(null)
+                        }}
+                        className="h-12 px-6 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-900/20 active:scale-95 transition-all whitespace-nowrap"
+                    >
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Create Profile
+                    </Button>
                 </div>
             </div>
 
@@ -174,7 +262,58 @@ export default function UserManagementPage() {
                     )}
                 </div>
 
-                {!editingAccount ? (
+                {isCreating && !editingAccount && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-500 bg-neutral-900/30 p-8 rounded-[2.5rem] border border-neutral-800/50">
+                        <div className="flex flex-col gap-4">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 px-1">Select Account Type</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <button
+                                    onClick={() => setCreateRole('customer')}
+                                    className={`p-6 rounded-3xl border transition-all text-left flex items-center gap-4 ${createRole === 'customer' ? 'bg-blue-600 border-blue-500 text-white shadow-xl shadow-blue-900/20' : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:border-neutral-700'}`}
+                                >
+                                    <div className={`p-4 rounded-2xl ${createRole === 'customer' ? 'bg-blue-500' : 'bg-neutral-800'}`}>
+                                        <User className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <div className="font-black uppercase tracking-widest text-[11px]">Consumer</div>
+                                        <div className={`text-[10px] font-medium ${createRole === 'customer' ? 'text-blue-100' : 'text-neutral-500'}`}>Personal account for individual customers</div>
+                                    </div>
+                                </button>
+                                <button
+                                    onClick={() => setCreateRole('partner')}
+                                    className={`p-6 rounded-3xl border transition-all text-left flex items-center gap-4 ${createRole === 'partner' ? 'bg-blue-600 border-blue-500 text-white shadow-xl shadow-blue-900/20' : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:border-neutral-700'}`}
+                                >
+                                    <div className={`p-4 rounded-2xl ${createRole === 'partner' ? 'bg-blue-500' : 'bg-neutral-800'}`}>
+                                        <Store className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <div className="font-black uppercase tracking-widest text-[11px]">Partner</div>
+                                        <div className={`text-[10px] font-medium ${createRole === 'partner' ? 'text-blue-100' : 'text-neutral-500'}`}>Business account for sellers & providers</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        {createRole === 'customer' ? (
+                            <UserCreationForm
+                                role="customer"
+                                onSubmit={(data) => {
+                                    handleCreateUser(data, 'customer')
+                                    setIsCreating(false)
+                                }}
+                                loading={loading}
+                                onCancel={handleCancelCreate}
+                            />
+                        ) : (
+                            <PartnerOnboardingForm
+                                availableCategories={categories}
+                                onCancel={handleCancelCreate}
+                            />
+                        )}
+                    </div>
+                )}
+
+                {!editingAccount && !isCreating ? (
                     <div className="overflow-x-auto bg-neutral-900 rounded-3xl border border-neutral-800 shadow-xl">
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -187,7 +326,7 @@ export default function UserManagementPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-800">
-                                {(activeTab === 'customer' ? filteredUsers : filteredPartners).map((acc) => (
+                                 {(activeTab === 'customer' ? filteredUsers : filteredPartners).map((acc) => (
                                     <tr
                                         key={acc.id}
                                         onClick={() => handleSelectAccount(acc)}
@@ -201,6 +340,7 @@ export default function UserManagementPage() {
                                                 <div>
                                                     <div className="text-sm font-bold text-white truncate max-w-[150px] md:max-w-xs">
                                                         {acc.full_name || acc.businessName}
+                                                        {acc.profile?.onboarding_status === 'pending' && <span className="ml-2 text-[8px] bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded-full ring-1 ring-amber-500/30 uppercase tracking-widest font-black">Unverified</span>}
                                                     </div>
                                                     <div className="text-xs text-neutral-500 hidden sm:block">
                                                         ID: {acc.id.substring(0, 8)}...
@@ -210,7 +350,7 @@ export default function UserManagementPage() {
                                         </td>
                                         <td className="px-6 py-4 hidden md:table-cell">
                                             <div className="text-sm text-neutral-300">{acc.email}</div>
-                                            {acc.phone && <div className="text-xs text-neutral-500">{acc.phone}</div>}
+                                            {acc.profile?.phone && <div className="text-xs text-neutral-500">{acc.profile.phone}</div>}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700 text-xs font-semibold">
@@ -219,9 +359,15 @@ export default function UserManagementPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                                Active
+                                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                acc.profile?.onboarding_status === 'verified' 
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                                    : acc.profile?.onboarding_status === 'pending'
+                                                        ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                                                        : 'bg-neutral-800 text-neutral-500 border border-neutral-700'
+                                            }`}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${acc.profile?.onboarding_status === 'verified' ? 'bg-emerald-500' : acc.profile?.onboarding_status === 'pending' ? 'bg-amber-500' : 'bg-neutral-500'}`} />
+                                                {acc.profile?.onboarding_status === 'verified' ? 'Verified' : acc.profile?.onboarding_status === 'pending' ? 'Unverified' : 'Registration Open'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -246,106 +392,144 @@ export default function UserManagementPage() {
                         )}
                     </div>
                 ) : (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <TabsContent value="customer" className="m-0">
-                            <UserCreationForm
-                                key={editingAccount?.id || 'new-customer'}
-                                role="customer"
-                                onSubmit={(e) => handleCreateUser(e, 'customer')}
-                                loading={loading}
-                                initialData={editingAccount}
-                                onCancel={() => setEditingAccount(null)}
-                            />
-                        </TabsContent>
+                    <div className="space-y-12">
+                        {editingAccount && (
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                                {/* Left Side: Documents & Verification */}
+                                <div className="lg:col-span-4 space-y-8">
+                                    {activeTab === 'retailer' && editingAccount.profile?.onboarding_status === 'pending' && (
+                                        <Card className="p-8 border-amber-500/20 bg-amber-500/5 rounded-[2.5rem] space-y-6">
+                                            <div className="space-y-1">
+                                                <h3 className="text-xl font-black text-amber-500 uppercase tracking-tighter italic">Review <span className="text-white">Registration</span></h3>
+                                                <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest leading-relaxed">Review the attached legal documents before approving partner status.</p>
+                                            </div>
 
-                        <TabsContent value="retailer" className="m-0">
-                            <PartnerOnboardingForm
-                                key={editingAccount?.id || 'new-partner'}
-                                availableCategories={categories}
-                                initialData={editingAccount}
-                                userId={editingAccount?.id}
-                                onCancel={() => {
-                                    setEditingAccount(null)
-                                    refreshData()
-                                }}
-                            />
-                        </TabsContent>
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <span className="text-[9px] font-black uppercase tracking-widest text-neutral-500">NID Document</span>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <a href={editingAccount.profile?.nid_front_url} target="_blank" className="aspect-video bg-neutral-950 rounded-xl border border-neutral-800 overflow-hidden hover:border-blue-500 transition-colors">
+                                                            <img src={editingAccount.profile?.nid_front_url} className="w-full h-full object-cover opacity-50 hover:opacity-100" />
+                                                        </a>
+                                                        <a href={editingAccount.profile?.nid_back_url} target="_blank" className="aspect-video bg-neutral-950 rounded-xl border border-neutral-800 overflow-hidden hover:border-blue-500 transition-colors">
+                                                            <img src={editingAccount.profile?.nid_back_url} className="w-full h-full object-cover opacity-50 hover:opacity-100" />
+                                                        </a>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <span className="text-[9px] font-black uppercase tracking-widest text-neutral-500">Trade License</span>
+                                                    <a href={editingAccount.profile?.trade_license_url} target="_blank" className="block p-4 bg-neutral-950 rounded-2xl border border-neutral-800 hover:border-blue-500 flex items-center justify-between group">
+                                                        <div className="flex items-center gap-3">
+                                                            <FileCheck className="w-4 h-4 text-blue-500" />
+                                                            <span className="text-[10px] font-bold text-neutral-400 group-hover:text-white">View License PDF/Image</span>
+                                                        </div>
+                                                        <Edit2 className="w-3 h-3 text-neutral-700" />
+                                                    </a>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-6 flex flex-col gap-3">
+                                                <Button 
+                                                    onClick={() => setIsContractDialogOpen(true)}
+                                                    className="w-full h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-[9px] shadow-lg shadow-blue-900/40"
+                                                >
+                                                    <FileSignature className="w-3 h-3 mr-2" />
+                                                    Review & Sign Agreement
+                                                </Button>
+                                                
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <Button 
+                                                        onClick={() => handleReject(editingAccount.id)}
+                                                        disabled={loading}
+                                                        variant="outline" 
+                                                        className="h-12 border-red-500/20 hover:bg-red-500/10 text-red-500 rounded-xl font-black uppercase tracking-widest text-[9px]"
+                                                    >
+                                                        Reject
+                                                    </Button>
+                                                    <Button 
+                                                        onClick={() => handleVerify(editingAccount.id)}
+                                                        disabled={loading}
+                                                        className="h-12 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase tracking-widest text-[9px] shadow-lg shadow-emerald-900/40"
+                                                    >
+                                                        {loading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <CheckCircle2 className="w-3 h-3 mr-2" />}
+                                                        Approve
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    )}
+
+                                    <Card className="p-8 border-neutral-800 bg-neutral-900/50 backdrop-blur-xl rounded-[2.5rem] space-y-6">
+                                        <div className="space-y-1">
+                                            <h3 className="text-xs font-black text-neutral-400 uppercase tracking-widest">Account <span className="text-white">Status</span></h3>
+                                            <p className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest">System level flags and verification metadata.</p>
+                                        </div>
+                                        <div className="space-y-4 font-mono text-[10px]">
+                                            <div className="flex justify-between py-2 border-b border-neutral-800">
+                                                <span className="text-neutral-500 uppercase">Onboarding Step</span>
+                                                <span className="text-blue-400 font-black">{editingAccount.profile?.onboarding_step || '0'}/4</span>
+                                            </div>
+                                            <div className="flex justify-between py-2 border-b border-neutral-800">
+                                                <span className="text-neutral-500 uppercase">Phone Verified</span>
+                                                <span className={editingAccount.profile?.phone_verified ? 'text-emerald-500' : 'text-red-500'}>
+                                                    {editingAccount.profile?.phone_verified ? 'YES' : 'NO'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between py-2">
+                                                <span className="text-neutral-500 uppercase">Last Updated</span>
+                                                <span className="text-neutral-400">{new Date(editingAccount.profile?.updated_at || Date.now()).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </div>
+
+                                {/* Right Side: Profile Forms */}
+                                <div className="lg:col-span-8">
+                                    <div>
+                                        <p className="text-neutral-400 font-medium mb-6">Update profile details and account settings for <span className="text-white font-bold italic">@{editingAccount.email.split('@')[0]}</span></p>
+                                        {activeTab === 'customer' ? (
+                                            <UserCreationForm
+                                                role="customer"
+                                                initialData={editingAccount}
+                                                onSubmit={(data) => {
+                                                    handleCreateUser(data, 'customer')
+                                                    handleCancelEdit()
+                                                }}
+                                                loading={loading}
+                                                onCancel={handleCancelEdit}
+                                            />
+                                        ) : (
+                                            <PartnerOnboardingForm
+                                                userId={editingAccount.id}
+                                                initialData={editingAccount}
+                                                availableCategories={categories}
+                                                onCancel={handleCancelEdit}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </Tabs>
+
+            <ContractReviewDialog
+                contractId={activeContractId}
+                open={isContractDialogOpen}
+                onOpenChange={setIsContractDialogOpen}
+                onUpdated={() => {
+                    refreshData()
+                    setSuccess("Contract updated and signed!")
+                }}
+                onVerify={() => {
+                    if (editingAccount) {
+                        handleVerify(editingAccount.id)
+                        setIsContractDialogOpen(false)
+                    }
+                }}
+            />
         </div>
-    )
-}
-
-function UserCreationForm({ role, onSubmit, loading, initialData, onCancel }: { role: string, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, loading: boolean, initialData?: any, onCancel: () => void }) {
-    return (
-        <Card className="border-neutral-800 rounded-[2.5rem] p-10 shadow-2xl shadow-black/40 bg-neutral-900 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-3xl -mr-32 -mt-32 rounded-full" />
-
-            <form onSubmit={onSubmit} className="relative z-10 space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 pl-1">Full Name</label>
-                        <div className="relative">
-                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
-                            <Input required name="fullName" defaultValue={initialData?.full_name || ''} className="h-14 pl-12 rounded-2xl border-neutral-800 bg-neutral-950/50 focus:bg-neutral-950 text-white placeholder:text-neutral-600 shadow-inner" placeholder="John Doe" />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 pl-1">Email Address</label>
-                        <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
-                            <Input required type="email" name="email" defaultValue={initialData?.email || ''} disabled={!!initialData} className="h-14 pl-12 rounded-2xl border-neutral-800 bg-neutral-950/50 focus:bg-neutral-950 text-white placeholder:text-neutral-600 shadow-inner disabled:opacity-50" placeholder="john@example.com" />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 pl-1">Phone Number</label>
-                        <div className="relative">
-                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
-                            <Input required name="phone" defaultValue={initialData?.phone || ''} className="h-14 pl-12 rounded-2xl border-neutral-800 bg-neutral-950/50 focus:bg-neutral-950 text-white placeholder:text-neutral-600 shadow-inner" placeholder="+8801XXXXXXXXX" />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 pl-1">Default Address</label>
-                        <div className="relative">
-                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
-                            <Input required name="address" defaultValue={initialData?.address || ''} className="h-14 pl-12 rounded-2xl border-neutral-800 bg-neutral-950/50 focus:bg-neutral-950 text-white placeholder:text-neutral-600 shadow-inner" placeholder="123 Street, Dhaka" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-4 pt-4">
-                    <p className="text-[10px] text-neutral-500 font-medium italic">
-                        {initialData ? '* Update existing profile information.' : '* A temporary password will be generated and emailed to the user.'}
-                    </p>
-                    <div className="flex gap-4">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={onCancel}
-                            className={`h-16 rounded-[1.5rem] font-black uppercase tracking-widest px-8 text-neutral-400 hover:text-white hover:bg-neutral-800 ${!initialData && 'hidden'}`}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            disabled={loading}
-                            className="flex-1 h-16 bg-blue-600 hover:bg-blue-500 text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all"
-                        >
-                            {loading ? (
-                                <div className="flex items-center gap-2">
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    saving...
-                                </div>
-                            ) : (
-                                initialData ? 'Update Account' : 'Create Consumer Account'
-                            )}
-                        </Button>
-                    </div>
-                </div>
-            </form>
-        </Card>
     )
 }

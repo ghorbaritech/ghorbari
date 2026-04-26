@@ -87,3 +87,4 @@ export function AssignPartnerDialog({ onAssign }: { onAssign: (id: string) => vo
         </Dialog>
     )
 }
+

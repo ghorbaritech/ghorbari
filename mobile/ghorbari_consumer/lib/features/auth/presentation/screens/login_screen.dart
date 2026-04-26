@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_event.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/screens/signup_screen.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/main_screen.dart';
+import 'package:Dalankotha_consumer/core/theme/Dalankotha_theme.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_event.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/screens/signup_screen.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/main_screen.dart';
 import 'dart:ui';
+import 'package:Dalankotha_consumer/shared/widgets/branding_widget.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -69,17 +70,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Image.asset(
-                                'assets/images/logo.png',
-                                height: 48,
-                              ),
+                               const BrandingWidget(size: 48, showText: false),
                               const SizedBox(height: 16),
                               const Text(
-                                'Welcome to Ghorbari',
+                                'Welcome to Dalankotha',
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
-                                  color: GhorbariTheme.primaryDark,
+                                  color: DalankothaTheme.primaryDark,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -87,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Premium Construction & Design',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: GhorbariTheme.primaryDark.withOpacity(0.6),
+                                  color: DalankothaTheme.primaryDark.withOpacity(0.6),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),

@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/domain/repositories/auth_repository.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_event.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Dalankotha_consumer/features/auth/domain/repositories/auth_repository.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_event.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_event.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_partner/features/dashboard/presentation/screens/main_screen.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_event.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_state.dart';
+import 'package:dalankotha_partner/features/dashboard/presentation/screens/main_screen.dart';
+import 'package:dalankotha_partner/shared/widgets/branding_widget.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.business_center_rounded, size: 64, color: Colors.blueAccent),
+              const BrandingWidget(size: 80, showText: false),
               const SizedBox(height: 32),
               const Text(
                 'Partner Login',

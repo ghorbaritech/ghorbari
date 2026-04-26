@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ghorbari_partner/shared/widgets/glass_card.dart';
+import 'package:dalankotha_partner/shared/widgets/glass_card.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
@@ -28,7 +28,7 @@ class SupportScreen extends StatelessWidget {
             Text('Our support team is here for you 24/7', style: TextStyle(color: Colors.grey.shade400, fontSize: 14)),
             const SizedBox(height: 48),
             _buildSupportAction(Icons.chat_bubble_outline_rounded, 'Live Chat', 'Chat with an agent now', Colors.blueAccent),
-            _buildSupportAction(Icons.email_outlined, 'Email Support', 'support@ghorbari.com', Colors.purpleAccent),
+            _buildSupportAction(Icons.email_outlined, 'Email Support', 'support@dalankotha.com', Colors.purpleAccent),
             _buildSupportAction(Icons.phone_outlined, 'Call Us', '+880 9612 345678', Colors.greenAccent),
             const SizedBox(height: 48),
             const Text('Frequently Asked Questions', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),

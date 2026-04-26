@@ -9,7 +9,7 @@ import { CreditCard, Truck, CheckCircle2, Loader2, User, Phone, Mail, MapPin } f
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/store/unifiedCartStore";
 import { createClient } from "@/utils/supabase/client";
 import { createOrder } from "@/services/orderService";
 import { useRouter } from "next/navigation";

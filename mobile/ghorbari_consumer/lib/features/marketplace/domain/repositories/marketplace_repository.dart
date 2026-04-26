@@ -1,5 +1,5 @@
-import 'package:ghorbari_consumer/shared/models/category.dart';
-import 'package:ghorbari_consumer/shared/models/product.dart';
+import 'package:Dalankotha_consumer/shared/models/category.dart';
+import 'package:Dalankotha_consumer/shared/models/product.dart';
 
 abstract class MarketplaceRepository {
   Future<List<Category>> getCategories();

@@ -1,4 +1,4 @@
-import 'package:ghorbari_consumer/shared/models/service_item.dart';
+import 'package:Dalankotha_consumer/shared/models/service_item.dart';
 
 abstract class ServiceRepository {
   Future<List<ServiceItem>> getServices({String? categoryId});

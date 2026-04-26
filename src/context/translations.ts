@@ -67,7 +67,7 @@ export const translations = {
         footer_contact: "Contact Us",
         footer_faqs: "FAQs",
         footer_guidelines: "Guidelines",
-        footer_rights: "Ghorbari Platform. Engineered for Excellence.",
+        footer_rights: "Dalankotha Platform. Engineered for Excellence.",
         footer_privacy: "Privacy",
         footer_cookies: "Cookies",
         footer_security: "Security",
@@ -311,7 +311,7 @@ export const translations = {
         calc_int_item_kitchen_desc: "Full modular setup",
         calc_int_item_decor_desc: "TV Unit, Foyer, Paint",
         calc_int_disclaimer: "*Price may vary based on actual site conditions",
-        calc_int_quality_tag: "Ghorbari Quality Seal",
+        calc_int_quality_tag: "Dalankotha Quality Seal",
         calc_int_quality_desc: "We only use Grade-A verified materials. Every interior package comes with a 10-year warranty on transit and hardware.",
     },
     BN: {

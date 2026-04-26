@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:ghorbari_consumer/shared/models/booking.dart';
+import 'package:Dalankotha_consumer/shared/models/booking.dart';
 
 abstract class BookingEvent extends Equatable {
   const BookingEvent();

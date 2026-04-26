@@ -3,14 +3,14 @@
  * In a real production app, this would integrate with Sentry or LogRocket.
  */
 
-export interface GhorbariError extends Error {
+export interface DalankothaError extends Error {
     code?: string;
     details?: any;
     context?: string;
 }
 
 export const logError = (error: any, context: string) => {
-    const formattedError: GhorbariError = {
+    const formattedError: DalankothaError = {
         name: error?.name || 'UnknownError',
         message: error?.message || String(error),
         code: error?.code,
@@ -19,7 +19,7 @@ export const logError = (error: any, context: string) => {
     };
 
     // Console logging with distinct formatting
-    console.group(`🚨 Ghorbari Error [${context}]`);
+    console.group(`🚨 Dalankotha Error [${context}]`);
     console.error('Message:', formattedError.message);
     if (formattedError.code) console.error('Code:', formattedError.code);
     if (formattedError.details) console.error('Details:', formattedError.details);

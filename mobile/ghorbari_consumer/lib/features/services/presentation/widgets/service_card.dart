@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:ghorbari_consumer/shared/models/service_item.dart';
+import 'package:Dalankotha_consumer/shared/models/service_item.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:ghorbari_consumer/shared/widgets/glass_card.dart';
+import 'package:Dalankotha_consumer/shared/widgets/glass_card.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/screens/booking_screen.dart';
-import 'package:ghorbari_consumer/features/design/presentation/screens/design_booking_wizard_screen.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_event.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/screens/booking_screen.dart';
+import 'package:Dalankotha_consumer/features/design/presentation/screens/design_booking_wizard_screen.dart';
+import 'package:Dalankotha_consumer/core/utils/logger.dart';
+
 class ServiceCard extends StatelessWidget {
   final ServiceItem service;
   final VoidCallback onTap;
@@ -21,9 +23,9 @@ class ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (service.imageUrl != null && service.imageUrl!.isNotEmpty) {
-       print('SERVICE CARD [${service.name}] IMAGE URL: ${service.imageUrl}');
+       AppLogger.i('SERVICE CARD [${service.name}] IMAGE URL: ${service.imageUrl}');
     } else {
-       print('SERVICE CARD [${service.name}] HAS NO IMAGE URL!');
+       AppLogger.d('SERVICE CARD [${service.name}] HAS NO IMAGE URL!');
     }
     return Container(
       width: 160,

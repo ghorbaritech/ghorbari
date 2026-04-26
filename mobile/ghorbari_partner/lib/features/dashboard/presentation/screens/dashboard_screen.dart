@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_partner/features/orders/presentation/bloc/partner_order_bloc.dart';
-import 'package:ghorbari_partner/features/orders/presentation/bloc/partner_order_state.dart';
-import 'package:ghorbari_partner/features/inventory/presentation/bloc/inventory_bloc.dart';
-import 'package:ghorbari_partner/features/dashboard/presentation/screens/more_screen.dart';
-import 'package:ghorbari_partner/features/inventory/presentation/screens/inventory_screen.dart';
-import 'package:ghorbari_partner/main.dart'; // For Branding widget
-import 'package:ghorbari_partner/features/orders/presentation/screens/manage_orders_screen.dart';
-import 'package:ghorbari_partner/shared/models/order.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_state.dart';
+import 'package:dalankotha_partner/features/orders/presentation/bloc/partner_order_bloc.dart';
+import 'package:dalankotha_partner/features/orders/presentation/bloc/partner_order_state.dart';
+import 'package:dalankotha_partner/features/inventory/presentation/bloc/inventory_bloc.dart';
+import 'package:dalankotha_partner/features/dashboard/presentation/screens/more_screen.dart';
+import 'package:dalankotha_partner/features/inventory/presentation/screens/inventory_screen.dart';
+import 'package:dalankotha_partner/main.dart'; // For Branding widget
+import 'package:dalankotha_partner/features/orders/presentation/screens/manage_orders_screen.dart';
+import 'package:dalankotha_partner/shared/models/order.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatelessWidget {

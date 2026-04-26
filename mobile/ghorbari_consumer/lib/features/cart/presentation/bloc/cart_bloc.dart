@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_state.dart';
-import 'package:ghorbari_consumer/shared/models/cart_item.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_event.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_state.dart';
+import 'package:Dalankotha_consumer/shared/models/cart_item.dart';
 
 class CartBloc extends Bloc<CartEvent, CartState> {
   CartBloc() : super(const CartState()) {

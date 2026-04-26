@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:dalankotha_partner/core/utils/logger.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -9,12 +10,12 @@ class NotificationService {
 
   Future<void> init() async {
     if (_isInitialized) return;
-    print("Notification Service Initialized (Mock)");
+    AppLogger.i("Notification Service Initialized (Mock)");
     _isInitialized = true;
   }
 
   void listenToNotifications(String userId) {
-    print("Listening to notifications for user: $userId (Mock)");
+    AppLogger.d("Listening to notifications for user: $userId (Mock)");
     Supabase.instance.client
         .from('notifications')
         .stream(primaryKey: ['id'])
@@ -23,7 +24,7 @@ class NotificationService {
           if (data.isNotEmpty) {
             final latest = data.last;
             if (latest['is_read'] == false) {
-               print("New notification: ${latest['title']}");
+               AppLogger.i("New notification: ${latest['title']}");
             }
           }
         });

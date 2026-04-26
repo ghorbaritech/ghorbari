@@ -1,4 +1,4 @@
-import 'package:ghorbari_consumer/shared/models/product.dart';
+import 'package:Dalankotha_consumer/shared/models/product.dart';
 import 'package:equatable/equatable.dart';
 
 class CartItem extends Equatable {

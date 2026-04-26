@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ghorbari_partner/shared/widgets/glass_card.dart';
+import 'package:dalankotha_partner/shared/widgets/glass_card.dart';
 
 class CampaignsScreen extends StatelessWidget {
   const CampaignsScreen({super.key});

@@ -30,15 +30,7 @@ export default async function Home() {
   const promoBanners = contentMap['promo_banners'] || [];
   const serviceShowcaseFallback = contentMap['service_showcase'] || {};
 
-  console.log('HOME PAGE DEBUG:', {
-    hasFeatured: !!rawFeatured,
-    isArray: Array.isArray(rawFeatured),
-    itemsCount: featuredCategories.length,
-    keys: Object.keys(contentMap)
-  });
-
   const pageLayout = contentMap['page_layout'] || [];
-  console.log('FINAL PAGE LAYOUT ORDER:', pageLayout.map((l: any) => l.data_key));
 
   return (
     <main className="min-h-screen flex flex-col font-sans bg-neutral-50 overflow-x-hidden">

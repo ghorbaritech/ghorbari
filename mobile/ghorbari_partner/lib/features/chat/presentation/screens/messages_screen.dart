@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_partner/main.dart'; // For Branding widget
-import 'package:ghorbari_partner/features/chat/presentation/bloc/chat_bloc.dart';
-import 'package:ghorbari_partner/features/chat/presentation/screens/chat_screen.dart';
-import 'package:ghorbari_partner/shared/models/chat.dart';
-import 'package:ghorbari_partner/shared/widgets/glass_card.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_state.dart';
+import 'package:dalankotha_partner/main.dart'; // For Branding widget
+import 'package:dalankotha_partner/features/chat/presentation/bloc/chat_bloc.dart';
+import 'package:dalankotha_partner/features/chat/presentation/screens/chat_screen.dart';
+import 'package:dalankotha_partner/shared/models/chat.dart';
+import 'package:dalankotha_partner/shared/widgets/glass_card.dart';
 import 'package:intl/intl.dart';
 
 class MessagesScreen extends StatefulWidget {

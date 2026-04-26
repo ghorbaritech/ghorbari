@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ghorbari_partner/core/network/supabase_service.dart';
-import 'package:ghorbari_partner/features/auth/domain/entities/partner_entity.dart';
-import 'package:ghorbari_partner/shared/models/partner_profile.dart';
+import 'package:dalankotha_partner/core/network/supabase_service.dart';
+import 'package:dalankotha_partner/features/auth/domain/entities/partner_entity.dart';
+import 'package:dalankotha_partner/shared/models/partner_profile.dart';
 
 abstract class AuthRemoteDataSource {
   Future<PartnerEntity> signIn(String email, String password);

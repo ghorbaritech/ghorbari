@@ -1,4 +1,4 @@
-package com.example.ghorbari_consumer
+package com.example.dalankotha_consumer
 
 import io.flutter.embedding.android.FlutterActivity
 

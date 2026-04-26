@@ -1,6 +1,6 @@
-import 'package:ghorbari_consumer/shared/models/service_item.dart';
-import 'package:ghorbari_consumer/features/services/domain/repositories/service_repository.dart';
-import 'package:ghorbari_consumer/features/services/data/datasources/service_remote_data_source.dart';
+import 'package:Dalankotha_consumer/shared/models/service_item.dart';
+import 'package:Dalankotha_consumer/features/services/domain/repositories/service_repository.dart';
+import 'package:Dalankotha_consumer/features/services/data/datasources/service_remote_data_source.dart';
 
 class ServiceRepositoryImpl implements ServiceRepository {
   final ServiceRemoteDataSource remoteDataSource;

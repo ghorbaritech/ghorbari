@@ -1,6 +1,7 @@
-import 'package:ghorbari_consumer/core/network/supabase_service.dart';
-import 'package:ghorbari_consumer/shared/models/category.dart';
-import 'package:ghorbari_consumer/shared/models/product.dart';
+import 'package:Dalankotha_consumer/core/network/supabase_service.dart';
+import 'package:Dalankotha_consumer/shared/models/category.dart';
+import 'package:Dalankotha_consumer/shared/models/product.dart';
+import 'package:Dalankotha_consumer/core/utils/logger.dart';
 
 abstract class MarketplaceRemoteDataSource {
   Future<List<Category>> getCategories();
@@ -53,9 +54,9 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     
     final response = await query.order('created_at', ascending: false);
     final rawList = response as List;
-    print("DEBUG: Fetched ${rawList.length} products from Supabase before filtering.");
+    AppLogger.d("Fetched ${rawList.length} products from Supabase before filtering.");
     if (rawList.isNotEmpty) {
-      print("DEBUG: First item JSON: ${rawList.first}");
+      AppLogger.d("First item JSON: ${rawList.first}");
     }
     
     return rawList
@@ -72,7 +73,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
            try {
              return Product.fromJson(json);
            } catch (e) {
-             print("DEBUG: Failed to parse Product: $e");
+             AppLogger.d("Failed to parse Product: $e");
              return null;
            }
         })
@@ -164,11 +165,11 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
        contentMap['design_display_config']['items'] = await enrichItems(rawDesign['selected_ids']);
     }
 
-    print("DEBUG: CMS CONTENT KEYS: ${contentMap.keys.toList()}");
+    AppLogger.d("CMS CONTENT KEYS: ${contentMap.keys.toList()}");
     if (contentMap['page_layout'] is List) {
       final layout = contentMap['page_layout'] as List;
       for (var item in layout) {
-        print("DEBUG: LAYOUT ITEM: type=${item['type']}, key=${item['data_key']}, hidden=${item['hidden']}");
+        AppLogger.d("LAYOUT ITEM: type=${item['type']}, key=${item['data_key']}, hidden=${item['hidden']}");
       }
     }
 

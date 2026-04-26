@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
-import 'package:ghorbari_consumer/shared/models/category.dart';
-import 'package:ghorbari_consumer/shared/models/product.dart';
-import 'package:ghorbari_consumer/shared/models/cms_content.dart';
+import 'package:Dalankotha_consumer/shared/models/category.dart';
+import 'package:Dalankotha_consumer/shared/models/product.dart';
+import 'package:Dalankotha_consumer/shared/models/cms_content.dart';
 
 enum MarketplaceStatus { initial, loading, loaded, failure }
 

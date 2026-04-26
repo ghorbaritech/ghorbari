@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/bookings/domain/repositories/booking_repository.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_event.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_state.dart';
+import 'package:Dalankotha_consumer/features/bookings/domain/repositories/booking_repository.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_event.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_state.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final BookingRepository bookingRepository;

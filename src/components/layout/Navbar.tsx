@@ -6,11 +6,12 @@ import { Search, ShoppingCart, User, Menu, X, ArrowRight, LayoutDashboard, LogOu
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/store/unifiedCartStore";
 import { useLanguage } from "@/context/LanguageContext";
 import { useDebounce } from "@/hooks/useDebounce";
+import { getBrandingSettings } from "@/services/brandingService";
 import { SearchOverlay } from "../search/SearchOverlay";
 import { CartDrawer } from "../cart/CartDrawer";
 import { MegaMenu } from "./MegaMenu";
@@ -19,12 +20,14 @@ import { CalculatorDropdown } from "./CalculatorDropdown";
 export function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { language, setLanguage, t } = useLanguage();
+    const [logoUrl, setLogoUrl] = useState<string>("/logo-dalankotha-white-bg.png");
     const [searchQuery, setSearchQuery] = useState("");
     const [user, setUser] = useState<any>(null);
     const [profile, setProfile] = useState<any>(null);
     const [contactPhone, setContactPhone] = useState<string | null>(null);
     const [locationName, setLocationName] = useState<string>("Set Location");
     const [isLocating, setIsLocating] = useState(false);
+    const pathname = usePathname();
 
     // Search Autocomplete State
     const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -64,6 +67,11 @@ export function Navbar() {
             }
         }
         fetchContact();
+
+        // Fetch Branding Settings
+        getBrandingSettings().then(settings => {
+            if (settings?.logo_dark_url) setLogoUrl(settings.logo_dark_url);
+        });
     }, []);
 
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -140,7 +148,13 @@ export function Navbar() {
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
-        window.location.reload();
+        if (pathname.includes('/dashboard/partner') || 
+            pathname.includes('/dashboard/designer') || 
+            pathname.includes('/dashboard/service-provider')) {
+            window.location.href = '/partner';
+        } else {
+            window.location.reload();
+        }
     };
 
     return (
@@ -170,6 +184,7 @@ export function Navbar() {
                         )}
                         <button
                             onClick={() => setLanguage(language === 'EN' ? 'BN' : 'EN')}
+                            aria-label={`Switch language to ${language === 'EN' ? 'Bengali' : 'English'}`}
                             className="hover:text-primary-600 transition-colors flex items-center gap-1 font-bold"
                         >
                             <span className={language === 'EN' ? 'text-primary-600' : 'text-neutral-400'}>EN</span>
@@ -185,10 +200,10 @@ export function Navbar() {
                 <div className="section-container h-20 flex items-center gap-8 lg:gap-12">
                     {/* Logo */}
                     <Link href="/" className="flex-shrink-0">
-                        <div className="relative w-40 h-10">
+                        <div className="relative w-52 h-14">
                             <Image
-                                src="/logo-v2.png"
-                                alt="Ghorbari Logo"
+                                src={logoUrl}
+                                alt="Dalankotha Logo"
                                 fill
                                 className="object-contain object-left"
                                 priority
@@ -201,6 +216,7 @@ export function Navbar() {
                         <button
                             onClick={requestLocation}
                             disabled={isLocating}
+                            aria-label="Detect my location for delivery"
                             className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-neutral-100 transition-colors text-neutral-600 group"
                         >
                             {isLocating ? (
@@ -275,6 +291,7 @@ export function Navbar() {
 
                         <button
                             onClick={() => openDrawer()}
+                            aria-label="Open shopping cart"
                             className="flex flex-col items-center gap-0.5 px-3 group relative"
                         >
                             <div className="p-2 rounded-full group-hover:bg-neutral-100 transition-colors">
@@ -301,20 +318,29 @@ export function Navbar() {
                         <MegaMenu language={language} />
                         <Link
                             href="/services/design/book"
-                            className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
+                            aria-current={pathname.startsWith('/services/design') ? 'page' : undefined}
+                            className={`hover:text-primary-600 transition-colors py-3 border-b-2 hover:border-primary-600 ${
+                                pathname.startsWith('/services/design') ? 'text-primary-600 border-primary-600' : 'border-transparent'
+                            }`}
                         >
                             {t.nav_design_planning}
                         </Link>
                         <CalculatorDropdown language={language} t={t} />
                         <Link
                             href="/products"
-                            className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
+                            aria-current={pathname.startsWith('/products') ? 'page' : undefined}
+                            className={`hover:text-primary-600 transition-colors py-3 border-b-2 hover:border-primary-600 ${
+                                pathname.startsWith('/products') ? 'text-primary-600 border-primary-600' : 'border-transparent'
+                            }`}
                         >
                             {t.nav_marketplace}
                         </Link>
                         <Link
                             href="/services"
-                            className="hover:text-primary-600 transition-colors py-3 border-b-2 border-transparent hover:border-primary-600"
+                            aria-current={pathname === '/services' ? 'page' : undefined}
+                            className={`hover:text-primary-600 transition-colors py-3 border-b-2 hover:border-primary-600 ${
+                                pathname === '/services' ? 'text-primary-600 border-primary-600' : 'border-transparent'
+                            }`}
                         >
                             {t.nav_renovation}
                         </Link>
@@ -323,7 +349,6 @@ export function Navbar() {
                         <Link
                             href={user ? "/ai-consultant" : "/login?next=/ai-consultant"}
                             className="ml-auto flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest text-white bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 shadow-md hover:shadow-teal-300/50 transition-all animate-pulse-slow relative overflow-hidden"
-                            style={{ animationDuration: '3s' }}
                         >
                             <Sparkles className="w-3.5 h-3.5" />
                             AI Consultant
@@ -404,30 +429,31 @@ export function Navbar() {
             }
 
             {/* Mobile Bottom Navigation Bar */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-[70] h-16 flex items-center justify-between px-2 pb-safe shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
-                <Link href="/" className="flex flex-col items-center justify-center flex-1 w-full h-full text-neutral-500 hover:text-primary-600 transition-colors gap-1">
+            <nav aria-label="Mobile main navigation" className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-[70] h-16 flex items-center justify-between px-2 pb-safe shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+                <Link href="/" aria-current={pathname === '/' ? 'page' : undefined} className={`flex flex-col items-center justify-center flex-1 w-full h-full transition-colors gap-1 ${ pathname === '/' ? 'text-primary-600' : 'text-neutral-500 hover:text-primary-600' }`}>
                     <Home className="w-[22px] h-[22px]" strokeWidth={2.5} />
                     <span className="text-[9px] font-bold uppercase tracking-wider">Home</span>
                 </Link>
-                <Link href="/services/design" className="flex flex-col items-center justify-center flex-1 w-full h-full text-neutral-500 hover:text-primary-600 transition-colors gap-1">
+                <Link href="/services/design" aria-current={pathname.startsWith('/services/design') ? 'page' : undefined} className={`flex flex-col items-center justify-center flex-1 w-full h-full transition-colors gap-1 ${ pathname.startsWith('/services/design') ? 'text-primary-600' : 'text-neutral-500 hover:text-primary-600' }`}>
                     <PencilRuler className="w-[22px] h-[22px]" strokeWidth={2.5} />
                     <span className="text-[9px] font-bold uppercase tracking-wider">Design</span>
                 </Link>
                 {/* AI Consultant centre button */}
                 <Link
                     href={user ? "/ai-consultant" : "/login?next=/ai-consultant"}
+                    aria-label="Open AI Consultant"
                     className="flex flex-col items-center justify-center w-14 h-14 -mt-5 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/30 gap-1 transition-all hover:scale-105"
                 >
                     <Sparkles className="w-5 h-5" strokeWidth={2.5} />
                     <span className="text-[8px] font-black uppercase tracking-wider leading-none">AI</span>
                 </Link>
-                <Link href="/services" className="flex flex-col items-center justify-center flex-1 w-full h-full text-neutral-500 hover:text-primary-600 transition-colors gap-1">
+                <Link href="/services" aria-current={pathname === '/services' ? 'page' : undefined} className={`flex flex-col items-center justify-center flex-1 w-full h-full transition-colors gap-1 ${ pathname === '/services' ? 'text-primary-600' : 'text-neutral-500 hover:text-primary-600' }`}>
                     <Wrench className="w-[22px] h-[22px]" strokeWidth={2.5} />
                     <span className="text-[9px] font-bold uppercase tracking-wider">Services</span>
                 </Link>
-                <Link href="/products" className="flex flex-col items-center justify-center flex-1 w-full h-full text-neutral-500 hover:text-primary-600 transition-colors gap-1">
+                <Link href="/products" aria-current={pathname.startsWith('/products') ? 'page' : undefined} className={`flex flex-col items-center justify-center flex-1 w-full h-full transition-colors gap-1 ${ pathname.startsWith('/products') ? 'text-primary-600' : 'text-neutral-500 hover:text-primary-600' }`}>
                     <Package className="w-[22px] h-[22px]" strokeWidth={2.5} />
-                    <span className="text-[9px] font-bold uppercase tracking-wider">Product</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider">Shop</span>
                 </Link>
             </nav>
         </header >

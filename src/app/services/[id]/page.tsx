@@ -170,7 +170,7 @@ export default async function ServiceDetailPage({ params }: Params) {
                                                 </div>
                                             </div>
                                             <p className="text-neutral-400 text-sm leading-relaxed mb-6 line-clamp-2 italic">
-                                                "{seller?.bio || 'Verified partner on Ghorbari platform providing professional services.'}"
+                                                "{seller?.bio || 'Verified partner on Dalankotha platform providing professional services.'}"
                                             </p>
                                             <Link href={`/partner/${pkg.designer_id}`}>
                                                 <Button variant="outline" className="border-white/20 text-white hover:bg-white hover:text-neutral-900 font-black text-xs uppercase tracking-widest rounded-xl">

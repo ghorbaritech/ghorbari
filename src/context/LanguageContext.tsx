@@ -18,7 +18,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const [language, setLanguageState] = useState<Language>('BN');
 
     useEffect(() => {
-        const saved = localStorage.getItem('ghorbari_lang') as Language | null;
+        const saved = localStorage.getItem('dalankotha_lang') as Language | null;
         const lang = (saved === 'EN' || saved === 'BN') ? saved : 'BN';
         setLanguageState(lang);
         document.documentElement.lang = lang === 'BN' ? 'bn' : 'en';
@@ -26,7 +26,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
     const setLanguage = (lang: Language) => {
         setLanguageState(lang);
-        localStorage.setItem('ghorbari_lang', lang);
+        localStorage.setItem('dalankotha_lang', lang);
         // Set html[lang] so CSS font override activates
         document.documentElement.lang = lang === 'BN' ? 'bn' : 'en';
     };

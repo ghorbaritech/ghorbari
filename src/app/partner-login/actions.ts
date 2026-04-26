@@ -25,7 +25,10 @@ export async function partnerSignIn(formData: FormData) {
 
         if (error) {
             console.error('Partner Login Error:', error.message)
-            return { error: error.message }
+            const errorMessage = error.message === 'Invalid login credentials' 
+                ? 'Invalid credentials. If you just registered, please verify your email before logging in.'
+                : error.message;
+            return { error: errorMessage }
         }
 
         if (!data?.user) {
@@ -37,7 +40,7 @@ export async function partnerSignIn(formData: FormData) {
         // Verify role
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role, onboarding_step')
             .eq('id', user.id)
             .single()
 
@@ -47,15 +50,23 @@ export async function partnerSignIn(formData: FormData) {
             return { error: 'Account profile not found. Please contact support.' }
         }
 
-        console.log('Partner Login Attempt:', { email, role: profile.role });
-
-        // Check if role is designer or seller
-        if (profile.role !== 'designer' && profile.role !== 'seller') {
-            await supabase.auth.signOut()
-            return { error: 'Unauthorized: This portal is for Designers and Sellers only.' }
+        console.log('Partner Login Attempt:', { email, role: profile.role, status: profile.onboarding_status });
+        
+        // Finalize redirect path based on status
+        if (profile.onboarding_step >= 4) {
+             if (profile.role === 'designer') {
+                redirectPath = '/dashboard/designer'
+            } else if (profile.role === 'service_provider') {
+                redirectPath = '/dashboard/service-provider'
+            } else {
+                // Default to partner dashboard for 'partner', 'seller', or 'customer' (with finished onboarding)
+                redirectPath = '/dashboard/partner'
+            }
+        } else {
+            redirectPath = '/partner/onboarding'
         }
-
     } catch (err: any) {
+        if (err.message === 'NEXT_REDIRECT') throw err
         console.error('Unexpected Partner Login Error:', err)
         return { error: `An unexpected error occurred: ${err.message || 'Unknown error'}` }
     }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_bloc.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_event.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_state.dart';
-import 'package:ghorbari_consumer/shared/models/booking.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_bloc.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_event.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_state.dart';
+import 'package:Dalankotha_consumer/shared/models/booking.dart';
 import 'package:intl/intl.dart';
 
 class MyBookingsScreen extends StatefulWidget {

@@ -39,86 +39,97 @@ type LayoutData = {
     unitDetails: UnitDetail[];
 };
 
-const UnitInputs = ({ layoutId, unit, updateFn, t, title }: { layoutId: number, unit: UnitDetail, updateFn: any, t: any, title: string }) => (
-    <div className="space-y-6 animate-in slide-in-from-left-4 duration-500">
-        <div className="flex items-center gap-3">
-            <div className="h-8 w-1 bg-primary-600 rounded-full" />
-            <h4 className="font-black text-neutral-800 text-sm uppercase tracking-wider">{title}</h4>
+const UnitInputs = ({ 
+    layoutId, 
+    unit, 
+    updateFn, 
+    t, 
+    title 
+}: { 
+    layoutId: number, 
+    unit: any, 
+    updateFn: (lid: number, uid: number, field: string, val: string) => void, 
+    t: any, 
+    title: string 
+}) => {
+    return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+            <h4 className="font-black text-sm text-primary-900 border-l-4 border-primary-500 pl-3 uppercase tracking-wider">{title}</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
+                <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{t.bed || "Bed"}</Label>
+                    <Input 
+                        type="number" 
+                        placeholder="2" 
+                        className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
+                        value={unit.bedrooms} 
+                        onChange={(e) => updateFn(layoutId, unit.unitId, 'bedrooms', e.target.value)} 
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{t.drawingRoom || "Drawing"}</Label>
+                    <Input 
+                        type="number" 
+                        placeholder="1" 
+                        className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
+                        value={unit.drawingRooms} 
+                        onChange={(e) => updateFn(layoutId, unit.unitId, 'drawingRooms', e.target.value)} 
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{t.bath || "Bath"}</Label>
+                    <Input 
+                        type="number" 
+                        placeholder="2" 
+                        className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
+                        value={unit.bathrooms} 
+                        onChange={(e) => updateFn(layoutId, unit.unitId, 'bathrooms', e.target.value)} 
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{t.balcony || "Balcony"}</Label>
+                    <Input 
+                        type="number" 
+                        placeholder="2" 
+                        className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
+                        value={unit.balcony} 
+                        onChange={(e) => updateFn(layoutId, unit.unitId, 'balcony', e.target.value)} 
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{t.kitchen || "Kitchen"}</Label>
+                    <Input 
+                        type="number" 
+                        placeholder="1" 
+                        className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
+                        value={unit.kitchen} 
+                        onChange={(e) => updateFn(layoutId, unit.unitId, 'kitchen', e.target.value)} 
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{t.dining || "Dining"}</Label>
+                    <Input 
+                        type="number" 
+                        placeholder="1" 
+                        className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
+                        value={unit.diningRooms} 
+                        onChange={(e) => updateFn(layoutId, unit.unitId, 'diningRooms', e.target.value)} 
+                    />
+                </div>
+                <div className="space-y-1.5 col-span-2">
+                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{(t as any).extraSpace || "Additional Space / Requirements"}</Label>
+                    <Input 
+                        placeholder="e.g. Study room, Store" 
+                        className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
+                        value={unit.additionalSpace} 
+                        onChange={(e) => updateFn(layoutId, unit.unitId, 'additionalSpace', e.target.value)} 
+                    />
+                </div>
+            </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.bed}</Label>
-                <Input 
-                    type="number" 
-                    placeholder="2" 
-                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
-                    value={unit.bedrooms} 
-                    onChange={(e) => updateFn(layoutId, unit.unitId, 'bedrooms', e.target.value)} 
-                />
-            </div>
-            <div className="space-y-2">
-                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.drawing}</Label>
-                <Input 
-                    type="number" 
-                    placeholder="1" 
-                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
-                    value={unit.drawingRooms} 
-                    onChange={(e) => updateFn(layoutId, unit.unitId, 'drawingRooms', e.target.value)} 
-                />
-            </div>
-            <div className="space-y-2">
-                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.bath}</Label>
-                <Input 
-                    type="number" 
-                    placeholder="2" 
-                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
-                    value={unit.bathrooms} 
-                    onChange={(e) => updateFn(layoutId, unit.unitId, 'bathrooms', e.target.value)} 
-                />
-            </div>
-            <div className="space-y-2">
-                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.balcony}</Label>
-                <Input 
-                    type="number" 
-                    placeholder="2" 
-                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
-                    value={unit.balcony} 
-                    onChange={(e) => updateFn(layoutId, unit.unitId, 'balcony', e.target.value)} 
-                />
-            </div>
-            <div className="space-y-2">
-                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.kitchen}</Label>
-                <Input 
-                    type="number" 
-                    placeholder="1" 
-                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
-                    value={unit.kitchen} 
-                    onChange={(e) => updateFn(layoutId, unit.unitId, 'kitchen', e.target.value)} 
-                />
-            </div>
-            <div className="space-y-2">
-                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">Dining</Label>
-                <Input 
-                    type="number" 
-                    placeholder="1" 
-                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
-                    value={unit.diningRooms} 
-                    onChange={(e) => updateFn(layoutId, unit.unitId, 'diningRooms', e.target.value)} 
-                />
-            </div>
-            <div className="space-y-2 sm:col-span-2 lg:col-span-2">
-                <Label className="text-xs font-bold text-neutral-500 uppercase ml-1 opacity-70">{t.additionalSpace}</Label>
-                <Input 
-                    type="text" 
-                    placeholder="e.g. Study room, Store" 
-                    className="h-11 bg-neutral-50/50 border-neutral-200 focus:bg-white transition-colors" 
-                    value={unit.additionalSpace} 
-                    onChange={(e) => updateFn(layoutId, unit.unitId, 'additionalSpace', e.target.value)} 
-                />
-            </div>
-        </div>
-    </div>
-);
+    );
+};
+
 
 // Service Types
 type ServiceType = 'structural-architectural' | 'interior';
@@ -200,17 +211,18 @@ function DesignBookingWizard() {
         soilTest: '',
         roofFeatures: [] as string[],
 
-        designerSelectionType: '' as 'ghorbari' | 'list' | '',
+        designerSelectionType: '' as 'Dalankotha' | 'list' | '',
         selectedDesignerId: null as string | null,
 
         // Interior - Setup
         propertyType: '', // 'Full house' | 'Full Apartment' | 'Specific Area'
 
-        // Full House
+        // Full Building
         houseType: '', // 'Duplex' | 'Multistoried'
         intFloors: '',
         intUnitsPerFloor: '',
         intAreaPerUnit: '',
+        intAreaUnit: 'sqft',
 
         // Full Apartment
         aptSize: '',
@@ -227,6 +239,10 @@ function DesignBookingWizard() {
         specificInstruction: '',
         preferredDate: '',
         preferredTime: '',
+
+        // Inspiration
+        inspirationLink: '',
+        selectedInspirationSamples: [] as string[],
     });
 
     const [serviceTypes, setServiceTypes] = useState<ServiceType[]>(
@@ -296,8 +312,20 @@ function DesignBookingWizard() {
     }, [JSON.stringify(serviceTypes)]);
 
 
-    const updateData = (key: string, value: any) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+    const updateData = (field: string, value: any) => {
+        setFormData(prev => {
+            const newData = { ...prev, [field]: value };
+            // Defaults
+            if (field === 'houseType' && value === 'Duplex') {
+                newData.intFloors = '2';
+                newData.numberOfLayouts = '1';
+            }
+            if (field === 'propertyType' && value === 'Full Apartment') {
+                newData.numberOfLayouts = '1';
+                newData.houseType = '';
+            }
+            return newData;
+        });
     };
 
     const toggleArrayItem = (key: keyof typeof formData, value: string) => {
@@ -390,7 +418,7 @@ function DesignBookingWizard() {
     }, [formData.numberOfLayouts]);
 
     const showsDesignQ = formData.designerOption === 'design' || formData.designerOption === 'both';
-    const skippableListStep = formData.designerSelectionType === 'ghorbari';
+    const skippableListStep = formData.designerSelectionType === 'Dalankotha';
 
 
 
@@ -408,7 +436,7 @@ function DesignBookingWizard() {
             // Calculate tentative pricing (basic placeholder logic based on rules)
             let tentativePrice = 0;
             if (serviceTypes.includes('structural-architectural')) {
-                if (formData.designerSelectionType === 'ghorbari') {
+                if (formData.designerSelectionType === 'Dalankotha') {
                     if (formData.designerOption === 'both') tentativePrice = 80000;
                     else if (formData.designerOption === 'design') tentativePrice = 50000;
                     else tentativePrice = 30000;
@@ -487,41 +515,42 @@ function DesignBookingWizard() {
             setLoading(false);
         }
     };
-
     const nextStep = () => {
         if (step === 0) {
             if (serviceTypes.includes('structural-architectural')) setStep(1);
+            else setStep(8);
+        } else if (step === 1) {
+            if (formData.designerOption === 'design') setStep(3);
+            else setStep(2);
+        } else if (step === 2) {
+            setStep(3);
+        } else if (step === 3) {
+            if (showsDesignQ) setStep(4);
             else if (serviceTypes.includes('interior')) setStep(8);
-            else setStep(13);
-        } else if (step >= 1 && step <= 7) {
-            // Structural flow: always go through checklist (step 2) then upload (step 3)
-            if (step === 1) setStep(2);
-            else if (step === 2) setStep(3);
-            else if (step === 3) {
-                if (showsDesignQ) setStep(4);
-                else if (serviceTypes.includes('interior')) setStep(8);
-                else setStep(11);
-            }
-            else if (step === 4) setStep(5);
-            else if (step === 5) setStep(6);
-            else if (step === 6) setStep(7);
-            else if (step === 7) {
-                if (serviceTypes.includes('interior')) setStep(8);
-                else setStep(11);
-            }
+            else setStep(11);
+        } else if (step >= 4 && step <= 6) {
+            setStep(step + 1);
+        } else if (step === 7) {
+            if (serviceTypes.includes('interior')) setStep(8);
+            else setStep(11);
         } else if (step >= 8 && step <= 10) {
             // Interior flow
             if (step === 8) setStep(9);
-            else if (step === 9) setStep(10);
-            else if (step === 10) setStep(11);
+            else if (step === 9) {
+                if (formData.propertyType === 'Full building') setStep(10);
+                else setStep(11);
+            } else if (step === 10) {
+                setStep(11);
+            }
         } else if (step === 11) {
-            // Designer route decision
-            if (skippableListStep) setStep(13); // Skip list, go to schedule
-            else setStep(12); // Go to designer selection list
+            // Designer route decision (Structural)
+            if (serviceTypes.includes('interior')) setStep(13);
+            else if (skippableListStep) setStep(13);
+            else setStep(12);
         } else if (step === 12) {
-            setStep(13); // From list to schedule
+            setStep(13);
         } else if (step === 13) {
-            setStep(14); // From schedule to review
+            setStep(14);
         }
     };
 
@@ -535,18 +564,18 @@ function DesignBookingWizard() {
                 if (showsDesignQ) setStep(7);
                 else setStep(3);
             } else setStep(0);
-        } else if (step >= 9 && step <= 10) {
-            setStep(step - 1);
+        } else if (step === 9) {
+            setStep(8);
+        } else if (step === 10) {
+            setStep(9);
         } else if (step === 11) {
-            if (serviceTypes.includes('interior')) setStep(10);
-            else if (serviceTypes.includes('structural-architectural')) {
-                if (showsDesignQ) setStep(7);
-                else setStep(3);
-            } else setStep(0);
+            if (formData.propertyType === 'Full building') setStep(10);
+            else setStep(9);
         } else if (step === 12) {
             setStep(11);
         } else if (step === 13) {
-            if (skippableListStep) setStep(11);
+            if (serviceTypes.includes('interior')) setStep(11);
+            else if (skippableListStep) setStep(11);
             else setStep(12);
         } else if (step === 14) {
             setStep(13);
@@ -565,10 +594,10 @@ function DesignBookingWizard() {
             }
         }
         if (serviceTypes.includes('interior')) {
-            active.push(8, 9, 10);
+            active.push(8, 9);
+            if (formData.propertyType === 'Full building' && (formData.houseType === 'Multistoried' || formData.houseType === 'Duplex')) active.push(10);
+            active.push(11);
         }
-        active.push(11);
-        if (!skippableListStep) active.push(12);
         active.push(13, 14);
         return active;
     };
@@ -1062,89 +1091,229 @@ function DesignBookingWizard() {
                     totalSteps={totalSteps}
                     onNext={nextStep}
                     onBack={prevStep}
+                    canNext={
+                        formData.propertyType === 'Full building' ? (
+                            formData.houseType === 'Multistoried' ? (!!formData.intAreaPerUnit && !!formData.intUnitsPerFloor && !!formData.numberOfLayouts && !!formData.intFloors) :
+                            formData.houseType === 'Duplex' ? (!!formData.intFloors && !!formData.intUnitsPerFloor && !!formData.intAreaPerUnit && !!formData.numberOfLayouts) :
+                            false
+                        ) :
+                        formData.propertyType === 'Full Apartment' ? (!!formData.aptSize && !!formData.intAreaUnit && !!formData.layoutsData[0].unitDetails[0].bedrooms) :
+                        formData.propertyType === 'Specific Area' ? (!!formData.specificAreaType && !!formData.roomSize) :
+                        false
+                    }
                 >
                     <div className="space-y-8 animate-in fade-in duration-500">
                         {formData.propertyType === 'Full building' && (
                             <div className="space-y-8">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 gap-6">
                                     <div className="space-y-3">
                                         <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.typeOfHouse}</Label>
                                         <RadioCardGroup
                                             options={[
-                                                { id: 'Duplex', label: t.duplex },
-                                                { id: 'Multistoried', label: t.multistoried },
+                                                { id: 'Duplex', label: t.duplex, icon: Home },
+                                                { id: 'Multistoried', label: t.multistoried, icon: Building2 },
                                             ]}
                                             selected={formData.houseType}
-                                            onChange={(id) => updateData('houseType', id)}
+                                            onChange={(id) => {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    houseType: id,
+                                                    intFloors: prev.intFloors || (id === 'Duplex' ? '2' : '5'),
+                                                    intUnitsPerFloor: prev.intUnitsPerFloor || (id === 'Duplex' ? '1' : '10'),
+                                                    intAreaPerUnit: prev.intAreaPerUnit || (id === 'Duplex' ? '1500' : '2000'),
+                                                    numberOfLayouts: prev.numberOfLayouts || '1'
+                                                }));
+                                            }}
                                             columns={2}
                                         />
                                     </div>
-                                    <div className="space-y-3">
-                                        <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.numFloors}</Label>
-                                        <Input type="number" placeholder="2" className="h-12 rounded-xl" value={formData.intFloors} onChange={(e) => updateData('intFloors', e.target.value)} />
-                                    </div>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div className="space-y-3">
-                                        <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.unitsEachFloor}</Label>
-                                        <Input type="number" placeholder="2" className="h-12 rounded-xl" value={formData.intUnitsPerFloor} onChange={(e) => updateData('intUnitsPerFloor', e.target.value)} />
+
+                                {formData.houseType === 'Multistoried' ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 animate-in slide-in-from-top-4 duration-500">
+                                        <div className="space-y-3 md:col-span-2 bg-neutral-50/30 p-4 rounded-2xl border border-neutral-100">
+                                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{(t as any).floorAreaQ || "Area of the floor"}</Label>
+                                            <div className="flex gap-4">
+                                                <Input type="number" placeholder="2000" className="h-14 bg-white rounded-xl flex-1 text-lg font-bold border-neutral-200" value={formData.intAreaPerUnit} onChange={(e) => updateData('intAreaPerUnit', e.target.value)} />
+                                                <Select value={formData.intAreaUnit} onValueChange={(v) => updateData('intAreaUnit', v)}>
+                                                    <SelectTrigger className="w-[160px] h-14 bg-white rounded-xl font-bold border-neutral-200">
+                                                        <SelectValue placeholder="Unit" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="sqft">sqft</SelectItem>
+                                                        <SelectItem value="Katha">Katha</SelectItem>
+                                                        <SelectItem value="Decimal">Decimal</SelectItem>
+                                                        <SelectItem value="Bigha">Bigha</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.numFloors || "Number of floors"}</Label>
+                                            <Input type="number" placeholder="5" className="h-14 bg-neutral-50/50 rounded-xl font-bold border-neutral-200" value={formData.intFloors} onChange={(e) => updateData('intFloors', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{(t as any).totalUnitsQ || "Total units"}</Label>
+                                            <Input type="number" placeholder="10" className="h-14 bg-neutral-50/50 rounded-xl font-bold border-neutral-200" value={formData.intUnitsPerFloor} onChange={(e) => updateData('intUnitsPerFloor', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-3 md:col-span-2">
+                                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{(t as any).layoutCountQ || "Layout Counts"}</Label>
+                                            <Input type="number" min="1" max="10" placeholder="2" className="h-14 bg-neutral-50/50 rounded-xl font-bold border-neutral-200" value={formData.numberOfLayouts} onChange={(e) => updateData('numberOfLayouts', e.target.value)} />
+                                        </div>
                                     </div>
-                                    <div className="space-y-3">
-                                        <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.areaEachUnit}</Label>
-                                        <Input type="number" placeholder="1500" className="h-12 rounded-xl" value={formData.intAreaPerUnit} onChange={(e) => updateData('intAreaPerUnit', e.target.value)} />
+                                ) : formData.houseType === 'Duplex' && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 animate-in slide-in-from-top-4 duration-500">
+                                        <div className="space-y-3 md:col-span-2 bg-neutral-50/30 p-4 rounded-2xl border border-neutral-100">
+                                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.areaEachUnit || "Area of each floor"}</Label>
+                                            <div className="flex gap-4">
+                                                <Input type="number" placeholder="1500" className="h-14 bg-white rounded-xl flex-1 text-lg font-bold border-neutral-200" value={formData.intAreaPerUnit} onChange={(e) => updateData('intAreaPerUnit', e.target.value)} />
+                                                <Select value={formData.intAreaUnit} onValueChange={(v) => updateData('intAreaUnit', v)}>
+                                                    <SelectTrigger className="w-[160px] h-14 bg-white rounded-xl font-bold border-neutral-200">
+                                                        <SelectValue placeholder="Unit" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="sqft">sqft</SelectItem>
+                                                        <SelectItem value="Katha">Katha</SelectItem>
+                                                        <SelectItem value="Decimal">Decimal</SelectItem>
+                                                        <SelectItem value="Bigha">Bigha</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.numFloors || "Number of floors"}</Label>
+                                            <Input type="number" placeholder="2" className="h-14 bg-neutral-50/50 rounded-xl font-bold border-neutral-200" value={formData.intFloors} onChange={(e) => updateData('intFloors', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.unitsEachFloor || "Units per floor"}</Label>
+                                            <Input type="number" placeholder="2" className="h-14 bg-neutral-50/50 rounded-xl font-bold border-neutral-200" value={formData.intUnitsPerFloor} onChange={(e) => updateData('intUnitsPerFloor', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-3 md:col-span-2">
+                                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{(t as any).layoutCountQ || "Layout Counts"}</Label>
+                                            <Input type="number" min="1" max="10" placeholder="1" className="h-14 bg-neutral-50/50 rounded-xl font-bold border-neutral-200" value={formData.numberOfLayouts} onChange={(e) => updateData('numberOfLayouts', e.target.value)} />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         )}
                         {formData.propertyType === 'Full Apartment' && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div className="space-y-3">
-                                    <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.aptSize}</Label>
-                                    <Input type="number" placeholder="1200" className="h-12 rounded-xl" value={formData.aptSize} onChange={(e) => updateData('aptSize', e.target.value)} />
+                            <div className="space-y-10 animate-in fade-in duration-500">
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-primary-600 uppercase tracking-[0.2em]">{t.propertyType} Details</h4>
+                                    <div className="grid grid-cols-1 gap-6">
+                                        <div className="space-y-3 bg-neutral-50/30 p-6 rounded-3xl border border-neutral-100">
+                                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.aptSize}</Label>
+                                            <div className="flex gap-4">
+                                                <Input type="number" placeholder="1200" className="h-14 bg-white rounded-xl flex-1 text-lg font-bold border-neutral-200" value={formData.aptSize} onChange={(e) => updateData('aptSize', e.target.value)} />
+                                                <Select value={formData.intAreaUnit} onValueChange={(v) => updateData('intAreaUnit', v)}>
+                                                    <SelectTrigger className="w-[160px] h-14 bg-white rounded-xl font-bold border-neutral-200">
+                                                        <SelectValue placeholder="Unit" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="sqft">sqft</SelectItem>
+                                                        <SelectItem value="Katha">Katha</SelectItem>
+                                                        <SelectItem value="Decimal">Decimal</SelectItem>
+                                                        <SelectItem value="Bigha">Bigha</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="space-y-3">
-                                    <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.noOfRoom}</Label>
-                                    <Input type="number" placeholder="3" className="h-12 rounded-xl" value={formData.aptRooms} onChange={(e) => updateData('aptRooms', e.target.value)} />
+
+                                <div className="bg-white border border-neutral-200 rounded-3xl p-8 shadow-sm animate-in zoom-in-95 duration-500 delay-150">
+                                    <UnitInputs 
+                                        layoutId={formData.layoutsData[0].id} 
+                                        unit={formData.layoutsData[0].unitDetails[0]} 
+                                        updateFn={updateUnitDetail} 
+                                        t={t} 
+                                        title={t.aptDetailsTitle || "Apartment Room Details"}
+                                    />
                                 </div>
                             </div>
                         )}
                         {formData.propertyType === 'Specific Area' && (
-                            <div className="space-y-8">
-                                <div className="space-y-3">
-                                    <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.specificArea}</Label>
-                                    <RadioCardGroup
-                                        options={[
-                                            { id: 'Living Room', label: t.livingRoom },
-                                            { id: 'Drawing Room', label: t.drawingRoom },
-                                            { id: 'Bed Room', label: t.bedRoom },
-                                            { id: 'Bath Room', label: t.bathRoom },
-                                            { id: 'Kitchen', label: t.kitchen },
-                                            { id: 'Balcony', label: t.balcony },
-                                            { id: 'Rooftop', label: t.rooftop },
-                                            { id: 'Entrance', label: t.entrance },
-                                        ]}
-                                        selected={formData.specificAreaType}
-                                        onChange={(id) => updateData('specificAreaType', id)}
-                                        columns={4}
-                                    />
-                                </div>
-                                {formData.specificAreaType === 'Bed Room' && (
-                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-                                        <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">Bedroom Type</Label>
+                            <div className="space-y-10 animate-in fade-in duration-500">
+                                <div className="space-y-8">
+                                    <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{t.selectAreaQ || "Select Area"}</Label>
+                                    
+                                    {/* Standard Areas */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-1 w-8 bg-neutral-200 rounded-full" />
+                                            <h4 className="text-[10px] font-black text-neutral-400 uppercase tracking-[0.2em]">{t.standardAreas || "Standard Areas"}</h4>
+                                        </div>
                                         <RadioCardGroup
                                             options={[
-                                                { id: 'Master Bedroom', label: t.masterBed },
-                                                { id: 'General Bedroom', label: t.generalBed },
-                                                { id: 'Welcome Newborn', label: t.welcomeNewborn },
-                                                { id: 'Teenagers Special', label: t.teenagersSpecial },
-                                                { id: 'Children Bedroom', label: t.childrenBed },
+                                                { id: 'Living Room', label: t.livingRoom, image: 'https://images.unsplash.com/photo-1583847268964-b28dc2f51ac9?w=400&h=400&fit=crop' },
+                                                { id: 'Drawing Room', label: t.drawingRoom, image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&h=400&fit=crop' },
+                                                { id: 'Kitchen', label: t.kitchen, image: 'https://images.unsplash.com/photo-1556911223-e4524a73936d?w=400&h=400&fit=crop' },
+                                                { id: 'Bath Room', label: t.bathRoom, image: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=400&h=400&fit=crop' },
+                                                { id: 'Balcony', label: t.balcony, image: 'https://images.unsplash.com/photo-1560448204-61dc36dc98bd?w=400&h=400&fit=crop' },
+                                                { id: 'Rooftop', label: t.rooftop, image: 'https://images.unsplash.com/photo-1531835597900-51ce18427dfa?w=400&h=400&fit=crop' },
+                                                { id: 'Entrance', label: t.entrance, image: 'https://images.unsplash.com/photo-1585128719715-46776b56a0d1?w=400&h=400&fit=crop' },
                                             ]}
-                                            selected={formData.bedRoomType}
-                                            onChange={(id) => updateData('bedRoomType', id)}
+                                            selected={formData.specificAreaType}
+                                            onChange={(id) => updateData('specificAreaType', id)}
+                                            columns={4}
+                                        />
+                                    </div>
+
+                                    {/* Exclusive/Themed Bedrooms */}
+                                    <div className="space-y-4 pt-4 border-t border-dotted border-neutral-200">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-1 w-8 bg-primary-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                                            <h4 className="text-[10px] font-black text-primary-600 uppercase tracking-[0.2em]">{t.exclusivePremium || "Exclusive Premium Spaces"}</h4>
+                                            <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-[8px] font-black uppercase tracking-widest rounded-full">Pro</span>
+                                        </div>
+                                        <RadioCardGroup
+                                            options={[
+                                                { id: 'Master Bedroom', label: t.masterBed || "Master Bedroom", image: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400&h=400&fit=crop' },
+                                                { id: 'General Bedroom', label: t.generalBed || "General Bedroom", image: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=400&h=400&fit=crop' },
+                                                { id: 'New Born', label: (t as any).newBornBed || "Welcome Newborn", image: 'https://images.unsplash.com/photo-1520206151081-30cc81395726?w=400&h=400&fit=crop' },
+                                                { id: 'Teenage Cave', label: (t as any).teenageCave || "Teenage Cave", image: 'https://images.unsplash.com/photo-1534349762230-e09ca054d456?w=400&h=400&fit=crop' },
+                                                { id: 'Bridal Bed', label: (t as any).bridalBed || "Bridal Bed", image: 'https://images.unsplash.com/photo-1536376074432-8f274fa4bf72?w=400&h=400&fit=crop' },
+                                            ]}
+                                            selected={formData.specificAreaType}
+                                            onChange={(id) => updateData('specificAreaType', id)}
                                             columns={3}
                                         />
                                     </div>
-                                )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-neutral-100">
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                        <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{(t as any).roomSizeQ || "Room Size"}</Label>
+                                        <div className="flex gap-4">
+                                            <Input 
+                                                type="number" 
+                                                placeholder="200" 
+                                                className="h-14 bg-neutral-50/50 rounded-xl flex-1 font-bold border-neutral-200" 
+                                                value={formData.roomSize} 
+                                                onChange={(e) => updateData('roomSize', e.target.value)} 
+                                            />
+                                            <Select value={formData.intAreaUnit} onValueChange={(v) => updateData('intAreaUnit', v)}>
+                                                <SelectTrigger className="w-[120px] h-14 bg-neutral-50/50 rounded-xl font-bold border-neutral-200">
+                                                    <SelectValue placeholder="Unit" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="sqft">sqft</SelectItem>
+                                                    <SelectItem value="Katha">Katha</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3 pt-4 border-t border-neutral-100">
+                                    <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{(t as any).anyInstruction || "Any specific instruction"}</Label>
+                                    <textarea 
+                                        className="w-full min-h-[120px] p-4 rounded-3xl bg-neutral-50/50 border-2 border-neutral-100 focus:border-primary-200 focus:bg-white transition-all outline-none text-sm leading-relaxed"
+                                        placeholder="e.g. I want a modern look with white theme..."
+                                        value={formData.specificInstruction}
+                                        onChange={(e) => updateData('specificInstruction', e.target.value)}
+                                    />
+                                </div>
                             </div>
                         )}
                     </div>
@@ -1157,21 +1326,194 @@ function DesignBookingWizard() {
         return (
             <MainLayout>
                 <WizardStep
-                    key={`step10-int-vibe-${lang}`}
+                    key={`step10-layouts-${lang}`}
                     lang={lang}
-                    title={t.aestheticsTitle}
-                    description={t.aestheticsDesc}
+                    title={formData.propertyType === 'Full Apartment' ? (t as any).aptDetailsTitle || "Apartment Room Details" : (t.numLayoutsQ || "How Many Different Layouts?")}
+                    description={t.spaceLayoutDesc}
                     currentStep={visualStep - 1}
                     totalSteps={totalSteps}
                     onNext={nextStep}
                     onBack={prevStep}
                 >
-                    <RadioCardGroup
-                        options={getVibeOptions(lang)}
-                        selected={formData.structuralVibe}
-                        onChange={(id) => updateData('structuralVibe', id)}
-                        columns={2}
-                    />
+                    <div className="max-w-4xl mx-auto space-y-8">
+                        <Tabs defaultValue="1" className="w-full">
+                            {formData.layoutsData.length > 1 && (
+                                <TabsList className="grid grid-cols-4 mb-8 bg-neutral-100 p-1 rounded-xl">
+                                    {formData.layoutsData.map((layout) => (
+                                        <TabsTrigger 
+                                            key={layout.id} 
+                                            value={String(layout.id)}
+                                            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold text-xs py-2.5"
+                                        >
+                                            {t.layoutTab} {layout.id}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            )}
+                            {formData.layoutsData.map((layout) => (
+                                <TabsContent key={layout.id} value={String(layout.id)} className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm space-y-6">
+                                        {formData.propertyType !== 'Full Apartment' && (
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100">
+                                                <div className="space-y-1">
+                                                    <h3 className="font-bold text-lg text-neutral-800">{t.layoutTab} {layout.id} Configuration</h3>
+                                                    <p className="text-sm text-neutral-500">Define use and structure for this layout.</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-neutral-50 p-1.5 rounded-lg border border-neutral-200">
+                                                    <Label className="text-xs font-bold px-2">{t.garageQ}</Label>
+                                                    <div className="flex gap-1">
+                                                        <Button 
+                                                            variant={layout.isGarage === 'yes' ? 'default' : 'outline'} 
+                                                            size="sm" 
+                                                            className={`h-8 px-4 text-xs font-bold rounded-md ${layout.isGarage === 'yes' ? 'bg-primary-900 text-white' : 'text-neutral-500'}`}
+                                                            onClick={() => updateLayoutData(layout.id, 'isGarage', 'yes')}
+                                                        >
+                                                            {t.yes}
+                                                        </Button>
+                                                        <Button 
+                                                            variant={layout.isGarage === 'no' ? 'default' : 'outline'} 
+                                                            size="sm" 
+                                                            className={`h-8 px-4 text-xs font-bold rounded-md ${layout.isGarage === 'no' ? 'bg-primary-900 text-white' : 'text-neutral-500'}`}
+                                                            onClick={() => updateLayoutData(layout.id, 'isGarage', 'no')}
+                                                        >
+                                                            {t.no}
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {formData.propertyType === 'Full Apartment' && (
+                                            <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                                                <UnitInputs 
+                                                    layoutId={layout.id} 
+                                                    unit={layout.unitDetails[0]} 
+                                                    updateFn={updateUnitDetail} 
+                                                    t={t} 
+                                                    title={t.aptDetailsTitle || "Apartment Room Details"}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {formData.propertyType !== 'Full Apartment' && layout.isGarage === 'no' && (
+                                            <>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="space-y-3">
+                                                        <Label className="font-bold text-neutral-700">{t.numUnitsQ}</Label>
+                                                        <Input 
+                                                            type="number" 
+                                                            className="h-12 bg-neutral-50/50 border-neutral-200" 
+                                                            value={layout.numberOfUnits} 
+                                                            onChange={(e) => handleNumUnitsChange(layout.id, e.target.value)} 
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <Label className="font-bold text-neutral-700">{t.identicalUnitsQ}</Label>
+                                                        <div className="flex gap-4">
+                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'yes' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'}`} onClick={() => updateLayoutData(layout.id, 'unitsAreIdentical', 'yes')}>{t.yes}</div>
+                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'no' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'}`} onClick={() => updateLayoutData(layout.id, 'unitsAreIdentical', 'no')}>{t.no}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-8">
+                                                    {layout.unitsAreIdentical === 'yes' ? (
+                                                        <UnitInputs 
+                                                            layoutId={layout.id} 
+                                                            unit={layout.unitDetails[0]} 
+                                                            updateFn={updateUnitDetail} 
+                                                            t={t} 
+                                                            title={`${t.unitTab} Details (All ${layout.numberOfUnits} units)`}
+                                                        />
+                                                    ) : (
+                                                        <div className="space-y-12">
+                                                            {layout.unitDetails.map((unit, idx) => (
+                                                                <UnitInputs 
+                                                                    key={unit.unitId}
+                                                                    layoutId={layout.id} 
+                                                                    unit={unit} 
+                                                                    updateFn={updateUnitDetail} 
+                                                                    t={t} 
+                                                                    title={`${t.unitTab} ${unit.unitId} Details`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </TabsContent>
+                            ))}
+                        </Tabs>
+                    </div>
+                </WizardStep>
+            </MainLayout>
+        );
+    }
+
+    if (step === 11) {
+        const inspirationSamples = [
+            { id: 'sample1', label: 'Modern Luxury', image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=400&fit=crop' },
+            { id: 'sample2', label: 'Classic Elegance', image: 'https://images.unsplash.com/photo-1592595896551-12b371d546d5?w=400&h=400&fit=crop' },
+            { id: 'sample3', label: 'Minimalist Zen', image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=400&fit=crop' },
+            { id: 'sample4', label: 'Vibrant Art Deco', image: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?w=400&h=400&fit=crop' },
+        ];
+
+        return (
+            <MainLayout>
+                <WizardStep
+                    key={`step11-inspiration-${lang}`}
+                    lang={lang}
+                    title={(t as any).inspirationTitle || "Design Inspiration"}
+                    description={(t as any).inspirationDesc || "Tell us about your style preference."}
+                    currentStep={visualStep - 1}
+                    totalSteps={totalSteps}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                >
+                    <div className="max-w-3xl mx-auto space-y-12 animate-in fade-in duration-500">
+                        <div className="space-y-6">
+                            <Label className="text-sm font-black text-neutral-400 uppercase tracking-widest">{(t as any).selectFromSamples || "Select from Samples"}</Label>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                {inspirationSamples.map((sample) => (
+                                    <div 
+                                        key={sample.id}
+                                        onClick={() => toggleArrayItem('selectedInspirationSamples', sample.id)}
+                                        className={`group relative aspect-square rounded-2xl overflow-hidden cursor-pointer border-4 transition-all ${
+                                            formData.selectedInspirationSamples.includes(sample.id)
+                                                ? 'border-primary-600 scale-95 shadow-inner'
+                                                : 'border-transparent hover:border-primary-200'
+                                        }`}
+                                    >
+                                        <img src={sample.image} alt={sample.label} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                        <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${formData.selectedInspirationSamples.includes(sample.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`}>
+                                            <CheckCircle2 className="w-8 h-8 text-white" />
+                                        </div>
+                                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                                            <p className="text-[10px] font-bold text-white uppercase tracking-wider truncate">{sample.label}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-6 pt-8 border-t border-neutral-100">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="h-4 w-4 rounded-full bg-primary-100 flex items-center justify-center">
+                                    <div className="h-2 w-2 rounded-full bg-primary-600" />
+                                </div>
+                                <Label className="text-sm font-black text-neutral-700 uppercase tracking-widest">{(t as any).yourInspirationLink || "Your Inspiration Link"}</Label>
+                            </div>
+                            <Input 
+                                type="url" 
+                                placeholder={(t as any).inspirationLinkPlaceholder || "Share open link of your inspiration"} 
+                                className="h-14 bg-white border-2 border-neutral-100 rounded-2xl px-6 focus:border-primary-600 focus:ring-0 transition-all font-medium text-neutral-600" 
+                                value={formData.inspirationLink}
+                                onChange={(e) => updateData('inspirationLink', e.target.value)}
+                            />
+                        </div>
+                    </div>
                 </WizardStep>
             </MainLayout>
         );
@@ -1193,7 +1535,7 @@ function DesignBookingWizard() {
                 >
                     <RadioCardGroup
                         options={[
-                            { id: 'ghorbari', label: t.suggestedOption, icon: CheckCircle2, description: t.suggestedOptionDesc },
+                            { id: 'Dalankotha', label: t.suggestedOption, icon: CheckCircle2, description: t.suggestedOptionDesc },
                             { id: 'list', label: t.listOption, icon: UserCircle, description: t.listOptionDesc },
                         ]}
                         selected={formData.designerSelectionType}
@@ -1223,7 +1565,7 @@ function DesignBookingWizard() {
                             <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
                                 <UserCircle className="w-16 h-16 text-neutral-200 mb-4" />
                                 <p className="font-black text-neutral-400 uppercase tracking-widest text-sm">No designers available</p>
-                                <p className="text-neutral-400 text-xs mt-2">Please go back and let Ghorbari suggest an expert for you.</p>
+                                <p className="text-neutral-400 text-xs mt-2">Please go back and let Dalankotha suggest an expert for you.</p>
                             </div>
                         )}
                         {designers.map((designer) => (
@@ -1296,7 +1638,7 @@ function DesignBookingWizard() {
 
     if (step === 14) {
         const selectedDesigner = designers.find(d => d.id === formData.selectedDesignerId);
-        const providerName = formData.designerSelectionType === 'ghorbari' ? t.suggestedOption : (selectedDesigner?.company_name || '-');
+        const providerName = formData.designerSelectionType === 'Dalankotha' ? t.suggestedOption : (selectedDesigner?.company_name || '-');
         const price = formData.designerOption === 'both' ? 80000 : (formData.designerOption === 'design' ? 50000 : 30000);
 
         return (
@@ -1362,6 +1704,8 @@ function DesignBookingWizard() {
 
     return null;
 }
+
+
 
 function MainLayout({ children }: { children: ReactNode }) {
     return (

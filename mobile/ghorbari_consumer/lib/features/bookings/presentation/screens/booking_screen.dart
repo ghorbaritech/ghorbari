@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_bloc.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_event.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_state.dart';
-import 'package:ghorbari_consumer/shared/models/service_item.dart';
-import 'package:ghorbari_consumer/shared/models/booking.dart';
-import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_bloc.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_event.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_state.dart';
+import 'package:Dalankotha_consumer/shared/models/service_item.dart';
+import 'package:Dalankotha_consumer/shared/models/booking.dart';
+import 'package:Dalankotha_consumer/core/theme/Dalankotha_theme.dart';
 import 'package:intl/intl.dart';
-import 'package:ghorbari_consumer/features/services/data/repositories/service_repository_impl.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/main_screen.dart';
+import 'package:Dalankotha_consumer/features/services/data/repositories/service_repository_impl.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/main_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BookingScreen extends StatefulWidget {
@@ -208,7 +208,7 @@ class _BookingScreenState extends State<BookingScreen> {
               height: 4,
               margin: EdgeInsets.only(right: index == 2 ? 0 : 8),
               decoration: BoxDecoration(
-                color: isActive ? GhorbariTheme.primaryBlue : Colors.grey.shade300,
+                color: isActive ? DalankothaTheme.primaryBlue : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -284,8 +284,8 @@ class _BookingScreenState extends State<BookingScreen> {
             return Container(
                margin: const EdgeInsets.only(bottom: 12),
                decoration: BoxDecoration(
-                 border: Border.all(color: isSelected ? GhorbariTheme.primaryBlue : Colors.grey.shade200),
-                 color: isSelected ? GhorbariTheme.primaryBlue.withOpacity(0.05) : Colors.white,
+                 border: Border.all(color: isSelected ? DalankothaTheme.primaryBlue : Colors.grey.shade200),
+                 color: isSelected ? DalankothaTheme.primaryBlue.withOpacity(0.05) : Colors.white,
                  borderRadius: BorderRadius.circular(12),
                ),
                child: CheckboxListTile(
@@ -302,7 +302,7 @@ class _BookingScreenState extends State<BookingScreen> {
                  title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                  subtitle: Text(item.description ?? ''),
                  secondary: Text('৳${item.unitPrice}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                 activeColor: GhorbariTheme.primaryBlue,
+                 activeColor: DalankothaTheme.primaryBlue,
                  controlAffinity: ListTileControlAffinity.leading,
                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                ),

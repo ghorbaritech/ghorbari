@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:ghorbari_partner/shared/models/order.dart';
+import 'package:dalankotha_partner/shared/models/order.dart';
 
 abstract class PartnerOrderState extends Equatable {
   const PartnerOrderState();

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_consumer/shared/models/booking.dart';
-import 'package:ghorbari_consumer/features/bookings/data/datasources/booking_remote_data_source.dart';
+import 'package:Dalankotha_consumer/core/theme/Dalankotha_theme.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Dalankotha_consumer/shared/models/booking.dart';
+import 'package:Dalankotha_consumer/features/bookings/data/datasources/booking_remote_data_source.dart';
 import 'package:intl/intl.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -117,7 +117,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: _filter == 'ongoing' ? GhorbariTheme.primaryBlue : Colors.transparent,
+                      color: _filter == 'ongoing' ? DalankothaTheme.primaryBlue : Colors.transparent,
                       width: 2,
                     ),
                   ),
@@ -127,7 +127,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     'Ongoing',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: _filter == 'ongoing' ? GhorbariTheme.primaryBlue : Colors.grey.shade600,
+                      color: _filter == 'ongoing' ? DalankothaTheme.primaryBlue : Colors.grey.shade600,
                     ),
                   ),
                 ),
@@ -142,7 +142,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: _filter == 'history' ? GhorbariTheme.primaryBlue : Colors.transparent,
+                      color: _filter == 'history' ? DalankothaTheme.primaryBlue : Colors.transparent,
                       width: 2,
                     ),
                   ),
@@ -152,7 +152,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     'Order History',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: _filter == 'history' ? GhorbariTheme.primaryBlue : Colors.grey.shade600,
+                      color: _filter == 'history' ? DalankothaTheme.primaryBlue : Colors.grey.shade600,
                     ),
                   ),
                 ),
@@ -218,7 +218,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               const Text('Total Amount', style: TextStyle(fontWeight: FontWeight.w500)),
               Text(
                 '৳${order.totalAmount.toStringAsFixed(0)}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: GhorbariTheme.primaryBlue),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: DalankothaTheme.primaryBlue),
               ),
             ],
           ),

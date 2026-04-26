@@ -1,5 +1,5 @@
-import 'package:ghorbari_consumer/core/network/supabase_service.dart';
-import 'package:ghorbari_consumer/shared/models/booking.dart';
+import 'package:Dalankotha_consumer/core/network/supabase_service.dart';
+import 'package:Dalankotha_consumer/shared/models/booking.dart';
 
 abstract class BookingRemoteDataSource {
   Future<Booking> createBooking(Booking booking);

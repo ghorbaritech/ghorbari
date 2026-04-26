@@ -1,6 +1,6 @@
-import 'package:ghorbari_consumer/shared/models/booking.dart';
-import 'package:ghorbari_consumer/features/bookings/domain/repositories/booking_repository.dart';
-import 'package:ghorbari_consumer/features/bookings/data/datasources/booking_remote_data_source.dart';
+import 'package:Dalankotha_consumer/shared/models/booking.dart';
+import 'package:Dalankotha_consumer/features/bookings/domain/repositories/booking_repository.dart';
+import 'package:Dalankotha_consumer/features/bookings/data/datasources/booking_remote_data_source.dart';
 
 class BookingRepositoryImpl implements BookingRepository {
   final BookingRemoteDataSource remoteDataSource;

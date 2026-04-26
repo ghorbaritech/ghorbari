@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_event.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_partner/features/auth/presentation/screens/login_screen.dart';
-import 'package:ghorbari_partner/features/dashboard/presentation/screens/dashboard_screen.dart';
-import 'package:ghorbari_partner/features/orders/presentation/screens/manage_orders_screen.dart';
-import 'package:ghorbari_partner/features/inventory/presentation/screens/inventory_screen.dart';
-import 'package:ghorbari_partner/features/finance/presentation/screens/finance_screen.dart';
-import 'package:ghorbari_partner/features/marketing/presentation/screens/campaigns_screen.dart';
-import 'package:ghorbari_partner/features/chat/presentation/screens/messages_screen.dart';
-import 'package:ghorbari_partner/features/dashboard/presentation/screens/more_screen.dart';
-import 'package:ghorbari_partner/features/support/presentation/screens/support_screen.dart';
-import 'package:ghorbari_partner/features/settings/presentation/screens/settings_screen.dart';
-import 'package:ghorbari_partner/main.dart'; // For Branding widget
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_event.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_state.dart';
+import 'package:dalankotha_partner/features/auth/presentation/screens/login_screen.dart';
+import 'package:dalankotha_partner/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:dalankotha_partner/features/orders/presentation/screens/manage_orders_screen.dart';
+import 'package:dalankotha_partner/features/inventory/presentation/screens/inventory_screen.dart';
+import 'package:dalankotha_partner/features/finance/presentation/screens/finance_screen.dart';
+import 'package:dalankotha_partner/features/marketing/presentation/screens/campaigns_screen.dart';
+import 'package:dalankotha_partner/features/chat/presentation/screens/messages_screen.dart';
+import 'package:dalankotha_partner/features/dashboard/presentation/screens/more_screen.dart';
+import 'package:dalankotha_partner/features/support/presentation/screens/support_screen.dart';
+import 'package:dalankotha_partner/features/settings/presentation/screens/settings_screen.dart';
+import 'package:dalankotha_partner/main.dart'; // For Branding widget
 
-import 'package:ghorbari_partner/features/orders/presentation/bloc/partner_order_bloc.dart';
-import 'package:ghorbari_partner/features/orders/presentation/bloc/partner_order_event.dart';
-import 'package:ghorbari_partner/features/inventory/presentation/bloc/inventory_bloc.dart';
-import 'package:ghorbari_partner/core/services/notification_service.dart';
+import 'package:dalankotha_partner/features/orders/presentation/bloc/partner_order_bloc.dart';
+import 'package:dalankotha_partner/features/orders/presentation/bloc/partner_order_event.dart';
+import 'package:dalankotha_partner/features/inventory/presentation/bloc/inventory_bloc.dart';
+import 'package:dalankotha_partner/core/services/notification_service.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

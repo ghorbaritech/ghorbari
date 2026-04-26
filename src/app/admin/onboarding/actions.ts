@@ -111,6 +111,18 @@ export async function createSeller(data: any) {
     return { success: true, userId: authUser.user.id }
 }
 
+async function logVerificationAction(profileId: string, action: string, notes?: string, adminId?: string) {
+    const adminClient = createAdminClient()
+    await adminClient
+        .from('verification_logs')
+        .insert({
+            profile_id: profileId,
+            admin_id: adminId,
+            action,
+            notes
+        })
+}
+
 export async function createPartner(data: any) {
     console.log("createPartner action started", { email: data.email, roles: data.roles });
     try {
@@ -171,11 +183,22 @@ export async function createPartner(data: any) {
                 email: data.email,
                 role: dbRole,
                 full_name: data.businessName,
+                phone_number: data.phoneNumber,
+                // Verification Data
+                nid_number: data.nidNumber,
+                nid_front_url: data.nidFrontUrl,
+                nid_back_url: data.nidBackUrl,
+                trade_license_url: data.tradeLicenseUrl,
+                onboarding_step: data.onboardingStep || 1,
+                phone_verified: data.phoneVerified || false,
                 updated_at: new Date().toISOString(),
             })
 
         if (profileUpdateError) {
             console.error("createPartner: Profile upsert failed", profileUpdateError);
+        } else {
+            // Log the initial account provisioning
+            await logVerificationAction(userId, 'PROVISIONED', 'Account created by Admin', user.id)
         }
 
         // 3. Insert into respective tables based on roles
@@ -262,89 +285,7 @@ export async function createPartner(data: any) {
     }
 }
 
-export async function generateDemoPartners() {
-    const supabase = await createClient()
-    const adminClient = createAdminClient()
-
-    // Check if admin
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id).single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
-
-    const demoPartners = [
-        {
-            email: "global@ghorbari.com",
-            password: "password123",
-            businessName: "Global Construction & Co",
-            roles: { seller: true, designer: true, service_provider: true },
-            seller_data: { primaryCategories: ["Cement", "Steel"], commissionRate: 12 },
-            designer_data: { specializations: ["Architectural Design", "Urban Planning"], portfolioUrl: "https://global.com", experienceYears: 20 },
-            service_data: { serviceTypes: ["Construction Work", "HVAC Installation"], experienceYears: 15 }
-        },
-        {
-            email: "creative@ghorbari.com",
-            password: "password123",
-            businessName: "Creative Builders",
-            roles: { seller: false, designer: true, service_provider: true },
-            designer_data: { specializations: ["Interior Design", "3D Visualization"], portfolioUrl: "https://creative.com", experienceYears: 8 },
-            service_data: { serviceTypes: ["Painting Service", "Carpentry"], experienceYears: 10 }
-        },
-        {
-            email: "studiox@ghorbari.com",
-            password: "password123",
-            businessName: "Studio X",
-            roles: { seller: false, designer: true, service_provider: false },
-            designer_data: { specializations: ["Architectural Design", "Landscape Design"], portfolioUrl: "https://studiox.com", experienceYears: 5 }
-        },
-        {
-            email: "sevenrings@ghorbari.com",
-            password: "password123",
-            businessName: "Seven Rings Ltd",
-            roles: { seller: true, designer: false, service_provider: false },
-            seller_data: { primaryCategories: ["Cement"], commissionRate: 5 }
-        },
-        {
-            email: "bsrm@ghorbari.com",
-            password: "password123",
-            businessName: "BSRM Official",
-            roles: { seller: true, designer: false, service_provider: false },
-            seller_data: { primaryCategories: ["Steel"], commissionRate: 5 }
-        },
-        // Attempt to upgrade existing sellers if they exist by email, or create new ones
-        // "Seven Rings Ltd" and "BSRM Official" are likely existing sellers. 
-        // We will skip creating them here to avoid duplicates, but we could upgrade them if we knew their emails.
-        // Instead, let's create a "Mega Mart" as a pure seller demo.
-        {
-            email: "megamart@ghorbari.com",
-            password: "password123",
-            businessName: "Mega Materials Mart",
-            roles: { seller: true, designer: false, service_provider: false },
-            seller_data: { primaryCategories: ["Tiles", "Sanitary"], commissionRate: 8 }
-        }
-    ]
-
-    const results = []
-
-    for (const partner of demoPartners) {
-        // cleanup existing
-        // Check if user exists by email
-        const { data: { users } } = await adminClient.auth.admin.listUsers()
-        const existing = users.find((u: any) => u.email === partner.email)
-
-        if (existing) {
-            // Delete to recreate (SAFE FOR DEMO ONLY)
-            await adminClient.auth.admin.deleteUser(existing.id)
-        }
-
-        const res = await createPartner({
-            ...partner,
-            temporaryPassword: partner.password
-        })
-        results.push({ name: partner.businessName, ...res })
-    }
-
-    return results
-}
+// generateDemoPartners has been removed to ensure production security
 export async function getUsers() {
     const supabase = await createClient()
     const { data, error } = await supabase
@@ -409,8 +350,9 @@ export async function getCategories() {
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('product_categories')
-        .select('id, name, type')
+        .select('id, name, name_bn, type')
         .is('parent_id', null)
+
         .order('name')
 
     if (error) {
@@ -424,21 +366,57 @@ export async function updatePartner(userId: string, data: any) {
     console.log("updatePartner action started", { userId, roles: data.roles });
     try {
         const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // Verify if current user is admin
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user?.id)
+            .single()
+
+        if (profile?.role !== 'admin' && user?.id !== userId) {
+            throw new Error('Unauthorized')
+        }
+
+        
         const adminClient = createAdminClient()
+
+        let dbRole = 'customer'
+        if (data.roles?.seller) dbRole = 'seller'
+        else if (data.roles?.designer) dbRole = 'designer'
+        else if (data.roles?.service_provider) dbRole = 'seller'
+        
+        console.log(`[updatePartner] Updating profile for user: ${userId}`, {
+            role: dbRole,
+            step: data.onboardingStep,
+            businessName: data.businessName
+        });
 
         // 1. Update Profile Entry
         const { error: profileError } = await adminClient
             .from('profiles')
             .update({
                 full_name: data.businessName,
-                role: 'retailer',
+                phone_number: data.phoneNumber,
+                nid_number: data.nidNumber,
+                nid_front_url: data.nidFrontUrl,
+                nid_back_url: data.nidBackUrl,
+                trade_license_url: data.tradeLicenseUrl,
+                onboarding_step: data.onboardingStep,
+                phone_verified: data.phoneVerified,
+                role: dbRole,
                 updated_at: new Date().toISOString(),
             })
             .eq('id', userId)
 
         if (profileError) {
-            console.error("updatePartner: Profile update failed", profileError);
+            console.error("[updatePartner] Profile update FAILED:", profileError);
             return { error: profileError.message }
+        } else {
+            console.log("[updatePartner] Profile update SUCCESSFUL");
+            // Log update if significant fields changed (optional, but good for audit)
+            await logVerificationAction(userId, 'PROFILE_UPDATED', 'Admin updated profile details', user.id)
         }
 
         // 2. Update respective tables
@@ -512,6 +490,20 @@ export async function updatePartner(userId: string, data: any) {
 export async function updateUserProfile(userId: string, data: any) {
     console.log("updateUserProfile action started", { userId });
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // Verify if current user is admin
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user?.id)
+            .single()
+
+        if (profile?.role !== 'admin') {
+            throw new Error('Unauthorized')
+        }
+
         const adminClient = createAdminClient()
         const { error } = await adminClient
             .from('profiles')
@@ -532,5 +524,83 @@ export async function updateUserProfile(userId: string, data: any) {
     } catch (e: any) {
         console.error("updateUserProfile exception", e);
         return { error: e.message || "Internal Server Error" }
+    }
+}
+
+export async function updateOnboardingStep(userId: string, step: number) {
+    try {
+        const supabase = await createClient()
+        const adminClient = createAdminClient()
+        
+        const { error } = await adminClient
+            .from('profiles')
+            .update({ onboarding_step: step })
+            .eq('id', userId)
+
+        if (error) throw error
+        return { success: true }
+    } catch (err: any) {
+        console.error("updateOnboardingStep failed:", err)
+        return { error: err.message }
+    }
+}
+
+export async function verifyPartner(userId: string, adminId: string) {
+    try {
+        const adminClient = createAdminClient()
+        
+        // 1. Update Profile Status
+        const { error: profileError } = await adminClient
+            .from('profiles')
+            .update({ 
+                onboarding_status: 'verified',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', userId)
+
+        if (profileError) throw profileError
+
+        // 2. Update status in role-specific tables
+        const tables = ['sellers', 'designers', 'service_providers']
+        for (const table of tables) {
+            await adminClient
+                .from(table)
+                .update({ verification_status: 'approved' })
+                .eq('user_id', userId)
+        }
+
+        // 3. Log Action
+        await logVerificationAction(userId, 'APPROVED', 'Partner identity and business verified by admin', adminId)
+
+        return { success: true }
+    } catch (err: any) {
+        console.error("verifyPartner failed:", err)
+        return { error: err.message }
+    }
+}
+
+export async function rejectPartner(userId: string, adminId: string, reason: string) {
+    try {
+        const adminClient = createAdminClient()
+        
+        // 1. Reset Status and Update Step for correction
+        const { error: profileError } = await adminClient
+            .from('profiles')
+            .update({ 
+                onboarding_status: 'rejected',
+                onboarding_step: 1, // Send back to start or specific step
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', userId)
+
+        if (profileError) throw profileError
+
+        // 2. Log Action
+        await logVerificationAction(userId, 'REJECTED', reason, adminId)
+
+        return { success: true }
+    } catch (err: any) {
+        console.error("rejectPartner failed:", err)
+        return { error: err.message }
     }
 }

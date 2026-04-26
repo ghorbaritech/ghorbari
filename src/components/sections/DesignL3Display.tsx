@@ -103,7 +103,7 @@ export function DesignL3Display({ packages, categories, loading, config }: Desig
                         <div className="sticky top-24">
                             <div className="bg-neutral-50/50 rounded-3xl p-6 border border-neutral-100">
                                 <h3 className="text-sm font-bold text-neutral-400 uppercase tracking-widest mb-6 px-2">
-                                    {language === 'BN' ? 'ঘরবাড়ি ডিজাইন' : 'Ghorbari Design'}
+                                    {language === 'BN' ? 'ঘরবাড়ি ডিজাইন' : 'Dalankotha Design'}
                                 </h3>
 
                                 <div className="space-y-1">

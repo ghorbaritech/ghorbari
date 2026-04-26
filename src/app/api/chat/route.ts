@@ -1,253 +1,416 @@
-import { streamText, tool, convertToModelMessages } from 'ai';
-import { createGoogleGenerativeAI, google } from '@ai-sdk/google';
+// Build Trigger: 2026-04-26T02:10:00Z
+import { streamText, tool } from 'ai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
-import { generateImagen3 } from '@/utils/ai/imagen';
+import { generateRoomDesign } from '@/utils/ai/imagen';
 import { createClient } from '@/utils/supabase/server';
+import { createClient as createRawSupabaseClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
+import { KNOWLEDGE_BASE } from '@/utils/ai/knowledge';
 
-// Allow streaming responses up to 60 seconds
-export const maxDuration = 60;
+/**
+ * 🤖 Dalankotha AI Agent — v4.0.0
+ *
+ * Single canonical route for all AI interactions.
+ * Supports two modes via `mode` body param:
+ *   - 'full'   (default) — text + image generation + session persistence
+ *   - 'widget' — text only, anonymous, fast
+ */
 
-const getSystemPrompt = (language: string) => `
-You are the Ghorbari AI Construction Consultant, an expert architect, civil engineer, and interior designer specialized in the context of building and renovating in Bangladesh.
-Your goal is to provide highly accurate, practical, and helpful advice to homeowners and builders.
+export const maxDuration = 90;
 
-IMAGE GENERATION GUIDELINES:
-- Trigger the \`generate_design_image\` tool ONLY when the user explicitly asks for a DESIGN, VISUALIZATION, IMAGE, or to SHOW them a visual representation of a space.
-- If the user asks about costs, materials, or general advice, respond with TEXT only. Do NOT generate images for cost estimates unless specifically asked for a design of the room being discussed.
-- You MUST call the tool in the VERY FIRST STEP for visual requests.
-- Do NOT provide a long text response before calling the tool.
+// Validate that a string looks like a UUID to avoid RLS errors
+const isValidUUID = (str: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
-Language Instructions:
-${language === 'en'
-        ? '- IMPORTANT: The user has selected English as their preferred language. You MUST respond ONLY in English for this entire conversation.'
-        : '- IMPORTANT: সর্বদা বাংলায় উত্তর দিন। আপনার সমস্ত সাড়া বাংলায় লিখতে হবে। শুধুমাত্র প্রযুক্তিগত শব্দ যেখানে বাংলা সমতুল্য নেই, সেখানে ইংরেজি ব্যবহার করুন।\n- English rule: When the user writes in English, still respond in Bangla.\n- You can understand mixed "Banglish" as is common in Bangladesh.'
-    }
+const SYSTEM_PROMPT = `
+You are **Dalankotha AI** — the expert construction and interior design consultant for দালানকোঠা, Bangladesh's premium construction and renovation platform.
 
-Capabilities & Tone:
-1. Speak professionally but accessibly. Be encouraging but realistic about costs and timelines.
-2. You understand local materials (e.g., specific cement brands, RCC vs PCC, local brick types).
-3. If the user asks about Ghorbari services or products, confidently recommend they check the "Products" or "Services" sections on the website.
+## Personality
+- Warm, direct, knowledgeable — like a "trusted big brother" who is a design and construction expert.
+- Respond ONLY in the language the user writes in:
+  - Bengali or Banglish → always reply in বাংলা script (e.g. write "আপনি", never "apni")
+  - English → reply in English
 
-When calling \`generate_design_image\`:
-- Write a highly detailed, descriptive prompt for the image generator (e.g., "A hyper-realistic architectural render of a modern minimalist living room in Dhaka, natural sunlight, warm wood tones, beige sofa, indoor plants, 8k resolution").
+---
+
+## ⚠️ MANDATORY CONVERSATION FLOWS — FOLLOW EXACTLY
+
+### FLOW 1: User shares a room/space photo
+This is a strict multi-step process. DO NOT skip steps or jump to image generation.
+
+**STEP 1 — ROOM ANALYSIS**
+Carefully study the uploaded photo and write 2–3 sentences describing:
+- What furniture, colors, lighting, and layout you see
+- What is NOT working (e.g. "আলোর ব্যবস্থা দুর্বল", "ফার্নিচার রুমের সাথে মানানসই নয়")
+
+**STEP 2 — SUGGEST 3 DISTINCT DESIGN OPTIONS**
+Present 3 clearly different design styles. Use this EXACT format:
+
+---
+**বিকল্প ১: [Style Name — e.g. মডার্ন মিনিমালিস্ট]**
+পরিবর্তন: [List 3–4 specific changes: furniture, colors, lighting, flooring]
+আনুমানিক খরচ: ৳X – ৳Y লাখ
+
+**বিকল্প ২: [Style Name — e.g. স্ক্যান্ডিনেভিয়ান ওয়ার্ম]**
+পরিবর্তন: [List 3–4 specific changes]
+আনুমানিক খরচ: ৳X – ৳Y লাখ
+
+**বিকল্প ৩: [Style Name — e.g. আরবান লফট]**
+পরিবর্তন: [List 3–4 specific changes]
+আনুমানিক খরচ: ৳X – ৳Y লাখ
+---
+
+**STEP 3 — ASK THE USER TO CHOOSE**
+Always end your response with:
+"কোন বিকল্পটি আপনার পছন্দ? আপনি বললে আমি সাথে সাথে সেই ডিজাইনের একটি ফটোরিয়েলিস্টিক ভিজ্যুয়াল তৈরি করব!"
+
+⛔ **ABSOLUTE RULE: DO NOT call generate_visual_design on the first response when a photo is uploaded.
+You MUST complete Steps 1, 2, and 3 first. The image tool is FORBIDDEN until the user has chosen an option.**
+
+---
+
+### FLOW 2: User selects one of the 3 options
+Detection: User says any of — "option 1", "প্রথমটা", "বিকল্প ২", "first one", "second", "এটা করো", "তাই করো", "show me", "হ্যাঁ", "ok", a number ("১", "2"), or refers to a style name.
+
+Action: IMMEDIATELY call **generate_visual_design** tool with a rich, detailed prompt:
+- Reference the uploaded room's existing structural layout, perspective, and architecture
+- Apply ONLY the specific changes from the chosen option (furniture, colors, materials, lighting)
+- Add: "Dhaka Bangladesh apartment, professional architectural photography, photorealistic, 4K, beautiful lighting"
+
+After the image: write 3–4 bullets explaining what changed and suggest the matching Dalankotha service.
+
+---
+
+### FLOW 3: User requests a design WITHOUT a photo
+1. Ask: "কোন ধরনের রুম?" (Living room? Bedroom? Kitchen?)
+2. Ask: "পছন্দের স্টাইল কী?" (Minimalist? Classic? Modern?)
+3. Once answered → call **generate_visual_design** immediately
+4. After image → explain design choices and suggest Dalankotha service
+
+---
+
+### FLOW 4: User asks about construction or renovation cost
+1. If floor area is unknown → ask for it in sqft or katha
+2. Ask city and project type (full build / interior / renovation / gray structure)
+3. Call **estimateConstructionCost** tool
+4. Show results as a clear breakdown
+5. End with: "সঠিক কোটেশনের জন্য /services-এ একজন Dalankotha পেশাদার বুক করুন।"
+
+---
+
+### FLOW 5: User asks about Dalankotha services or booking
+1. Identify which service (design / permit / construction / materials)
+2. Explain in 2–3 sentences what it includes
+3. Link: "/services এ বুক করুন"
+
+---
+
+## Guardrails
+- Never give binding cost quotes — always say "আনুমানিক" (estimate) and recommend a formal BOQ
+- Never approve structural changes without: "অবশ্যই একজন সার্টিফাইড স্ট্রাকচারাল ইঞ্জিনিয়ারের সাথে নিশ্চিত করুন"
+- Never fabricate RAJUK/CDA rules
 `;
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        console.log('[AI CONSULT] Request body keys:', Object.keys(body));
-
-        // Handle both 'language' (ChatInterface) and 'lang' (AIChatAssistant)
-        const { messages: uiMessages, userId, sessionId: incomingSessionId, language: langKey, lang: fallbackLang } = body;
-        const language = langKey || fallbackLang || 'bn';
-
-        console.log('Chat API Request:', {
-            hasMessages: !!uiMessages,
-            messagesCount: uiMessages?.length,
-            lang: language,
+        const {
+            messages: uiMessages,
             userId,
-            clientSessionId: incomingSessionId
-        });
+            sessionId: incomingSessionId,
+            language: langKey,
+            lang: fallbackLang,
+            mode = 'full',       // 'full' | 'widget'
+        } = body;
 
-        if (!uiMessages || !Array.isArray(uiMessages)) {
-            console.error('Invalid or missing messages in request');
-            return NextResponse.json({ error: "Messages are required" }, { status: 400 });
+        const language = langKey || fallbackLang || 'bn';
+        const isWidgetMode = mode === 'widget';
+
+        if (!uiMessages || !Array.isArray(uiMessages) || uiMessages.length === 0) {
+            return NextResponse.json({ error: 'Valid messages array is required' }, { status: 400 });
         }
-
-        const lastMessage = uiMessages?.[uiMessages.length - 1];
-
-        // Extract text for persistence
-        let lastMessageText = '';
-        if (lastMessage?.content && typeof lastMessage.content === 'string') {
-            lastMessageText = lastMessage.content;
-        } else if (lastMessage?.parts) {
-            lastMessageText = lastMessage.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text).join(' ');
-        }
-
-        console.log(`[AI CONSULT] Request from ${userId} [lang:${language}]:`, lastMessageText.substring(0, 100));
-
-        // Robust conversion using AI SDK utility
-        console.log('[AI CONSULT] Converting UI messages to model messages with convertToModelMessages...');
-        const messages = await convertToModelMessages(uiMessages);
-
-        console.log('[AI CONSULT] Conversion successful. Message count:', messages.length);
-
-        // Debug: Log the full structure of the last 2 messages to identify why tool loop occurs
-        messages.slice(-2).forEach((m, i) => {
-            console.log(`[AI CONSULT] Converted Message ${i} [${(m as any).role}]:`, JSON.stringify(m).substring(0, 500));
-        });
 
         const supabase = await createClient();
         let sessionId = incomingSessionId;
 
-        console.log('[AI CONSULT] Checking session...');
+        // --- 1. Build System Prompt ---
+        let systemPrompt = SYSTEM_PROMPT;
 
-        // 1. Ensure we have a session
-        if (!sessionId && userId) {
-            const { data: session, error: sessionError } = await supabase
-                .from('ai_sessions')
-                .insert({
-                    user_id: userId,
-                    title: lastMessageText.substring(0, 50) || 'New Conversation'
-                })
-                .select()
-                .single();
+        // Try to load CMS override (silently ignore if unavailable)
+        try {
+            const { data: cmsData } = await supabase
+                .from('home_content')
+                .select('section_key, content')
+                .in('section_key', ['ai_system_prompt', 'ai_training_data']);
 
-            if (!sessionError && session) {
-                sessionId = session.id;
+            const promptItem = cmsData?.find((d) => d.section_key === 'ai_system_prompt');
+            const knowledgeItem = cmsData?.find((d) => d.section_key === 'ai_training_data');
+
+            if (promptItem?.content?.prompt) systemPrompt = promptItem.content.prompt;
+
+            const activeKnowledge = knowledgeItem?.content?.knowledge_base || KNOWLEDGE_BASE;
+            systemPrompt += `\n\n## Verified Knowledge Base\n${JSON.stringify(activeKnowledge, null, 2)}`;
+        } catch {
+            systemPrompt += `\n\n## Verified Knowledge Base\n${JSON.stringify(KNOWLEDGE_BASE, null, 2)}`;
+        }
+
+        systemPrompt += language === 'bn'
+            ? '\n\n## Active Language\nThe user is writing in Bengali. Respond ONLY in বাংলা script. Never use English or transliteration in your reply.'
+            : '\n\n## Active Language\nThe user is writing in English. Respond in English.';
+
+        if (isWidgetMode) {
+            systemPrompt += '\n\n## Session Mode: Widget\nKeep responses concise (max 4 sentences). If the user wants to see a design or needs detailed consultation, say: "For the full AI Design experience, visit our AI Consultant page" and link to /ai-consultant.';
+        }
+
+        // --- 2. Session Management (skip for widget mode or invalid userId) ---
+        const lastMessage = uiMessages[uiMessages.length - 1];
+        const lastMessageText =
+            typeof lastMessage?.content === 'string'
+                ? lastMessage.content
+                : (lastMessage?.parts
+                    ?.filter((p: any) => p.type === 'text')
+                    ?.map((p: any) => p.text)
+                    ?.join(' ') || 'New conversation');
+
+        if (!isWidgetMode && !sessionId && userId && isValidUUID(userId)) {
+            try {
+                const { data: session } = await supabase
+                    .from('ai_sessions')
+                    .insert({
+                        user_id: userId,
+                        title: lastMessageText.substring(0, 60) || 'New Conversation',
+                    })
+                    .select()
+                    .single();
+                if (session) sessionId = session.id;
+            } catch (e) {
+                console.warn('[AI] Session insert failed, continuing without session:', e);
             }
         }
 
-        // 2. Save User Message
-        if (sessionId && lastMessageText) {
-            await supabase.from('ai_messages').insert({
-                session_id: sessionId,
-                role: 'user',
-                content: lastMessageText
-            });
+        if (!isWidgetMode && sessionId && lastMessageText) {
+            supabase
+                .from('ai_messages')
+                .insert({ session_id: sessionId, role: 'user', content: lastMessageText })
+                .then()
+                .catch(() => { /* non-fatal */ });
         }
 
+        // --- 3. Sanitize Messages for Gemini API ---
         const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '';
-        const googleProvider = createGoogleGenerativeAI({ apiKey });
+        if (!apiKey) throw new Error('Gemini API key is not set');
 
-        // Call the language model
-        const result = streamText({
-            model: googleProvider('gemini-flash-latest'),
-            messages,
-            system: getSystemPrompt(language),
-            toolChoice: 'auto',
-            // @ts-ignore
-            maxSteps: 5,
-            tools: {
-                generate_design_image: tool({
-                    description: 'MANDATORY: Call this whenever the user wants to see, design, or visualize a room, building, or space. MUST be called for visual requests.',
-                    parameters: z.object({
-                        prompt: z.string().describe('Highly detailed architectural prompt for image generation. Style, lighting, materials, and location (Dhaka, Bangladesh).'),
-                        designType: z.enum(['interior', 'exterior']).default('interior'),
-                    }),
-                    // @ts-ignore - Vercel AI SDK v6 tool generics mismatch
-                    execute: async ({ prompt, designType }: { prompt?: string; designType?: 'interior' | 'exterior' }) => {
-                        console.log(`[TOOL CALLED] generate_design_image. Raw Args:`, { prompt, designType });
+        const google = createGoogleGenerativeAI({ apiKey });
 
-                        // Robustness: If the model failed to provide args but we reached here, try to infer or fallback
-                        const finalPrompt = prompt || "A beautiful modern interior design for a home in Bangladesh";
-                        const finalType = designType || 'interior';
+        /**
+         * 🔄 Standard Core Message Converter
+         * Hand-rolled for maximum control over tool results and images.
+         */
+        const coreMessages: any[] = [];
+        for (const m of uiMessages) {
+            const content: any[] = [];
+            
+            // Add text if present
+            const text = typeof m.content === 'string' ? m.content : '';
+            if (text.trim()) content.push({ type: 'text', text });
 
-                        console.log(`[AI CONSULT] Executing with - Type: ${finalType}, Prompt: ${finalPrompt}`);
-
-                        try {
-                            // 1. Generate Image via Vertex AI Imagen 3
-                            let base64Image: string;
-
-                            try {
-                                console.log('[AI CONSULT] Attempting Vertex AI generation...');
-                                base64Image = await generateImagen3(finalPrompt, finalType);
-                                console.log('[AI CONSULT] Vertex AI generation successful.');
-                            } catch (e) {
-                                console.warn('[AI CONSULT] Vertex AI failed or not configured, using fallback placeholder.', e);
-                                // Fallback placeholder if Vertex AI is not yet setup
-                                const placeholderUrl = finalType === 'interior'
-                                    ? 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=1000'
-                                    : 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=1000';
-
-                                return {
-                                    success: true,
-                                    url: placeholderUrl,
-                                    message: `Generated a ${finalType} visualization (Fallback) based on: "${finalPrompt}"`,
-                                };
-                            }
-
-                            // 2. Upload to Supabase Storage (ai-uploads bucket)
-                            const supabase = await createClient();
-                            const fileName = `${userId || 'guest'}/${uuidv4()}.png`;
-                            const buffer = Buffer.from(base64Image, 'base64');
-
-                            console.log('[AI CONSULT] Uploading to Supabase Storage:', fileName);
-                            const { data: uploadData, error: uploadError } = await supabase.storage
-                                .from('ai-uploads')
-                                .upload(fileName, buffer, {
-                                    contentType: 'image/png',
-                                    upsert: true
-                                });
-
-                            if (uploadError) {
-                                console.error('[AI CONSULT] Supabase Upload Error:', uploadError);
-                                throw uploadError;
-                            }
-                            console.log('[AI CONSULT] Upload successful.');
-
-                            // 3. Get Public URL
-                            const { data: { publicUrl } } = supabase.storage
-                                .from('ai-uploads')
-                                .getPublicUrl(fileName);
-
-                            console.log('[AI CONSULT] Public URL generated:', publicUrl);
-                            return {
-                                success: true,
-                                url: publicUrl,
-                                message: `Generated a ${finalType} visualization based on: "${finalPrompt}"`,
-                            };
-
-                        } catch (error) {
-                            console.error('[AI CONSULT] Tool Execution Error:', error);
-                            return {
-                                success: false,
-                                message: 'Failed to generate image. Please try again.',
-                            };
-                        }
-                    },
-                }),
-            },
-            onStepFinish: ({ text, toolCalls, toolResults, finishReason }) => {
-                console.log(`[AI CONSULT] Step finished. Reason: ${finishReason}`);
-                if (toolCalls && toolCalls.length > 0) {
-                    console.log(`[AI CONSULT] Step emitted ${toolCalls.length} tool calls:`, toolCalls.map(tc => tc.toolName));
-                }
-                if (toolResults && toolResults.length > 0) {
-                    console.log(`[AI CONSULT] Step returned ${toolResults.length} tool results.`);
-                }
-            },
-            onFinish: async ({ text }) => {
-                // Persist the assistant message
-                if (sessionId) {
-                    try {
-                        const supabase = await createClient();
-                        await supabase.from('ai_messages').insert({
-                            session_id: sessionId,
-                            role: 'assistant',
-                            content: text || 'Assistant response (contained tool calls/results)'
-                        });
-                    } catch (e) {
-                        console.error('[AI CONSULT] Persistence error:', e);
+            // Add images from attachments
+            if (m.experimental_attachments?.length) {
+                for (const att of m.experimental_attachments) {
+                    if (att.contentType?.startsWith('image/') && att.url) {
+                        content.push({ type: 'image', image: att.url });
                     }
                 }
             }
-        });
 
-        // Handle non-streaming requests (e.g., from mobile)
-        if (body.stream === false) {
-            const { text, toolResults } = await result;
-            return NextResponse.json({
-                text,
-                toolResults,
-                sessionId
+            // Add tool calls (only for assistant role to avoid protocol errors)
+            if (m.role === 'assistant' && m.toolInvocations?.length) {
+                for (const ti of m.toolInvocations) {
+                    if (ti.state === 'call' || ti.state === 'result') {
+                        content.push({
+                            type: 'tool-call',
+                            toolCallId: ti.toolCallId,
+                            toolName: ti.toolName,
+                            args: ti.args
+                        });
+                    }
+                }
+            }
+
+            if (content.length > 0) {
+                coreMessages.push({ role: m.role, content });
+            }
+
+            // Results must accompany the conversation as 'tool' role messages
+            const results = m.toolInvocations?.filter((ti: any) => ti.state === 'result');
+            if (results?.length) {
+                coreMessages.push({
+                    role: 'tool',
+                    content: results.map((ti: any) => ({
+                        type: 'tool-result',
+                        toolCallId: ti.toolCallId,
+                        toolName: ti.toolName,
+                        result: ti.result
+                    }))
+                });
+            }
+        }
+
+        console.log(`[AI Route] Sending ${coreMessages.length} messages to Gemini. Last role: ${coreMessages[coreMessages.length - 1]?.role}`);
+
+
+        // --- 4. Define Tools ---
+
+        const tools: Record<string, any> = {
+            estimateConstructionCost: tool({
+                description: 'Calculate construction or renovation cost for a Bangladesh project. Call this for ANY cost/price/budget question.',
+                parameters: z.object({
+                    area_sqft: z.number().describe('Total floor area in square feet'),
+                    tier: z.enum(['basic', 'standard', 'premium', 'luxury']).describe('Quality tier'),
+                    location: z.string().optional().default('Dhaka').describe('City or area'),
+                    project_type: z
+                        .enum(['gray_structure', 'full_build', 'interior_only', 'renovation'])
+                        .optional()
+                        .default('full_build'),
+                }),
+                execute: async ({ area_sqft, tier, location = 'Dhaka', project_type = 'full_build' }) => {
+                    console.log(`[Tool] estimateConstructionCost: area=${area_sqft}, tier=${tier}, type=${project_type}`);
+
+                    const rates: Record<string, Record<string, number>> = {
+                        gray_structure: { basic: 1800, standard: 2200, premium: 2800, luxury: 3500 },
+                        full_build:     { basic: 2500, standard: 3200, premium: 4000, luxury: 5500 },
+                        interior_only:  { basic: 600,  standard: 1000, premium: 1500, luxury: 2500 },
+                        renovation:     { basic: 800,  standard: 1200, premium: 2000, luxury: 3000 },
+                    };
+                    const rate = rates[project_type]?.[tier] ?? rates.full_build.standard;
+                    const total = area_sqft * rate;
+                    return {
+                        success: true,
+                        area_sqft,
+                        tier,
+                        location,
+                        project_type,
+                        rate_per_sqft: `৳${rate.toLocaleString()}`,
+                        estimated_total_bdt: total,
+                        estimated_total_lac: `৳${(total / 100000).toFixed(1)} লাখ`,
+                        formatted: `৳${total.toLocaleString()}`,
+                        note: 'Market estimate — actual costs depend on site conditions and current material prices. Book a formal consultation for a precise BOQ.',
+                    };
+                },
+            }),
+        };
+
+        // Only expose image generation in full mode
+        if (!isWidgetMode) {
+            tools.generate_visual_design = tool({
+                description: 'Generate a photorealistic design visualization. Call IMMEDIATELY when user wants to see any design, room, or style. Do not describe in text first — generate the image, then explain.',
+                parameters: z.object({
+                    prompt: z.string().describe('Detailed design prompt: room type, style, colors, materials, furniture, lighting, Bangladesh context'),
+                    designType: z.enum(['interior', 'exterior', 'renovation']).default('interior'),
+                    style: z.string().optional().describe('Design style (e.g., minimalist, modern, Scandinavian, traditional Bangladeshi)'),
+                }),
+                execute: async ({ prompt, designType, style }) => {
+                    console.log(`[Tool] generate_visual_design: type=${designType}, style=${style}, prompt_len=${prompt.length}`);
+
+                    try {
+                        const enrichedPrompt = [
+                            style ? `${style} style` : '',
+                            prompt,
+                            designType === 'exterior' ? 'exterior architecture, Bangladesh' : 'interior design, Bangladesh apartment',
+                            'professional architectural photography, photorealistic, 4K, beautiful natural and artificial lighting',
+                        ].filter(Boolean).join(', ');
+
+                        // Extract the most recent uploaded image from conversation
+                        let lastUserImageBase64: string | undefined;
+                        for (let i = coreMessages.length - 1; i >= 0; i--) {
+                            const m = coreMessages[i];
+                            if (m.role === 'user' && Array.isArray(m.content)) {
+                                const imgPart = m.content.find((p: any) => p.type === 'image');
+                                if (imgPart?.image) {
+                                    lastUserImageBase64 = Buffer.isBuffer(imgPart.image)
+                                        ? imgPart.image.toString('base64')
+                                        : String(imgPart.image).replace(/^data:image\/\w+;base64,/, '');
+                                    break;
+                                }
+                            }
+                        }
+                        // Fallback: check uiMessages attachments
+                        if (!lastUserImageBase64) {
+                            for (let i = uiMessages.length - 1; i >= 0; i--) {
+                                const m = uiMessages[i];
+                                const att = m.experimental_attachments?.find((a: any) => a.contentType?.startsWith('image/'));
+                                if (att?.url) {
+                                    lastUserImageBase64 = att.url.startsWith('data:')
+                                        ? att.url.split(',')[1]
+                                        : att.url;
+                                    break;
+                                }
+                            }
+                        }
+
+                        const base64Image = await generateRoomDesign(enrichedPrompt, lastUserImageBase64);
+                        const fileName = `ai-designs/${userId && isValidUUID(userId) ? userId : 'guest'}/${uuidv4()}.png`;
+                        const buffer = Buffer.from(base64Image, 'base64');
+
+                        const supabaseAdmin = createRawSupabaseClient(
+                            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                            process.env.SUPABASE_SERVICE_ROLE_KEY!
+                        );
+
+                        const { error: uploadError } = await supabaseAdmin.storage
+                            .from('brand-assets')
+                            .upload(fileName, buffer, { contentType: 'image/png', cacheControl: '3600' });
+
+                        if (uploadError) throw uploadError;
+
+                        const { data: { publicUrl } } = supabaseAdmin.storage
+                            .from('brand-assets')
+                            .getPublicUrl(fileName);
+
+                        return { success: true, url: publicUrl, imageUrl: publicUrl };
+                    } catch (err: any) {
+                        const message = err?.message || 'Unknown error';
+                        console.error('[AI Tool] generate_visual_design failed:', message);
+                        return {
+                            success: false,
+                            error: message,
+                            message: 'Image generation failed. I will describe the design instead.',
+                        };
+                    }
+                },
             });
         }
 
-        // 3. Respond with the stream using the UI message stream response (v6)
+        // --- 5. Stream Response ---
+        const result = streamText({
+            model: google('gemini-1.5-flash'),
+            messages: coreMessages,
+            system: systemPrompt,
+            maxSteps: 8,
+            maxTokens: 2048,
+            tools,
+            onFinish: async ({ text }) => {
+                if (!isWidgetMode && sessionId) {
+                    supabase
+                        .from('ai_messages')
+                        .insert({ session_id: sessionId, role: 'assistant', content: text || '' })
+                        .then()
+                        .catch(() => { /* non-fatal */ });
+                }
+            },
+        });
+
         return result.toUIMessageStreamResponse({
-            headers: {
-                'x-ai-session-id': sessionId || '',
-            }
+            headers: { 'x-ai-session-id': sessionId || '' },
         });
 
     } catch (error: any) {
-        console.error('API /ai/consult Error Details:', error);
-        return NextResponse.json({
-            error: 'Internal Server Error',
-            details: error?.message || 'Unknown error'
-        }, { status: 500 });
+        console.error('[AI Master Route] Fatal error:', error?.message || error);
+        return NextResponse.json(
+            { error: 'AI service error', details: error?.message },
+            { status: 500 }
+        );
     }
 }

@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS public.service_request_items (
 
 -- 3. Modify service_requests to support assignment choice and scheduling
 ALTER TABLE public.service_requests 
-ADD COLUMN IF NOT EXISTS assignment_type TEXT DEFAULT 'ghorbari_assign', -- 'ghorbari_assign' or 'user_choose'
+ADD COLUMN IF NOT EXISTS assignment_type TEXT DEFAULT 'dalankotha_assign', -- 'dalankotha_assign' or 'user_choose'
 ADD COLUMN IF NOT EXISTS preferred_schedule JSONB, -- { date: '...', time_slot: '...' }
 ADD COLUMN IF NOT EXISTS total_amount DECIMAL(10,2) DEFAULT 0;
 

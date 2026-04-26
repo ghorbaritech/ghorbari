@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_partner/features/inventory/presentation/bloc/inventory_bloc.dart';
-import 'package:ghorbari_partner/features/inventory/presentation/screens/add_product_screen.dart';
-import 'package:ghorbari_partner/shared/models/product.dart';
-import 'package:ghorbari_partner/shared/widgets/glass_card.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_state.dart';
+import 'package:dalankotha_partner/features/inventory/presentation/bloc/inventory_bloc.dart';
+import 'package:dalankotha_partner/features/inventory/presentation/screens/add_product_screen.dart';
+import 'package:dalankotha_partner/shared/models/product.dart';
+import 'package:dalankotha_partner/shared/widgets/glass_card.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});

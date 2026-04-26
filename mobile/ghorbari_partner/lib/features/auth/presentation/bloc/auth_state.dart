@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:ghorbari_partner/features/auth/domain/entities/partner_entity.dart';
+import 'package:dalankotha_partner/features/auth/domain/entities/partner_entity.dart';
 
 abstract class AuthState extends Equatable {
   const AuthState();

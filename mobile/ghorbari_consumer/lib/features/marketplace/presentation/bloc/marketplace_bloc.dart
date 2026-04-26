@@ -1,14 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/marketplace/domain/repositories/marketplace_repository.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_event.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_state.dart';
-import 'package:ghorbari_consumer/shared/models/cms_content.dart';
+import 'package:Dalankotha_consumer/features/marketplace/domain/repositories/marketplace_repository.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/bloc/marketplace_event.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/bloc/marketplace_state.dart';
+import 'package:Dalankotha_consumer/shared/models/cms_content.dart';
+import 'package:Dalankotha_consumer/core/utils/logger.dart';
 
 class MarketplaceBloc extends Bloc<MarketplaceEvent, MarketplaceState> {
   final MarketplaceRepository marketplaceRepository;
 
   MarketplaceBloc({required this.marketplaceRepository}) : super(const MarketplaceState()) {
-    print('DEBUG: MarketplaceBloc created: $hashCode');
+    AppLogger.d('MarketplaceBloc created: $hashCode');
     on<MarketplaceFetchCategories>(_onFetchCategories);
     on<MarketplaceFetchProducts>(_onFetchProducts);
     on<MarketplaceFetchProductDetails>(_onFetchProductDetails);
@@ -19,22 +20,22 @@ class MarketplaceBloc extends Bloc<MarketplaceEvent, MarketplaceState> {
     MarketplaceFetchCMSContent event,
     Emitter<MarketplaceState> emit,
   ) async {
-    print('DEBUG: _onFetchCMSContent started');
+    AppLogger.d('_onFetchCMSContent started');
     emit(state.copyWith(
       cmsStatus: MarketplaceStatus.loading,
       nonce: state.nonce + 1,
     ));
     try {
-      print('DEBUG: Calling repository.getHomeCMSContent()...');
+      AppLogger.d('Calling repository.getHomeCMSContent()...');
       final cmsContent = await marketplaceRepository.getHomeCMSContent();
-      print('DEBUG: Repository returned content with keys: ${cmsContent.keys.join(", ")}');
+      AppLogger.d('Repository returned content with keys: ${cmsContent.keys.join(", ")}');
       emit(state.copyWith(
         cmsStatus: MarketplaceStatus.loaded,
         cmsContent: CMSContent(cmsContent),
         nonce: state.nonce + 1,
       ));
     } catch (e) {
-      print('DEBUG: CMS Content Fetch error: $e');
+      AppLogger.d('CMS Content Fetch error: $e');
       emit(state.copyWith(
         cmsStatus: MarketplaceStatus.failure,
         errorMessage: e.toString(),
@@ -47,17 +48,17 @@ class MarketplaceBloc extends Bloc<MarketplaceEvent, MarketplaceState> {
     MarketplaceFetchCategories event,
     Emitter<MarketplaceState> emit,
   ) async {
-    print('DEBUG: _onFetchCategories started');
+    AppLogger.d('_onFetchCategories started');
     emit(state.copyWith(categoriesStatus: MarketplaceStatus.loading));
     try {
       final categories = await marketplaceRepository.getCategories();
-      print('DEBUG: Fetched ${categories.length} categories: ${categories.map((c) => c.name).join(", ")}');
+      AppLogger.d('Fetched ${categories.length} categories: ${categories.map((c) => c.name).join(", ")}');
       emit(state.copyWith(
         categories: categories,
         categoriesStatus: MarketplaceStatus.loaded,
       ));
     } catch (e) {
-      print('DEBUG: Categories Fetch error: $e');
+      AppLogger.d('Categories Fetch error: $e');
       emit(state.copyWith(
         categoriesStatus: MarketplaceStatus.failure,
         errorMessage: e.toString(),
@@ -69,23 +70,23 @@ class MarketplaceBloc extends Bloc<MarketplaceEvent, MarketplaceState> {
     MarketplaceFetchProducts event,
     Emitter<MarketplaceState> emit,
   ) async {
-    print('DEBUG: _onFetchProducts started (categoryId: ${event.categoryId})');
+    AppLogger.d('_onFetchProducts started (categoryId: ${event.categoryId})');
     emit(state.copyWith(productsStatus: MarketplaceStatus.loading));
     try {
       final products = await marketplaceRepository.getProducts(
         categoryId: event.categoryId,
         recursive: event.recursive,
       );
-      print('DEBUG: Fetched ${products.length} products');
+      AppLogger.d('Fetched ${products.length} products');
       for (var p in products) {
-        print('DEBUG: Product: "${p.name}" (ID: ${p.id}, CategoryID: ${p.categoryId})');
+        AppLogger.d('Product: "${p.name}" (ID: ${p.id}, CategoryID: ${p.categoryId})');
       }
       emit(state.copyWith(
         products: products,
         productsStatus: MarketplaceStatus.loaded,
       ));
     } catch (e) {
-      print('DEBUG: Products Fetch error: $e');
+      AppLogger.d('Products Fetch error: $e');
       emit(state.copyWith(
         productsStatus: MarketplaceStatus.failure,
         errorMessage: e.toString(),

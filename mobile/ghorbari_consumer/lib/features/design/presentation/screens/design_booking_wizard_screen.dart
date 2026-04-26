@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/intl.dart';
-import 'package:ghorbari_consumer/core/network/supabase_service.dart';
-import 'package:ghorbari_consumer/features/design/presentation/widgets/checkbox_card_group.dart';
-import 'package:ghorbari_consumer/features/design/presentation/widgets/radio_card_group.dart';
-import 'package:ghorbari_consumer/features/design/presentation/widgets/wizard_step_indicator.dart';
-import 'package:ghorbari_consumer/features/design/utils/design_translations.dart';
+import 'package:Dalankotha_consumer/core/network/supabase_service.dart';
+import 'package:Dalankotha_consumer/features/design/presentation/widgets/checkbox_card_group.dart';
+import 'package:Dalankotha_consumer/features/design/presentation/widgets/radio_card_group.dart';
+import 'package:Dalankotha_consumer/features/design/presentation/widgets/wizard_step_indicator.dart';
+import 'package:Dalankotha_consumer/features/design/utils/design_translations.dart';
 
 class DesignBookingWizardScreen extends StatefulWidget {
   final String? initialService;
@@ -25,7 +25,7 @@ class DesignBookingWizardScreen extends StatefulWidget {
 //  4 : Space Layout (land area, floors, # layouts)
 //  5 : Plot Features (orientation, soil, roof)
 //  6 : Design Aesthetics (structural vibe)
-//  7 : Choose Designer Route (Ghorbari / List)
+//  7 : Choose Designer Route (Dalankotha / List)
 //  8 : Select Designer from List
 //  9 : Property Type (interior)
 // 10 : Interior Project Requirements
@@ -82,7 +82,7 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
     }
   ];
 
-  String designerSelectionType = ''; // 'ghorbari' | 'list'
+  String designerSelectionType = ''; // 'Dalankotha' | 'list'
   String? selectedDesignerId;
 
   // Form State — Interior
@@ -91,6 +91,7 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
   String intFloors = '';
   String intUnitsPerFloor = '';
   String intAreaPerUnit = '';
+  String intAreaUnit = 'sqft'; // 'sqft' | 'Katha' | 'Decimal' | 'Bigha'
   String aptSize = '';
   String aptRooms = '';
   String specificAreaType = '';
@@ -98,13 +99,15 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
   String designScope = '';
   String roomSize = '';
   String specificInstruction = '';
+  String inspirationLink = '';
+  List<String> selectedInspirationSamples = [];
 
   String preferredDate = '';
   String preferredTime = '';
 
   // Convenience getters
   bool get showsDesignQ => designerOption == 'design' || designerOption == 'both';
-  bool get skippableListStep => designerSelectionType == 'ghorbari';
+  bool get skippableListStep => designerSelectionType == 'Dalankotha';
 
   @override
   void initState() {
@@ -155,7 +158,9 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
       if (!skippableListStep) active.add(8); // designer list
     }
     if (serviceTypes.contains('interior')) {
-      active.addAll([9, 10, 11, 12]); // property type, requirements, vibe, route
+      active.addAll([9, 10]); // property type, requirements
+      if (propertyType == 'Full building') active.add(45); // Reuse detailed layout config for full building
+      active.addAll([11, 12]); // inspiration/vibe, route
       if (!skippableListStep) active.add(13); // designer list
     }
     active.addAll([14, 15]); // schedule, review
@@ -199,7 +204,11 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
       } else if (step == 4) {
         step = 45; // Move to detailed layout (web Step 5)
       } else if (step == 45) {
-        step = 5; // Move to Plot features
+        if (serviceTypes.contains('interior')) {
+          step = 11;
+        } else {
+          step = 5; // Move to Plot features
+        }
       } else if (step == 5) {
         step = 6;
       } else if (step == 6) {
@@ -225,7 +234,17 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
       else if (step == 9) {
         step = 10;
       } else if (step == 10) {
-        step = 11;
+        print('DEBUG: DESIGN WIZARD - Step 10 NEXT. propertyType: $propertyType');
+        if (propertyType.toLowerCase().contains('building')) {
+          print('DEBUG: DESIGN WIZARD - Routing to Layout Config (Step 45)');
+          if (layoutsData.isNotEmpty && intUnitsPerFloor.isNotEmpty) {
+            layoutsData[0]['numberOfUnits'] = intUnitsPerFloor;
+          }
+          step = 45;
+        } else {
+          print('DEBUG: DESIGN WIZARD - Routing to Inspiration (Step 11)');
+          step = 11;
+        }
       } else if (step == 11) {
         step = 12;
       } else if (step == 12) {
@@ -255,7 +274,11 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
       } else if (step == 4) {
         step = 3;
       } else if (step == 45) {
-        step = 4;
+        if (serviceTypes.contains('interior')) {
+          step = 10;
+        } else {
+          step = 4;
+        }
       } else if (step == 5) {
         step = 45;
       } else if (step == 6) {
@@ -277,7 +300,11 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
       } else if (step == 10) {
         step = 9;
       } else if (step == 11) {
-        step = 10;
+        if (propertyType == 'Full building') {
+          step = 45;
+        } else {
+          step = 10;
+        }
       } else if (step == 12) {
         step = 11;
       } else if (step == 13) {
@@ -313,7 +340,7 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
 
       int tentativePrice = 0;
       if (serviceTypes.contains('structural-architectural')) {
-        if (designerSelectionType == 'ghorbari') {
+        if (designerSelectionType == 'Dalankotha') {
           if (designerOption == 'both') tentativePrice = 80000;
           else if (designerOption == 'design') tentativePrice = 50000;
           else tentativePrice = 30000;
@@ -360,6 +387,7 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
         'intFloors': intFloors,
         'intUnitsPerFloor': intUnitsPerFloor,
         'intAreaPerUnit': intAreaPerUnit,
+        'intAreaUnit': intAreaUnit,
         'aptSize': aptSize,
         'aptRooms': aptRooms,
         'specificAreaType': specificAreaType,
@@ -367,6 +395,8 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
         'designScope': designScope,
         'roomSize': roomSize,
         'specificInstruction': specificInstruction,
+        'inspirationLink': inspirationLink,
+        'selectedInspirationSamples': selectedInspirationSamples,
         'tentativePrice': tentativePrice,
         'preferredSchedule': {
           'date': preferredDate,
@@ -662,69 +692,92 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
             const SizedBox(height: 8),
             Text(tr('layoutConfigDesc'), style: TextStyle(color: Colors.grey.shade600)),
             const SizedBox(height: 24),
-            TabBar(
-              isScrollable: layoutsData.length > 3,
-              labelColor: primaryColor,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: primaryColor,
-              tabs: layoutsData.map((l) => Tab(text: '${tr('layoutTab')} ${l['id']}')).toList(),
-            ),
-            const SizedBox(height: 24),
+            if (layoutsData.length > 1) ...[
+              TabBar(
+                isScrollable: layoutsData.length > 3,
+                labelColor: primaryColor,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: primaryColor,
+                tabs: layoutsData.map((l) => Tab(text: '${tr('layoutTab')} ${l['id']}')).toList(),
+              ),
+              const SizedBox(height: 24),
+            ],
             SizedBox(
-              height: 500, // Reasonable height for inner scrollable area
+              height: 600, // Increased height for inner scrollable area
               child: TabBarView(
+                physics: layoutsData.length > 1 ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
                 children: layoutsData.map((layout) {
                   return SingleChildScrollView(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('${tr('layoutTab')} ${layout['id']} Configuration', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      padding: const EdgeInsets.all(4),
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.grey.shade100),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(width: 4, height: 20, decoration: BoxDecoration(color: const Color(0xFFC2410C), borderRadius: BorderRadius.circular(2))),
+                                    const SizedBox(width: 12),
+                                    Text('${tr('layoutTab').toUpperCase()} ${layout['id']} CONFIGURATION', 
+                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A), letterSpacing: 0.5)),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12)),
+                                  child: Row(
+                                    children: [
+                                      Text(tr('garageQ'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                                      const SizedBox(width: 8),
+                                      _buildMiniToggle(layout['isGarage'] == 'yes', (v) => setState(() => layout['isGarage'] = v ? 'yes' : 'no'), tr),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text('Define use and structure for this layout.', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+                            const SizedBox(height: 32),
+                            
+                            if (layout['isGarage'] == 'no') ...[
                               Row(
                                 children: [
-                                  Text(tr('garageQ'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 8),
-                                  Switch(
-                                    value: layout['isGarage'] == 'yes',
-                                    onChanged: (v) => setState(() => layout['isGarage'] = v ? 'yes' : 'no'),
-                                    activeColor: primaryColor,
+                                  Expanded(child: _buildTextField(tr('numUnitsQ'), layout['numberOfUnits'], (v) => setState(() => layout['numberOfUnits'] = v), keyboardType: TextInputType.number)),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(tr('identicalUnitsQ'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                                        const SizedBox(height: 8),
+                                        _buildMiniToggle(layout['unitsAreIdentical'] == 'yes', (v) => setState(() => layout['unitsAreIdentical'] = v ? 'yes' : 'no'), tr),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          if (layout['isGarage'] == 'no') ...[
-                            _buildTextField(tr('numUnitsQ'), layout['numberOfUnits'], (v) => setState(() => layout['numberOfUnits'] = v), keyboardType: TextInputType.number),
-                            const SizedBox(height: 16),
-                            Text(tr('identicalUnitsQ'), style: const TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 8),
-                            RadioCardGroup(
-                              options: [
-                                RadioCardOption(id: 'yes', label: tr('yes')),
-                                RadioCardOption(id: 'no', label: tr('no')),
+                              const SizedBox(height: 24),
+                              
+                              if (layout['unitsAreIdentical'] == 'yes') ...[
+                                _buildUnitInputs('${tr('unitTab')} DETAILS (ALL ${layout['numberOfUnits']} UNITS)', layout['unitDetails'], tr),
+                              ] else ...[
+                                const Text('Different units detected. Please define unit 1 details:', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 11, color: Colors.grey)),
+                                const SizedBox(height: 12),
+                                _buildUnitInputs('${tr('unitTab')} 1 DETAILS', layout['unitDetails'], tr),
                               ],
-                              selectedId: layout['unitsAreIdentical'],
-                              onChanged: (v) => setState(() => layout['unitsAreIdentical'] = v),
-                              columns: 2,
-                            ),
-                            const SizedBox(height: 24),
-                            if (layout['unitsAreIdentical'] == 'yes') ...[
-                              _buildUnitInputs('${tr('unitTab')} Details (All ${layout['numberOfUnits']} units)', layout['unitDetails'], tr),
-                            ] else ...[
-                              // For simplicity in mobile, we show one detail block but explain it applies per unit
-                              // or we could iterate if numberOfUnits is small.
-                              // Web does it for all.
-                              const Text('Please define specifications for unit types:', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13)),
-                              const SizedBox(height: 12),
-                              _buildUnitInputs('${tr('unitTab')} 1 Details', layout['unitDetails'], tr),
                             ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   );
@@ -825,15 +878,16 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
 
     // ── Step 10: Interior Project Requirements ───────────────────────────────
     if (step == 10) {
+      final isFullBuilding = propertyType.toLowerCase().contains('building');
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(tr('projectReqs'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(isFullBuilding ? tr('numLayoutsQ') : tr('projectReqs'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Text(tr('spaceLayoutDesc'), style: TextStyle(color: Colors.grey.shade600)),
           const SizedBox(height: 32),
 
-          if (propertyType == 'Full building') ...[
+          if (isFullBuilding) ...[
             Text(tr('typeOfHouse'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             RadioCardGroup(
@@ -842,30 +896,64 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
                 RadioCardOption(id: 'Multistoried', label: tr('Multistoried')),
               ],
               selectedId: houseType,
-              onChanged: (v) => setState(() => houseType = v),
+              onChanged: (v) => setState(() {
+                houseType = v;
+                if (v == 'Duplex' && intFloors.isEmpty) intFloors = '2';
+              }),
               columns: 2,
             ),
             const SizedBox(height: 24),
-            _buildTextField(tr('numFloors'), intFloors, (v) => setState(() => intFloors = v), keyboardType: TextInputType.number),
-            _buildTextField(tr('unitsEachFloor'), intUnitsPerFloor, (v) => setState(() => intUnitsPerFloor = v), keyboardType: TextInputType.number),
-            _buildTextField(tr('areaEachUnit'), intAreaPerUnit, (v) => setState(() => intAreaPerUnit = v), keyboardType: TextInputType.number),
+            _buildAreaWithUnit(tr('areaEachUnit'), intAreaPerUnit, intAreaUnit, 
+              (v) => setState(() => intAreaPerUnit = v), 
+              (v) => setState(() => intAreaUnit = v!)),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _buildTextField(tr('numFloors'), intFloors, (v) => setState(() => intFloors = v), keyboardType: TextInputType.number)),
+                const SizedBox(width: 16),
+                Expanded(child: _buildTextField(tr('unitsEachFloor'), intUnitsPerFloor, (v) => setState(() => intUnitsPerFloor = v), keyboardType: TextInputType.number)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(tr('numLayoutsQ'), numberOfLayouts, (v) => setState(() {
+              numberOfLayouts = v;
+              final count = int.tryParse(v) ?? 1;
+              if (count > 0 && count != layoutsData.length) {
+                if (count > layoutsData.length) {
+                  for (int i = layoutsData.length; i < count; i++) {
+                    layoutsData.add({
+                      'id': i + 1,
+                      'isGarage': 'no',
+                      'numberOfUnits': '1',
+                      'unitsAreIdentical': 'yes',
+                      'unitDetails': {'beds': '', 'baths': '', 'drawing': '', 'kitchen': '', 'balcony': '', 'others': ''}
+                    });
+                  }
+                } else {
+                  layoutsData = layoutsData.sublist(0, count);
+                }
+              }
+            }), keyboardType: TextInputType.number),
           ],
 
           if (propertyType == 'Full Apartment') ...[
-            _buildTextField(tr('aptSize'), aptSize, (v) => setState(() => aptSize = v), keyboardType: TextInputType.number),
-            _buildTextField(tr('noOfRoom'), aptRooms, (v) => setState(() => aptRooms = v), keyboardType: TextInputType.number),
+            _buildAreaWithUnit(tr('aptSize'), aptSize, intAreaUnit, 
+              (v) => setState(() => aptSize = v), 
+              (v) => setState(() => intAreaUnit = v!)),
+            const SizedBox(height: 24),
+            // Apartment room details (matches web's Step 9 for apartment)
+            _buildUnitInputs(tr('aptDetailsTitle'), layoutsData[0]['unitDetails'], tr),
           ],
 
           if (propertyType == 'Specific Area') ...[
-            Text(tr('specificArea'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
+            Text(tr('standardAreas'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.grey.shade400, letterSpacing: 1.2)),
+            const SizedBox(height: 8),
             RadioCardGroup(
               options: [
                 RadioCardOption(id: 'Living Room', label: tr('livingRoom')),
                 RadioCardOption(id: 'Drawing Room', label: tr('drawingRoom')),
-                RadioCardOption(id: 'Bed Room', label: tr('bedRoom')),
-                RadioCardOption(id: 'Bath Room', label: tr('bathRoom')),
                 RadioCardOption(id: 'Kitchen', label: tr('kitchen')),
+                RadioCardOption(id: 'Bath Room', label: tr('bathRoom')),
                 RadioCardOption(id: 'Balcony', label: tr('balcony')),
                 RadioCardOption(id: 'Rooftop', label: tr('rooftop')),
                 RadioCardOption(id: 'Entrance', label: tr('entrance')),
@@ -875,24 +963,21 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
               columns: 2,
             ),
             const SizedBox(height: 24),
-
-            if (specificAreaType == 'Bed Room') ...[
-              Text(tr('bedRoom'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              RadioCardGroup(
-                options: [
-                  RadioCardOption(id: 'Master Bedroom', label: tr('masterBed')),
-                  RadioCardOption(id: 'General Bedroom', label: tr('generalBed')),
-                  RadioCardOption(id: 'Welcome Newborn', label: tr('welcomeNewborn')),
-                  RadioCardOption(id: 'Teenagers Special', label: tr('teenagersSpecial')),
-                  RadioCardOption(id: 'Children Bedroom', label: tr('childrenBed')),
-                ],
-                selectedId: bedRoomType,
-                onChanged: (v) => setState(() => bedRoomType = v),
-                columns: 2,
-              ),
-              const SizedBox(height: 24),
-            ],
+            Text(tr('exclusivePremium'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: primaryColor, letterSpacing: 1.2)),
+            const SizedBox(height: 8),
+            RadioCardGroup(
+              options: [
+                RadioCardOption(id: 'Master Bedroom', label: tr('masterBed')),
+                RadioCardOption(id: 'General Bedroom', label: tr('generalBed')),
+                RadioCardOption(id: 'New Born', label: tr('welcomeNewborn')),
+                RadioCardOption(id: 'Teenage Cave', label: tr('teenageCave')),
+                RadioCardOption(id: 'Bridal Bed', label: tr('bridalBed')),
+              ],
+              selectedId: specificAreaType,
+              onChanged: (v) => setState(() => specificAreaType = v),
+              columns: 2,
+            ),
+            const SizedBox(height: 24),
 
             Text('Design Scope', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
@@ -906,16 +991,121 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
               columns: 2,
             ),
             const SizedBox(height: 24),
-            _buildTextField(tr('roomSize'), roomSize, (v) => setState(() => roomSize = v), keyboardType: TextInputType.number),
+            _buildAreaWithUnit(tr('roomSize'), roomSize, intAreaUnit, 
+              (v) => setState(() => roomSize = v), 
+              (v) => setState(() => intAreaUnit = v!)),
+            const SizedBox(height: 16),
             _buildTextField(tr('anyInstruction'), specificInstruction, (v) => setState(() => specificInstruction = v)),
           ],
         ],
       );
     }
 
-    // ── Step 11: Design Aesthetics (interior vibe) ───────────────────────────
+    // ── Step 45: Detailed Layout Configurator (interior path) ─────────────────
+    if (step == 45) {
+      final count = int.tryParse(numberOfLayouts) ?? 1;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(tr('layoutConfigTitle') ?? 'Layout Configuration', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(tr('layoutConfigDesc'), style: TextStyle(color: Colors.grey.shade600)),
+          const SizedBox(height: 24),
+          DefaultTabController(
+            length: count,
+            child: Column(
+              children: [
+                TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  indicatorColor: const Color(0xFFC2410C),
+                  labelColor: const Color(0xFFC2410C),
+                  unselectedLabelColor: Colors.grey,
+                  tabs: List.generate(count, (i) => Tab(text: '${tr('layoutTab')} ${i + 1}')),
+                ),
+                SizedBox(
+                  height: 600, // Adjusted for room grid
+                  child: TabBarView(
+                    children: List.generate(count, (i) => _buildLayoutTab(i, tr)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // ── Step 11: Design Inspiration (interior vibe — matches web Step 11) ──
     if (step == 11) {
-      return _buildAestheticsStep(tr, primaryColor);
+      final inspirationSamples = [
+        {'id': 'sample1', 'label': tr('themed_modern_luxury'), 'image': 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=400&fit=crop'},
+        {'id': 'sample2', 'label': tr('themed_classic_elegance'), 'image': 'https://images.unsplash.com/photo-1592595896551-12b371d546d5?w=400&h=400&fit=crop'},
+        {'id': 'sample3', 'label': tr('themed_minimalist_zen'), 'image': 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=400&fit=crop'},
+        {'id': 'sample4', 'label': tr('themed_vibrant_art_deco'), 'image': 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?w=400&h=400&fit=crop'},
+      ];
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(tr('inspirationTitle'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(tr('inspirationDesc'), style: TextStyle(color: Colors.grey.shade600)),
+          const SizedBox(height: 32),
+          Text(tr('selectFromSamples'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF334155))),
+          const SizedBox(height: 16),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1,
+            ),
+            itemCount: inspirationSamples.length,
+            itemBuilder: (context, idx) {
+              final sample = inspirationSamples[idx];
+              final isSelected = selectedInspirationSamples.contains(sample['id']);
+              return GestureDetector(
+                onTap: () => setState(() {
+                  if (isSelected) selectedInspirationSamples.remove(sample['id']);
+                  else selectedInspirationSamples.add(sample['id']!);
+                }),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: isSelected ? primaryColor : Colors.transparent, width: 3),
+                    image: DecorationImage(image: NetworkImage(sample['image']!), fit: BoxFit.cover),
+                  ),
+                  child: Stack(
+                    children: [
+                      if (isSelected)
+                        const Positioned(
+                          top: 8, right: 8,
+                          child: CircleAvatar(backgroundColor: Colors.white, radius: 12, child: Icon(Icons.check, size: 16, color: Color(0xFFC2410C))),
+                        ),
+                      Positioned(
+                        bottom: 0, left: 0, right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(13)),
+                            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.8)]),
+                          ),
+                          child: Text(sample['label']!, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 32),
+          _buildTextField(tr('yourInspirationLink'), inspirationLink, (v) => setState(() => inspirationLink = v)),
+        ],
+      );
     }
 
     // ── Step 12: Choose Designer Route (interior path) ───────────────────────
@@ -1006,7 +1196,7 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
     if (step == 15) {
       int price = 0;
       if (serviceTypes.contains('structural-architectural')) {
-        if (designerSelectionType == 'ghorbari') {
+        if (designerSelectionType == 'Dalankotha') {
           if (designerOption == 'both') price = 80000;
           else if (designerOption == 'design') price = 50000;
           else price = 30000;
@@ -1061,6 +1251,20 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
                 const Divider(height: 32),
                 _reviewRow(trKey('serviceArea'), serviceTypes.join(', ').replaceAll('structural-architectural', 'Structural')),
                 const SizedBox(height: 12),
+                if (serviceTypes.contains('structural-architectural')) ...[
+                  _reviewRow(trKey('landArea'), '$landAreaInput ${trKey('katha')}'),
+                  const SizedBox(height: 12),
+                  _reviewRow(trKey('initialFloors'), initialFloors),
+                  const SizedBox(height: 12),
+                ],
+                if (serviceTypes.contains('interior')) ...[
+                  _reviewRow(trKey('propertyType'), propertyType),
+                  const SizedBox(height: 12),
+                  if (propertyType == 'Full building') _reviewRow(trKey('numFloors'), intFloors),
+                  if (propertyType == 'Full Apartment') _reviewRow(trKey('aptSize'), '$aptSize $intAreaUnit'),
+                  if (propertyType == 'Specific Area') _reviewRow(trKey('specificArea'), specificAreaType),
+                  const SizedBox(height: 12),
+                ],
                 _reviewRow(trKey('prefDateLabel'), '$preferredDate${preferredTime.isNotEmpty ? ' | $preferredTime' : ''}'),
               ],
             ),
@@ -1121,7 +1325,7 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
         const SizedBox(height: 32),
         RadioCardGroup(
           options: [
-            RadioCardOption(id: 'ghorbari', label: tr('suggestedOption'), description: tr('suggestedOptionDesc'), icon: Icons.person),
+            RadioCardOption(id: 'Dalankotha', label: tr('suggestedOption'), description: tr('suggestedOptionDesc'), icon: Icons.person),
             RadioCardOption(id: 'list', label: tr('listOption'), description: tr('listOptionDesc'), icon: Icons.star),
           ],
           selectedId: designerSelectionType,
@@ -1212,6 +1416,83 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
     );
   }
 
+  Widget _buildLayoutTab(int index, String Function(String) tr) {
+    final layout = layoutsData[index];
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildUnitDetailsHeader('${tr('layoutTab')} ${index + 1} Configuration', tr('layoutConfigDesc')),
+          const SizedBox(height: 24),
+          
+          Row(
+            children: [
+              Expanded(child: Text(tr('garageQ'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+              _buildYesNoToggle(layout['isGarage'] == 'yes', (val) => setState(() => layout['isGarage'] = val ? 'yes' : 'no')),
+            ],
+          ),
+          const Divider(height: 32),
+          
+          _buildTextField(tr('numUnitsQ'), layout['numberOfUnits'] ?? '1', (v) => setState(() => layout['numberOfUnits'] = v), keyboardType: TextInputType.number),
+          const SizedBox(height: 16),
+          
+          Row(
+            children: [
+              Expanded(child: Text(tr('identicalUnitsQ'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+              _buildYesNoToggle(layout['unitsAreIdentical'] == 'yes', (val) => setState(() => layout['unitsAreIdentical'] = val ? 'yes' : 'no')),
+            ],
+          ),
+          const SizedBox(height: 32),
+          
+          _buildUnitInputs('${tr('unitTab')} DETAILS (ALL ${layout['numberOfUnits']} UNITS)', layout['unitDetails'], tr),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnitDetailsHeader(String title, String desc) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+        const SizedBox(height: 4),
+        Text(desc, style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
+      ],
+    );
+  }
+
+  Widget _buildYesNoToggle(bool value, Function(bool) onChanged) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildToggleBtn('YES', value, () => onChanged(true)),
+          _buildToggleBtn('NO', !value, () => onChanged(false)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleBtn(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF78350F) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.grey, fontWeight: FontWeight.bold, fontSize: 11)),
+      ),
+    );
+  }
+
   Widget _buildDocCheckItem(String title, String subtitle, bool value, ValueChanged<bool> onChanged, Color primaryColor) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1228,28 +1509,97 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
   }
 
   Widget _buildUnitInputs(String title, Map<String, dynamic> unit, String Function(String) tr) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(width: 4, height: 20, decoration: BoxDecoration(color: const Color(0xFFC2410C), borderRadius: BorderRadius.circular(2))),
+              const SizedBox(width: 12),
+              Text(title.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF78350F), letterSpacing: 0.5)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 2.2,
+            children: [
+              _buildSmallNumberInput(tr('bed_label'), unit['beds'] ?? '', (v) => setState(() => unit['beds'] = v)),
+              _buildSmallNumberInput(tr('drawing_label'), unit['drawing'] ?? '', (v) => setState(() => unit['drawing'] = v)),
+              _buildSmallNumberInput(tr('bath_label'), unit['baths'] ?? '', (v) => setState(() => unit['baths'] = v)),
+              _buildSmallNumberInput(tr('balcony_label'), unit['balcony'] ?? '', (v) => setState(() => unit['balcony'] = v)),
+              _buildSmallNumberInput(tr('kitchen_label'), unit['kitchen'] ?? '', (v) => setState(() => unit['kitchen'] = v)),
+              _buildSmallNumberInput(tr('dining_label'), unit['dining'] ?? '', (v) => setState(() => unit['dining'] = v)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildTextField(tr('additional_needs_label'), unit['others'] ?? '', (v) => setState(() => unit['others'] = v)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniToggle(bool isActive, Function(bool) onChanged, String Function(String) tr) {
+    return Container(
+      height: 32,
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade200)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _miniToggleButton(tr('yes'), isActive, () => onChanged(true)),
+          _miniToggleButton(tr('no'), !isActive, () => onChanged(false)),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniToggleButton(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF78350F) : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: isSelected ? [BoxShadow(color: const Color(0xFF78350F).withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))] : null,
+        ),
+        child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.grey.shade400)),
+      ),
+    );
+  }
+
+  Widget _buildSmallNumberInput(String label, String value, Function(String) onChanged) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF475569))),
-        ),
-        _buildTextField(tr('bedsQ'), unit['beds'], (v) => setState(() => unit['beds'] = v), keyboardType: TextInputType.number),
-        _buildTextField(tr('bathsQ'), unit['baths'], (v) => setState(() => unit['baths'] = v), keyboardType: TextInputType.number),
-        Row(
-          children: [
-            Expanded(child: _buildTextField(tr('drawingQ'), unit['drawing'], (v) => setState(() => unit['drawing'] = v), keyboardType: TextInputType.number)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildTextField(tr('kitchenQ'), unit['kitchen'], (v) => setState(() => unit['kitchen'] = v), keyboardType: TextInputType.number)),
-          ],
-        ),
-        Row(
-          children: [
-            Expanded(child: _buildTextField(tr('balconyQ'), unit['balcony'], (v) => setState(() => unit['balcony'] = v), keyboardType: TextInputType.number)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildTextField(tr('othersQ'), unit['others'], (v) => setState(() => unit['others'] = v))),
-          ],
+        Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade400)),
+        const SizedBox(height: 8),
+        TextField(
+          onChanged: onChanged,
+          keyboardType: TextInputType.number,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          controller: TextEditingController(text: value)..selection = TextSelection.fromPosition(TextPosition(offset: value.length)),
+          textAlign: TextAlign.center,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade200)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade200)),
+          ),
         ),
       ],
     );
@@ -1278,6 +1628,7 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
           TextField(
             onChanged: onChanged,
             keyboardType: keyboardType,
+            controller: TextEditingController(text: value)..selection = TextSelection.fromPosition(TextPosition(offset: value.length)),
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.grey.shade50,
@@ -1288,6 +1639,60 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAreaWithUnit(String label, String value, String unit, Function(String) onValueChanged, Function(String?) onUnitChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  onChanged: onValueChanged,
+                  keyboardType: TextInputType.number,
+                  controller: TextEditingController(text: value)..selection = TextSelection.fromPosition(TextPosition(offset: value.length)),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                    hintText: 'e.g. 1500',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: Colors.grey.shade200),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: unit,
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                    items: ['sqft', 'Katha', 'Decimal', 'Bigha'].map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                    onChanged: onUnitChanged,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -1311,8 +1716,11 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
       case 8:  canNext = selectedDesignerId != null; break;
       case 9:  canNext = propertyType.isNotEmpty; break;
       case 10:
-        if (propertyType == 'Full building') canNext = houseType.isNotEmpty && intFloors.isNotEmpty;
-        else if (propertyType == 'Full Apartment') canNext = aptSize.isNotEmpty && aptRooms.isNotEmpty;
+        if (propertyType.toLowerCase().contains('building')) canNext = houseType.isNotEmpty && intFloors.isNotEmpty && numberOfLayouts.isNotEmpty;
+        else if (propertyType == 'Full Apartment') {
+          final unit = layoutsData[0]['unitDetails'];
+          canNext = aptSize.isNotEmpty && unit['beds'].isNotEmpty;
+        }
         else if (propertyType == 'Specific Area') canNext = specificAreaType.isNotEmpty && (specificAreaType != 'Bed Room' || bedRoomType.isNotEmpty) && designScope.isNotEmpty && roomSize.isNotEmpty;
         else canNext = true;
         break;

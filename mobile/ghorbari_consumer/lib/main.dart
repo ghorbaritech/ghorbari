@@ -1,47 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:Dalankotha_consumer/core/config/app_config.dart';
+import 'package:Dalankotha_consumer/core/utils/logger.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/home_screen.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/main_screen.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:ghorbari_consumer/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_bloc.dart';
-import 'package:ghorbari_consumer/features/marketplace/data/repositories/marketplace_repository_impl.dart';
-import 'package:ghorbari_consumer/features/marketplace/data/datasources/marketplace_remote_data_source.dart';
-import 'package:ghorbari_consumer/features/services/presentation/bloc/service_bloc.dart';
-import 'package:ghorbari_consumer/features/services/data/repositories/service_repository_impl.dart';
-import 'package:ghorbari_consumer/features/services/data/datasources/service_remote_data_source.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_bloc.dart';
-import 'package:ghorbari_consumer/features/bookings/data/repositories/booking_repository_impl.dart';
-import 'package:ghorbari_consumer/features/bookings/data/datasources/booking_remote_data_source.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:Dalankotha_consumer/core/theme/Dalankotha_theme.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/home_screen.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/main_screen.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Dalankotha_consumer/shared/widgets/branding_widget.dart';
+import 'package:Dalankotha_consumer/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:Dalankotha_consumer/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/bloc/marketplace_bloc.dart';
+import 'package:Dalankotha_consumer/features/marketplace/data/repositories/marketplace_repository_impl.dart';
+import 'package:Dalankotha_consumer/features/marketplace/data/datasources/marketplace_remote_data_source.dart';
+import 'package:Dalankotha_consumer/features/services/presentation/bloc/service_bloc.dart';
+import 'package:Dalankotha_consumer/features/services/data/repositories/service_repository_impl.dart';
+import 'package:Dalankotha_consumer/features/services/data/datasources/service_remote_data_source.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_bloc.dart';
+import 'package:Dalankotha_consumer/features/bookings/data/repositories/booking_repository_impl.dart';
+import 'package:Dalankotha_consumer/features/bookings/data/datasources/booking_remote_data_source.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_bloc.dart';
 
 void main() async {
-  print('DEBUG: [1] Initializing WidgetsFlutterBinding...');
+  AppLogger.i('Initializing application...');
   WidgetsFlutterBinding.ensureInitialized();
-  print('DEBUG: [2] Initializing EasyLocalization...');
   await EasyLocalization.ensureInitialized();
 
   // Initialize Supabase
-  print('DEBUG: [3] Initializing Supabase...');
   try {
     await Supabase.initialize(
-      url: 'https://nnrzszujwhutbgghtjwc.supabase.co',
-      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ucnpzenVqd2h1dGJnZ2h0andjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxNTM0MDYsImV4cCI6MjA4NDcyOTQwNn0.Wm5Rt80-9_WyDCIxQVbreNSn9BTlqfgN8HmORGZcsO4',
+      url: AppConfig.supabaseUrl,
+      anonKey: AppConfig.supabaseAnonKey,
     );
-    print('DEBUG: [4] Supabase Initialized. Running App...');
-  } catch (e) {
-    print('DEBUG: [FATAL ERROR] Supabase Init Failed: $e');
+    AppLogger.i('Supabase Initialized');
+  } catch (e, stack) {
+    AppLogger.e('Supabase Init Failed', e, stack);
   }
 
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('en'), Locale('bn')],
-      path: 'assets/translations',
+      path: 'translations',
       fallbackLocale: const Locale('en'),
       startLocale: const Locale('bn'), // Default to Bangla
       child: MultiRepositoryProvider(
@@ -105,7 +107,7 @@ void main() async {
               create: (context) => CartBloc(),
             ),
           ],
-          child: const GhorbariConsumerApp(),
+          child: const DalankothaConsumerApp(),
         ),
       ),
     ),
@@ -121,19 +123,19 @@ class AppScrollBehavior extends MaterialScrollBehavior {
       };
 }
 
-class GhorbariConsumerApp extends StatelessWidget {
-  const GhorbariConsumerApp({super.key});
+class DalankothaConsumerApp extends StatelessWidget {
+  const DalankothaConsumerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Ghorbari',
+      title: 'Dalankotha',
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
       debugShowCheckedModeBanner: false,
       scrollBehavior: AppScrollBehavior(),
-      theme: GhorbariTheme.lightTheme,
+      theme: DalankothaTheme.lightTheme,
       home: const SplashScreen(),
     );
   }
@@ -154,10 +156,22 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _navigate() async {
-    print('DEBUG: SplashScreen navigate started');
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      AppLogger.i('Consumer: user already authenticated, immediate main screen bounce');
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      }
+      return;
+    }
+
+    AppLogger.d('SplashScreen navigate started');
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
-      print('DEBUG: SplashScreen pushing MainScreen');
+      AppLogger.d('SplashScreen pushing MainScreen as guest');
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -167,40 +181,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-             Image.asset(
-               'assets/images/logo.png',
-               height: 64,
-             ),
-             const SizedBox(height: 24),
-             if (false) // Hide the text logo for now
-               const Text(
-              'GHORBARI',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 4.0,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-             const SizedBox(height: 12),
-             Text(
-              'QUALITY CONSTRUCTION ECOSYSTEM',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.5,
-                color: Colors.grey.shade500,
-              ),
-            ),
-             const SizedBox(height: 48),
-             const CircularProgressIndicator(strokeWidth: 2),
-          ],
-        ),
+        child: BrandingWidget(size: 120),
       ),
     );
   }

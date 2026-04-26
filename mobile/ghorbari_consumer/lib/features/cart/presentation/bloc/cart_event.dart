@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:ghorbari_consumer/shared/models/product.dart';
+import 'package:Dalankotha_consumer/shared/models/product.dart';
 
 abstract class CartEvent extends Equatable {
   const CartEvent();

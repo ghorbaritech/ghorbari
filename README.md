@@ -41,7 +41,7 @@ To deploy the project to Vercel, you can use the following command:
 npx vercel --prod
 ```
 
-Make sure you have the Vercel CLI installed or use `npx` as shown above. The project is already linked to the Vercel project `ghorbari`.
+Make sure you have the Vercel CLI installed or use `npx` as shown above. The project is already linked to the Vercel project `dalankotha`.
 
 ### Environment Variables
 

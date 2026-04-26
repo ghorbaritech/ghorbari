@@ -9,7 +9,7 @@ import { getL } from "@/utils/localization"
 import { getSubcategoriesByParentId, Category } from "@/services/categoryService"
 import Link from 'next/link'
 import { ServiceCard } from '@/components/ui/ServiceCard'
-import { useServiceCart } from '@/context/ServiceCartContext'
+import { useServiceCart } from "@/store/unifiedCartStore";
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 

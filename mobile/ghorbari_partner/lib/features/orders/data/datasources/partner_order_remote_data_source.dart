@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ghorbari_partner/core/network/supabase_service.dart';
-import 'package:ghorbari_partner/shared/models/order.dart';
+import 'package:Dalankotha_partner/core/network/supabase_service.dart';
+import 'package:Dalankotha_partner/shared/models/order.dart';
 
 abstract class PartnerOrderRemoteDataSource {
   Future<List<Order>> getPartnerOrders(String partnerId);
@@ -10,7 +10,7 @@ abstract class PartnerOrderRemoteDataSource {
 class PartnerOrderRemoteDataSourceImpl implements PartnerOrderRemoteDataSource {
   @override
   Future<List<Order>> getPartnerOrders(String partnerId) async {
-    // In Ghorbari, we filter by seller_id for products/materials
+    // In Dalankotha, we filter by seller_id for products/materials
     final response = await SupabaseService.from('orders')
         .select('*')
         .eq('seller_id', partnerId)

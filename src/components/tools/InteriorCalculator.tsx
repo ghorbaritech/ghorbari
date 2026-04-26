@@ -45,17 +45,24 @@ const BKH_SIZES = {
 };
 
 export function InteriorCalculator() {
-    const { isBN, t } = useLanguage();
+    const { language, t } = useLanguage();
+    const isBN = language === "BN";
     const [bhk, setBhk] = useState<BHKType>('2bhk');
     const [tier, setTier] = useState<Tier>('classic');
     const [includeCeiling, setIncludeCeiling] = useState(true);
     const [includeKitchen, setIncludeKitchen] = useState(true);
 
+    const toBNDigits = (str: string | number) => {
+        const digits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+        return str.toString().replace(/\d/g, d => digits[parseInt(d)]);
+    };
+
     const formatCurrency = (val: number) => {
-        const formatted = new Intl.NumberFormat(isBN ? 'bn-BD' : 'en-BD', {
+        const formatted = new Intl.NumberFormat('en-BD', {
             maximumFractionDigits: 0
         }).format(val);
-        return `${formatted}${BDT_SYMBOL}`;
+        const result = isBN ? toBNDigits(formatted) : formatted;
+        return `${result}${BDT_SYMBOL}`;
     };
 
     const results = useMemo(() => {
@@ -77,13 +84,13 @@ export function InteriorCalculator() {
             { 
                 name: t.calc_int_item_wardrobes, 
                 val: RATES.components.wardrobe_unit[tier] * roomCount, 
-                desc: `${isBN ? roomCount.toLocaleString('bn-BD') : roomCount} ${isBN ? 'টি রুম' : 'Units'}`,
+                desc: `${isBN ? toBNDigits(roomCount) : roomCount} ${isBN ? 'টি রুম' : 'Units'}`,
                 icon: Layout 
             },
             { 
                 name: t.calc_int_item_ceiling, 
                 val: includeCeiling ? RATES.components.false_ceiling_sqft[tier] * size : 0,
-                desc: `${isBN ? size.toLocaleString('bn-BD') : size} ${isBN ? 'বর্গফুট' : 'sqft'}`,
+                desc: `${isBN ? toBNDigits(size) : size} ${isBN ? 'বর্গফুট' : 'sqft'}`,
                 icon: Layers 
             },
             { 
@@ -101,7 +108,7 @@ export function InteriorCalculator() {
             breakdown,
             size
         };
-    }, [bhk, tier, includeCeiling, includeKitchen, isBN]);
+    }, [bhk, tier, includeCeiling, includeKitchen, language]);
 
     return (
         <div className="w-full max-w-6xl mx-auto p-4 md:p-8 space-y-12">
@@ -246,7 +253,7 @@ export function InteriorCalculator() {
 
                 {/* Right: Results Summary */}
                 <div className="lg:col-span-12 xl:col-span-5 space-y-8">
-                    <div className="bg-primary-950 rounded-[40px] p-8 md:p-10 shadow-2xl relative overflow-hidden group">
+                    <div className="rounded-[40px] p-8 md:p-10 shadow-2xl relative overflow-hidden group" style={{ backgroundColor: '#001F3F' }}>
                         
                         {/* Background Decor */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-800/20 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-primary-600/30 transition-all duration-700" />

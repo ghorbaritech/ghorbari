@@ -1,31 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_bloc.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_event.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/bloc/marketplace_state.dart';
-import 'package:ghorbari_consumer/shared/models/cms_content.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/bloc/marketplace_bloc.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/bloc/marketplace_event.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/bloc/marketplace_state.dart';
+import 'package:Dalankotha_consumer/shared/models/cms_content.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/widgets/product_card.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/product_details_screen.dart';
-import 'package:ghorbari_consumer/shared/models/product.dart';
-import 'package:ghorbari_consumer/features/services/presentation/widgets/service_card.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/screens/booking_screen.dart';
-import 'package:ghorbari_consumer/features/design/presentation/screens/design_booking_wizard_screen.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_state.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/screens/cart_screen.dart';
-import 'package:ghorbari_consumer/shared/models/category.dart';
+import 'package:Dalankotha_consumer/core/utils/image_utils.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/widgets/product_card.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/product_details_screen.dart';
+import 'package:Dalankotha_consumer/shared/models/product.dart';
+import 'package:Dalankotha_consumer/features/services/presentation/widgets/service_card.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/screens/booking_screen.dart';
+import 'package:Dalankotha_consumer/features/design/presentation/screens/design_booking_wizard_screen.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_state.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/screens/cart_screen.dart';
+import 'package:Dalankotha_consumer/shared/models/category.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:ghorbari_consumer/core/utils/category_icon_helper.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/category_listing_screen.dart';
-import 'package:ghorbari_consumer/shared/models/service_item.dart';
-import 'package:ghorbari_consumer/core/utils/location_service.dart';
-import 'package:ghorbari_consumer/shared/widgets/ai_assistant_widget.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/search_screen.dart';
+import 'package:Dalankotha_consumer/core/utils/category_icon_helper.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/category_listing_screen.dart';
+import 'package:Dalankotha_consumer/shared/models/service_item.dart';
+import 'package:Dalankotha_consumer/core/utils/location_service.dart';
+import 'package:Dalankotha_consumer/shared/widgets/ai_assistant_widget.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int)? onNavigateToTab;
@@ -105,23 +106,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ];
     }
 
-    const String supabaseUrl = 'https://nnrzszujwhutbgghtjwc.supabase.co';
-    const String supabaseStorageBase = '$supabaseUrl/storage/v1/object/public/';
-
-    String resolveImageUrl(String? path) {
-      if (path == null || path.isEmpty) return '';
-      if (path.startsWith('http')) return path;
-      if (path.startsWith('/storage/v1/object/public/')) return '$supabaseUrl$path';
-      if (path.startsWith('/')) return '$supabaseStorageBase${path.substring(1)}';
-      return '$supabaseStorageBase$path';
-    }
+    String resolveUrl(String? path) => ImageUtils.resolveUrl(path);
 
     List<Widget> sections = [];
     for (var item in layout) {
       if (item.hidden) continue;
       switch (item.type) {
         case 'HeroSlider': case 'HeroContainer':
-          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildHeroSlider(content[item.dataKey], resolveImageUrl)));
+          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildHeroSlider(content[item.dataKey], resolveUrl)));
           break;
         case 'IconSlider':
           if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildFeaturedCategories(CMSCategorySection.fromJson(content[item.dataKey]))));
@@ -130,16 +122,16 @@ class _HomeScreenState extends State<HomeScreen> {
           if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildDesignServicesSection(content[item.dataKey], state)));
           break;
         case 'PromoBanners': case 'ThreeSliderBanner':
-          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildPromoBanner(content[item.dataKey], resolveImageUrl)));
+          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildPromoBanner(content[item.dataKey], resolveUrl)));
           break;
         case 'SingleSlider':
-          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildSingleSlider(content[item.dataKey], resolveImageUrl)));
+          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildSingleSlider(content[item.dataKey], resolveUrl)));
           break;
         case 'MovingIconSlider':
-          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildMovingIconSlider(content[item.dataKey], resolveImageUrl)));
+          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildMovingIconSlider(content[item.dataKey], resolveUrl)));
           break;
         case 'InfoCardSlider': case 'CardSlider':
-          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildInfoCardSlider(content[item.dataKey])));
+          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildInfoCardSlider(InfoCardData.fromJson(content[item.dataKey]))));
           break;
         case 'CategoryShowcase':
           dynamic secData;
@@ -158,11 +150,11 @@ class _HomeScreenState extends State<HomeScreen> {
           if (secData != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildServiceSection(CMSProductSection.fromJson(secData))));
           break;
         case 'BlogSlider':
-          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildBlogSection(BlogData.fromJson(content[item.dataKey]), resolveImageUrl)));
+          if (content[item.dataKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildBlogSection(BlogData.fromJson(content[item.dataKey]), resolveUrl)));
           break;
         case 'TestimonialSlider': case 'ReviewsSlider': case 'TestimonialSection':
           final tKey = content[item.dataKey] != null ? item.dataKey : 'testimonial_section';
-          if (content[tKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildTestimonialSection(TestimonialData.fromJson(content[tKey]), resolveImageUrl)));
+          if (content[tKey] != null) sections.add(Padding(padding: const EdgeInsets.only(bottom: 32), child: _buildTestimonialSection(TestimonialData.fromJson(content[tKey]), resolveUrl)));
           break;
       }
     }
@@ -171,12 +163,65 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSliverAppBar(BuildContext context) {
     return SliverAppBar(
-      backgroundColor: Colors.white, elevation: 0, pinned: true,
-      title: Row(children: [
-        Image.asset('assets/images/logo.png', height: 28, errorBuilder: (context, error, stackTrace) => const Text('GHORBARI', style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A)))),
-        const SizedBox(width: 8),
-        Expanded(child: InkWell(onTap: _requestLocation, borderRadius: BorderRadius.circular(8), child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.location_on, size: 12, color: Colors.blue.shade700), const SizedBox(width: 4), Flexible(child: Text(_locationName, style: const TextStyle(fontSize: 10, color: Color(0xFF475569), fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis)), if (_isLocating) const Padding(padding: EdgeInsets.only(left: 4), child: SizedBox(width: 8, height: 8, child: CircularProgressIndicator(strokeWidth: 1.5)))])))),
-      ]),
+      backgroundColor: Colors.white,
+      elevation: 0,
+      pinned: true,
+      centerTitle: false,
+      leading: IconButton(
+        icon: const Icon(Icons.menu_rounded, color: Color(0xFF0F172A)),
+        onPressed: () => Scaffold.of(context).openDrawer(),
+      ),
+      title: Row(
+        children: [
+          Image.asset(
+            'assets/images/dalankotha_logo_v3.png',
+            height: 42,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const Text(
+              'dalankotha',
+              style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: InkWell(
+              onTap: _requestLocation,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.location_on, size: 12, color: Colors.blue.shade700),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        _locationName,
+                        style: const TextStyle(fontSize: 10, color: Color(0xFF475569), fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (_isLocating)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4),
+                        child: SizedBox(
+                          width: 8,
+                          height: 8,
+                          child: CircularProgressIndicator(strokeWidth: 1.5),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       actions: [
         IconButton(icon: const Icon(Icons.search, color: Color(0xFF0F172A)), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SearchScreen()))),
         IconButton(icon: const Icon(Icons.notifications_outlined, color: Color(0xFF0F172A)), onPressed: () {}),
@@ -191,34 +236,220 @@ class _HomeScreenState extends State<HomeScreen> {
     final hero = HeroData.fromJson(rawHeroData);
     final isBn = context.locale.languageCode == 'bn';
     return Container(
-      height: 180, margin: const EdgeInsets.only(top: 12, bottom: 32),
+      height: 200, 
+      margin: const EdgeInsets.only(top: 12, bottom: 20),
       child: CarouselSlider(
-        options: CarouselOptions(height: 180, viewportFraction: 0.9, enlargeCenterPage: true, autoPlay: true, autoPlayInterval: const Duration(seconds: 5)),
+        options: CarouselOptions(
+          height: 200, 
+          viewportFraction: 0.92, 
+          enlargeCenterPage: true, 
+          autoPlay: true, 
+          autoPlayInterval: const Duration(seconds: 6)
+        ),
         items: hero.slides.map((slide) {
           final title = (isBn && slide.titleBn != null && slide.titleBn!.isNotEmpty) ? slide.titleBn! : slide.title;
           final subtitle = (isBn && slide.subtitleBn != null && slide.subtitleBn!.isNotEmpty) ? slide.subtitleBn! : slide.subtitle;
+          
           Color bgColor = const Color(0xFF0F172A);
-          if (slide.overlayColor != null) { try { bgColor = Color(int.parse('FF${slide.overlayColor!.replaceAll('#', '')}', radix: 16)); } catch (e) {} }
+          final titleLower = title.toLowerCase();
+          if (titleLower.contains('design') || titleLower.contains('স্থাপত্য')) {
+            bgColor = const Color(0xFF16A34A); // Brand Green
+          } else if (titleLower.contains('market') || titleLower.contains('নির্মাণ') || titleLower.contains('materials')) {
+            bgColor = const Color(0xFFEA580C); // Brand Orange
+          } else if (titleLower.contains('service') || titleLower.contains('প্রকৌশলী') || titleLower.contains('engine')) {
+            bgColor = const Color(0xFF1E3A8A); // Brand Blue
+          } else if (slide.overlayColor != null) {
+            try {
+              bgColor = Color(int.parse('FF${slide.overlayColor!.replaceAll('#', '')}', radix: 16));
+            } catch (e) {}
+          }
+
+          final imageUrl = resolveUrl(slide.image);
+          // Logging for debugging Hero resolution
+          print('DEBUG: HERO IMAGE URL: $imageUrl');
+
           return Container(
-            width: double.infinity, decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: bgColor), clipBehavior: Clip.antiAlias,
-            child: Row(children: [
-              Expanded(flex: 3, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15), child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                if (subtitle != null && subtitle.isNotEmpty) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(4)), child: Text(subtitle, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))),
-                const SizedBox(height: 8), Flexible(child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, height: 1.2), maxLines: 2, overflow: TextOverflow.ellipsis)),
-                const SizedBox(height: 12), GestureDetector(onTap: () { final link = slide.link?.toLowerCase() ?? ''; if (link.contains('design')) widget.onNavigateToTab?.call(1); else if (link.contains('service')) widget.onNavigateToTab?.call(2); else widget.onNavigateToTab?.call(3); }, child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)), child: Text(isBn ? 'আরও জানুন' : 'Learn More', style: TextStyle(color: bgColor, fontSize: 10, fontWeight: FontWeight.bold)))),
-              ]))),
-              if (slide.image != null) Expanded(flex: 2, child: kIsWeb ? Image.network(resolveUrl(slide.image), fit: BoxFit.contain, alignment: Alignment.centerRight, errorBuilder: (context, error, stackTrace) => const SizedBox.shrink()) : CachedNetworkImage(imageUrl: resolveUrl(slide.image), fit: BoxFit.contain, alignment: Alignment.centerRight, errorWidget: (context, url, error) => const SizedBox.shrink())),
-            ]),
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              color: bgColor,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Row(
+              children: [
+                // Left Side: Text Content
+                Expanded(
+                  flex: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 0, 20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (subtitle != null && subtitle.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              subtitle.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 12),
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            height: 1.1,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            final link = slide.link?.toLowerCase() ?? '';
+                            if (link.contains('design')) widget.onNavigateToTab?.call(1);
+                            else if (link.contains('service')) widget.onNavigateToTab?.call(2);
+                            else widget.onNavigateToTab?.call(3);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: bgColor,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            minimumSize: const Size(0, 36),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            isBn ? 'আরও জানুন' : 'Learn More',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // Right Side: Image
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    padding: const EdgeInsets.all(12.0),
+                    alignment: Alignment.center,
+                    child: Builder(
+                      builder: (context) {
+                        // Priority 1: Use dynamic CMS image if available
+                        if (slide.image != null && slide.image!.isNotEmpty) {
+                          return kIsWeb 
+                            ? Image.network(
+                                imageUrl,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) => _buildLocalHeroFallback(title),
+                              )
+                            : CachedNetworkImage(
+                                imageUrl: imageUrl,
+                                fit: BoxFit.contain,
+                                errorWidget: (context, url, error) => _buildLocalHeroFallback(title),
+                                placeholder: (context, url) => Center(child: CircularProgressIndicator(color: Colors.white.withOpacity(0.3), strokeWidth: 2)),
+                              );
+                        }
+                        
+                        // Priority 2: Local fallback
+                        return _buildLocalHeroFallback(title);
+                      }
+                    ),
+                  ),
+                ),
+              ],
+            ),
           );
         }).toList(),
       ),
     );
   }
 
+  Widget _buildLocalHeroFallback(String title) {
+    final titleLower = title.toLowerCase();
+    if (titleLower.contains('design') || titleLower.contains('স্থাপত্য')) {
+      return Image.asset('assets/images/hero-design.png', fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.architecture, color: Colors.white24, size: 48));
+    } else if (titleLower.contains('market') || titleLower.contains('নির্মাণ') || titleLower.contains('materials')) {
+      return Image.asset('assets/images/hero-materials.png', fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.shopping_bag, color: Colors.white24, size: 48));
+    } else {
+      return Image.asset('assets/images/hero-services.png', fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.engineering, color: Colors.white24, size: 48));
+    }
+  }
+
   Widget _buildFeaturedCategories(CMSCategorySection section) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      if (section.title != null && section.title!.isNotEmpty) Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), child: Text(section.title!, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)))),
-      SizedBox(height: 120, child: ListView.builder(padding: const EdgeInsets.symmetric(horizontal: 12), scrollDirection: Axis.horizontal, itemCount: section.items.length, itemBuilder: (context, index) { final item = section.items[index]; final isBn = context.locale.languageCode == 'bn'; final displayName = (isBn && item.nameBn != null && item.nameBn!.isNotEmpty) ? item.nameBn! : item.name; return _buildCircularCategory(displayName, CategoryIconHelper.getIcon(item.name), false, () { Navigator.push(context, MaterialPageRoute(builder: (context) => CategoryListingScreen(category: Category(id: item.id, name: item.name, slug: item.slug ?? '', type: 'product', level: 0)))); }); })),
+      if (section.title != null && section.title!.isNotEmpty) 
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), 
+          child: Text(
+            section.title!, 
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))
+          )
+        ),
+      SizedBox(
+        height: 120, 
+        child: ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 12), 
+          scrollDirection: Axis.horizontal, 
+          itemCount: section.items.length, 
+          itemBuilder: (context, index) { 
+            final item = section.items[index]; 
+            final isBn = context.locale.languageCode == 'bn'; 
+            final displayName = (isBn && item.nameBn != null && item.nameBn!.isNotEmpty) ? item.nameBn! : item.name; 
+            
+            // Determine icon widget with better 3D-style fallbacks for categories
+            Widget iconWidget;
+            if (item.icon != null && item.icon!.isNotEmpty && (item.icon!.startsWith('http') || item.icon!.contains('/'))) {
+              iconWidget = _buildIconOrImage(item.icon!, size: 40, label: item.name);
+            } else {
+              // Comprehensive fallback mapping for categories
+              IconData catIcon = Icons.category_rounded;
+              Color catColor = const Color(0xFF64748B);
+              final n = item.name.toLowerCase();
+              
+              if (n.contains('cement') || n.contains('সিমেন্ট')) { 
+                catIcon = Icons.view_in_ar_rounded; catColor = const Color(0xFF92400E); 
+              } else if (n.contains('sand') || n.contains('বালি')) { 
+                catIcon = Icons.auto_awesome_motion_rounded; catColor = const Color(0xFFD97706); 
+              } else if (n.contains('brick') || n.contains('ইট')) { 
+                catIcon = Icons.grid_view_rounded; catColor = const Color(0xFFB91C1C); 
+              } else if (n.contains('stone') || n.contains('পাথর')) { 
+                catIcon = Icons.landscape_rounded; catColor = const Color(0xFF475569); 
+              } else if (n.contains('materials') || n.contains('সাজসজ্জা')) {
+                catIcon = Icons.construction_rounded; catColor = const Color(0xFF0369A1);
+              } else if (n.contains('service') || n.contains('পেশাদার')) {
+                catIcon = Icons.handyman_rounded; catColor = const Color(0xFF15803D);
+              }
+              
+              iconWidget = Icon(catIcon, color: catColor, size: 28);
+            }
+
+            return _buildCircularCategory(
+              displayName, 
+              iconWidget, 
+              false, 
+              () { 
+                Navigator.push(context, MaterialPageRoute(builder: (context) => CategoryListingScreen(category: Category(id: item.id, name: item.name, slug: item.slug ?? '', type: 'product', level: 0)))); 
+              }
+            ); 
+          }
+        )
+      ),
     ]);
   }
 
@@ -236,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       width: 200, margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))], border: Border.all(color: Colors.grey.shade100)), clipBehavior: Clip.antiAlias,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Stack(children: [CachedNetworkImage(imageUrl: cat.icon ?? '', height: 140, width: double.infinity, fit: BoxFit.cover, errorWidget: (context, url, error) => Container(color: Colors.grey.shade200, child: const Center(child: Icon(Icons.design_services, color: Colors.grey)))), Positioned(top: 8, right: 8, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), borderRadius: BorderRadius.circular(20)), child: const Row(children: [Icon(Icons.star, color: Colors.amber, size: 14), SizedBox(width: 2), Text('4.8', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))])))]),
+        Stack(children: [CachedNetworkImage(imageUrl: ImageUtils.resolveUrl(cat.icon ?? ''), height: 140, width: double.infinity, fit: BoxFit.cover, errorWidget: (context, url, error) => Container(color: Colors.grey.shade200, child: const Center(child: Icon(Icons.design_services, color: Colors.grey)))), Positioned(top: 8, right: 8, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), borderRadius: BorderRadius.circular(20)), child: const Row(children: [Icon(Icons.star, color: Colors.amber, size: 14), SizedBox(width: 2), Text('4.8', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))])))]),
         Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(cat.nameBn ?? cat.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)), maxLines: 2, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 8), Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('৳১৬০০', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))), ElevatedButton(onPressed: () { final name = cat.name.toLowerCase(); final isStructural = name.contains('structur') || name.contains('architectur') || name.contains('build') || name.contains('plan'); Navigator.push(context, MaterialPageRoute(builder: (context) => DesignBookingWizardScreen(initialService: isStructural ? 'structural-architectural' : 'interior'))); }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0F172A), foregroundColor: Colors.white, minimumSize: const Size(0, 32), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), child: const Text('বুকিং দিন', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)))])
@@ -260,7 +491,16 @@ class _HomeScreenState extends State<HomeScreen> {
       if (parentCat == null) return const SizedBox.shrink();
       final subcategories = state.categories.cast<Category>().where((c) => c.parentId == parentCat!.id && c.type == 'service').toList();
       if (subcategories.isEmpty) return const SizedBox(height: 200, child: Center(child: Text('Service categories unavailable.')));
-      final serviceItems = subcategories.map((cat) => ServiceItem(id: cat.id, name: cat.nameBn ?? cat.name, categoryId: parentCat!.id, unitPrice: (cat.metadata?['price'] ?? 0).toDouble(), unitType: cat.metadata?['unit'] ?? 'hr', imageUrl: cat.icon ?? '', rating: 4.8, description: cat.nameBn ?? cat.name)).toList();
+      final serviceItems = subcategories.map((cat) => ServiceItem(
+        id: cat.id, 
+        name: cat.nameBn ?? cat.name, 
+        categoryId: parentCat!.id, 
+        unitPrice: (cat.metadata?['price'] ?? 0).toDouble(), 
+        unitType: cat.metadata?['unit'] ?? 'hr', 
+        imageUrl: ImageUtils.resolveUrl(cat.icon ?? ''),
+        rating: 4.8, 
+        description: cat.nameBn ?? cat.name
+      )).toList();
       return SizedBox(height: 240, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: serviceItems.length, itemBuilder: (context, index) => ServiceCard(service: serviceItems[index], onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen(service: serviceItems[index]))))));
     });
   }
@@ -272,19 +512,40 @@ class _HomeScreenState extends State<HomeScreen> {
     final banners = rawItems.map((i) => HeroSlide.fromJson(i)).toList();
     final isBn = context.locale.languageCode == 'bn';
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), child: Text('our_current_deals'.tr(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)))),
-      SizedBox(height: 160, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: banners.length, itemBuilder: (context, index) {
-        final banner = banners[index];
-        Color bgColor = const Color(0xFF0F172A);
-        if (banner.overlayColor != null) { try { bgColor = Color(int.parse('FF${banner.overlayColor!.replaceAll('#', '')}', radix: 16)); } catch (e) {} }
-        return Container(
-          width: 300, margin: const EdgeInsets.only(right: 12), decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(20)), clipBehavior: Clip.antiAlias,
-          child: Stack(children: [
-            if (banner.image != null) Positioned(right: 0, top: 0, bottom: 0, width: 150, child: Stack(children: [Positioned.fill(child: kIsWeb ? Image.network(resolveUrl(banner.image), fit: BoxFit.cover, color: Colors.black.withOpacity(0.05), colorBlendMode: BlendMode.darken, errorBuilder: (c, e, s) => Container(color: bgColor)) : CachedNetworkImage(imageUrl: resolveUrl(banner.image), fit: BoxFit.cover, color: Colors.black.withOpacity(0.05), colorBlendMode: BlendMode.darken, errorWidget: (c, u, e) => Container(color: bgColor))), Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [bgColor, bgColor.withOpacity(0)], begin: Alignment.centerLeft, end: Alignment.centerRight)))])),
-            GestureDetector(onTap: () { final link = banner.link?.toLowerCase() ?? ''; if (link.contains('design')) widget.onNavigateToTab?.call(1); else if (link.contains('service')) widget.onNavigateToTab?.call(2); else widget.onNavigateToTab?.call(3); }, child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [Text(isBn && banner.titleBn != null ? banner.titleBn! : banner.title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)), const SizedBox(height: 16), Row(children: [Text('explore'.tr(), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)), const SizedBox(width: 4), const Icon(Icons.arrow_forward, color: Colors.white, size: 14)])])))
-          ]),
-        );
-      })),
+      Padding(padding: const EdgeInsets.fromLTRB(16, 24, 16, 16), child: Text('our_current_deals'.tr(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)))),
+      SizedBox(
+        height: 180, 
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal, 
+          padding: const EdgeInsets.symmetric(horizontal: 16), 
+          itemCount: banners.length, 
+          itemBuilder: (context, index) {
+            final banner = banners[index];
+            final bannerUrl = resolveUrl(banner.image);
+            return GestureDetector(
+              onTap: () { 
+                final link = banner.link?.toLowerCase() ?? ''; 
+                if (link.contains('design')) widget.onNavigateToTab?.call(1); 
+                else if (link.contains('service')) widget.onNavigateToTab?.call(2); 
+                else widget.onNavigateToTab?.call(3); 
+              }, 
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.85, 
+                margin: const EdgeInsets.only(right: 16), 
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100, 
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]
+                ), 
+                clipBehavior: Clip.antiAlias,
+                child: kIsWeb 
+                  ? Image.network(bannerUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image_outlined, color: Colors.grey))) 
+                  : CachedNetworkImage(imageUrl: bannerUrl, fit: BoxFit.cover, errorWidget: (c, u, e) => const Center(child: Icon(Icons.image_outlined, color: Colors.grey))),
+              ),
+            );
+          }
+        )
+      ),
     ]);
   }
 
@@ -306,16 +567,149 @@ class _HomeScreenState extends State<HomeScreen> {
     ]);
   }
 
-  Widget _buildInfoCardSlider(dynamic rawData) {
-    if (rawData == null) return const SizedBox.shrink();
-    final data = InfoCardData.fromJson(rawData);
+  Widget _buildInfoCardSlider(InfoCardData data) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 24), padding: const EdgeInsets.symmetric(vertical: 40), color: const Color(0xFF0F172A),
-      child: Column(children: [
-        if (data.title.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 32), child: Text(data.title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
-        SizedBox(height: 180, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: data.items.length, itemBuilder: (context, index) { final item = data.items[index]; return Container(width: 160, margin: const EdgeInsets.only(right: 24), child: Column(children: [Icon(Icons.verified_user_outlined, color: Colors.blue.shade400, size: 36), const SizedBox(height: 12), Text(item.label, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), textAlign: TextAlign.center)])); })),
-      ]),
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      color: const Color(0xFF0F172A), // Match the dark background from web reference
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              data.title, 
+              style: const TextStyle(
+                color: Colors.white, 
+                fontSize: 24, 
+                fontWeight: FontWeight.bold
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            height: 160,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: data.items.length,
+              itemBuilder: (context, index) {
+                final item = data.items[index];
+                return Container(
+                  width: 140,
+                  margin: const EdgeInsets.only(right: 16),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: item.icon != null && item.icon!.isNotEmpty
+                            ? _buildIconOrImage(item.icon!, label: item.label)
+                            : _getFallbackIcon(item.label, size: 36),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        item.label, 
+                        style: const TextStyle(
+                          color: Colors.white, 
+                          fontSize: 14, 
+                          fontWeight: FontWeight.w600
+                        ), 
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (item.subtitle != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            item.subtitle!, 
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.6), 
+                              fontSize: 11
+                            ), 
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ]
+                  )
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildIconOrImage(String path, {double size = 36, String? label}) {
+    final resolvedUrl = ImageUtils.resolveUrl(path);
+    if (resolvedUrl.startsWith('http') || resolvedUrl.contains('/storage/') || resolvedUrl.contains('ghorbari.tech')) {
+       return kIsWeb 
+         ? Image.network(
+             resolvedUrl,
+             width: size,
+             height: size,
+             fit: BoxFit.contain,
+             errorBuilder: (c, u, e) => _getFallbackIcon(label ?? '', size: size),
+           )
+         : CachedNetworkImage(
+             imageUrl: resolvedUrl,
+             width: size,
+             height: size,
+             fit: BoxFit.contain,
+             errorWidget: (c, u, e) => _getFallbackIcon(label ?? '', size: size),
+           );
+    }
+    return _getFallbackIcon(label ?? '', size: size);
+  }
+
+  Widget _getFallbackIcon(String label, {double size = 36}) {
+    final l = label.toLowerCase();
+    IconData icon = Icons.verified_user_outlined;
+    Color color = Colors.blue.shade400;
+
+    if (l.contains('verified') || l.contains('সদস্য')) {
+      icon = Icons.verified_user;
+      color = Colors.blue.shade600;
+    } else if (l.contains('support') || l.contains('সহায়তা')) {
+      icon = Icons.headset_mic;
+      color = Colors.green.shade600;
+    } else if (l.contains('secure') || l.contains('নিরাপদ')) {
+      icon = Icons.security;
+      color = Colors.orange.shade600;
+    } else if (l.contains('quality') || l.contains('মান')) {
+      icon = Icons.star_rounded;
+      color = Colors.amber.shade600;
+    } else if (l.contains('plan') || l.contains('expert') || l.contains('পরিকল্পনা')) {
+      icon = Icons.engineering;
+      color = Colors.indigo.shade600;
+    } else if (l.contains('price') || l.contains('মূল্য')) {
+      icon = Icons.attach_money;
+      color = Colors.teal.shade600;
+    } else if (l.contains('cement') || l.contains('সিমেন্ট')) {
+      icon = Icons.view_in_ar_rounded;
+      color = const Color(0xFF92400E);
+    } else if (l.contains('sand') || l.contains('বালি')) {
+      icon = Icons.auto_awesome_motion_rounded;
+      color = const Color(0xFFD97706);
+    } else if (l.contains('brick') || l.contains('ইট')) {
+      icon = Icons.grid_view_rounded;
+      color = const Color(0xFFB91C1C);
+    } else if (l.contains('stone') || l.contains('পাথর')) {
+      icon = Icons.landscape_rounded;
+      color = const Color(0xFF475569);
+    } else if (l.contains('design') || l.contains('স্থাপত্য')) {
+      icon = Icons.palette_rounded;
+      color = const Color(0xFF15803D);
+    }
+    
+    return Icon(icon, color: color, size: size);
   }
 
   Widget _buildProductSection(CMSProductSection section, MarketplaceState state) {
@@ -338,12 +732,36 @@ class _HomeScreenState extends State<HomeScreen> {
     return SizedBox(height: 240, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: products.length, itemBuilder: (context, index) => Padding(padding: const EdgeInsets.only(right: 12), child: SizedBox(width: 160, child: ProductCard(product: products[index], onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProductDetailsScreen(product: products[index]))))))));
   }
 
-  Widget _buildCircularCategory(String name, String icon, bool isSelected, VoidCallback onTap) {
+  Widget _buildCircularCategory(String name, Widget icon, bool isSelected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 80, margin: const EdgeInsets.symmetric(horizontal: 4),
-        child: Column(children: [Container(height: 64, width: 64, decoration: BoxDecoration(color: isSelected ? const Color(0xFFF97316).withOpacity(0.1) : Colors.grey.shade50, shape: BoxShape.circle, border: Border.all(color: isSelected ? const Color(0xFFF97316) : Colors.grey.shade200, width: 2)), child: Center(child: Text(icon, style: const TextStyle(fontSize: 24)))), const SizedBox(height: 8), Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? const Color(0xFFF97316) : const Color(0xFF475569)))]),
+        child: Column(
+          children: [
+            Container(
+              height: 64, width: 64, 
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFFF97316).withOpacity(0.05) : Colors.white, 
+                shape: BoxShape.circle, 
+                border: Border.all(color: isSelected ? const Color(0xFFF97316) : Colors.grey.withOpacity(0.2), width: 1)
+              ), 
+              child: Center(child: icon)
+            ), 
+            const SizedBox(height: 8), 
+            Text(
+              name, 
+              maxLines: 1, 
+              overflow: TextOverflow.ellipsis, 
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11, 
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500, 
+                color: isSelected ? const Color(0xFFF97316) : const Color(0xFF475569)
+              )
+            )
+          ]
+        ),
       ),
     );
   }

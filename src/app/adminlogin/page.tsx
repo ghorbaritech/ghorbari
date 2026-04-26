@@ -25,8 +25,8 @@ export default function AdminLoginPage() {
             } else if (result?.success) {
                 router.push('/admin')
             }
-        } catch (err) {
-            setError("An unexpected error occurred. Please try again.")
+        } catch (err: any) {
+            setError(err.message || "An unexpected error occurred. Please try again.")
             setLoading(false)
         }
     }
@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
                                 type="email"
                                 required
                                 className="h-14 bg-neutral-700 border-none text-white rounded-2xl font-bold placeholder:text-neutral-500 focus:ring-2 focus:ring-orange-600 shadow-inner"
-                                placeholder="name@ghorbari.com"
+                                placeholder="name@dalankotha.com"
                             />
                         </div>
                         <div className="space-y-2">

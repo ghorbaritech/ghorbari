@@ -149,7 +149,7 @@ export default function ConciergeOrderPage() {
                     name: customer.full_name,
                     email: customer.email,
                     phone: customer.phone_number,
-                    address: customer.address || 'Ghorbari Concierge'
+                    address: customer.address || 'Dalankotha Concierge'
                 }, false)
             }
             setSuccess('Product Order placed successfully!')

@@ -1,5 +1,5 @@
-name: ghorbari_partner
-description: Ghorbari Partner App - Manage your Business, Orders and Services.
+name: Dalankotha_partner
+description: Dalankotha Partner App - Manage your Business, Orders and Services.
 version: 1.0.0+1
 
 environment:
@@ -17,7 +17,7 @@ dependencies:
   
   # Backend & Networking
   supabase_flutter: ^2.4.0
-  dio: ^5.4.0
+  dio: ^5.7.0
   
   # UI & Design
   google_fonts: ^6.1.0
@@ -35,7 +35,8 @@ dependencies:
   injectable: ^2.3.2
   shared_preferences: ^2.2.2
   intl: ^0.20.2
-
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.2.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

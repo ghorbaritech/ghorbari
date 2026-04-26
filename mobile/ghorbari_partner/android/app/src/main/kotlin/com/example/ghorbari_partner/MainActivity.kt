@@ -1,4 +1,4 @@
-package com.example.ghorbari_partner
+package com.example.dalankotha_partner
 
 import io.flutter.embedding.android.FlutterActivity
 

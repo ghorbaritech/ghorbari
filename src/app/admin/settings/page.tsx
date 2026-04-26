@@ -16,6 +16,8 @@ import {
     Palette
 } from 'lucide-react'
 import { getPlatformConfigs, updatePlatformConfig } from '@/services/orderService'
+import { LogoManager } from '@/components/admin/LogoManager'
+import { getBrandingSettings, BrandingSettings } from '@/services/brandingService'
 
 export default function PlatformSettingsPage() {
     const [configs, setConfigs] = useState<any[]>([])
@@ -23,6 +25,7 @@ export default function PlatformSettingsPage() {
     const [saving, setSaving] = useState(false)
     const [success, setSuccess] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
+    const [branding, setBranding] = useState<BrandingSettings | null>(null)
 
     useEffect(() => {
         loadConfigs()
@@ -32,6 +35,8 @@ export default function PlatformSettingsPage() {
         try {
             const data = await getPlatformConfigs()
             setConfigs(data || [])
+            const brandData = await getBrandingSettings()
+            setBranding(brandData)
         } catch (err) {
             console.error('Failed to load configs', err)
         } finally {
@@ -104,10 +109,18 @@ export default function PlatformSettingsPage() {
                     <TabsTrigger value="services" className="px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all flex items-center gap-2">
                         <Wrench className="w-3 h-3" /> Service Rates
                     </TabsTrigger>
-                    <TabsTrigger value="design" className="px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all flex items-center gap-2">
-                        <Palette className="w-3 h-3" /> Design Rates
+                    <TabsTrigger value="branding" className="px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest text-neutral-500 data-[state=active]:bg-neutral-800 data-[state=active]:text-white transition-all flex items-center gap-2">
+                        <Palette className="w-3 h-3" /> Branding
                     </TabsTrigger>
                 </TabsList>
+
+                {/* Branding Tab */}
+                <TabsContent value="branding" className="m-0 space-y-8">
+                    <LogoManager 
+                        branding={branding} 
+                        onUpdate={(updated) => setBranding(updated)} 
+                    />
+                </TabsContent>
 
                 {/* Global Tab */}
                 <TabsContent value="global" className="m-0 space-y-8">

@@ -3,7 +3,7 @@
 import React from 'react';
 import { ShoppingCart, X, Plus, Minus, Trash2, ArrowRight, ReceiptText, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/store/unifiedCartStore";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -141,7 +141,7 @@ export function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClose: () =
 
                             <div className="flex items-center justify-center gap-2 text-[10px] text-neutral-400 font-bold uppercase tracking-widest">
                                 <ShieldCheck className="w-3 h-3 text-emerald-500" />
-                                Secure Checkout by Ghorbari
+                                Secure Checkout by Dalankotha
                             </div>
                         </div>
                     )}

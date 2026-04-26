@@ -5,7 +5,7 @@ import { ServiceCartItem } from "@/context/ServiceCartContext";
 
 export async function placeServiceRequest(data: {
     items: ServiceCartItem[];
-    assignmentType: 'ghorbari_assign' | 'user_choose';
+    assignmentType: 'dalankotha_assign' | 'user_choose';
     providerId?: string;
     schedule: any;
     totalAmount: number;

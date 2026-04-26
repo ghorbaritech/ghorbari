@@ -6,35 +6,28 @@
   /* Standardizing on DM Sans for premium feel, removing Zalando */
   --font-display: var(--font-dm-sans), sans-serif;
 
-  /* Refined Professional Palette */
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #2563eb;
-  /* Royal Blue for trust */
-  --color-primary-700: #1d4ed8;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
-  --color-primary-950: #0f172a;
-  /* Deep Navy - Our Core Brand */
+  /* Dalankotha Professional Gold/Orange Palette */
+  --color-primary-50: #fff9eb;
+  --color-primary-100: #ffeed1;
+  --color-primary-200: #ffda99;
+  --color-primary-300: #ffbc4d;
+  --color-primary-400: #ff9d24;
+  --color-primary-500: #f59e0b; /* Primary Brand Gold */
+  --color-primary-600: #ea580c; /* Deep Accent Orange */
+  --color-primary-700: #c2410c;
+  --color-primary-800: #9a3412;
+  --color-primary-900: #7c2d12;
+  --color-primary-950: #431407;
 
-  /* Secondary / Accent for CTAs */
-  --color-accent-500: #059669;
-  /* Trust Emerald */
-  --color-accent-600: #047857;
-
-  /* Natural & Sophisticated Secondary */
-  --color-secondary-500: #f59e0b;
-  /* Professional Amber */
+  /* Secondary / Accent */
+  --color-accent-500: #10b981;
+  --color-accent-600: #059669;
 
   /* Semantic */
   --color-success: #10b981;
   --color-error: #ef4444;
   --color-warning: #f59e0b;
-  --color-info: #3b82f6;
+  --color-info: #0ea5e9;
 }
 
 /* Custom Utilities based on Professional E-commerce Standards */
@@ -94,13 +87,43 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #d1d5db;
   }
+
+  /* AI Consultant CTA pulse animation */
+  .animate-pulse-slow {
+    animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Skeleton shimmer loading state */
+  .skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+    border-radius: 0.5rem;
+  }
+
+  /* High-contrast sunlight mode for on-site workers */
+  .sunlight-mode {
+    filter: contrast(1.15) brightness(1.05);
+  }
 }
 
 :root {
   /* Brand Constants */
   --brand-navy: #0f172a;
   --brand-emerald: #059669;
+  --brand-primary: #2563eb;
+  --brand-amber: #f59e0b;
 
   --background: #fbfcfd;
   --foreground: #0f172a;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

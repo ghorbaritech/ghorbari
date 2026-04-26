@@ -1,58 +1,88 @@
-import { PredictionServiceClient, helpers } from '@google-cloud/aiplatform';
+/**
+ * 🎨 Dalankotha Image Generation Utility
+ * Uses Gemini 2.0 Flash Preview Image Generation
+ * Model: gemini-2.0-flash-preview-image-generation
+ * NOTE: Standard gemini-2.0-flash does NOT generate images via generateContent.
+ *       The preview image generation model must be used explicitly.
+ */
 
-const project = process.env.GOOGLE_CLOUD_PROJECT || 'ghorbari-platform';
-const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-const apiEndpoint = `${location}-aiplatform.googleapis.com`;
-const publisher = 'google';
-const model = 'imagen-3.0-generate-001'; // or specific version
+const IMAGE_GEN_MODEL = 'gemini-2.5-flash-image';
+const IMAGE_GEN_TIMEOUT_MS = 30_000; // 30 second hard timeout (image gen can be slow)
 
-const clientOptions = {
-    apiEndpoint: apiEndpoint,
-};
+export async function generateRoomDesign(
+    prompt: string,
+    roomImageBase64?: string
+): Promise<string> {
+    const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (!apiKey) throw new Error('GOOGLE_GEMINI_API_KEY is not configured');
 
-const predictionServiceClient = new PredictionServiceClient(clientOptions);
+    const parts: any[] = [];
 
-export async function generateImagen3(prompt: string, designType: 'interior' | 'exterior') {
-    const endpoint = `projects/${project}/locations/${location}/publishers/${publisher}/models/${model}`;
+    if (roomImageBase64) {
+        // Room photo provided — redesign mode
+        const cleanBase64 = roomImageBase64.replace(/^data:image\/\w+;base64,/, '');
+        parts.push({
+            inlineData: { mimeType: 'image/jpeg', data: cleanBase64 },
+        });
+        parts.push({
+            text: `[ROOM REDESIGN TASK]
+Redesign the room in this photo. Keep the exact structural geometry (walls, ceiling, windows, doors, camera angle).
+Only change: furniture, wall textures/paint, floor materials, lighting fixtures, colors, and decorations.
+Apply this style: ${prompt}
+Output: Photorealistic architectural photography, 4K quality, beautiful professional lighting.`,
+        });
+    } else {
+        // Fresh design generation
+        parts.push({
+            text: `Create a photorealistic interior design visualization.
+Style requirements: ${prompt}
+Setting: High-end Bangladesh apartment, Dhaka.
+Output: Professional architectural photography, beautiful lighting, 4K quality, ultra-realistic.`,
+        });
+    }
 
-    const instance = {
-        prompt: prompt,
-    };
-
-    const instanceValue = helpers.toValue(instance);
-    const instances = [instanceValue!];
-
-    const parameter = {
-        sampleCount: 1,
-        // Optional parameters
-        aspectRatio: '1:1',
-        addWatermark: false,
-    };
-
-    const parameters = helpers.toValue(parameter);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), IMAGE_GEN_TIMEOUT_MS);
 
     try {
-        const [response] = await predictionServiceClient.predict({
-            endpoint,
-            instances,
-            parameters,
-        });
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_GEN_MODEL}:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                signal: controller.signal,
+                body: JSON.stringify({
+                    contents: [{ role: 'user', parts }],
+                    generationConfig: {
+                        responseModalities: ['IMAGE', 'TEXT'],
+                        temperature: 1,
+                    },
+                }),
+            }
+        );
 
-        if (!response.predictions || response.predictions.length === 0) {
-            throw new Error('No predictions returned from Vertex AI');
+        if (!response.ok) {
+            const errText = await response.text();
+            console.error('[Imagen] API error:', response.status, errText.slice(0, 300));
+            throw new Error(`Image generation failed: HTTP ${response.status}`);
         }
 
-        // The response format for Imagen 3 returns base64 image data
-        const prediction = response.predictions[0] as any;
-        const base64Image = prediction.structValue?.fields?.bytesBase64Encoded?.stringValue;
+        const data = await response.json();
+        const imagePart = data?.candidates?.[0]?.content?.parts?.find(
+            (p: any) => p.inlineData?.data
+        );
 
-        if (!base64Image) {
-            throw new Error('Image data not found in prediction response');
+        if (!imagePart?.inlineData?.data) {
+            const candidate = data?.candidates?.[0];
+            console.error('[Imagen] No image in response. Finish reason:', candidate?.finishReason);
+            throw new Error('No image returned from Gemini. Model may have declined the request.');
         }
 
-        return base64Image;
-    } catch (error) {
-        console.error('Vertex AI Imagen 3 Error:', error);
-        throw error;
+        return imagePart.inlineData.data; // base64 PNG string
+    } finally {
+        clearTimeout(timeout);
     }
 }
+
+// Backwards-compatible export alias
+export const generateImagen3 = generateRoomDesign;

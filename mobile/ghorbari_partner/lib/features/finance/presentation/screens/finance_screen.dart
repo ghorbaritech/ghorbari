@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ghorbari_partner/shared/widgets/glass_card.dart';
+import 'package:dalankotha_partner/shared/widgets/glass_card.dart';
 
 class FinanceScreen extends StatelessWidget {
   const FinanceScreen({super.key});

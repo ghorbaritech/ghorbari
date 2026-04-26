@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_partner/features/orders/presentation/bloc/partner_order_bloc.dart';
-import 'package:ghorbari_partner/features/orders/presentation/bloc/partner_order_event.dart';
-import 'package:ghorbari_partner/features/orders/presentation/bloc/partner_order_state.dart';
-import 'package:ghorbari_partner/shared/models/order.dart';
-import 'package:ghorbari_partner/shared/widgets/shimmer_loading.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:dalankotha_partner/features/auth/presentation/bloc/auth_state.dart';
+import 'package:dalankotha_partner/features/orders/presentation/bloc/partner_order_bloc.dart';
+import 'package:dalankotha_partner/features/orders/presentation/bloc/partner_order_event.dart';
+import 'package:dalankotha_partner/features/orders/presentation/bloc/partner_order_state.dart';
+import 'package:dalankotha_partner/shared/models/order.dart';
+import 'package:dalankotha_partner/shared/widgets/shimmer_loading.dart';
 import 'package:intl/intl.dart';
 
 class ManageOrdersScreen extends StatefulWidget {

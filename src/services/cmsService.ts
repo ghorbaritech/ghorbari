@@ -3,7 +3,7 @@ import { createClient } from '@/utils/supabase/client';
 export interface HomeContent {
     id: string;
     section_key: string;
-    content: any; // JSONB
+    content: Record<string, unknown>; // JSONB
     is_active: boolean;
 }
 
@@ -23,7 +23,7 @@ export async function getHomeContent(sectionKey?: string) {
     return data as HomeContent[];
 }
 
-export async function updateHomeContent(sectionKey: string, content: any) {
+export async function updateHomeContent(sectionKey: string, content: Record<string, unknown>) {
     const supabase = createClient();
 
     // Upsert logic

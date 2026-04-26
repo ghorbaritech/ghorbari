@@ -78,7 +78,7 @@ export default function LoginPage() {
 
                 <div className="space-y-6 text-center pt-4">
                     <Link href="/register" className="block text-xs font-black text-orange-600 hover:text-orange-500 uppercase tracking-widest">
-                        New to Ghorbari? Create Account
+                        New to Dalankotha? Create Account
                     </Link>
 
                     <div className="pt-6 border-t border-neutral-100">

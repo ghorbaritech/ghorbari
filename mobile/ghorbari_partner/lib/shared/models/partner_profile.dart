@@ -27,7 +27,7 @@ class PartnerProfile extends Equatable {
     return PartnerProfile(
       id: json['id'],
       userId: json['user_id'],
-      businessName: json['business_name'] ?? 'Ghorbari Partner',
+      businessName: json['business_name'] ?? 'Dalankotha Partner',
       logoUrl: json['logo_url'],
       type: json['type'] ?? 'seller',
       isVerified: json['is_verified'] ?? false,

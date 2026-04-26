@@ -14,7 +14,7 @@ import { getL } from "@/utils/localization";
 import { getServiceItems, ServiceItem } from "@/services/serviceItemService";
 import { ServiceCartSidebar } from "@/components/sections/ServiceCartSidebar";
 import { getCategories } from "@/services/categoryService";
-import { useServiceCart } from "@/context/ServiceCartContext";
+import { useServiceCart } from "@/store/unifiedCartStore";
 import { toast } from "sonner";
 import Link from "next/link";
 

@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/services/domain/repositories/service_repository.dart';
-import 'package:ghorbari_consumer/features/services/presentation/bloc/service_event.dart';
-import 'package:ghorbari_consumer/features/services/presentation/bloc/service_state.dart';
+import 'package:Dalankotha_consumer/features/services/domain/repositories/service_repository.dart';
+import 'package:Dalankotha_consumer/features/services/presentation/bloc/service_event.dart';
+import 'package:Dalankotha_consumer/features/services/presentation/bloc/service_state.dart';
 
 class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
   final ServiceRepository serviceRepository;

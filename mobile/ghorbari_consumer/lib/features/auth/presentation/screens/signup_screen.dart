@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_event.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/main_screen.dart';
+import 'package:Dalankotha_consumer/core/theme/Dalankotha_theme.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_event.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/main_screen.dart';
 import 'dart:ui';
 
 class SignUpScreen extends StatefulWidget {
@@ -72,16 +72,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
-                                  color: GhorbariTheme.primaryDark,
+                                  color: DalankothaTheme.primaryDark,
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Join the Ghorbari construction ecosystem',
+                                'Join the Dalankotha construction ecosystem',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: GhorbariTheme.primaryDark.withOpacity(0.6),
+                                  color: DalankothaTheme.primaryDark.withOpacity(0.6),
                                 ),
                               ),
                               const SizedBox(height: 32),

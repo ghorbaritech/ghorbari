@@ -8,11 +8,11 @@ import {
     Layout,
     Image as ImageIcon,
     MessageSquare,
-    FileCheck,
-    Bell,
-    Star,
     ExternalLink,
-    Upload
+    Upload,
+    CheckCircle2,
+    Clock,
+    ShieldAlert
 } from 'lucide-react'
 
 export default function DesignerDashboard() {
@@ -26,8 +26,12 @@ export default function DesignerDashboard() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            // Get designer profile
-            const { data: des } = await supabase.from('designers').select('*').eq('user_id', user.id).single()
+            // Get designer profile with onboarding status
+            const { data: des } = await supabase
+                .from('designers')
+                .select('*, profile:profiles(onboarding_status)')
+                .eq('user_id', user.id)
+                .single()
             setDesigner(des)
 
             if (des) {
@@ -54,8 +58,21 @@ export default function DesignerDashboard() {
                                 <Star className="w-4 h-4 text-yellow-600 fill-current" />
                                 <span className="text-sm font-black text-yellow-700">{designer?.rating}</span>
                             </div>
+                            
+                            {/* Verification Badge */}
+                            {designer?.profile?.onboarding_status === 'verified' ? (
+                                <div className="flex items-center gap-1.5 bg-green-50 text-green-700 px-4 py-1.5 rounded-full border border-green-100 shadow-sm">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Verified Partner</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-4 py-1.5 rounded-full border border-amber-100 shadow-sm">
+                                    <Clock className="w-4 h-4" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-nowrap">Verification Pending</span>
+                                </div>
+                            )}
                         </div>
-                        <p className="text-neutral-500 font-bold uppercase text-xs tracking-[0.2em]">{designer?.specializations?.join(' • ') || 'Verification Pending'}</p>
+                        <p className="text-neutral-500 font-bold uppercase text-xs tracking-[0.2em]">{designer?.specializations?.join(' • ') || 'Select Specializations'}</p>
                     </div>
                     <div className="flex gap-4">
                         <Button variant="outline" className="rounded-2xl h-14 px-8 border-2 font-black uppercase text-xs tracking-wider">

@@ -135,7 +135,7 @@ export default function CostCalculator() {
                 >
                     <div className="inline-flex items-center px-4 py-2 rounded-2xl bg-white shadow-xl shadow-primary-900/5 border border-primary-50">
                         <Calculator className="w-4 h-4 mr-2 text-primary-600" />
-                        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-primary-950">Ghorbari Intelligence</span>
+                        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-primary-950">Dalankotha Intelligence</span>
                     </div>
                     
                     <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-neutral-900 tracking-tight leading-[1.1]">
@@ -333,7 +333,7 @@ export default function CostCalculator() {
                         transition={{ delay: 0.2 }}
                         className="lg:col-span-12 xl:col-span-7 h-full"
                     >
-                        <Card className="border-none shadow-[0_40px_80px_-15px_rgba(0,0,0,0.15)] rounded-[3rem] overflow-hidden bg-primary-950 text-white relative min-h-[700px] flex flex-col">
+                        <Card className="border-none shadow-[0_40px_80px_-15px_rgba(0,0,0,0.15)] rounded-[3rem] overflow-hidden text-white relative min-h-[700px] flex flex-col" style={{ backgroundColor: '#001F3F' }}>
                             {/* Animated background glow */}
                             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary-600/30 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 animate-pulse-slow" />
                             <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-500/20 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2 animate-pulse-slow" />

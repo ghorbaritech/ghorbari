@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ghorbari_partner/shared/widgets/glass_card.dart';
+import 'package:dalankotha_partner/shared/widgets/glass_card.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

@@ -1,5 +1,5 @@
-import 'package:ghorbari_consumer/core/network/supabase_service.dart';
-import 'package:ghorbari_consumer/shared/models/service_item.dart';
+import 'package:Dalankotha_consumer/core/network/supabase_service.dart';
+import 'package:Dalankotha_consumer/shared/models/service_item.dart';
 
 abstract class ServiceRemoteDataSource {
   Future<List<ServiceItem>> getServices({String? categoryId});
@@ -35,7 +35,7 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
         unitType: unit,
         imageUrl: icon ?? '',
         categoryId: cat['parent_id'] ?? '',
-        providerId: 'ghorbari',
+        providerId: 'dalankotha',
         rating: 4.8,
       );
     }).toList();

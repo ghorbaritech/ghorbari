@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ghorbari_consumer/shared/models/product.dart';
+import 'package:dalankotha_consumer/shared/models/product.dart';
 
 void main() {
   test('Parses Product from JSON', () {

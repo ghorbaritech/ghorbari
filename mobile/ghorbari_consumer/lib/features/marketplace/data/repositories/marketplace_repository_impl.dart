@@ -1,7 +1,7 @@
-import 'package:ghorbari_consumer/shared/models/category.dart';
-import 'package:ghorbari_consumer/shared/models/product.dart';
-import 'package:ghorbari_consumer/features/marketplace/domain/repositories/marketplace_repository.dart';
-import 'package:ghorbari_consumer/features/marketplace/data/datasources/marketplace_remote_data_source.dart';
+import 'package:Dalankotha_consumer/shared/models/category.dart';
+import 'package:Dalankotha_consumer/shared/models/product.dart';
+import 'package:Dalankotha_consumer/features/marketplace/domain/repositories/marketplace_repository.dart';
+import 'package:Dalankotha_consumer/features/marketplace/data/datasources/marketplace_remote_data_source.dart';
 
 class MarketplaceRepositoryImpl implements MarketplaceRepository {
   final MarketplaceRemoteDataSource remoteDataSource;

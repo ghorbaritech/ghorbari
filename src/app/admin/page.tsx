@@ -24,6 +24,8 @@ import Link from 'next/link'
 export default function AdminDashboard() {
     const [requests, setRequests] = useState<any[]>([])
     const [designers, setDesigners] = useState<any[]>([])
+    const [lastActivity, setLastActivity] = useState<any[]>([])
+    const [pendingAssignId, setPendingAssignId] = useState<string | null>(null)
     const [stats, setStats] = useState({
         totalUsers: 0,
         activeProjects: 0,
@@ -40,7 +42,7 @@ export default function AdminDashboard() {
         async function fetchData() {
             try {
                 // Fetch service requests
-                const { data: reqs, error: reqError } = await supabase.from('service_requests').select('*').order('created_at', { ascending: false })
+                const { data: reqs, error: reqError } = await supabase.from('service_requests').select('*').order('created_at', { ascending: false }).limit(50)
                 if (reqError && Object.keys(reqError).length > 0) {
                     console.error('Service Requests Fetch Error:', reqError)
                 }
@@ -52,15 +54,28 @@ export default function AdminDashboard() {
                 }
 
                 // Fetch general stats
-                const { count: userCount, error: countError } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
-                if (countError && Object.keys(countError).length > 0) {
-                    console.error('Profiles Count Error:', countError)
-                }
+                const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
+
+                // Fetch real total revenue from confirmed orders
+                const { data: revenueData } = await supabase
+                    .from('orders')
+                    .select('total_amount')
+                    .eq('status', 'confirmed')
+
+                const totalRevenue = (revenueData || []).reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0)
+
+                // Fetch last 3 partner activity entries
+                const { data: activity } = await supabase
+                    .from('partner_activity_log')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(3)
 
                 if (!isMounted) return
 
                 setRequests(reqs || [])
                 setDesigners(des || [])
+                setLastActivity(activity || [])
 
                 const activeProjects = (reqs || []).filter((r: any) => r.status === 'in_progress').length
                 const pendingReqs = (reqs || []).filter((r: any) => r.status === 'pending_assignment').length
@@ -69,7 +84,7 @@ export default function AdminDashboard() {
                     totalUsers: userCount || 0,
                     activeProjects,
                     pendingRequests: pendingReqs,
-                    totalSales: 0
+                    totalSales: totalRevenue
                 })
             } catch (err: any) {
                 if (err && Object.keys(err).length > 0) {
@@ -82,13 +97,19 @@ export default function AdminDashboard() {
     }, [])
 
     const handleAssign = async (designerId: string) => {
+        if (pendingAssignId !== designerId) {
+            // First click: highlight selection for confirmation
+            setPendingAssignId(designerId)
+            return
+        }
+        // Second click: confirmed — execute assignment
         setIsAssigning(true)
         const result = await assignDesigner(selectedRequest.id, designerId)
         if (result.success) {
-            // Refresh requests
-            const { data: updatedReqs } = await supabase.from('service_requests').select('*').order('created_at', { ascending: false })
+            const { data: updatedReqs } = await supabase.from('service_requests').select('*').order('created_at', { ascending: false }).limit(50)
             setRequests(updatedReqs || [])
             setSelectedRequest(null)
+            setPendingAssignId(null)
         }
         setIsAssigning(false)
     }
@@ -98,8 +119,8 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto space-y-10">
                 <header className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-extrabold text-white tracking-tight italic">Platform Orchestrator</h1>
-                        <p className="text-neutral-400 font-medium">Monitoring the Ghorbari ecosystem & service workflows</p>
+                        <h1 className="text-3xl font-extrabold text-white tracking-tight">Platform Orchestrator</h1>
+                        <p className="text-neutral-400 font-medium">Monitoring the Dalankotha ecosystem &amp; service workflows</p>
                     </div>
                     {/* Only show for Admin role */}
                     <div className="flex gap-4">
@@ -193,7 +214,7 @@ export default function AdminDashboard() {
                                             <div className="flex items-center gap-6">
                                                 <div className="text-right">
                                                     <p className="text-[10px] font-bold text-neutral-500 uppercase">Assigned To</p>
-                                                    <p className="text-sm font-bold text-white">Sarah Chen Studio</p>
+                                                    <p className="text-sm font-bold text-white">{designers.find(d => d.id === req.assigned_designer_id)?.company_name || 'Assigned Partner'}</p>
                                                 </div>
                                                 <Button
                                                     onClick={() => setSchedulingRequest(req)}
@@ -226,22 +247,28 @@ export default function AdminDashboard() {
                         <h2 className="text-xl font-bold text-white">Ecosystem Status</h2>
                         <Card className="p-6 border-neutral-800 bg-neutral-900/50 shadow-sm rounded-3xl backdrop-blur-sm">
                             <div className="space-y-6">
-                                <div className="flex gap-4">
-                                    <div className="w-1 h-12 bg-emerald-500 rounded-full" />
-                                    <div>
-                                        <p className="font-bold text-white">Sarah Chen Design</p>
-                                        <p className="text-xs text-neutral-500 font-medium">Completed SR-2024-0005</p>
-                                        <p className="text-[10px] font-bold text-emerald-400 uppercase mt-1">Status: Active</p>
+                                {lastActivity.length > 0 ? lastActivity.map((activity: any) => (
+                                    <div key={activity.id} className="flex gap-4">
+                                        <div className={`w-1 h-12 rounded-full ${activity.type === 'completed' ? 'bg-emerald-500' : 'bg-orange-500'}`} />
+                                        <div>
+                                            <p className="font-bold text-white">{activity.partner_name || 'Partner'}</p>
+                                            <p className="text-xs text-neutral-500 font-medium">{activity.description}</p>
+                                            <p className={`text-[10px] font-bold uppercase mt-1 ${activity.type === 'completed' ? 'text-emerald-400' : 'text-orange-400'}`}>
+                                                Status: {activity.status || 'Active'}
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex gap-4">
-                                    <div className="w-1 h-12 bg-orange-500 rounded-full" />
-                                    <div>
-                                        <p className="font-bold text-white">Build Materials Co.</p>
-                                        <p className="text-xs text-neutral-500 font-medium">New product listing pending</p>
-                                        <p className="text-xs font-bold text-orange-400 uppercase mt-1">Status: Action Required</p>
+                                )) : (
+                                    <div className="space-y-6">
+                                        <div className="flex gap-4 opacity-50">
+                                            <div className="w-1 h-12 bg-neutral-700 rounded-full" />
+                                            <div>
+                                                <p className="font-bold text-neutral-400 text-sm">No recent activity</p>
+                                                <p className="text-xs text-neutral-600 font-medium">Partner events will appear here</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </Card>
                     </div>
@@ -264,15 +291,23 @@ export default function AdminDashboard() {
                                 {designers.map((designer) => (
                                     <div
                                         key={designer.id}
-                                        className="p-6 border-2 border-neutral-800 bg-neutral-950/50 rounded-3xl hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer flex justify-between items-center group"
+                                        className={`p-6 border-2 rounded-3xl transition-all cursor-pointer flex justify-between items-center group ${
+                                            pendingAssignId === designer.id
+                                                ? 'border-blue-500/80 bg-blue-500/10'
+                                                : 'border-neutral-800 bg-neutral-950/50 hover:border-blue-500/50 hover:bg-blue-500/5'
+                                        }`}
                                         onClick={() => handleAssign(designer.id)}
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="w-14 h-14 bg-neutral-800 rounded-2xl flex items-center justify-center font-black text-neutral-400 group-hover:bg-blue-500/20 group-hover:text-blue-400 border border-neutral-700 group-hover:border-blue-500/30">
+                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black border transition-colors ${
+                                                pendingAssignId === designer.id
+                                                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                                    : 'bg-neutral-800 text-neutral-400 border-neutral-700 group-hover:bg-blue-500/20 group-hover:text-blue-400 group-hover:border-blue-500/30'
+                                            }`}>
                                                 {designer.company_name?.[0] || 'D'}
                                             </div>
                                             <div>
-                                                <h3 className="font-black text-white group-hover:text-blue-400 transition-colors">{designer.company_name}</h3>
+                                                <h3 className={`font-black transition-colors ${ pendingAssignId === designer.id ? 'text-blue-400' : 'text-white group-hover:text-blue-400' }`}>{designer.company_name}</h3>
                                                 <p className="text-xs text-neutral-500 font-bold uppercase">{designer.specializations?.join(' • ') || 'General'}</p>
                                                 <div className="flex items-center gap-1 mt-1">
                                                     <CheckCircle2 className="w-3 h-3 text-emerald-500" />
@@ -282,9 +317,13 @@ export default function AdminDashboard() {
                                         </div>
                                         <Button
                                             disabled={isAssigning}
-                                            className="bg-neutral-800 hover:bg-blue-600 text-white font-bold rounded-xl group-hover:shadow-lg group-hover:shadow-blue-900/20"
+                                            className={`font-bold rounded-xl transition-all ${
+                                                pendingAssignId === designer.id
+                                                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30'
+                                                    : 'bg-neutral-800 hover:bg-blue-600 text-white'
+                                            }`}
                                         >
-                                            Assign
+                                            {pendingAssignId === designer.id ? '✓ Confirm' : 'Select'}
                                         </Button>
                                     </div>
                                 ))}

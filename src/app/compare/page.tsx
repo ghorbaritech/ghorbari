@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart, X, Check, Minus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/store/unifiedCartStore";
 
 export default function ComparePage() {
     const { compareList, removeFromCompare } = useCompare();

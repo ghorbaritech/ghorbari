@@ -1,6 +1,6 @@
 {
-    "name": "ghorbari_consumer",
-    "short_name": "ghorbari_consumer",
+    "name": "dalankotha_consumer",
+    "short_name": "dalankotha_consumer",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

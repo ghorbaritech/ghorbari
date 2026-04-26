@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:ghorbari_consumer/shared/models/product.dart';
+import 'package:Dalankotha_consumer/shared/models/product.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/screens/cart_screen.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/screens/cart_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class ProductCard extends StatelessWidget {

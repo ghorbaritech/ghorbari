@@ -40,7 +40,7 @@ export async function getServiceItems(categoryId?: string) {
 export async function getServiceItemsByCategories(categoryIds: string[]) {
     if (!categoryIds || categoryIds.length === 0) return [];
 
-    // In Ghorbari, specific service items are stored as level 2 product_categories of type 'service'
+    // In Dalankotha, specific service items are stored as level 2 product_categories of type 'service'
     const supabase = createClient();
     const { data: catData, error } = await supabase
         .from('product_categories')

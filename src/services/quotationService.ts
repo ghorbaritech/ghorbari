@@ -96,7 +96,7 @@ export async function acceptQuote(type: QuoteType, id: string, amount: number) {
     return data;
 }
 
-export async function createProductInquiry(inquiry: any) {
+export async function createProductInquiry(inquiry: Record<string, unknown>) {
     const supabase = createClient();
     // Logic to insert into product_inquiries
     // Generate simple ID like INQ-{Random}

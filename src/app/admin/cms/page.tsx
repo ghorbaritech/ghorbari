@@ -2305,7 +2305,7 @@ export default function CMSPage() {
                                     <Settings className="w-5 h-5 text-emerald-500" />
                                     Step 6: Designer Route Selection
                                 </h3>
-                                <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest mt-1 ml-8">Ghorbari vs Profile Route options</p>
+                                <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest mt-1 ml-8">Dalankotha vs Profile Route options</p>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4">

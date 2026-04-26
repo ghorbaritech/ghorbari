@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:ghorbari_consumer/shared/models/service_item.dart';
+import 'package:Dalankotha_consumer/shared/models/service_item.dart';
 
 abstract class ServiceState extends Equatable {
   const ServiceState();

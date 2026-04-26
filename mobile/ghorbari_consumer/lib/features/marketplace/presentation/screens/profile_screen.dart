@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/core/theme/ghorbari_theme.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_event.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Dalankotha_consumer/core/theme/Dalankotha_theme.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_event.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_state.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -89,8 +89,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 50,
-                  backgroundColor: GhorbariTheme.primaryBlue.withOpacity(0.1),
-                  child: const Icon(Icons.person, size: 50, color: GhorbariTheme.primaryBlue),
+                  backgroundColor: DalankothaTheme.primaryBlue.withOpacity(0.1),
+                  child: const Icon(Icons.person, size: 50, color: DalankothaTheme.primaryBlue),
                 ),
                 const SizedBox(height: 32),
                 
@@ -137,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       : ElevatedButton(
                           onPressed: _saveProfile,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: GhorbariTheme.primaryBlue,
+                            backgroundColor: DalankothaTheme.primaryBlue,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(

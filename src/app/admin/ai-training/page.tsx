@@ -118,7 +118,7 @@ export default function AITrainingPanel() {
                     <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">
                         Training <span className="text-blue-500">Data</span>
                     </h1>
-                    <p className="text-neutral-500 font-medium">Teach your Ghorbari Assistant how to reply to queries.</p>
+                    <p className="text-neutral-500 font-medium">Teach your Dalankotha Assistant how to reply to queries.</p>
                 </div>
 
                 <Button onClick={() => handleOpenModal()} className="bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-white h-12 px-6 rounded-xl font-black uppercase text-xs tracking-widest shadow-sm transition-all flex items-center gap-2">

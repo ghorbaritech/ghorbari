@@ -284,7 +284,7 @@ export async function getHomeContent() {
                     descriptionEn: "How would you like to proceed with your designer?",
                     descriptionBn: "আপনি কিভাবে আপনার ডিজাইনারের সাথে এগিয়ে যেতে চান?",
                     options: [
-                        { id: 'ghorbari', label: "ঘরবাড়ি দ্বারা প্রস্তাবিত", labelEn: "Suggested by Ghorbari", descriptionEn: "We will assign the best verified expert for your needs automatically.", descriptionBn: "আমরা অটোমেটিক আপনার প্রয়োজনের জন্য সেরা যাচাইকৃত বিশেষজ্ঞ নিয়োগ করব।", icon: "CheckCircle2" },
+                        { id: 'Dalankotha', label: "ঘরবাড়ি দ্বারা প্রস্তাবিত", labelEn: "Suggested by Dalankotha", descriptionEn: "We will assign the best verified expert for your needs automatically.", descriptionBn: "আমরা অটোমেটিক আপনার প্রয়োজনের জন্য সেরা যাচাইকৃত বিশেষজ্ঞ নিয়োগ করব।", icon: "CheckCircle2" },
                         { id: 'list', label: "প্রোফাইল থেকে চয়ন করুন", labelEn: "Choose from Profiles", descriptionEn: "Browse eligible designer profiles and select one yourself.", descriptionBn: "যোগ্য ডিজাইনার প্রোফাইল ব্রাউজ করুন এবং নিজেই একটি নির্বাচন করুন।", icon: "UserCircle" }
                     ]
                 }

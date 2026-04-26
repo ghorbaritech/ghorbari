@@ -372,3 +372,4 @@ export function CategoryDialog({ isOpen, onClose, category, allCategories, onSuc
         </Dialog>
     );
 }
+

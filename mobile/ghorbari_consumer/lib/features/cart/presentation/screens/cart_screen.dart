@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_state.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_event.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_state.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/screens/checkout_screen.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/screens/checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});

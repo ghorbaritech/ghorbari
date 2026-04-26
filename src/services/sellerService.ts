@@ -4,7 +4,7 @@ export async function getSellerProfile(sellerId: string) {
     const supabase = await createClient()
 
     // 1. Resolve seller & base user — accept either seller.id OR profiles.id
-    let sellerData: any = null
+    let sellerData: Record<string, unknown> | null = null
 
     // First try finding directly by seller ID
     let { data: directSeller } = await supabase
@@ -26,7 +26,7 @@ export async function getSellerProfile(sellerId: string) {
     }
 
     // 2. Try fetching Designer Profile (if any) linked to this user
-    let designerData: any = null
+    let designerData: Record<string, unknown> | null = null
     let targetUserId = sellerData?.user_id || sellerId;
 
     // Path A: seller found → look up designer by seller's user_id
@@ -117,24 +117,24 @@ export async function getSellerProfile(sellerId: string) {
     // 4. Compute stats
     const totalOrders = (sellerData?.total_orders || orders.length) + (designerData?.completed_projects || 0)
     const totalOrderValue = sellerData?.total_order_value ||
-        orders.reduce((sum: number, o: any) => sum + (parseFloat(o.total_amount) || 0), 0)
+        orders.reduce((sum: number, o: { total_amount: string }) => sum + (parseFloat(o.total_amount) || 0), 0)
 
     let avgRating = 0;
     if (reviews.length > 0) {
-        avgRating = reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length;
+        avgRating = reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / reviews.length;
     } else {
         avgRating = designerData?.rating || sellerData?.rating || 0;
     }
 
     const ratingBreakdown = [5, 4, 3, 2, 1].map(star => ({
         star,
-        count: reviews.filter((r: any) => r.rating === star).length
+        count: reviews.filter((r: { rating: number }) => r.rating === star).length
     }))
 
     // Choose primary display metadata (prefer seller, fallback to designer)
     const businessName = sellerData?.business_name || designerData?.company_name || 'Partner Profile';
     const businessType = sellerData?.business_type || (designerData ? 'Design Studio' : 'Retailer');
-    const bio = sellerData?.bio || designerData?.bio || 'Verified partner on the Ghorbari platform.';
+    const bio = sellerData?.bio || designerData?.bio || 'Verified partner on the Dalankotha platform.';
     const shopPhotoUrl = sellerData?.shop_photo_url || designerData?.portfolio_url || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=1200&q=80';
     const galleryUrls = sellerData?.gallery_urls?.length > 0
         ? sellerData.gallery_urls

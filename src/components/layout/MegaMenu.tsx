@@ -287,3 +287,4 @@ export function MegaMenu({ language, triggerLabel }: MegaMenuProps) {
         </>
     );
 }
+

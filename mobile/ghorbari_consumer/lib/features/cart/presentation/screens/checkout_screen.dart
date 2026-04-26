@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_consumer/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_bloc.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_event.dart';
-import 'package:ghorbari_consumer/features/bookings/presentation/bloc/booking_state.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_event.dart';
-import 'package:ghorbari_consumer/features/cart/presentation/bloc/cart_state.dart';
-import 'package:ghorbari_consumer/shared/models/booking.dart';
-import 'package:ghorbari_consumer/features/marketplace/presentation/screens/main_screen.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Dalankotha_consumer/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_bloc.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_event.dart';
+import 'package:Dalankotha_consumer/features/bookings/presentation/bloc/booking_state.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_event.dart';
+import 'package:Dalankotha_consumer/features/cart/presentation/bloc/cart_state.dart';
+import 'package:Dalankotha_consumer/shared/models/booking.dart';
+import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/main_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -144,7 +144,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
              barrierDismissible: false,
              builder: (context) => AlertDialog(
                title: const Row(children: [Icon(Icons.check_circle, color: Colors.green), SizedBox(width: 8), Text('Order Successful')]),
-               content: const Text('Your order has been submitted for admin review. Thank you for shopping with Ghorbari!'),
+               content: const Text('Your order has been submitted for admin review. Thank you for shopping with Dalankotha!'),
                actions: [
                  TextButton(
                    onPressed: () {

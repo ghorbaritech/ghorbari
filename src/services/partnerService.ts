@@ -69,7 +69,7 @@ export async function getPartnerById(id: string) {
         roles,
         rating: Math.max(seller?.rating || 0, designer?.rating || 0, serviceProvider?.rating || 0) || 5.0, // Default/Max
         reviews: 0, // TODO: Implement reviews aggregation
-        bio: designer?.bio || serviceProvider?.bio || "Verified Ghorbari Partner",
+        bio: designer?.bio || serviceProvider?.bio || "Verified Dalankotha Partner",
         tags: Array.from(new Set(tags)).slice(0, 8), // Unique tags, max 8
         details: {
             seller,

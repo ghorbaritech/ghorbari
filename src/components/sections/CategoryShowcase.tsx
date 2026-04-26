@@ -38,7 +38,7 @@ export function CategoryShowcase({ title, category, bgClass = "bg-white", link =
                 }
 
                 if (data && data.length > 0) {
-                    // Filter out dummy sellers (e.g., Ghorbari Demo Store)
+                    // Filter out dummy sellers (e.g., Dalankotha Demo Store)
                     // Based on investigation, demo store IDs contain 'f1f1' or '886d'
                     const realProducts = data.filter(p =>
                         p.seller_id !== 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1' &&

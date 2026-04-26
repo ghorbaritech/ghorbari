@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ghorbari_partner/features/auth/presentation/bloc/auth_state.dart';
-import 'package:ghorbari_partner/shared/widgets/glass_card.dart';
+import 'package:Dalankotha_partner/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Dalankotha_partner/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Dalankotha_partner/shared/widgets/glass_card.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -12,8 +12,8 @@ class ProfileScreen extends StatelessWidget {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         String name = 'Partner';
-        String email = 'partner@ghorbari.com';
-        String businessName = 'Ghorbari Business';
+        String email = 'partner@Dalankotha.com';
+        String businessName = 'Dalankotha Business';
         
         if (state is AuthAuthenticated) {
           name = state.partner.profile?.businessName ?? name;

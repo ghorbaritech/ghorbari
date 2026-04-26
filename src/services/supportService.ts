@@ -46,7 +46,7 @@ export async function getUserTickets(userId: string) {
     return data as SupportTicket[];
 }
 
-export async function getAllTickets(filters?: any) {
+export async function getAllTickets(filters?: Record<string, unknown>) {
     const supabase = createClient();
     let query = supabase
         .from('support_tickets')
@@ -63,7 +63,7 @@ export async function getAllTickets(filters?: any) {
 
 export async function updateTicketStatus(id: string, status: string, assignedTo?: string) {
     const supabase = createClient();
-    const updates: any = { status };
+    const updates: Record<string, unknown> = { status };
     if (assignedTo) updates.assigned_to = assignedTo;
 
     const { data, error } = await supabase

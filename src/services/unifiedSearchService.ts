@@ -9,7 +9,7 @@ export interface UnifiedSearchResult {
     price?: number;
     image?: string;
     category_name?: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
     originalType?: string; // from DB
 }
 

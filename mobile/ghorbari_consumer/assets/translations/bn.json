@@ -49,7 +49,7 @@
   "design_and_planning": "আর্কিটেকচারাল ডিজাইন এবং প্ল্যানিং",
   "our_current_deals": "আমাদের বর্তমান অফার",
   "explore": "देखুন",
-  "ghorbari_services": "ঘরবাড়ি সার্ভিসেস",
+  "dalankotha_services": "ঘরবাড়ি সার্ভিসেস",
   "all_services": "সকল সার্ভিস",
   "services_found": "টি সার্ভিস পাওয়া গেছে",
   "no_services_found": "আপনার ফিল্টারের সাথে মিলে এমন কোনো সার্ভিস নেই।",
@@ -119,5 +119,13 @@
   "unit_cft": "সিএফটি",
   "unit_ltr": "লিটার",
   "unit_sqft": "বর্গফুট",
-  "unit_points": "পয়েন্ট"
+  "unit_points": "পয়েন্ট",
+  "calc_mode_building": "বিল্ডিং নির্মাণ",
+  "calc_mode_interior": "ইন্টেরিয়র ডিজাইন",
+  "calc_woodwork": "কাঠ ও ক্যাবিনেট",
+  "calc_ceiling": "ফলস সিলিং",
+  "calc_lighting": "লাইট ও ইলেকট্রিক্যাল",
+  "calc_mat_board": "বোর্ড / কাঠ",
+  "calc_mat_ceiling": "সিলিং বোর্ড",
+  "unit_sheets": "শীট"
 }

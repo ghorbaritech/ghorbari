@@ -17,7 +17,7 @@ export default async function AdminOnboardingPage() {
             <div className="max-w-6xl mx-auto">
                 <header className="mb-10">
                     <h1 className="text-3xl font-bold text-gray-900 italic">Platform Orchestrator</h1>
-                    <p className="text-gray-500">Manage the Ghorbari Ecosystem - Onboard New Partners</p>
+                    <p className="text-gray-500">Manage the Dalankotha Ecosystem - Onboard New Partners</p>
                 </header>
 
                 <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">

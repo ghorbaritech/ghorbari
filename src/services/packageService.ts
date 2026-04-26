@@ -139,7 +139,7 @@ export async function deleteDesignPackage(id: string) {
     const { error } = await supabase.from('design_packages').delete().eq('id', id);
     if (error) throw error;
 }
-export async function getDesignPackageById(id: string, supabaseClient?: any) {
+export async function getDesignPackageById(id: string, supabaseClient?: unknown) {
     // Basic UUID validation
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) return null;

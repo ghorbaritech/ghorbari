@@ -124,3 +124,4 @@ export function RateOrderModal({ orderId, sellerId, onSuccess, children }: RateO
         </Dialog>
     )
 }
+

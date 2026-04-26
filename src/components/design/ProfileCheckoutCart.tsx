@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useDesignCart } from './DesignCartProvider';
 import { X, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { PreBookingModal } from './PreBookingModal';
-import { useCart } from '@/context/CartContext';
+import { useCart } from "@/store/unifiedCartStore";
 
 interface ProfileCheckoutCartProps {
     designerId: string;
@@ -40,7 +40,7 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [], s
 
     const price = selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    // Apply bundle logic specific to Ghorbari if needed
+    // Apply bundle logic specific to Dalankotha if needed
     // Note: developerOption is not defined in the provided context, assuming it's meant to be passed or derived.
     // For now, this line might cause a linting error if developerOption is not available.
     // if (developerOption === 'both' && selectedPackageIds.length === 2 && price === 100000) {
@@ -340,3 +340,4 @@ export function ProfileCheckoutCart({ designerId, providerName, packages = [], s
         </div>
     );
 }
+

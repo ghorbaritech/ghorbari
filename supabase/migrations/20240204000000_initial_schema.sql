@@ -1,4 +1,4 @@
--- GHORBARI PLATFORM - INITIAL CONSOLIDATED SCHEMA
+-- DALANKOTHA PLATFORM - INITIAL CONSOLIDATED SCHEMA
 -- This schema covers: User Profiles, Designer/Seller Management, Marketplace, 
 -- Service Workflows, Messaging, Cart Persistence, and Transaction Auditing.
 

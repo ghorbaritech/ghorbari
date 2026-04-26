@@ -15,15 +15,13 @@ const hindSiliguri = Hind_Siliguri({
 });
 
 export const metadata: Metadata = {
-  title: "Ghorbari - Design & Construction Marketplace",
+  title: "Dalankotha - Design & Construction Marketplace",
   description: "Full-stack architectural design and construction marketplace.",
   icons: {
     icon: "/favicon.svg",
   },
 };
 
-import { CartProvider } from "@/context/CartContext";
-import { ServiceCartProvider } from "@/context/ServiceCartContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 import { CompareProvider } from "@/context/CompareContext";
@@ -43,8 +41,8 @@ export default function RootLayout({
         className={`${dmSans.variable} ${hindSiliguri.variable} antialiased font-sans pb-16 md:pb-0`}
       >
         <LanguageProvider>
-          <CartProvider>
-            <ServiceCartProvider>
+          
+            
               <CompareProvider>
                 {children}
                 <Toaster />
@@ -52,8 +50,8 @@ export default function RootLayout({
                 <SonnerToaster />
                 <AIChatAssistant />
               </CompareProvider>
-            </ServiceCartProvider>
-          </CartProvider>
+            
+          
         </LanguageProvider>
       </body>
     </html>

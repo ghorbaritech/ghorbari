@@ -10,7 +10,8 @@ import {
     TrendingUp,
     CheckCircle2,
     Clock,
-    Star
+    Star,
+    ShieldAlert
 } from 'lucide-react'
 
 export default function ProviderDashboard() {
@@ -24,7 +25,7 @@ export default function ProviderDashboard() {
             if (user) {
                 const { data: sp } = await supabase
                     .from('service_providers')
-                    .select('*')
+                    .select('*, profile:profiles(onboarding_status)')
                     .eq('user_id', user.id)
                     .single()
                 setProvider(sp)
@@ -40,8 +41,19 @@ export default function ProviderDashboard() {
                 <h1 className="text-3xl font-black text-neutral-900 italic tracking-tight uppercase">
                     {provider?.business_name || 'Provider Console'}
                 </h1>
-                <div className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                    Service Partner
+                <div className="flex gap-2">
+                    {provider?.profile?.onboarding_status === 'verified' ? (
+                        <div className="bg-green-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-green-100 italic">
+                            <CheckCircle2 className="w-3 h-3" /> Verified Partner
+                        </div>
+                    ) : (
+                        <div className="bg-amber-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-amber-100 italic">
+                            <Clock className="w-3 h-3" /> Verification Pending
+                        </div>
+                    )}
+                    <div className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-blue-100 italic">
+                        Service Partner
+                    </div>
                 </div>
             </div>
 

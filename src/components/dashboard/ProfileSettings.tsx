@@ -167,3 +167,4 @@ export default function ProfileSettings({ table, title, description }: ProfileSe
         </div>
     );
 }
+

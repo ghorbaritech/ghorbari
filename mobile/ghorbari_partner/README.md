@@ -1,4 +1,4 @@
-# ghorbari_partner
+# dalankotha_partner
 
 A new Flutter project.
 

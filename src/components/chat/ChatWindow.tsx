@@ -156,3 +156,4 @@ export function ChatWindow({ contextId, contextType, otherUserId, title, classNa
 }
 
 import { MessageSquare } from "lucide-react";
+

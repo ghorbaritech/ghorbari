@@ -26,9 +26,17 @@ export default async function DashboardLayout({
     if (!user) {
         // Redirect to login if accessing dashboard without session
         return (
-            <div className="flex min-h-screen items-center justify-center">
-                <p>Redirecting...</p>
-                <script dangerouslySetInnerHTML={{ __html: `window.location.href = '/login'` }} />
+            <div className="flex min-h-screen items-center justify-center bg-neutral-950 text-white">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm font-bold uppercase tracking-widest animate-pulse">Redirecting to Authorization...</p>
+                </div>
+                <script dangerouslySetInnerHTML={{ __html: `
+                    const isPartner = window.location.pathname.includes('/partner') || 
+                                      window.location.pathname.includes('/designer') || 
+                                      window.location.pathname.includes('/service-provider');
+                    window.location.href = isPartner ? '/partner' : '/login';
+                ` }} />
             </div>
         )
     }

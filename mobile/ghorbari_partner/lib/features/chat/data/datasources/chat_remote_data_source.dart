@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ghorbari_partner/core/network/supabase_service.dart';
-import 'package:ghorbari_partner/shared/models/chat.dart';
+import 'package:dalankotha_partner/core/network/supabase_service.dart';
+import 'package:dalankotha_partner/shared/models/chat.dart';
 
 abstract class ChatRemoteDataSource {
   Future<List<ChatConversation>> getConversations(String currentUserId);

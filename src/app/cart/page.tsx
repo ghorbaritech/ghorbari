@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Trash2, Minus, Plus, ArrowRight, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/store/unifiedCartStore";
 
 export default function CartPage() {
     const { items, updateQuantity, removeItem, totalAmount, grandTotal, platformCharges, vatAmount } = useCart();

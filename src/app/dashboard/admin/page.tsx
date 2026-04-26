@@ -79,7 +79,7 @@ export default function AdminDashboard() {
                 <header className="flex justify-between items-center mb-10">
                     <div>
                         <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight italic">Platform Orchestrator</h1>
-                        <p className="text-neutral-500 font-medium">Monitoring the Ghorbari ecosystem & service workflows</p>
+                        <p className="text-neutral-500 font-medium">Monitoring the Dalankotha ecosystem & service workflows</p>
                     </div>
                     <div className="flex gap-4">
                         <Link href="/admin/onboarding">

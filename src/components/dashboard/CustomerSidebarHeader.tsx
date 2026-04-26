@@ -286,3 +286,4 @@ export function CustomerSidebarHeader({ profile, email }: { profile: any, email:
         </Dialog>
     )
 }
+

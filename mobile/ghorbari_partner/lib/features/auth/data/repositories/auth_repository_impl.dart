@@ -1,6 +1,6 @@
-import 'package:ghorbari_partner/features/auth/domain/entities/partner_entity.dart';
-import 'package:ghorbari_partner/features/auth/domain/repositories/auth_repository.dart';
-import 'package:ghorbari_partner/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:dalankotha_partner/features/auth/domain/entities/partner_entity.dart';
+import 'package:dalankotha_partner/features/auth/domain/repositories/auth_repository.dart';
+import 'package:dalankotha_partner/features/auth/data/datasources/auth_remote_data_source.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
