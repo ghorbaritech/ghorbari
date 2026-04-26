@@ -1,6 +1,4 @@
 import PartnerOnboardingForm from '@/components/forms/PartnerOnboardingForm'
-import { Button } from '@/components/ui/button'
-import { generateDemoPartners } from './actions'
 import { createClient } from '@/utils/supabase/server'
 
 export default async function AdminOnboardingPage() {
@@ -31,14 +29,6 @@ export default async function AdminOnboardingPage() {
                                 <span className="font-bold text-primary-600 ml-1">Service Provider</span>.
                             </p>
                         </div>
-                        <form action={async () => {
-                            'use server'
-                            await generateDemoPartners()
-                        }}>
-                            <Button variant="outline" size="sm" className="border-dashed border-red-300 text-red-500 hover:bg-red-50 hover:text-red-700">
-                                🛠️ Generate Demo Data (Dev Only)
-                            </Button>
-                        </form>
                     </div>
 
                     <PartnerOnboardingForm availableCategories={categories || []} />
