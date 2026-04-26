@@ -13,7 +13,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.43",
+    "@ai-sdk/google": "^3.0.64",
     "@ai-sdk/react": "^3.0.118",
     "@google-cloud/aiplatform": "^6.5.0",
     "@radix-ui/react-avatar": "^1.1.11",
