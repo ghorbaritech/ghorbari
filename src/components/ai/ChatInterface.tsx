@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import dynamic from 'next/dynamic';
 import { toast } from "sonner";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const PDFDownloadLink = dynamic(
     () => import('@react-pdf/renderer').then(mod => mod.PDFDownloadLink),
@@ -375,11 +377,13 @@ export default function ChatInterface({ userId, userName = "User" }: ChatInterfa
                                     )
                                 ))}
 
-                                {/* Text content */}
+                                {/* Text content rendered as Markdown */}
                                 {textContent && (
-                                    <span className="whitespace-pre-wrap text-sm leading-relaxed">
-                                        {textContent}
-                                    </span>
+                                    <div className="chat-markdown prose prose-sm max-w-none">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                            {textContent}
+                                        </ReactMarkdown>
+                                    </div>
                                 )}
 
                                 {/* Cost estimate result card */}

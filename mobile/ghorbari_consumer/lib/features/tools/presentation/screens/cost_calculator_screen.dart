@@ -8,14 +8,15 @@ import 'package:Dalankotha_consumer/features/tools/logic/calculation_logic.dart'
 enum CalculatorMode { building, interior }
 
 class CostCalculatorScreen extends StatefulWidget {
-  const CostCalculatorScreen({super.key});
+  final CalculatorMode? initialMode;
+  const CostCalculatorScreen({super.key, this.initialMode});
 
   @override
   State<CostCalculatorScreen> createState() => _CostCalculatorScreenState();
 }
 
 class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
-  CalculatorMode _mode = CalculatorMode.building;
+  late CalculatorMode _mode;
   double _inputValue = 1200.0;
   LandUnit _unit = LandUnit.sqft;
   int _floors = 1;
@@ -24,6 +25,12 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
   FoundationType _foundation = FoundationType.shallow;
 
   final TextEditingController _areaController = TextEditingController(text: '1200');
+
+  @override
+  void initState() {
+    super.initState();
+    _mode = widget.initialMode ?? CalculatorMode.building;
+  }
 
   @override
   void dispose() {

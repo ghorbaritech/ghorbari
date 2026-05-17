@@ -27,6 +27,8 @@ import 'package:Dalankotha_consumer/shared/models/service_item.dart';
 import 'package:Dalankotha_consumer/core/utils/location_service.dart';
 import 'package:Dalankotha_consumer/shared/widgets/ai_assistant_widget.dart';
 import 'package:Dalankotha_consumer/features/marketplace/presentation/screens/search_screen.dart';
+import 'package:Dalankotha_consumer/features/assistant/presentation/screens/ai_consultant_screen.dart';
+import 'package:Dalankotha_consumer/features/tools/presentation/screens/cost_calculator_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int)? onNavigateToTab;
@@ -276,102 +278,138 @@ class _HomeScreenState extends State<HomeScreen> {
               color: bgColor,
             ),
             clipBehavior: Clip.antiAlias,
-            child: Row(
+            child: Stack(
               children: [
-                // Left Side: Text Content
-                Expanded(
-                  flex: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 0, 20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (subtitle != null && subtitle.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              subtitle.toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 12),
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            height: 1.1,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                // Background Image (Full width)
+                if (slide.image != null && slide.image!.isNotEmpty)
+                  Positioned.fill(
+                    child: kIsWeb 
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(color: bgColor),
+                        )
+                      : CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          errorWidget: (context, url, error) => Container(color: bgColor),
+                          placeholder: (context, url) => Container(color: bgColor),
                         ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            final link = slide.link?.toLowerCase() ?? '';
-                            if (link.contains('design')) widget.onNavigateToTab?.call(1);
-                            else if (link.contains('service')) widget.onNavigateToTab?.call(2);
-                            else widget.onNavigateToTab?.call(3);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: bgColor,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            minimumSize: const Size(0, 36),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            isBn ? 'আরও জানুন' : 'Learn More',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                ),
                 
-                // Right Side: Image
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    padding: const EdgeInsets.all(12.0),
-                    alignment: Alignment.center,
-                    child: Builder(
-                      builder: (context) {
-                        // Priority 1: Use dynamic CMS image if available
-                        if (slide.image != null && slide.image!.isNotEmpty) {
-                          return kIsWeb 
-                            ? Image.network(
-                                imageUrl,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) => _buildLocalHeroFallback(title),
-                              )
-                            : CachedNetworkImage(
-                                imageUrl: imageUrl,
-                                fit: BoxFit.contain,
-                                errorWidget: (context, url, error) => _buildLocalHeroFallback(title),
-                                placeholder: (context, url) => Center(child: CircularProgressIndicator(color: Colors.white.withOpacity(0.3), strokeWidth: 2)),
-                              );
-                        }
-                        
-                        // Priority 2: Local fallback
-                        return _buildLocalHeroFallback(title);
-                      }
+                // Content Overlay (Only show text if it's not a placeholder like "Brand Banner")
+                if (!(title.toLowerCase().contains('brand') || title.toLowerCase().contains('banner')))
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Colors.black.withOpacity(0.7),
+                            Colors.black.withOpacity(0.0),
+                          ],
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(20.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (subtitle != null && subtitle.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      subtitle.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  title,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.1,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 12),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    final link = slide.link?.toLowerCase() ?? '';
+                                    if (link.contains('ai')) {
+                                      Navigator.push(context, MaterialPageRoute(builder: (context) => AIConsultantScreen()));
+                                    } else if (link.contains('calculator')) {
+                                      Navigator.push(context, MaterialPageRoute(builder: (context) => CostCalculatorScreen(initialMode: CalculatorMode.interior)));
+                                    } else if (link.contains('design')) {
+                                      widget.onNavigateToTab?.call(1);
+                                    } else if (link.contains('service')) {
+                                      widget.onNavigateToTab?.call(2);
+                                    } else {
+                                      widget.onNavigateToTab?.call(3);
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: bgColor,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    minimumSize: const Size(0, 32),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                                    elevation: 0,
+                                  ),
+                                  child: Text(
+                                    isBn ? 'আরও জানুন' : 'Learn More',
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Spacer(flex: 2),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                
+                // If it IS a Brand Banner with a link, make the whole card tappable
+                if (slide.link != null && slide.link!.isNotEmpty)
+                  Positioned.fill(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          final link = slide.link?.toLowerCase() ?? '';
+                          if (link.contains('ai')) {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => AIConsultantScreen()));
+                          } else if (link.contains('calculator')) {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => CostCalculatorScreen(initialMode: CalculatorMode.interior)));
+                          } else if (link.contains('design')) {
+                            widget.onNavigateToTab?.call(1);
+                          } else if (link.contains('service')) {
+                            widget.onNavigateToTab?.call(2);
+                          } else {
+                            widget.onNavigateToTab?.call(3);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
@@ -598,45 +636,58 @@ class _HomeScreenState extends State<HomeScreen> {
                 return Container(
                   width: 140,
                   margin: const EdgeInsets.only(right: 16),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          shape: BoxShape.circle,
-                        ),
-                        child: item.icon != null && item.icon!.isNotEmpty
-                            ? _buildIconOrImage(item.icon!, label: item.label)
-                            : _getFallbackIcon(item.label, size: 36),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        item.label, 
-                        style: const TextStyle(
-                          color: Colors.white, 
-                          fontSize: 14, 
-                          fontWeight: FontWeight.w600
-                        ), 
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (item.subtitle != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(
-                            item.subtitle!, 
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.6), 
-                              fontSize: 11
-                            ), 
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                  child: InkWell(
+                    onTap: () {
+                      final l = item.label.toLowerCase();
+                      if (l.contains('calculator') || l.contains('ক্যালকুলেটর')) {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => CostCalculatorScreen()));
+                      } else if (l.contains('ai') || l.contains('পরামর্শক')) {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => AIConsultantScreen()));
+                      } else if (l.contains('soil') || l.contains('মাটি')) {
+                        // Support soil test navigation if screen exists
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            shape: BoxShape.circle,
                           ),
+                          child: item.icon != null && item.icon!.isNotEmpty
+                              ? _buildIconOrImage(item.icon!, label: item.label)
+                              : _getFallbackIcon(item.label, size: 36),
                         ),
-                    ]
+                        const SizedBox(height: 16),
+                        Text(
+                          item.label, 
+                          style: const TextStyle(
+                            color: Colors.white, 
+                            fontSize: 14, 
+                            fontWeight: FontWeight.w600
+                          ), 
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (item.subtitle != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              item.subtitle!, 
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.6), 
+                                fontSize: 11
+                              ), 
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ]
+                    ),
                   )
                 );
               },

@@ -36,11 +36,11 @@ class _BrandingWidgetState extends State<BrandingWidget> {
     
     return Container(
       width: isBanner ? double.infinity : null,
-      padding: isBanner ? const EdgeInsets.all(24) : EdgeInsets.zero,
+      padding: isBanner ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24) : EdgeInsets.zero,
       decoration: isBanner ? BoxDecoration(
-        color: Colors.white,
+        color: Colors.black, // Changed to black as per user screenshot
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
       ) : null,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -48,16 +48,16 @@ class _BrandingWidgetState extends State<BrandingWidget> {
           useLocalOnly 
               ? Image.asset(
                   'assets/images/dalankotha_logo_v3.png',
-                  width: isBanner ? widget.size * 2 : widget.size,
-                  height: isBanner ? widget.size : widget.size,
-                  fit: BoxFit.contain,
+                  width: isBanner ? double.infinity : widget.size,
+                  height: isBanner ? null : widget.size,
+                  fit: isBanner ? BoxFit.fitWidth : BoxFit.contain,
                 )
               : (dynamicUrl != null
                   ? CachedNetworkImage(
                       imageUrl: dynamicUrl,
-                      width: widget.size,
-                      height: widget.size,
-                      fit: BoxFit.contain,
+                      width: isBanner ? double.infinity : widget.size,
+                      height: isBanner ? null : widget.size,
+                      fit: isBanner ? BoxFit.fitWidth : BoxFit.contain,
                       errorWidget: (context, url, error) => _buildFallback(),
                     )
                   : _buildFallback()),
@@ -66,10 +66,10 @@ class _BrandingWidgetState extends State<BrandingWidget> {
             Text(
               'QUALITY CONSTRUCTION ECOSYSTEM',
               style: TextStyle(
-                fontSize: isBanner ? 14 : widget.size * 0.15,
+                fontSize: isBanner ? 12 : widget.size * 0.15,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 2.0,
-                color: const Color(0xFF64748B),
+                color: isBanner ? Colors.white70 : const Color(0xFF64748B),
               ),
             ),
           ],

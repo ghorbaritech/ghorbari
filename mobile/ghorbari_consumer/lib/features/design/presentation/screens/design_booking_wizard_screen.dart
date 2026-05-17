@@ -412,11 +412,21 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
       });
 
       if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Design booking created successfully!'),
-            backgroundColor: Colors.green,
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Congratulations!'),
+            content: const Text('Your design booking has been received. Our consultant will contact you shortly.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context); // Close wizard
+                },
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
       }
@@ -1716,13 +1726,20 @@ class _DesignBookingWizardScreenState extends State<DesignBookingWizardScreen> {
       case 8:  canNext = selectedDesignerId != null; break;
       case 9:  canNext = propertyType.isNotEmpty; break;
       case 10:
-        if (propertyType.toLowerCase().contains('building')) canNext = houseType.isNotEmpty && intFloors.isNotEmpty && numberOfLayouts.isNotEmpty;
-        else if (propertyType == 'Full Apartment') {
+        final pt = propertyType.toLowerCase();
+        if (pt.contains('building')) {
+          canNext = houseType.isNotEmpty && intFloors.isNotEmpty && numberOfLayouts.isNotEmpty;
+        } else if (pt.contains('apartment')) {
           final unit = layoutsData[0]['unitDetails'];
-          canNext = aptSize.isNotEmpty && unit['beds'].isNotEmpty;
+          canNext = aptSize.isNotEmpty && (unit['beds']?.isNotEmpty ?? false);
+        } else if (pt.contains('specific') || pt.contains('area')) {
+          canNext = specificAreaType.isNotEmpty && 
+                    (specificAreaType != 'Bed Room' || bedRoomType.isNotEmpty) && 
+                    designScope.isNotEmpty && 
+                    roomSize.isNotEmpty;
+        } else {
+          canNext = true;
         }
-        else if (propertyType == 'Specific Area') canNext = specificAreaType.isNotEmpty && (specificAreaType != 'Bed Room' || bedRoomType.isNotEmpty) && designScope.isNotEmpty && roomSize.isNotEmpty;
-        else canNext = true;
         break;
       case 11: canNext = structuralVibe.isNotEmpty; break;
       case 12: canNext = designerSelectionType.isNotEmpty; break;

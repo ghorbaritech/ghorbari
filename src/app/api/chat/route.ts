@@ -1,5 +1,5 @@
 // Build Trigger: 2026-04-26T02:10:00Z
-import { streamText, tool } from 'ai';
+import { streamText, tool, convertToModelMessages } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
@@ -28,10 +28,11 @@ const SYSTEM_PROMPT = `
 You are **Dalankotha AI** — the expert construction and interior design consultant for দালানকোঠা, Bangladesh's premium construction and renovation platform.
 
 ## Personality
-- Warm, direct, knowledgeable — like a "trusted big brother" who is a design and construction expert.
-- Respond ONLY in the language the user writes in:
-  - Bengali or Banglish → always reply in বাংলা script (e.g. write "আপনি", never "apni")
-  - English → reply in English
+- **Expert Professional**: You are a seasoned construction veteran and a visionary interior designer. You don't just answer questions; you provide insights, pros/cons, and technical context.
+- **Trusted Advisor**: Warm but authoritative. Use terms like "মজবুত ভিত্তি" (strong foundation), "টেকসই ডিজাইন" (sustainable design), and "মানসম্মত উপকরণ" (quality materials).
+- **Responsive Language**: Respond in the language the user writes in:
+  - Bengali or Banglish → always reply in বাংলা script.
+  - English → reply in English.
 
 ---
 
@@ -100,17 +101,31 @@ After the image: write 3–4 bullets explaining what changed and suggest the mat
 
 ---
 
-### FLOW 5: User asks about Dalankotha services or booking
-1. Identify which service (design / permit / construction / materials)
-2. Explain in 2–3 sentences what it includes
-3. Link: "/services এ বুক করুন"
+### FLOW 6: General Construction/Design Questions (The "Expert" Mode)
+1. Provide a detailed, multi-paragraph response.
+2. If the user asks for prices (e.g., cement, rod, bricks):
+   - Do NOT say "I don't know."
+   - Provide a typical **price range** based on your expert training (e.g., "সাধারণত সিমেন্টের দাম ৫৩০-৫৮০ টাকার মধ্যে থাকে").
+   - Mention factors that affect price (brand, location, transportation).
+   - Suggest checking the Dalankotha Marketplace for current deals.
+3. Use technical details (e.g., mentioning 500W vs 400W rod, or SBU vs normal bricks) to establish authority.
 
 ---
 
+## Construction & Material Intelligence
+- **Cement**: Popular brands in Bangladesh include Shah, Holcim, Bashundhara, Seven Rings. Prices fluctuate between ৳500–৳600 per bag.
+- **Rod (MS Bar)**: 60-grade, 72.5-grade, 500W. Prices are around ৳95,000–৳105,000 per ton.
+- **Bricks**: No. 1 bricks, Picket, Auto-bricks. Prices vary by region.
+
 ## Guardrails
-- Never give binding cost quotes — always say "আনুমানিক" (estimate) and recommend a formal BOQ
-- Never approve structural changes without: "অবশ্যই একজন সার্টিফাইড স্ট্রাকচারাল ইঞ্জিনিয়ারের সাথে নিশ্চিত করুন"
-- Never fabricate RAJUK/CDA rules
+- Never give legally binding cost quotes — always use the term "আনুমানিক বাজার মূল্য" (approximate market value).
+- Always recommend a formal BOQ (Bill of Quantities) for project planning.
+- Never approve structural changes without a disclaimer to consult a certified structural engineer.
+- Never fabricate specific RAJUK/CDA rules; instead, explain the general process and link to official resources.
+
+## Proactive Engagement
+- Always end your response with a relevant follow-up question to keep the consultation moving forward (e.g., "আপনার কি এই স্টাইলটি পছন্দ হয়েছে, নাকি আমি অন্য কোনো রঙ নিয়ে কাজ করব?").
+- Actively suggest the next logical step (e.g., "খরচ তো জানলেন, এখন কি আমরা লেআউট নিয়ে কথা বলব?").
 `;
 
 export async function POST(req: Request) {
@@ -198,65 +213,21 @@ export async function POST(req: Request) {
                 .catch(() => { /* non-fatal */ });
         }
 
-        // --- 3. Sanitize Messages for Gemini API ---
+        // --- 3. Convert Messages ---
         const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '';
-        if (!apiKey) throw new Error('Gemini API key is not set');
-
-        const google = createGoogleGenerativeAI({ apiKey });
-
-        /**
-         * 🔄 Standard Core Message Converter
-         * Hand-rolled for maximum control over tool results and images.
-         */
-        const coreMessages: any[] = [];
-        for (const m of uiMessages) {
-            const content: any[] = [];
-            
-            // Add text if present
-            const text = typeof m.content === 'string' ? m.content : '';
-            if (text.trim()) content.push({ type: 'text', text });
-
-            // Add images from attachments
-            if (m.experimental_attachments?.length) {
-                for (const att of m.experimental_attachments) {
-                    if (att.contentType?.startsWith('image/') && att.url) {
-                        content.push({ type: 'image', image: att.url });
-                    }
-                }
-            }
-
-            // Add tool calls (only for assistant role to avoid protocol errors)
-            if (m.role === 'assistant' && m.toolInvocations?.length) {
-                for (const ti of m.toolInvocations) {
-                    if (ti.state === 'call' || ti.state === 'result') {
-                        content.push({
-                            type: 'tool-call',
-                            toolCallId: ti.toolCallId,
-                            toolName: ti.toolName,
-                            args: ti.args
-                        });
-                    }
-                }
-            }
-
-            if (content.length > 0) {
-                coreMessages.push({ role: m.role, content });
-            }
-
-            // Results must accompany the conversation as 'tool' role messages
-            const results = m.toolInvocations?.filter((ti: any) => ti.state === 'result');
-            if (results?.length) {
-                coreMessages.push({
-                    role: 'tool',
-                    content: results.map((ti: any) => ({
-                        type: 'tool-result',
-                        toolCallId: ti.toolCallId,
-                        toolName: ti.toolName,
-                        result: ti.result
-                    }))
-                });
-            }
-        }
+        const google = createGoogleGenerativeAI({ 
+            apiKey,
+        });
+        
+        // Fix for convertToModelMessages bug: ensure 'parts' exists
+        const sanitizedMessages = uiMessages.map((m: any) => ({
+            ...m,
+            parts: m.parts || [
+                { type: 'text', text: typeof m.content === 'string' ? m.content : '' }
+            ]
+        }));
+        
+        const coreMessages = await convertToModelMessages(sanitizedMessages);
 
         console.log(`[AI Route] Sending ${coreMessages.length} messages to Gemini. Last role: ${coreMessages[coreMessages.length - 1]?.role}`);
 
@@ -385,7 +356,9 @@ export async function POST(req: Request) {
 
         // --- 5. Stream Response ---
         const result = streamText({
-            model: google('gemini-1.5-flash'),
+            model: google('gemini-2.5-flash', {
+                useSearchGrounding: true,
+            }),
             messages: coreMessages,
             system: systemPrompt,
             maxSteps: 8,

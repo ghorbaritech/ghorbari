@@ -127,3 +127,51 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Chat Markdown Styling */
+.chat-markdown {
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.chat-markdown p {
+    margin-bottom: 0.75rem;
+}
+
+.chat-markdown p:last-child {
+    margin-bottom: 0;
+}
+
+.chat-markdown ul, .chat-markdown ol {
+    margin-bottom: 0.75rem;
+    padding-left: 1.25rem;
+}
+
+.chat-markdown li {
+    margin-bottom: 0.25rem;
+}
+
+.chat-markdown ul {
+    list-style-type: disc;
+}
+
+.chat-markdown ol {
+    list-style-type: decimal;
+}
+
+.chat-markdown strong {
+    font-weight: 700;
+    color: inherit;
+}
+
+.chat-markdown a {
+    color: #2563eb;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.chat-markdown h1, .chat-markdown h2, .chat-markdown h3 {
+    font-weight: 800;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
