@@ -28,6 +28,7 @@ export function Navbar() {
     const [locationName, setLocationName] = useState<string>("Set Location");
     const [isLocating, setIsLocating] = useState(false);
     const pathname = usePathname();
+    const [isMounted, setIsMounted] = useState(false);
 
     // Search Autocomplete State
     const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -72,6 +73,7 @@ export function Navbar() {
         getBrandingSettings().then(settings => {
             if (settings?.logo_dark_url) setLogoUrl(settings.logo_dark_url);
         });
+        setIsMounted(true);
     }, []);
 
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -300,7 +302,7 @@ export function Navbar() {
                             <span className="text-[10px] font-bold text-neutral-500 group-hover:text-primary-600 uppercase tracking-tighter transition-colors">
                                 {t.cart || "Cart"}
                             </span>
-                            {itemCount > 0 && (
+                            {isMounted && itemCount > 0 && (
                                 <span className="absolute top-1 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white text-[10px] font-bold border-2 border-white shadow-sm">
                                     {itemCount}
                                 </span>
@@ -317,7 +319,7 @@ export function Navbar() {
                     <nav className="flex items-center gap-10 h-12 text-[12px] font-bold text-neutral-700 uppercase tracking-wide whitespace-nowrap">
                         <MegaMenu language={language} />
                         <Link
-                            href="/services/design/book"
+                            href="/services/design"
                             aria-current={pathname.startsWith('/services/design') ? 'page' : undefined}
                             className={`hover:text-primary-600 transition-colors py-3 border-b-2 hover:border-primary-600 ${
                                 pathname.startsWith('/services/design') ? 'text-primary-600 border-primary-600' : 'border-transparent'
@@ -383,7 +385,7 @@ export function Navbar() {
                                 AI Consultant
                                 <ArrowRight className="w-4 h-4 ml-auto" />
                             </Link>
-                            <Link href="/services/design/book" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between py-2 border-b">
+                            <Link href="/services/design" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between py-2 border-b">
                                 {t.nav_design_planning} <ArrowRight className="w-4 h-4 text-neutral-300" />
                             </Link>
                             <Link href="/tools/cost-calculator" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between py-2 border-b">

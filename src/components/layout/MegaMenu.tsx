@@ -27,7 +27,7 @@ const TYPE_CONFIG = {
         icon: PencilRuler,
         color: "text-emerald-600",
         bg: "bg-emerald-50",
-        href: "/services/design/book",
+        href: "/services/design",
     },
     product: {
         label_en: "Products",
@@ -107,7 +107,7 @@ export function MegaMenu({ language, triggerLabel }: MegaMenuProps) {
 
     const getHref = (cat: Category) => {
         const id = cat.slug || cat.id;
-        if (cat.type === "design") return `/services/design/book`;
+        if (cat.type === "design") return `/services/design`;
         if (cat.type === "product") return `/products?category=${id}`;
         return `/services?category=${id}`;
     };

@@ -86,7 +86,7 @@ export async function getServiceItemById(id: string, supabaseClient?: any) {
         .from('service_items')
         .select('*, category:product_categories(id, name, name_bn, parent_id)')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error("Error fetching service item:", error);

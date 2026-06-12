@@ -44,7 +44,7 @@ export default function CheckoutPage() {
                     setFormData({
                         fullName: prof.full_name || "",
                         email: prof.email || "",
-                        phone: prof.phone_number || "",
+                        phone: prof.phone_number || prof.phone || user.phone || user.user_metadata?.phone_number || "",
                         address: prof.address || "",
                         city: "",
                         postalCode: ""

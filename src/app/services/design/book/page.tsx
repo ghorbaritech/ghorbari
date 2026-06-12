@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense, ReactNode } from 'react';
+import { useState, useEffect, Suspense, ReactNode, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Wind, Car, Trees, Waves, Dog, Baby, FileText, CheckCircle2, UserCircle, Map as MapIcon, Hash, CheckSquare, Star } from 'lucide-react';
+import { Ruler, Home, Building2, PaintBucket, BedDouble, Bath, Wind, Car, Trees, Waves, Dog, Baby, FileText, CheckCircle2, UserCircle, Map as MapIcon, Hash, CheckSquare, Star, Trash2, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { designTranslations } from '@/utils/designTranslations';
 import { useLanguage } from '@/context/LanguageContext';
@@ -37,6 +37,7 @@ type LayoutData = {
     numberOfUnits: string;
     unitsAreIdentical: string; // 'yes' | 'no'
     unitDetails: UnitDetail[];
+    sameAsLayout1?: boolean;
 };
 
 const UnitInputs = ({ 
@@ -44,13 +45,15 @@ const UnitInputs = ({
     unit, 
     updateFn, 
     t, 
-    title 
+    title,
+    disabled = false
 }: { 
     layoutId: number, 
     unit: any, 
     updateFn: (lid: number, uid: number, field: string, val: string) => void, 
     t: any, 
-    title: string 
+    title: string,
+    disabled?: boolean
 }) => {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -63,6 +66,7 @@ const UnitInputs = ({
                         placeholder="2" 
                         className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
                         value={unit.bedrooms} 
+                        disabled={disabled}
                         onChange={(e) => updateFn(layoutId, unit.unitId, 'bedrooms', e.target.value)} 
                     />
                 </div>
@@ -73,6 +77,7 @@ const UnitInputs = ({
                         placeholder="1" 
                         className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
                         value={unit.drawingRooms} 
+                        disabled={disabled}
                         onChange={(e) => updateFn(layoutId, unit.unitId, 'drawingRooms', e.target.value)} 
                     />
                 </div>
@@ -83,6 +88,7 @@ const UnitInputs = ({
                         placeholder="2" 
                         className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
                         value={unit.bathrooms} 
+                        disabled={disabled}
                         onChange={(e) => updateFn(layoutId, unit.unitId, 'bathrooms', e.target.value)} 
                     />
                 </div>
@@ -93,6 +99,7 @@ const UnitInputs = ({
                         placeholder="2" 
                         className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
                         value={unit.balcony} 
+                        disabled={disabled}
                         onChange={(e) => updateFn(layoutId, unit.unitId, 'balcony', e.target.value)} 
                     />
                 </div>
@@ -103,6 +110,7 @@ const UnitInputs = ({
                         placeholder="1" 
                         className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
                         value={unit.kitchen} 
+                        disabled={disabled}
                         onChange={(e) => updateFn(layoutId, unit.unitId, 'kitchen', e.target.value)} 
                     />
                 </div>
@@ -113,6 +121,7 @@ const UnitInputs = ({
                         placeholder="1" 
                         className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
                         value={unit.diningRooms} 
+                        disabled={disabled}
                         onChange={(e) => updateFn(layoutId, unit.unitId, 'diningRooms', e.target.value)} 
                     />
                 </div>
@@ -122,6 +131,7 @@ const UnitInputs = ({
                         placeholder="e.g. Study room, Store" 
                         className="h-12 bg-white rounded-xl font-bold border-neutral-200" 
                         value={unit.additionalSpace} 
+                        disabled={disabled}
                         onChange={(e) => updateFn(layoutId, unit.unitId, 'additionalSpace', e.target.value)} 
                     />
                 </div>
@@ -171,6 +181,9 @@ function DesignBookingWizard() {
 
     // Eligible designers fetched from DB
     const [designers, setDesigners] = useState<any[]>([]);
+
+    const [uploadedDocs, setUploadedDocs] = useState<File[]>([]);
+    const docInputRef = useRef<HTMLInputElement>(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -417,8 +430,73 @@ function DesignBookingWizard() {
         }
     }, [formData.numberOfLayouts]);
 
+    const toggleSameAsLayout1 = (layoutId: number, checked: boolean) => {
+        setFormData(prev => {
+            const layout1 = prev.layoutsData.find(l => l.id === 1);
+            return {
+                ...prev,
+                layoutsData: prev.layoutsData.map(l => {
+                    if (l.id === layoutId) {
+                        if (checked && layout1) {
+                            return {
+                                ...l,
+                                sameAsLayout1: true,
+                                isGarage: layout1.isGarage,
+                                numberOfUnits: layout1.numberOfUnits,
+                                unitsAreIdentical: layout1.unitsAreIdentical,
+                                unitDetails: JSON.parse(JSON.stringify(layout1.unitDetails))
+                            };
+                        } else {
+                            return {
+                                ...l,
+                                sameAsLayout1: false
+                            };
+                        }
+                    }
+                    return l;
+                })
+            };
+        });
+    };
+
+    useEffect(() => {
+        const layout1 = formData.layoutsData.find(l => l.id === 1);
+        if (!layout1) return;
+
+        let changed = false;
+        const newLayouts = formData.layoutsData.map(l => {
+            if (l.id > 1 && l.sameAsLayout1) {
+                const isIdentical = 
+                    l.isGarage === layout1.isGarage &&
+                    l.numberOfUnits === layout1.numberOfUnits &&
+                    l.unitsAreIdentical === layout1.unitsAreIdentical &&
+                    JSON.stringify(l.unitDetails) === JSON.stringify(layout1.unitDetails);
+
+                if (!isIdentical) {
+                    changed = true;
+                    return {
+                        ...l,
+                        isGarage: layout1.isGarage,
+                        numberOfUnits: layout1.numberOfUnits,
+                        unitsAreIdentical: layout1.unitsAreIdentical,
+                        unitDetails: JSON.parse(JSON.stringify(layout1.unitDetails))
+                    };
+                }
+            }
+            return l;
+        });
+
+        if (changed) {
+            setFormData(prev => ({
+                ...prev,
+                layoutsData: newLayouts
+            }));
+        }
+    }, [formData.layoutsData]);
+
     const showsDesignQ = formData.designerOption === 'design' || formData.designerOption === 'both';
     const skippableListStep = formData.designerSelectionType === 'Dalankotha';
+    const showsDesignInspiration = serviceTypes.includes('interior');
 
 
 
@@ -470,12 +548,21 @@ function DesignBookingWizard() {
             let roomInspirationUrl = await uploadFile(formData.roomInspiration);
             let roomImageUrl = await uploadFile(formData.roomImage);
 
+            const uploadedDocsUrls = [];
+            for (const file of uploadedDocs) {
+                const url = await uploadFile(file);
+                if (url) {
+                    uploadedDocsUrls.push({ name: file.name, url });
+                }
+            }
+
             const payloadDetails: any = {
                 ...formData,
                 tentativePrice,
                 aptInspirationUrl,
                 roomInspirationUrl,
                 roomImageUrl,
+                uploadedDocsUrls,
                 preferredSchedule: {
                     date: formData.preferredDate,
                     time: formData.preferredTime
@@ -515,74 +602,6 @@ function DesignBookingWizard() {
             setLoading(false);
         }
     };
-    const nextStep = () => {
-        if (step === 0) {
-            if (serviceTypes.includes('structural-architectural')) setStep(1);
-            else setStep(8);
-        } else if (step === 1) {
-            if (formData.designerOption === 'design') setStep(3);
-            else setStep(2);
-        } else if (step === 2) {
-            setStep(3);
-        } else if (step === 3) {
-            if (showsDesignQ) setStep(4);
-            else if (serviceTypes.includes('interior')) setStep(8);
-            else setStep(11);
-        } else if (step >= 4 && step <= 6) {
-            setStep(step + 1);
-        } else if (step === 7) {
-            if (serviceTypes.includes('interior')) setStep(8);
-            else setStep(11);
-        } else if (step >= 8 && step <= 10) {
-            // Interior flow
-            if (step === 8) setStep(9);
-            else if (step === 9) {
-                if (formData.propertyType === 'Full building') setStep(10);
-                else setStep(11);
-            } else if (step === 10) {
-                setStep(11);
-            }
-        } else if (step === 11) {
-            // Designer route decision (Structural)
-            if (serviceTypes.includes('interior')) setStep(13);
-            else if (skippableListStep) setStep(13);
-            else setStep(12);
-        } else if (step === 12) {
-            setStep(13);
-        } else if (step === 13) {
-            setStep(14);
-        }
-    };
-
-    const prevStep = () => {
-        if (step === 1) setStep(0);
-        else if (step >= 2 && step <= 7) {
-            if (step === 4) setStep(3);
-            else setStep(step - 1);
-        } else if (step === 8) {
-            if (serviceTypes.includes('structural-architectural')) {
-                if (showsDesignQ) setStep(7);
-                else setStep(3);
-            } else setStep(0);
-        } else if (step === 9) {
-            setStep(8);
-        } else if (step === 10) {
-            setStep(9);
-        } else if (step === 11) {
-            if (formData.propertyType === 'Full building') setStep(10);
-            else setStep(9);
-        } else if (step === 12) {
-            setStep(11);
-        } else if (step === 13) {
-            if (serviceTypes.includes('interior')) setStep(11);
-            else if (skippableListStep) setStep(11);
-            else setStep(12);
-        } else if (step === 14) {
-            setStep(13);
-        }
-    };
-
-
     const getActiveSteps = () => {
         const active: number[] = [0];
         if (serviceTypes.includes('structural-architectural')) {
@@ -596,15 +615,40 @@ function DesignBookingWizard() {
         if (serviceTypes.includes('interior')) {
             active.push(8, 9);
             if (formData.propertyType === 'Full building' && (formData.houseType === 'Multistoried' || formData.houseType === 'Duplex')) active.push(10);
+        }
+        if (showsDesignInspiration) {
             active.push(11);
         }
-        active.push(13, 14);
+        active.push(12);
+        if (formData.designerSelectionType === 'list') {
+            active.push(13);
+        }
+        active.push(14, 15);
         return active;
     };
 
     const activeSteps = getActiveSteps();
     const totalSteps = activeSteps.length;
     const visualStep = activeSteps.indexOf(step) + 1;
+
+    const nextStep = () => {
+        if (step === 4 || step === 9) {
+            if (!formData.numberOfLayouts || parseInt(formData.numberOfLayouts) < 1) {
+                updateData('numberOfLayouts', '1');
+            }
+        }
+        const currentIndex = activeSteps.indexOf(step);
+        if (currentIndex !== -1 && currentIndex < activeSteps.length - 1) {
+            setStep(activeSteps[currentIndex + 1]);
+        }
+    };
+
+    const prevStep = () => {
+        const currentIndex = activeSteps.indexOf(step);
+        if (currentIndex > 0) {
+            setStep(activeSteps[currentIndex - 1]);
+        }
+    };
 
     const timeSlots = [
         "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
@@ -755,6 +799,7 @@ function DesignBookingWizard() {
     }
 
     if (step === 3) {
+        const hasCheckedDocs = formData.hasDeed || formData.hasSurveyMap || formData.hasMutation || formData.hasTax || formData.hasNID || formData.hasLandPermit || formData.hasBuildingApproval;
         return (
             <MainLayout>
                 <WizardStep
@@ -766,17 +811,61 @@ function DesignBookingWizard() {
                     totalSteps={totalSteps}
                     onNext={nextStep}
                     onBack={prevStep}
+                    canNext={!hasCheckedDocs || uploadedDocs.length > 0}
                 >
-                    <div className="space-y-6">
-                        <div className="border-2 border-dashed border-neutral-300 rounded-3xl p-12 text-center bg-neutral-50/50 hover:bg-neutral-50 transition-colors cursor-pointer group">
+                    <div className="space-y-6 animate-in fade-in duration-500">
+                        <div 
+                            onClick={() => docInputRef.current?.click()}
+                            className="border-2 border-dashed border-neutral-300 rounded-3xl p-12 text-center bg-neutral-50/50 hover:bg-neutral-50 transition-colors cursor-pointer group"
+                        >
                             <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                                 <FileText className="w-8 h-8 text-primary-600" />
                             </div>
                             <h4 className="font-black text-neutral-900 mb-1 uppercase tracking-wider text-sm">UPLOAD DOCUMENTS</h4>
                             <p className="text-neutral-500 text-xs font-bold">Max file size: 10MB</p>
-                            <Input type="file" multiple className="hidden" />
+                            <input 
+                                type="file" 
+                                multiple 
+                                ref={docInputRef}
+                                onChange={(e) => {
+                                    if (e.target.files) {
+                                        setUploadedDocs(prev => [...prev, ...Array.from(e.target.files!)]);
+                                    }
+                                }}
+                                className="hidden" 
+                            />
                         </div>
                         <p className="text-center text-xs font-bold text-neutral-400 italic">Click to browse or drag and drop files here</p>
+
+                        {uploadedDocs.length > 0 && (
+                            <div className="space-y-3 mt-6">
+                                <Label className="text-xs font-black text-neutral-400 uppercase tracking-widest">Selected Files</Label>
+                                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                                    {uploadedDocs.map((file, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-3 bg-white border border-neutral-100 rounded-xl shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <FileText className="w-5 h-5 text-neutral-500" />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm font-bold text-neutral-800 truncate max-w-[200px] sm:max-w-xs">{file.name}</p>
+                                                    <p className="text-[10px] text-neutral-400 font-medium">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                                                </div>
+                                            </div>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setUploadedDocs(prev => prev.filter((_, i) => i !== idx));
+                                                }}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </WizardStep>
             </MainLayout>
@@ -795,7 +884,7 @@ function DesignBookingWizard() {
                     totalSteps={totalSteps}
                     onNext={nextStep}
                     onBack={prevStep}
-                    canNext={!!(formData.landAreaInput && formData.landAreaUnit && formData.initialFloors && formData.numberOfLayouts)}
+                    canNext={!!(formData.landAreaInput && formData.landAreaUnit && formData.initialFloors)}
                 >
                     <div className="max-w-2xl mx-auto space-y-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -883,6 +972,19 @@ function DesignBookingWizard() {
                             {formData.layoutsData.map((layout) => (
                                 <TabsContent key={layout.id} value={String(layout.id)} className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                     <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm space-y-6">
+                                        {layout.id > 1 && (
+                                            <div className="flex items-center gap-3 p-4 bg-primary-50/50 rounded-2xl border border-primary-100/80">
+                                                <Checkbox 
+                                                    id={`same-as-layout-1-s5-${layout.id}`}
+                                                    checked={!!layout.sameAsLayout1}
+                                                    onCheckedChange={(checked) => toggleSameAsLayout1(layout.id, !!checked)}
+                                                />
+                                                <Label htmlFor={`same-as-layout-1-s5-${layout.id}`} className="text-sm font-bold text-primary-950 cursor-pointer">
+                                                    {lang === 'bn' ? 'লেআউট ১ এর মতো একই' : 'Same as Layout 1'}
+                                                </Label>
+                                            </div>
+                                        )}
+
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100">
                                             <div className="space-y-1">
                                                 <h3 className="font-bold text-lg text-neutral-800">{t.layoutTab} {layout.id} Configuration</h3>
@@ -894,6 +996,7 @@ function DesignBookingWizard() {
                                                     <Button 
                                                         variant={layout.isGarage === 'yes' ? 'default' : 'outline'} 
                                                         size="sm" 
+                                                        disabled={!!layout.sameAsLayout1}
                                                         className={`h-8 px-4 text-xs font-bold rounded-md ${layout.isGarage === 'yes' ? 'bg-primary-900 text-white' : 'text-neutral-500'}`}
                                                         onClick={() => updateLayoutData(layout.id, 'isGarage', 'yes')}
                                                     >
@@ -902,6 +1005,7 @@ function DesignBookingWizard() {
                                                     <Button 
                                                         variant={layout.isGarage === 'no' ? 'default' : 'outline'} 
                                                         size="sm" 
+                                                        disabled={!!layout.sameAsLayout1}
                                                         className={`h-8 px-4 text-xs font-bold rounded-md ${layout.isGarage === 'no' ? 'bg-primary-900 text-white' : 'text-neutral-500'}`}
                                                         onClick={() => updateLayoutData(layout.id, 'isGarage', 'no')}
                                                     >
@@ -920,14 +1024,15 @@ function DesignBookingWizard() {
                                                             type="number" 
                                                             className="h-12 bg-neutral-50/50 border-neutral-200" 
                                                             value={layout.numberOfUnits} 
+                                                            disabled={!!layout.sameAsLayout1}
                                                             onChange={(e) => handleNumUnitsChange(layout.id, e.target.value)} 
                                                         />
                                                     </div>
                                                     <div className="space-y-3">
                                                         <Label className="font-bold text-neutral-700">{t.identicalUnitsQ}</Label>
                                                         <div className="flex gap-4">
-                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'yes' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'}`} onClick={() => updateLayoutData(layout.id, 'unitsAreIdentical', 'yes')}>{t.yes}</div>
-                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'no' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'}`} onClick={() => updateLayoutData(layout.id, 'unitsAreIdentical', 'no')}>{t.no}</div>
+                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'yes' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'} ${layout.sameAsLayout1 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`} onClick={() => !layout.sameAsLayout1 && updateLayoutData(layout.id, 'unitsAreIdentical', 'yes')}>{t.yes}</div>
+                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'no' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'} ${layout.sameAsLayout1 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`} onClick={() => !layout.sameAsLayout1 && updateLayoutData(layout.id, 'unitsAreIdentical', 'no')}>{t.no}</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -940,6 +1045,7 @@ function DesignBookingWizard() {
                                                             updateFn={updateUnitDetail} 
                                                             t={t} 
                                                             title={`${t.unitTab} Details (All ${layout.numberOfUnits} units)`}
+                                                            disabled={!!layout.sameAsLayout1}
                                                         />
                                                     ) : (
                                                         <div className="space-y-12">
@@ -951,6 +1057,7 @@ function DesignBookingWizard() {
                                                                     updateFn={updateUnitDetail} 
                                                                     t={t} 
                                                                     title={`${t.unitTab} ${idx + 1} Details`}
+                                                                    disabled={!!layout.sameAsLayout1}
                                                                 />
                                                             ))}
                                                         </div>
@@ -1039,12 +1146,30 @@ function DesignBookingWizard() {
                     onNext={nextStep}
                     onBack={prevStep}
                 >
-                    <RadioCardGroup
-                        options={getVibeOptions(lang)}
-                        selected={formData.structuralVibe}
-                        onChange={(id) => updateData('structuralVibe', id)}
-                        columns={2}
-                    />
+                    <div className="space-y-10">
+                        <RadioCardGroup
+                            options={getVibeOptions(lang)}
+                            selected={formData.structuralVibe}
+                            onChange={(id) => updateData('structuralVibe', id)}
+                            columns={2}
+                        />
+
+                        <div className="space-y-6 pt-8 border-t border-neutral-100 max-w-3xl mx-auto">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="h-4 w-4 rounded-full bg-primary-100 flex items-center justify-center">
+                                    <div className="h-2 w-2 rounded-full bg-primary-600" />
+                                </div>
+                                <Label className="text-sm font-black text-neutral-700 uppercase tracking-widest">{(t as any).yourInspirationLink || "Your Inspiration Link"}</Label>
+                            </div>
+                            <Input 
+                                type="url" 
+                                placeholder={(t as any).inspirationLinkPlaceholder || "Share open link of your inspiration"} 
+                                className="h-14 bg-white border-2 border-neutral-100 rounded-2xl px-6 focus:border-primary-600 focus:ring-0 transition-all font-medium text-neutral-600" 
+                                value={formData.inspirationLink}
+                                onChange={(e) => updateData('inspirationLink', e.target.value)}
+                            />
+                        </div>
+                    </div>
                 </WizardStep>
             </MainLayout>
         );
@@ -1093,8 +1218,8 @@ function DesignBookingWizard() {
                     onBack={prevStep}
                     canNext={
                         formData.propertyType === 'Full building' ? (
-                            formData.houseType === 'Multistoried' ? (!!formData.intAreaPerUnit && !!formData.intUnitsPerFloor && !!formData.numberOfLayouts && !!formData.intFloors) :
-                            formData.houseType === 'Duplex' ? (!!formData.intFloors && !!formData.intUnitsPerFloor && !!formData.intAreaPerUnit && !!formData.numberOfLayouts) :
+                            formData.houseType === 'Multistoried' ? (!!formData.intAreaPerUnit && !!formData.intUnitsPerFloor && !!formData.intFloors) :
+                            formData.houseType === 'Duplex' ? (!!formData.intFloors && !!formData.intUnitsPerFloor && !!formData.intAreaPerUnit) :
                             false
                         ) :
                         formData.propertyType === 'Full Apartment' ? (!!formData.aptSize && !!formData.intAreaUnit && !!formData.layoutsData[0].unitDetails[0].bedrooms) :
@@ -1353,6 +1478,19 @@ function DesignBookingWizard() {
                             {formData.layoutsData.map((layout) => (
                                 <TabsContent key={layout.id} value={String(layout.id)} className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                     <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm space-y-6">
+                                        {formData.propertyType !== 'Full Apartment' && layout.id > 1 && (
+                                            <div className="flex items-center gap-3 p-4 bg-primary-50/50 rounded-2xl border border-primary-100/80">
+                                                <Checkbox 
+                                                    id={`same-as-layout-1-s10-${layout.id}`}
+                                                    checked={!!layout.sameAsLayout1}
+                                                    onCheckedChange={(checked) => toggleSameAsLayout1(layout.id, !!checked)}
+                                                />
+                                                <Label htmlFor={`same-as-layout-1-s10-${layout.id}`} className="text-sm font-bold text-primary-950 cursor-pointer">
+                                                    {lang === 'bn' ? 'লেআউট ১ এর মতো একই' : 'Same as Layout 1'}
+                                                </Label>
+                                            </div>
+                                        )}
+
                                         {formData.propertyType !== 'Full Apartment' && (
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100">
                                                 <div className="space-y-1">
@@ -1365,6 +1503,7 @@ function DesignBookingWizard() {
                                                         <Button 
                                                             variant={layout.isGarage === 'yes' ? 'default' : 'outline'} 
                                                             size="sm" 
+                                                            disabled={!!layout.sameAsLayout1}
                                                             className={`h-8 px-4 text-xs font-bold rounded-md ${layout.isGarage === 'yes' ? 'bg-primary-900 text-white' : 'text-neutral-500'}`}
                                                             onClick={() => updateLayoutData(layout.id, 'isGarage', 'yes')}
                                                         >
@@ -1373,6 +1512,7 @@ function DesignBookingWizard() {
                                                         <Button 
                                                             variant={layout.isGarage === 'no' ? 'default' : 'outline'} 
                                                             size="sm" 
+                                                            disabled={!!layout.sameAsLayout1}
                                                             className={`h-8 px-4 text-xs font-bold rounded-md ${layout.isGarage === 'no' ? 'bg-primary-900 text-white' : 'text-neutral-500'}`}
                                                             onClick={() => updateLayoutData(layout.id, 'isGarage', 'no')}
                                                         >
@@ -1391,6 +1531,7 @@ function DesignBookingWizard() {
                                                     updateFn={updateUnitDetail} 
                                                     t={t} 
                                                     title={t.aptDetailsTitle || "Apartment Room Details"}
+                                                    disabled={!!layout.sameAsLayout1}
                                                 />
                                             </div>
                                         )}
@@ -1404,14 +1545,15 @@ function DesignBookingWizard() {
                                                             type="number" 
                                                             className="h-12 bg-neutral-50/50 border-neutral-200" 
                                                             value={layout.numberOfUnits} 
+                                                            disabled={!!layout.sameAsLayout1}
                                                             onChange={(e) => handleNumUnitsChange(layout.id, e.target.value)} 
                                                         />
                                                     </div>
                                                     <div className="space-y-3">
                                                         <Label className="font-bold text-neutral-700">{t.identicalUnitsQ}</Label>
                                                         <div className="flex gap-4">
-                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'yes' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'}`} onClick={() => updateLayoutData(layout.id, 'unitsAreIdentical', 'yes')}>{t.yes}</div>
-                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'no' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'}`} onClick={() => updateLayoutData(layout.id, 'unitsAreIdentical', 'no')}>{t.no}</div>
+                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'yes' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'} ${layout.sameAsLayout1 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`} onClick={() => !layout.sameAsLayout1 && updateLayoutData(layout.id, 'unitsAreIdentical', 'yes')}>{t.yes}</div>
+                                                            <div className={`flex-1 border text-center font-bold text-sm rounded-xl p-3 cursor-pointer transition-all ${layout.unitsAreIdentical === 'no' ? 'bg-primary-900 text-white shadow-md' : 'bg-neutral-50 text-neutral-700 border-neutral-200'} ${layout.sameAsLayout1 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`} onClick={() => !layout.sameAsLayout1 && updateLayoutData(layout.id, 'unitsAreIdentical', 'no')}>{t.no}</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1424,6 +1566,7 @@ function DesignBookingWizard() {
                                                             updateFn={updateUnitDetail} 
                                                             t={t} 
                                                             title={`${t.unitTab} Details (All ${layout.numberOfUnits} units)`}
+                                                            disabled={!!layout.sameAsLayout1}
                                                         />
                                                     ) : (
                                                         <div className="space-y-12">
@@ -1435,6 +1578,7 @@ function DesignBookingWizard() {
                                                                     updateFn={updateUnitDetail} 
                                                                     t={t} 
                                                                     title={`${t.unitTab} ${unit.unitId} Details`}
+                                                                    disabled={!!layout.sameAsLayout1}
                                                                 />
                                                             ))}
                                                         </div>
@@ -1519,11 +1663,11 @@ function DesignBookingWizard() {
         );
     }
 
-    if (step === 11) {
+    if (step === 12) {
         return (
             <MainLayout>
                 <WizardStep
-                    key={`step11-route-${lang}`}
+                    key={`step12-route-${lang}`}
                     lang={lang}
                     title={t.chooseRouteTitle}
                     description={t.chooseRouteDesc}
@@ -1546,11 +1690,11 @@ function DesignBookingWizard() {
         );
     }
 
-    if (step === 12) {
+    if (step === 13) {
         return (
             <MainLayout>
                 <WizardStep
-                    key={`step12-list-${lang}`}
+                    key={`step13-list-${lang}`}
                     lang={lang}
                     title={t.selectDesignerTitle}
                     description={t.selectDesignerDesc}
@@ -1560,11 +1704,11 @@ function DesignBookingWizard() {
                     onBack={prevStep}
                     canNext={!!formData.selectedDesignerId}
                 >
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {designers.length === 0 && (
                             <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
                                 <UserCircle className="w-16 h-16 text-neutral-200 mb-4" />
-                                <p className="font-black text-neutral-400 uppercase tracking-widest text-sm">No designers available</p>
+                                <p className="font-bold text-neutral-400 uppercase tracking-widest text-sm">No designers available</p>
                                 <p className="text-neutral-400 text-xs mt-2">Please go back and let Dalankotha suggest an expert for you.</p>
                             </div>
                         )}
@@ -1572,51 +1716,63 @@ function DesignBookingWizard() {
                             <div
                                 key={designer.id}
                                 onClick={() => updateData('selectedDesignerId', designer.id)}
-                                className={`group p-6 border-2 rounded-3xl cursor-pointer transition-all duration-300 ${
+                                className={`group p-6 bg-white border border-neutral-100 rounded-[32px] cursor-pointer transition-all duration-300 hover:shadow-xl hover:border-primary-100 flex flex-col justify-between ${
                                     formData.selectedDesignerId === designer.id
-                                        ? 'bg-primary-50 border-primary-600 shadow-xl'
-                                        : 'bg-white border-neutral-100 hover:border-primary-200'
+                                        ? 'ring-2 ring-primary-600 bg-primary-50/20 shadow-lg border-primary-200'
+                                        : ''
                                 }`}
                             >
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="w-16 h-16 bg-neutral-100 rounded-2xl flex items-center justify-center overflow-hidden">
-                                        {designer.profile?.avatar_url ? (
-                                            <img src={designer.profile.avatar_url} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <UserCircle className="w-10 h-10 text-neutral-300" />
-                                        )}
+                                <div>
+                                    <div className="flex items-start justify-between mb-6">
+                                        <div className="w-14 h-14 bg-neutral-50 rounded-2xl flex items-center justify-center border border-neutral-100 overflow-hidden shadow-inner group-hover:scale-105 transition-transform duration-300">
+                                            {designer.profile?.avatar_url ? (
+                                                <img src={designer.profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <UserCircle className="w-8 h-8 text-neutral-300" />
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 bg-amber-50/60 px-3 py-1 rounded-xl border border-amber-200/50">
+                                            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                                            <span className="text-xs font-black text-amber-700">{designer.average_rating || '4.8'}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200">
-                                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                                        <span className="text-xs font-black text-amber-700">{designer.average_rating || '4.8'}</span>
+
+                                    {/* Clickable name — opens partner profile in new tab */}
+                                    <div className="space-y-1">
+                                        <Link
+                                            href={`/partner/${designer.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="group/name inline-flex items-center gap-1.5"
+                                        >
+                                            <h3 className="font-extrabold text-neutral-800 text-base tracking-tight group-hover/name:text-primary-600 transition-colors leading-tight">
+                                                {designer.company_name}
+                                            </h3>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 mt-0.5 text-neutral-400 group-hover/name:text-primary-500 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                            </svg>
+                                        </Link>
+
+                                        <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+                                            {designer.experience_years} {t.yearsExp}
+                                        </p>
                                     </div>
                                 </div>
 
-                                {/* Clickable name — opens partner profile in new tab */}
-                                <Link
-                                    href={`/partner/${designer.id}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="group/name inline-flex items-start gap-1.5"
-                                >
-                                    <h3 className="font-black text-neutral-900 text-lg uppercase tracking-tight group-hover/name:text-primary-600 transition-colors leading-tight">
-                                        {designer.company_name}
-                                    </h3>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 mt-1 text-neutral-400 group-hover/name:text-primary-500 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                    </svg>
-                                </Link>
-
-                                <p className="text-[10px] font-black text-neutral-400 mt-2 uppercase tracking-widest">
-                                    {designer.experience_years} {t.yearsExp}
-                                </p>
-                                <div className="mt-6 pt-4 border-t border-neutral-100 flex items-center justify-between">
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">{t.startingFrom}</p>
-                                        <p className="text-xl font-black text-neutral-900">৳{designer.base_consultation_fee?.toLocaleString() || '5,000'}</p>
+                                <div className="mt-8 pt-4 border-t border-neutral-100 space-y-4">
+                                    <div className="flex items-baseline justify-between">
+                                        <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">{t.startingFrom}</span>
+                                        <span className="text-xl font-black text-neutral-900">৳{designer.base_consultation_fee?.toLocaleString() || '5,000'}</span>
                                     </div>
-                                    <Button variant={formData.selectedDesignerId === designer.id ? 'default' : 'outline'} className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest">
+                                    <Button 
+                                        variant={formData.selectedDesignerId === designer.id ? 'default' : 'outline'} 
+                                        className={`w-full rounded-2xl h-11 font-bold text-xs uppercase tracking-widest transition-all ${
+                                            formData.selectedDesignerId === designer.id
+                                                ? 'bg-primary-600 hover:bg-primary-700 text-white border-transparent shadow-md shadow-primary-200'
+                                                : 'border-neutral-200 text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
+                                        }`}
+                                    >
                                         {formData.selectedDesignerId === designer.id ? t.selected : t.bookNow}
                                     </Button>
                                 </div>
@@ -1628,7 +1784,7 @@ function DesignBookingWizard() {
         );
     }
 
-    if (step === 13) {
+    if (step === 14) {
         return (
             <MainLayout>
                 {renderScheduleStep(visualStep - 1, totalSteps, nextStep, prevStep)}
@@ -1636,7 +1792,7 @@ function DesignBookingWizard() {
         );
     }
 
-    if (step === 14) {
+    if (step === 15) {
         const selectedDesigner = designers.find(d => d.id === formData.selectedDesignerId);
         const providerName = formData.designerSelectionType === 'Dalankotha' ? t.suggestedOption : (selectedDesigner?.company_name || '-');
         const price = formData.designerOption === 'both' ? 80000 : (formData.designerOption === 'design' ? 50000 : 30000);
@@ -1644,7 +1800,7 @@ function DesignBookingWizard() {
         return (
             <MainLayout>
                 <WizardStep
-                    key={`step14-review-${lang}`}
+                    key={`step15-review-${lang}`}
                     lang={lang}
                     title={t.reviewTitle}
                     description={t.reviewDesc}
