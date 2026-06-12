@@ -1,35 +1,45 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 
 export async function signUp(formData: FormData) {
     try {
-        const supabase = await createClient()
-        if (!supabase || !supabase.auth) return { error: 'Auth system unavailable. Please contact support.' }
-
         const email = formData.get('email') as string
         const password = formData.get('password') as string
         const fullName = formData.get('fullName') as string
         const phoneNumber = formData.get('phoneNumber') as string
         const address = formData.get('address') as string
 
-        const { error } = await supabase.auth.signUp({
+        const adminClient = createAdminClient()
+        const { data: adminData, error: adminError } = await adminClient.auth.admin.createUser({
             email,
             password,
-            options: {
-                data: {
-                    full_name: fullName,
-                    phone_number: phoneNumber,
-                    address: address,
-                    role: 'customer',
-                },
-            },
+            email_confirm: true,
+            user_metadata: {
+                full_name: fullName,
+                phone_number: phoneNumber,
+                address: address,
+                role: 'customer',
+            }
         })
 
-        if (error) {
-            return { error: error.message }
+        if (adminError) {
+            return { error: adminError.message }
+        }
+
+        const supabase = await createClient()
+        if (!supabase || !supabase.auth) return { error: 'Auth system unavailable. Please contact support.' }
+
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        })
+
+        if (signInError) {
+            return { error: signInError.message }
         }
     } catch (err) {
         console.error('SignUp Error:', err)

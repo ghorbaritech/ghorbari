@@ -13,8 +13,13 @@ export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [fullName, setFullName] = useState('')
+    const [email, setEmail] = useState('')
+    const [phoneNumber, setPhoneNumber] = useState('')
+    const [address, setAddress] = useState('')
 
-    async function handleSubmit(formData: FormData) {
+    async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault()
         if (password !== confirmPassword) {
             setError("Passwords do not match")
             return
@@ -22,6 +27,7 @@ export default function RegisterPage() {
 
         setLoading(true)
         setError(null)
+        const formData = new FormData(e.currentTarget)
         const result = await signUp(formData)
         if (result?.error) {
             setError(result.error)
@@ -44,7 +50,7 @@ export default function RegisterPage() {
                     </p>
                 </div>
 
-                <form className="mt-10 space-y-5" action={handleSubmit}>
+                <form className="mt-10 space-y-5" onSubmit={onSubmit}>
                     <div className="space-y-4">
                         <div className="relative group">
                             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
@@ -53,6 +59,8 @@ export default function RegisterPage() {
                                 name="fullName"
                                 type="text"
                                 required
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
                                 className="pl-12 h-12 bg-gray-50 border-gray-100 focus:bg-white rounded-xl font-medium"
                                 placeholder="Full Name"
                             />
@@ -66,6 +74,8 @@ export default function RegisterPage() {
                                 type="email"
                                 autoComplete="email"
                                 required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 className="pl-12 h-12 bg-gray-50 border-gray-100 focus:bg-white rounded-xl font-medium"
                                 placeholder="Email Address"
                             />
@@ -78,6 +88,8 @@ export default function RegisterPage() {
                                 name="phoneNumber"
                                 type="tel"
                                 required
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
                                 className="pl-12 h-12 bg-gray-50 border-gray-100 focus:bg-white rounded-xl font-medium"
                                 placeholder="Phone Number"
                             />
@@ -90,6 +102,8 @@ export default function RegisterPage() {
                                 name="address"
                                 type="text"
                                 required
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
                                 className="pl-12 h-12 bg-gray-50 border-gray-100 focus:bg-white rounded-xl font-medium"
                                 placeholder="Full Address"
                             />

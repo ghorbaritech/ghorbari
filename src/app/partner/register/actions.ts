@@ -1,37 +1,46 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 import { redirect } from 'next/navigation'
 
-export async function partnerSignUp(formData: FormData) {
+export async function partnerSignUp(formData: FormData): Promise<{
+    error?: string;
+    success?: boolean;
+    redirect?: boolean;
+    requiresEmailVerification?: boolean;
+}> {
     try {
-        const supabase = await createClient()
-        if (!supabase || !supabase.auth) return { error: 'Auth system unavailable.' }
-
         const email = formData.get('email') as string
         const password = formData.get('password') as string
 
-        const { data, error: signUpError } = await supabase.auth.signUp({
+        const adminClient = createAdminClient()
+        const { data: adminData, error: adminError } = await adminClient.auth.admin.createUser({
             email,
             password,
-            options: {
-                data: {
-                    onboarding_status: 'pending'
-                },
-                emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/onboarding`
-            },
+            email_confirm: true,
+            user_metadata: {
+                onboarding_status: 'pending'
+            }
         })
 
-        if (signUpError) {
-            return { error: signUpError.message }
+        if (adminError) {
+            return { error: adminError.message }
         }
 
-        if (data?.session) {
-            return { success: true, redirect: true }
+        const supabase = await createClient()
+        if (!supabase || !supabase.auth) return { error: 'Auth system unavailable.' }
+
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        })
+
+        if (signInError) {
+            return { error: signInError.message }
         }
 
-        // Return success message and flags for email verification
-        return { success: true, requiresEmailVerification: true }
+        return { success: true, redirect: true }
     } catch (err) {
         console.error('Partner SignUp Error:', err)
         return { error: 'Unexpected error during registration' }
