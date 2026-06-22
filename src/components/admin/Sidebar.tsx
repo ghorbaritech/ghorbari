@@ -19,7 +19,8 @@ import {
     MessageSquare,
     LifeBuoy,
     Bot,
-    Gavel
+    Gavel,
+    Megaphone
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
     { label: 'Order Factory', icon: ShoppingBag, href: '/admin/orders', allowedRoles: ['admin', 'seller'] },
     { label: 'User Hub', icon: Users, href: '/admin/users', allowedRoles: ['admin'] },
     { label: 'CMS Manager', icon: FileText, href: '/admin/cms', allowedRoles: ['admin'] },
+    { label: 'Notice Manager', icon: Megaphone, href: '/admin/notice', allowedRoles: ['admin'] },
     { label: 'Milestones', icon: Flag, href: '/admin/milestones', allowedRoles: ['admin', 'designer', 'service_provider'] },
     { label: 'Categories', icon: Tag, href: '/admin/categories', allowedRoles: ['admin'] },
     { label: 'Factory', icon: Package, href: '/admin/factory', allowedRoles: ['admin', 'seller'] },

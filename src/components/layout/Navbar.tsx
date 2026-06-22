@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ShoppingCart, User, Menu, X, ArrowRight, LayoutDashboard, LogOut, Home, Package, PencilRuler, Wrench, Phone, MapPin, Loader2, Sparkles } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, ArrowRight, LayoutDashboard, LogOut, Home, Package, PencilRuler, Wrench, Phone, MapPin, Loader2, Sparkles, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
@@ -29,6 +29,8 @@ export function Navbar() {
     const [isLocating, setIsLocating] = useState(false);
     const pathname = usePathname();
     const [isMounted, setIsMounted] = useState(false);
+    const [isNoticeVisible, setIsNoticeVisible] = useState(true);
+    const [noticeBanner, setNoticeBanner] = useState<any>(null);
 
     // Search Autocomplete State
     const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -73,6 +75,18 @@ export function Navbar() {
         getBrandingSettings().then(settings => {
             if (settings?.logo_dark_url) setLogoUrl(settings.logo_dark_url);
         });
+
+        // Fetch Notice Banner Settings
+        supabase.from('home_content')
+            .select('*')
+            .eq('section_key', 'notice_banner')
+            .single()
+            .then(({ data }) => {
+                if (data && data.is_active) {
+                    setNoticeBanner(data.content);
+                }
+            });
+
         setIsMounted(true);
     }, []);
 
@@ -161,6 +175,55 @@ export function Navbar() {
 
     return (
         <header className="w-full z-50 bg-white sticky top-0 border-b border-neutral-200">
+            {/* Notice Banner */}
+            {isNoticeVisible && noticeBanner && noticeBanner.is_active && (
+                <div className="bg-[#0D233A] text-white text-[12px] h-10 flex items-center relative overflow-hidden w-full border-b border-blue-950 animate-marquee-container">
+                    <div className="section-container flex items-center justify-between w-full h-full relative z-10">
+                        {/* Notice Title badge */}
+                        <div className="flex items-center gap-2 text-amber-400 font-bold bg-[#0D233A] pr-4 z-20">
+                            <Megaphone className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+                            <span className="uppercase tracking-wider text-[10px]">{language === 'EN' ? 'Notice:' : 'বিজ্ঞপ্তি:'}</span>
+                        </div>
+
+                        {/* Scrolling Marquee Container */}
+                        <div className="flex-1 overflow-hidden h-full flex items-center relative">
+                            <div className="animate-marquee whitespace-nowrap flex gap-12 pl-4">
+                                <div className="flex items-center gap-4">
+                                    <span>{language === 'EN' ? noticeBanner.text : noticeBanner.text_bn}</span>
+                                    {noticeBanner.action_link && (
+                                        <Link 
+                                            href={noticeBanner.action_link} 
+                                            className="text-amber-400 hover:text-amber-300 font-bold underline transition-colors"
+                                        >
+                                            {language === 'EN' ? noticeBanner.action_text : noticeBanner.action_text_bn}
+                                        </Link>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-4" aria-hidden="true">
+                                    <span>{language === 'EN' ? noticeBanner.text : noticeBanner.text_bn}</span>
+                                    {noticeBanner.action_link && (
+                                        <Link 
+                                            href={noticeBanner.action_link} 
+                                            className="text-amber-400 hover:text-amber-300 font-bold underline transition-colors"
+                                        >
+                                            {language === 'EN' ? noticeBanner.action_text : noticeBanner.action_text_bn}
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Close Button */}
+                        <button 
+                            onClick={() => setIsNoticeVisible(false)}
+                            className="text-neutral-400 hover:text-white transition-colors p-1.5 rounded-full hover:bg-neutral-800/40 ml-4 z-20 bg-[#0D233A]"
+                            aria-label="Close notice banner"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
             {/* Top Utility Bar */}
             <div className="bg-neutral-50 border-b hidden sm:block">
                 <div className="section-container h-10 flex items-center justify-between text-[11px] font-medium text-neutral-500 uppercase tracking-wider">

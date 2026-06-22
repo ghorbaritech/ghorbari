@@ -175,3 +175,18 @@
     margin-top: 1rem;
     margin-bottom: 0.5rem;
 }
+
+/* Notice Banner Scrolling Marquee Animation */
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: inline-flex;
+  animation: marquee-scroll 30s linear infinite;
+}
+
+.animate-marquee-container:hover .animate-marquee {
+  animation-play-state: paused;
+}
