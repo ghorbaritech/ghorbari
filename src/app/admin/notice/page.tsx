@@ -293,7 +293,7 @@ export default function AdminNoticePage() {
 
       {/* Banner Settings Tab */}
       {activeTab === "banner" && (
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 space-y-6">
+        <div className="bg-white text-neutral-900 rounded-2xl border border-neutral-200 shadow-sm p-6 space-y-6">
           <div className="flex items-center justify-between border-b pb-4">
             <h2 className="text-lg font-bold text-neutral-900">Configure Top Notice</h2>
             <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export default function AdminNoticePage() {
                 value={bannerText}
                 onChange={(e) => setBannerText(e.target.value)}
                 placeholder="Enter notice text in English..."
-                className="w-full min-h-[80px] p-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0D233A]/20 focus:border-[#0D233A] text-sm"
+                className="w-full min-h-[80px] p-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0D233A]/20 focus:border-[#0D233A] text-sm text-neutral-900 bg-white"
               />
             </div>
             <div className="space-y-2">
@@ -326,7 +326,7 @@ export default function AdminNoticePage() {
                 value={bannerTextBn}
                 onChange={(e) => setBannerTextBn(e.target.value)}
                 placeholder="Enter notice text in Bengali..."
-                className="w-full min-h-[80px] p-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0D233A]/20 focus:border-[#0D233A] text-sm font-hind-siliguri"
+                className="w-full min-h-[80px] p-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0D233A]/20 focus:border-[#0D233A] text-sm font-hind-siliguri text-neutral-900 bg-white"
               />
             </div>
           </div>
@@ -376,7 +376,7 @@ export default function AdminNoticePage() {
 
       {/* Landing Page Builder Tab */}
       {activeTab === "form" && (
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 space-y-6">
+        <div className="bg-white text-neutral-900 rounded-2xl border border-neutral-200 shadow-sm p-6 space-y-6">
           <div className="border-b pb-4">
             <h2 className="text-lg font-bold text-neutral-900">Custom Dynamic Lead Form Configuration</h2>
             <p className="text-xs text-neutral-500 mt-1">Design the fields for the notice click action page dynamically.</p>
@@ -400,7 +400,7 @@ export default function AdminNoticePage() {
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   placeholder="Please complete this form..."
-                  className="w-full min-h-[70px] p-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0D233A]/20 focus:border-[#0D233A] text-sm"
+                  className="w-full min-h-[70px] p-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0D233A]/20 focus:border-[#0D233A] text-sm text-neutral-900 bg-white"
                 />
               </div>
             </div>
@@ -420,7 +420,7 @@ export default function AdminNoticePage() {
                   value={formDescBn}
                   onChange={(e) => setFormDescBn(e.target.value)}
                   placeholder="অনুরোধ জমা দিতে অনুগ্রহ করে ফর্মটি পূরণ করুন..."
-                  className="w-full min-h-[70px] p-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0D233A]/20 focus:border-[#0D233A] text-sm font-hind-siliguri"
+                  className="w-full min-h-[70px] p-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0D233A]/20 focus:border-[#0D233A] text-sm font-hind-siliguri text-neutral-900 bg-white"
                 />
               </div>
             </div>
@@ -485,7 +485,7 @@ export default function AdminNoticePage() {
                         <select
                           value={field.type}
                           onChange={(e: any) => handleFieldChange(idx, "type", e.target.value)}
-                          className="w-full h-9 px-3 border border-neutral-200 bg-white rounded-lg text-xs focus:ring-[#0D233A]/20"
+                          className="w-full h-9 px-3 border border-neutral-200 bg-white text-neutral-900 rounded-lg text-xs focus:ring-[#0D233A]/20"
                         >
                           <option value="text">Text Box</option>
                           <option value="select">Dropdown Select</option>
@@ -553,7 +553,7 @@ export default function AdminNoticePage() {
 
       {/* Submissions Viewer Tab */}
       {activeTab === "submissions" && (
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 space-y-6">
+        <div className="bg-white text-neutral-900 rounded-2xl border border-neutral-200 shadow-sm p-6 space-y-6">
           <div className="flex items-center justify-between border-b pb-4">
             <div>
               <h2 className="text-lg font-bold text-neutral-900">Lead Form Submissions</h2>
