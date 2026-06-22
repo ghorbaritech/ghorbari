@@ -176,7 +176,7 @@ export function Navbar() {
     return (
         <header className="w-full z-50 bg-white sticky top-0 border-b border-neutral-200">
             {/* Notice Banner */}
-            {isNoticeVisible && noticeBanner && noticeBanner.is_active && (
+            {isNoticeVisible && noticeBanner && (
                 <div className="bg-[#0D233A] text-white text-[12px] h-10 flex items-center relative overflow-hidden w-full border-b border-blue-950 animate-marquee-container">
                     <div className="section-container flex items-center justify-between w-full h-full relative z-10">
                         {/* Notice Title badge */}
