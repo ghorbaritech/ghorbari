@@ -31,9 +31,11 @@ import {
     CheckSquare,
     Home,
     Ruler,
-    PaintBucket
+    PaintBucket,
+    Upload
 } from 'lucide-react'
 import { getHomeContent, updateHomeSection, getCMSDependencies } from './actions'
+import { createClient } from '@/utils/supabase/client'
 
 import { GenericCardSlider } from "@/components/sections/GenericCardSlider"
 import { IconCategories } from "@/components/sections/IconCategories"
@@ -44,6 +46,94 @@ import { MovingIconSlider } from "@/components/sections/MovingIconSlider"
 import { InfoCardSlider } from "@/components/sections/InfoCardSlider"
 import { BlogSlider } from "@/components/sections/BlogSlider"
 import TestimonialSlider from "@/components/sections/TestimonialSlider"
+
+interface ImageUploaderProps {
+    value: string;
+    onChange: (url: string) => void;
+    placeholder?: string;
+    label?: string;
+}
+
+function ImageUploader({ value, onChange, placeholder = "Image URL", label }: ImageUploaderProps) {
+    const [uploading, setUploading] = useState(false);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const supabase = createClient();
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+            const filePath = `cms/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('brand-assets')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('brand-assets')
+                .getPublicUrl(filePath);
+
+            onChange(publicUrl);
+        } catch (error: any) {
+            console.error('Image upload failed:', error);
+            alert('Failed to upload image: ' + error.message);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-1.5 w-full">
+            {label && (
+                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
+                    {label}
+                </label>
+            )}
+            <div className="flex gap-2 items-center">
+                <div className="relative flex-1">
+                    <Input
+                        placeholder={placeholder}
+                        value={value || ''}
+                        onChange={e => onChange(e.target.value)}
+                        className="h-10 border-neutral-800 bg-neutral-900 text-white text-xs pr-10"
+                    />
+                    {value && (
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md overflow-hidden border border-neutral-700 bg-neutral-900 flex items-center justify-center">
+                            <img src={value} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                    )}
+                </div>
+                <div className="relative shrink-0">
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        disabled={uploading}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
+                    />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploading}
+                        className="h-10 border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white rounded-xl text-xs font-bold px-3 flex items-center gap-1.5"
+                    >
+                        {uploading ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />
+                        ) : (
+                            <Upload className="w-3.5 h-3.5 text-blue-500" />
+                        )}
+                        <span>{uploading ? 'Uploading...' : 'Upload'}</span>
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function CMSPage() {
     const [loading, setLoading] = useState(true)
@@ -226,18 +316,45 @@ export default function CMSPage() {
                                 </div>
                             </div>
                         </div>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                                const newLayout = [...content['page_layout']];
-                                newLayout[index].hidden = !newLayout[index].hidden;
-                                setContent({ ...content, page_layout: newLayout });
-                            }}
-                            className={`rounded-xl w-12 h-12 transition-all ${section.hidden ? 'text-neutral-600' : 'text-blue-500 bg-blue-500/10'}`}
-                        >
-                            {section.hidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                    const key = section.data_key;
+                                    const type = section.type;
+                                    if (key.startsWith('custom_') || ['SingleSlider', 'MovingIconSlider', 'InfoCardSlider', 'BlogSlider', 'TestimonialSlider', 'CardSlider', 'IconSlider', 'ThreeSliderBanner', 'HeroContainer'].includes(type)) {
+                                        setActiveTab('custom');
+                                        setEditingKey(key);
+                                        setCustomSegmentTitle(content[key]?.title || section.title);
+                                        setCustomSegmentItems(content[key]?.items || []);
+                                        setCustomSegmentType(type);
+                                    } else {
+                                        if (key === 'hero_section' || type === 'HeroSlider') setActiveTab('hero');
+                                        else if (key === 'featured_categories' || type === 'IconSlider') setActiveTab('categories');
+                                        else if (key === 'featured_products' || type === 'CardSlider') setActiveTab('products');
+                                        else if (key === 'promo_banners' || type === 'PromoBanners') setActiveTab('promos');
+                                        else if (key === 'featured_services' || type === 'Services') setActiveTab('services');
+                                        else if (key === 'user_reviews' || type === 'Reviews') setActiveTab('reviews');
+                                    }
+                                }}
+                                className="rounded-xl w-12 h-12 border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-800 transition-all"
+                            >
+                                <Settings className="w-5 h-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                    const newLayout = [...content['page_layout']];
+                                    newLayout[index].hidden = !newLayout[index].hidden;
+                                    setContent({ ...content, page_layout: newLayout });
+                                }}
+                                className={`rounded-xl w-12 h-12 transition-all ${section.hidden ? 'text-neutral-600' : 'text-blue-500 bg-blue-500/10'}`}
+                            >
+                                {section.hidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            </Button>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -566,18 +683,15 @@ export default function CMSPage() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Image URL</label>
-                                        <Input
-                                            value={item.image || ''}
-                                            onChange={(e) => {
-                                                const newItems = [...items.filter((i: any) => i.id !== slot), { ...item, image: e.target.value }];
-                                                setContent({ ...content, hero_section: { ...currentData, items: newItems } });
-                                            }}
-                                            className="text-xs border-neutral-800 bg-neutral-900 text-white"
-                                            placeholder="https://..."
-                                        />
-                                    </div>
+                                    <ImageUploader
+                                        label="Image URL"
+                                        value={item.image || ''}
+                                        onChange={(url) => {
+                                            const newItems = [...items.filter((i: any) => i.id !== slot), { ...item, image: url }];
+                                            setContent({ ...content, hero_section: { ...currentData, items: newItems } });
+                                        }}
+                                        placeholder="https://..."
+                                    />
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Link URL</label>
                                         <Input
@@ -716,18 +830,16 @@ export default function CMSPage() {
                                             className="font-bold text-xs border-neutral-800 bg-neutral-900 text-white"
                                         />
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">IMAGE URL</label>
-                                        <Input
-                                            value={item.image || ''}
-                                            onChange={(e) => {
-                                                const newItems = [...content['design_hero'].items];
-                                                newItems[idx] = { ...item, image: e.target.value };
-                                                setContent({ ...content, design_hero: { ...content['design_hero'], items: newItems } });
-                                            }}
-                                            className="text-xs border-neutral-800 bg-neutral-900 text-white"
-                                        />
-                                    </div>
+                                    <ImageUploader
+                                        label="IMAGE URL"
+                                        value={item.image || ''}
+                                        onChange={(url) => {
+                                            const newItems = [...content['design_hero'].items];
+                                            newItems[idx] = { ...item, image: url };
+                                            setContent({ ...content, design_hero: { ...content['design_hero'], items: newItems } });
+                                        }}
+                                        placeholder="https://..."
+                                    />
                                 </div>
                             </div>
 
@@ -847,18 +959,40 @@ export default function CMSPage() {
                                 </div>
                             </div>
                         </div>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                                const newLayout = [...content['design_page_layout']];
-                                newLayout[index].hidden = !newLayout[index].hidden;
-                                setContent({ ...content, design_page_layout: newLayout });
-                            }}
-                            className={`rounded-xl w-12 h-12 transition-all ${section.hidden ? 'text-neutral-600' : 'text-blue-500 bg-blue-500/10'}`}
-                        >
-                            {section.hidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                    const key = section.data_key;
+                                    const type = section.type;
+                                    if (key === 'design_hero' || type === 'DesignHero') {
+                                        setActiveTab('hero');
+                                    } else if (key === 'design_workflow' || type === 'DesignWorkflow') {
+                                        setActiveTab('workflows');
+                                    } else if (key === 'design_display_config' || type === 'DesignShowcase') {
+                                        setActiveTab('showcase');
+                                    } else if (key === 'user_reviews' || type === 'UserReviews') {
+                                        setActiveTab('reviews');
+                                    }
+                                }}
+                                className="rounded-xl w-12 h-12 border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-800 transition-all"
+                            >
+                                <Settings className="w-5 h-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                    const newLayout = [...content['design_page_layout']];
+                                    newLayout[index].hidden = !newLayout[index].hidden;
+                                    setContent({ ...content, design_page_layout: newLayout });
+                                }}
+                                className={`rounded-xl w-12 h-12 transition-all ${section.hidden ? 'text-neutral-600' : 'text-blue-500 bg-blue-500/10'}`}
+                            >
+                                {section.hidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            </Button>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -1044,18 +1178,16 @@ export default function CMSPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Image URL</label>
-                                <Input
-                                    value={banner.image_url || ''}
-                                    onChange={(e) => {
-                                        const newBanners = [...banners]
-                                        newBanners[i] = { ...banner, image_url: e.target.value }
-                                        setContent({ ...content, promo_banners: { ...currentData, items: newBanners } })
-                                    }}
-                                    className="h-8 text-xs border-neutral-800 bg-neutral-900 text-white"
-                                />
-                            </div>
+                            <ImageUploader
+                                label="Image URL"
+                                value={banner.image_url || ''}
+                                onChange={(url) => {
+                                    const newBanners = [...banners]
+                                    newBanners[i] = { ...banner, image_url: url }
+                                    setContent({ ...content, promo_banners: { ...currentData, items: newBanners } })
+                                }}
+                                placeholder="https://..."
+                            />
                             <div className="space-y-1">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Link URL</label>
                                 <Input
@@ -1299,20 +1431,21 @@ export default function CMSPage() {
                             <div className="space-y-4">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">User Avatar URL</label>
-                                    <div className="flex gap-4">
+                                    <div className="flex gap-4 items-end">
                                         <div className="w-20 h-20 rounded-2xl bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0 flex items-center justify-center">
                                             {review.image ? <img src={review.image} className="w-full h-full object-cover" /> : <Star className="w-6 h-6 text-neutral-700" />}
                                         </div>
-                                        <Input
-                                            value={review.image || ''}
-                                            onChange={(e) => {
-                                                const newItems = [...content['user_reviews'].items]
-                                                newItems[index].image = e.target.value
-                                                setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
-                                            }}
-                                            className="flex-1 text-xs border-neutral-800 bg-neutral-900 text-white self-end"
-                                            placeholder="https://..."
-                                        />
+                                        <div className="flex-1">
+                                            <ImageUploader
+                                                value={review.image || ''}
+                                                onChange={(url) => {
+                                                    const newItems = [...content['user_reviews'].items]
+                                                    newItems[index].image = url
+                                                    setContent({ ...content, user_reviews: { ...content['user_reviews'], items: newItems } })
+                                                }}
+                                                placeholder="https://..."
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1342,7 +1475,7 @@ export default function CMSPage() {
                             </div>
                             <Input
                                 placeholder="e.g. Summer Collection"
-                                value={customSegmentTitle}
+                                value={customSegmentTitle || ''}
                                 onChange={e => setCustomSegmentTitle(e.target.value)}
                                 className="h-14 border-neutral-800 bg-neutral-950 text-white font-bold rounded-xl focus:ring-blue-500 focus:border-blue-500 shadow-inner"
                             />
@@ -1418,16 +1551,39 @@ export default function CMSPage() {
                                                 className="h-9 border-neutral-800 bg-neutral-900 text-white text-xs"
                                             />
                                         )}
-                                        {cfgFields.includes('image') && (
+                                        {cfgFields.includes('subtitle') && (
                                             <Input
-                                                placeholder="Image URL"
-                                                value={item.image || ''}
+                                                placeholder="Subtitle"
+                                                value={item.subtitle || ''}
                                                 onChange={e => {
                                                     const newI = [...customSegmentItems];
-                                                    newI[index].image = e.target.value;
+                                                    newI[index].subtitle = e.target.value;
                                                     setCustomSegmentItems(newI);
                                                 }}
                                                 className="h-9 border-neutral-800 bg-neutral-900 text-white text-xs"
+                                            />
+                                        )}
+                                        {cfgFields.includes('description') && (
+                                            <Input
+                                                placeholder="Description"
+                                                value={item.description || ''}
+                                                onChange={e => {
+                                                    const newI = [...customSegmentItems];
+                                                    newI[index].description = e.target.value;
+                                                    setCustomSegmentItems(newI);
+                                                }}
+                                                className="h-9 border-neutral-800 bg-neutral-900 text-white text-xs"
+                                            />
+                                        )}
+                                        {cfgFields.includes('image') && (
+                                            <ImageUploader
+                                                value={item.image || ''}
+                                                onChange={url => {
+                                                    const newI = [...customSegmentItems];
+                                                    newI[index].image = url;
+                                                    setCustomSegmentItems(newI);
+                                                }}
+                                                placeholder="Image URL"
                                             />
                                         )}
                                         {cfgFields.includes('link') && (
@@ -1694,19 +1850,16 @@ export default function CMSPage() {
                                                 className="font-bold text-sm border-neutral-800 bg-neutral-900 text-white h-10 rounded-lg"
                                             />
                                         </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">SKETCH IMAGE URL</label>
-                                            <Input
-                                                value={step.image || ''}
-                                                onChange={(e) => {
-                                                    const newSteps = [...data.steps];
-                                                    newSteps[idx] = { ...step, image: e.target.value };
-                                                    setContent({ ...content, [sectionKey]: { ...data, steps: newSteps } });
-                                                }}
-                                                className="text-[10px] border-neutral-800 bg-neutral-900 text-blue-400 h-10 rounded-lg placeholder:text-neutral-700"
-                                                placeholder="https://..."
-                                            />
-                                        </div>
+                                        <ImageUploader
+                                            label="SKETCH IMAGE URL"
+                                            value={step.image || ''}
+                                            onChange={(url) => {
+                                                const newSteps = [...data.steps];
+                                                newSteps[idx] = { ...step, image: url };
+                                                setContent({ ...content, [sectionKey]: { ...data, steps: newSteps } });
+                                            }}
+                                            placeholder="https://..."
+                                        />
                                 </div>
                             </div>
                         </div>
@@ -1857,18 +2010,17 @@ export default function CMSPage() {
                                                             />
                                                             <p className="text-[8px] text-neutral-600 ml-1">e.g., FileText, Home, Shield</p>
                                                         </div>
-                                                        <div className="flex-1 space-y-1">
-                                                            <Input
+                                                        <div className="flex-1">
+                                                            <ImageUploader
                                                                 value={opt.image || ''}
-                                                                onChange={(e) => {
+                                                                onChange={(url) => {
                                                                     const newOpts = [...data.step1.options];
-                                                                    newOpts[actualIdx].image = e.target.value;
+                                                                    newOpts[actualIdx].image = url;
                                                                     updateStep1({ ...data.step1, options: newOpts });
                                                                 }}
-                                                                className="bg-neutral-900 border-neutral-800 rounded-xl h-10 text-xs text-white"
                                                                 placeholder="Custom Image URL"
                                                             />
-                                                            <p className="text-[8px] text-neutral-600 ml-1">Overrides icon if provided</p>
+                                                            <p className="text-[8px] text-neutral-600 ml-1 mt-1">Overrides icon if provided</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -2019,15 +2171,14 @@ export default function CMSPage() {
                                                             />
                                                             <p className="text-[8px] text-neutral-600 ml-1">e.g., Building2, Sofa, PenTool</p>
                                                         </div>
-                                                        <div className="flex-1 space-y-1">
-                                                            <Input
+                                                        <div className="flex-1">
+                                                            <ImageUploader
                                                                 value={opt.image || ''}
-                                                                onChange={(e) => {
+                                                                onChange={(url) => {
                                                                     const newOpts = [...data.step1.options];
-                                                                    newOpts[actualIdx].image = e.target.value;
+                                                                    newOpts[actualIdx].image = url;
                                                                     updateStep1({ ...data.step1, options: newOpts });
                                                                 }}
-                                                                className="bg-neutral-900 border-neutral-800 rounded-xl h-10 text-xs text-white"
                                                                 placeholder="Custom Image URL"
                                                             />
                                                         </div>
@@ -2285,7 +2436,7 @@ export default function CMSPage() {
                                         <div className="flex-1 space-y-2">
                                             <Input value={vibe.labelEn || ''} onChange={(e) => { const n = [...(data.designStep5?.vibeOptions || [])]; n[idx].labelEn = e.target.value; updateWizard({ ...data, designStep5: { ...data.designStep5, vibeOptions: n } }); }} className="h-8 text-xs bg-neutral-900 text-white" placeholder="Label EN (e.g. Modern / Minimalist)" />
                                             <Input value={vibe.labelBn || ''} onChange={(e) => { const n = [...(data.designStep5?.vibeOptions || [])]; n[idx].labelBn = e.target.value; updateWizard({ ...data, designStep5: { ...data.designStep5, vibeOptions: n } }); }} className="h-8 text-xs bg-neutral-900 border-blue-900/30 text-white" placeholder="Label BN (e.g. মডার্ন)" />
-                                            <Input value={vibe.image || ''} onChange={(e) => { const n = [...(data.designStep5?.vibeOptions || [])]; n[idx].image = e.target.value; updateWizard({ ...data, designStep5: { ...data.designStep5, vibeOptions: n } }); }} className="h-8 text-[10px] bg-neutral-900 text-blue-400" placeholder="Image URL (https://...)" />
+                                            <ImageUploader value={vibe.image || ''} onChange={(url) => { const n = [...(data.designStep5?.vibeOptions || [])]; n[idx].image = url; updateWizard({ ...data, designStep5: { ...data.designStep5, vibeOptions: n } }); }} placeholder="Image URL (https://...)" />
                                         </div>
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="w-14 h-14 rounded-xl overflow-hidden border border-neutral-800 bg-neutral-900">
