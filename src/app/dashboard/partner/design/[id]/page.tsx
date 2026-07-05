@@ -136,6 +136,17 @@ export default function PartnerTaskDetailPage() {
                                         let displayValue: any = value;
                                         if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
                                         if (Array.isArray(value)) displayValue = value.join(', ');
+                                        if (value && typeof value === 'object' && !Array.isArray(value)) {
+                                            displayValue = Object.entries(value)
+                                                .map(([subKey, subVal]) => {
+                                                    const formattedSubKey = subKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                                                    let displaySubVal: any = subVal;
+                                                    if (typeof subVal === 'boolean') displaySubVal = subVal ? 'Yes' : 'No';
+                                                    if (subVal && typeof subVal === 'object') displaySubVal = JSON.stringify(subVal);
+                                                    return `${formattedSubKey}: ${displaySubVal || '-'}`;
+                                                })
+                                                .join(' | ');
+                                        }
                                         if (!value) displayValue = '-';
 
                                         return (
