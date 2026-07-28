@@ -303,47 +303,52 @@ export async function getUsers() {
 export async function getPartners() {
     const supabase = await createClient()
 
-    // Fetch from all partner-related tables
+    // 1. Fetch all profiles with partner roles
+    const { data: partnerProfiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('role', ['seller', 'designer', 'service_provider'])
+
+    if (profileError || !partnerProfiles) {
+        console.error('Error fetching partner profiles:', profileError)
+        return []
+    }
+
+    // 2. Fetch records from role-specific tables to get business names & capabilities
     const [sellers, designers, serviceProviders] = await Promise.all([
-        supabase.from('sellers').select('*, profile:profiles(*)'),
-        supabase.from('designers').select('*, profile:profiles(*)'),
-        supabase.from('service_providers').select('*, profile:profiles(*)')
+        supabase.from('sellers').select('user_id, business_name'),
+        supabase.from('designers').select('user_id, company_name'),
+        supabase.from('service_providers').select('user_id, business_name')
     ])
 
-    // Combine and deduplicate by user_id
-    const partnersMap = new Map()
+    const sellersMap = new Map(sellers.data?.map(s => [s.user_id, s.business_name]))
+    const designersMap = new Map(designers.data?.map(d => [d.user_id, d.company_name]))
+    const providersMap = new Map(serviceProviders.data?.map(sp => [sp.user_id, sp.business_name]))
 
-    sellers.data?.forEach(s => {
-        partnersMap.set(s.user_id, {
-            id: s.user_id,
-            email: s.profile?.email,
-            businessName: s.business_name,
-            role: s.profile?.role,
-            roles: { seller: true },
-            seller_data: s,
-            profile: s.profile
-        })
+    // 3. Map profiles to the UI partner format
+    return partnerProfiles.map(p => {
+        let businessName = p.full_name
+        if (p.role === 'seller' && sellersMap.has(p.id)) {
+            businessName = sellersMap.get(p.id)
+        } else if (p.role === 'designer' && designersMap.has(p.id)) {
+            businessName = designersMap.get(p.id)
+        } else if (p.role === 'service_provider' && providersMap.has(p.id)) {
+            businessName = providersMap.get(p.id)
+        }
+
+        return {
+            id: p.id,
+            email: p.email,
+            businessName: businessName || p.full_name || 'Business Partner',
+            role: p.role,
+            roles: {
+                seller: p.role === 'seller',
+                designer: p.role === 'designer',
+                service_provider: p.role === 'service_provider'
+            },
+            profile: p
+        }
     })
-
-    designers.data?.forEach(d => {
-        const existing = partnersMap.get(d.user_id) || { id: d.user_id, email: d.profile?.email, businessName: d.company_name, role: d.profile?.role, roles: {}, profile: d.profile }
-        partnersMap.set(d.user_id, {
-            ...existing,
-            roles: { ...existing.roles, designer: true },
-            designer_data: d
-        })
-    })
-
-    serviceProviders.data?.forEach(sp => {
-        const existing = partnersMap.get(sp.user_id) || { id: sp.user_id, email: sp.profile?.email, businessName: sp.business_name, role: sp.profile?.role, roles: {}, profile: sp.profile }
-        partnersMap.set(sp.user_id, {
-            ...existing,
-            roles: { ...existing.roles, service_provider: true },
-            service_data: sp
-        })
-    })
-
-    return Array.from(partnersMap.values())
 }
 
 export async function getCategories() {
