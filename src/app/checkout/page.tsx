@@ -102,7 +102,7 @@ export default function CheckoutPage() {
                     address: `${formData.address}, ${formData.city}, ${formData.postalCode}`
                 };
 
-                await createOrder(orderData, customerDetails, !user);
+                await createOrder(orderData as any, customerDetails, !user);
             }
 
             setOrderStep(2);

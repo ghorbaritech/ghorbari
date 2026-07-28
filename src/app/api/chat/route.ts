@@ -206,11 +206,13 @@ export async function POST(req: Request) {
         }
 
         if (!isWidgetMode && sessionId && lastMessageText) {
-            supabase
-                .from('ai_messages')
-                .insert({ session_id: sessionId, role: 'user', content: lastMessageText })
-                .then()
-                .catch(() => { /* non-fatal */ });
+            try {
+                await supabase
+                    .from('ai_messages')
+                    .insert({ session_id: sessionId, role: 'user', content: lastMessageText });
+            } catch (e) {
+                // non-fatal
+            }
         }
 
         // --- 3. Convert Messages ---
@@ -235,7 +237,7 @@ export async function POST(req: Request) {
         // --- 4. Define Tools ---
 
         const tools: Record<string, any> = {
-            estimateConstructionCost: tool({
+            estimateConstructionCost: (tool as any)({
                 description: 'Calculate construction or renovation cost for a Bangladesh project. Call this for ANY cost/price/budget question.',
                 parameters: z.object({
                     area_sqft: z.number().describe('Total floor area in square feet'),
@@ -246,7 +248,7 @@ export async function POST(req: Request) {
                         .optional()
                         .default('full_build'),
                 }),
-                execute: async ({ area_sqft, tier, location = 'Dhaka', project_type = 'full_build' }) => {
+                execute: async ({ area_sqft, tier, location = 'Dhaka', project_type = 'full_build' }: any) => {
                     console.log(`[Tool] estimateConstructionCost: area=${area_sqft}, tier=${tier}, type=${project_type}`);
 
                     const rates: Record<string, Record<string, number>> = {
@@ -270,19 +272,19 @@ export async function POST(req: Request) {
                         note: 'Market estimate — actual costs depend on site conditions and current material prices. Book a formal consultation for a precise BOQ.',
                     };
                 },
-            }),
+            }) as any,
         };
 
         // Only expose image generation in full mode
         if (!isWidgetMode) {
-            tools.generate_visual_design = tool({
+            tools.generate_visual_design = (tool as any)({
                 description: 'Generate a photorealistic design visualization. Call IMMEDIATELY when user wants to see any design, room, or style. Do not describe in text first — generate the image, then explain.',
                 parameters: z.object({
                     prompt: z.string().describe('Detailed design prompt: room type, style, colors, materials, furniture, lighting, Bangladesh context'),
                     designType: z.enum(['interior', 'exterior', 'renovation']).default('interior'),
                     style: z.string().optional().describe('Design style (e.g., minimalist, modern, Scandinavian, traditional Bangladeshi)'),
                 }),
-                execute: async ({ prompt, designType, style }) => {
+                execute: async ({ prompt, designType, style }: any) => {
                     console.log(`[Tool] generate_visual_design: type=${designType}, style=${style}, prompt_len=${prompt.length}`);
 
                     try {
@@ -298,7 +300,7 @@ export async function POST(req: Request) {
                         for (let i = coreMessages.length - 1; i >= 0; i--) {
                             const m = coreMessages[i];
                             if (m.role === 'user' && Array.isArray(m.content)) {
-                                const imgPart = m.content.find((p: any) => p.type === 'image');
+                                const imgPart = m.content.find((p: any) => p.type === 'image') as any;
                                 if (imgPart?.image) {
                                     lastUserImageBase64 = Buffer.isBuffer(imgPart.image)
                                         ? imgPart.image.toString('base64')
@@ -351,12 +353,12 @@ export async function POST(req: Request) {
                         };
                     }
                 },
-            });
+            }) as any;
         }
 
         // --- 5. Stream Response ---
         const result = streamText({
-            model: google('gemini-3.5-flash', {
+            model: (google as any)('gemini-3.5-flash', {
                 useSearchGrounding: true,
             }),
             messages: coreMessages,
@@ -364,16 +366,18 @@ export async function POST(req: Request) {
             maxSteps: 8,
             maxTokens: 2048,
             tools,
-            onFinish: async ({ text }) => {
+            onFinish: async ({ text }: any) => {
                 if (!isWidgetMode && sessionId) {
-                    supabase
-                        .from('ai_messages')
-                        .insert({ session_id: sessionId, role: 'assistant', content: text || '' })
-                        .then()
-                        .catch(() => { /* non-fatal */ });
+                    try {
+                        await supabase
+                            .from('ai_messages')
+                            .insert({ session_id: sessionId, role: 'assistant', content: text || '' });
+                    } catch (e) {
+                        // non-fatal
+                    }
                 }
             },
-        });
+        } as any);
 
         return result.toUIMessageStreamResponse({
             headers: { 'x-ai-session-id': sessionId || '' },

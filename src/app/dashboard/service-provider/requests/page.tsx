@@ -30,7 +30,7 @@ export default function ServiceProviderRequestsPage() {
             const { data } = await supabase
                 .from('service_requests')
                 .select('*, customer:profiles(full_name, email, phone_number)')
-                .eq('provider_id', provider.id)
+                .eq('requirements->>provider_id', provider.id)
                 .order('created_at', { ascending: false });
 
             setRequests(data || []);

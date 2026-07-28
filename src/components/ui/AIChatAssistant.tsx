@@ -17,7 +17,7 @@ export function AIChatAssistant() {
     const [isListening, setIsListening] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const { messages, sendMessage, status, error, reload } = useChat({
+    const { messages, sendMessage, status, error, regenerate: reload } = useChat({
         api: "/api/chat",
         // Widget mode: text-only, no image gen, anonymous
         body: { userId: null, lang, mode: 'widget' },
@@ -30,7 +30,7 @@ export function AIChatAssistant() {
                     : 'Assalamu Alaikum! I am Dalankotha AI. How can I help you today?',
             }
         ],
-    });
+    } as any);
 
     const isTyping = status === 'submitted' || status === 'streaming';
     const hasError = !!error || status === 'error';

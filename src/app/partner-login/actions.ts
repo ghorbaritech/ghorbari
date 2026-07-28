@@ -40,7 +40,7 @@ export async function partnerSignIn(formData: FormData) {
         // Verify role
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('role, onboarding_step')
+            .select('role, onboarding_step, onboarding_status')
             .eq('id', user.id)
             .single()
 
@@ -50,7 +50,7 @@ export async function partnerSignIn(formData: FormData) {
             return { error: 'Account profile not found. Please contact support.' }
         }
 
-        console.log('Partner Login Attempt:', { email, role: profile.role, status: profile.onboarding_status });
+        console.log('Partner Login Attempt:', { email, role: (profile as any).role, status: (profile as any).onboarding_status });
         
         // Finalize redirect path based on status
         if (profile.onboarding_step >= 4) {

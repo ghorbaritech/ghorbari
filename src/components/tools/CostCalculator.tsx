@@ -425,7 +425,7 @@ export default function CostCalculator() {
                                                 color: 'bg-orange-400', 
                                                 icon: ShieldCheck, 
                                                 percent: 10,
-                                                items: language === 'BN' ? [{ name: 'জরুরি তহবিল', val: 1, unit: 'সেট' }] : [{ name: 'Emergency Fund', val: 1, unit: 'Set' }]
+                                                items: language === 'BN' ? [{ name: 'জরুরি তহবিল', val: 1, unit: 'সেট', key: 'emergency' }] : [{ name: 'Emergency Fund', val: 1, unit: 'Set', key: 'emergency' }]
                                             },
                                         ].map((item, idx) => (
                                             <motion.div 

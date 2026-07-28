@@ -14,7 +14,13 @@ import {
 import { Input } from "@/components/ui/input"
 import { Search, UserPlus } from "lucide-react"
 
-export function AssignPartnerDialog({ onAssign }: { onAssign: (id: string) => void }) {
+interface AssignPartnerDialogProps {
+    orderType?: 'design' | 'service'
+    serviceType?: string
+    onAssign: (id: string, role: 'designer' | 'seller' | 'service_provider', userId: string) => void
+}
+
+export function AssignPartnerDialog({ orderType, serviceType, onAssign }: AssignPartnerDialogProps) {
     const [open, setOpen] = useState(false)
     const [partners, setPartners] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
@@ -25,34 +31,124 @@ export function AssignPartnerDialog({ onAssign }: { onAssign: (id: string) => vo
     useEffect(() => {
         async function fetchPartners() {
             setLoading(true)
-            // Fetch verified sellers (retailers/freelancers)
-            // In a real app, you might want to join with profiles to get names if business_name isn't enough
-            const { data } = await supabase
-                .from('sellers')
-                .select('*')
-                .eq('verification_status', 'verified')
-                .ilike('business_name', `%${search}%`)
-                .limit(10)
+            
+            // Helper to normalize and check string matching
+            const isMatch = (tags: string[], query: string) => {
+                if (!query) return true;
+                const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const normQuery = normalize(query);
+                return tags.some(t => {
+                    const normT = normalize(t);
+                    return normT.includes(normQuery) || normQuery.includes(normT);
+                });
+            };
 
-            setPartners(data || [])
+            if (orderType === 'design') {
+                // Fetch verified designers
+                const { data, error } = await supabase
+                    .from('designers')
+                    .select('*')
+                    .eq('verification_status', 'verified')
+                    .ilike('company_name', `%${search}%`)
+                
+                if (!error && data) {
+                    // Filter in memory by specialization if serviceType is specified
+                    const filtered = serviceType
+                        ? data.filter(d => isMatch(d.specializations || [], serviceType))
+                        : data;
+                    setPartners(filtered.map(d => ({
+                        id: d.id,
+                        userId: d.user_id,
+                        businessName: d.company_name,
+                        typeLabel: (d.specializations || []).join(' • ') || 'Designer',
+                        role: 'designer'
+                    })));
+                } else {
+                    setPartners([]);
+                }
+            } else if (orderType === 'service') {
+                // Fetch verified service providers
+                const { data, error } = await supabase
+                    .from('service_providers')
+                    .select('*')
+                    .eq('verification_status', 'verified')
+                    .ilike('business_name', `%${search}%`)
+                
+                if (!error && data) {
+                    // Filter in memory by service type if serviceType is specified
+                    const filtered = serviceType
+                        ? data.filter(sp => isMatch(sp.service_types || [], serviceType))
+                        : data;
+                    setPartners(filtered.map(sp => ({
+                        id: sp.id,
+                        userId: sp.user_id,
+                        businessName: sp.business_name,
+                        typeLabel: (sp.service_types || []).join(' • ') || 'Service Provider',
+                        role: 'service_provider'
+                    })));
+                } else {
+                    setPartners([]);
+                }
+            } else {
+                // Fetch verified sellers
+                const { data, error } = await supabase
+                    .from('sellers')
+                    .select('*')
+                    .eq('verification_status', 'verified')
+                    .ilike('business_name', `%${search}%`)
+                
+                if (!error && data) {
+                    const filtered = serviceType
+                        ? data.filter(s => isMatch(s.primary_categories || [], serviceType))
+                        : data;
+                    setPartners(filtered.map(s => ({
+                        id: s.id,
+                        userId: s.user_id,
+                        businessName: s.business_name,
+                        typeLabel: s.business_type || 'Retailer',
+                        role: 'seller'
+                    })));
+                } else {
+                    setPartners([]);
+                }
+            }
+
             setLoading(false)
         }
 
         if (open) fetchPartners()
-    }, [open, search, supabase])
+    }, [open, search, supabase, orderType, serviceType])
+
+    const getTriggerText = () => {
+        if (orderType === 'design') return 'Assign Designer';
+        if (orderType === 'service') return 'Assign Provider';
+        return 'Assign Partner';
+    };
+
+    const getTitleText = () => {
+        if (orderType === 'design') return 'Select Designer';
+        if (orderType === 'service') return 'Select Service Provider';
+        return 'Select Partner';
+    };
+
+    const getDescriptionText = () => {
+        if (orderType === 'design') return 'Assign a verified architect or designer to this project.';
+        if (orderType === 'service') return 'Assign a verified service provider to this project.';
+        return 'Assign a verified retailer or freelancer to this project.';
+    };
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button className="w-full bg-neutral-900 text-white font-bold uppercase text-xs tracking-widest h-10 rounded-xl">
-                    <UserPlus className="w-4 h-4 mr-2" /> Assign Partner
+                    <UserPlus className="w-4 h-4 mr-2" /> {getTriggerText()}
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] rounded-3xl p-8">
+            <DialogContent className="sm:max-w-[425px] rounded-3xl p-8 bg-neutral-900 border-neutral-800 text-white shadow-2xl">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-black italic uppercase">Select Partner</DialogTitle>
+                    <DialogTitle className="text-xl font-black italic uppercase text-white">{getTitleText()}</DialogTitle>
                     <DialogDescription className="text-xs font-bold uppercase tracking-widest text-neutral-400">
-                        Assign a verified retailer or freelancer to this project.
+                        {getDescriptionText()}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
@@ -61,20 +157,24 @@ export function AssignPartnerDialog({ onAssign }: { onAssign: (id: string) => vo
                             placeholder="Search by name..."
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); }}
-                            className="pl-10 h-12 rounded-xl bg-neutral-50 border-none font-bold"
+                            className="pl-10 h-12 rounded-xl bg-neutral-950 border-neutral-800 text-white font-bold placeholder-neutral-500 focus-visible:ring-emerald-500"
                         />
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                     </div>
 
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                         {partners.map(partner => (
-                            <div key={partner.id} className="flex justify-between items-center p-3 hover:bg-neutral-50 rounded-xl transition-colors border border-transparent hover:border-neutral-100 cursor-pointer" onClick={() => { onAssign(partner.id); setOpen(false); }}>
+                            <div 
+                                key={partner.id} 
+                                className="flex justify-between items-center p-3 hover:bg-neutral-800/50 rounded-xl transition-colors border border-transparent hover:border-neutral-800 cursor-pointer" 
+                                onClick={() => { onAssign(partner.id, partner.role, partner.userId); setOpen(false); }}
+                            >
                                 <div>
-                                    <p className="font-bold text-sm text-neutral-900">{partner.business_name}</p>
-                                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">{partner.business_type || 'Retailer'}</p>
+                                    <p className="font-bold text-sm text-neutral-100">{partner.businessName}</p>
+                                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">{partner.typeLabel}</p>
                                 </div>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full bg-neutral-100">
-                                    <UserPlus className="w-4 h-4 text-neutral-600" />
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full bg-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-700">
+                                    <UserPlus className="w-4 h-4" />
                                 </Button>
                             </div>
                         ))}
@@ -87,4 +187,3 @@ export function AssignPartnerDialog({ onAssign }: { onAssign: (id: string) => vo
         </Dialog>
     )
 }
-

@@ -204,12 +204,20 @@ export default function CustomerDesignOrderDetailPage() {
                                         let displayValue: any = value;
                                         if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
                                         if (Array.isArray(value)) displayValue = value.join(', ');
+                                        if (value && typeof value === 'object') {
+                                            const obj = value as any;
+                                            if (key === 'buildingDetails') {
+                                                displayValue = `Floors: ${obj.floors || '-'}, Land Area: ${obj.landArea || '-'} ${obj.landAreaUnit || ''}`;
+                                            } else {
+                                                displayValue = JSON.stringify(value);
+                                            }
+                                        }
                                         if (!value) displayValue = '-';
 
                                         return (
-                                            <div key={key} className="flex justify-between py-3 border-b border-neutral-200 last:border-0">
-                                                <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">{formattedKey}</span>
-                                                <span className="font-bold text-neutral-900 text-right">{displayValue}</span>
+                                            <div key={key} className="flex flex-col py-3 border-b border-neutral-200 last:border-0 gap-1">
+                                                <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">{formattedKey}</span>
+                                                <span className="font-bold text-neutral-800 text-sm break-words">{String(displayValue)}</span>
                                             </div>
                                         );
                                     })}

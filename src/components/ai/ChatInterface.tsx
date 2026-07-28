@@ -153,7 +153,7 @@ export default function ChatInterface({ userId, userName = "User" }: ChatInterfa
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const { messages, sendMessage, status, error, reload } = useChat({
+    const { messages, sendMessage, status, error, regenerate: reload } = useChat({
         api: "/api/chat",
         body: { userId, sessionId, language, mode: 'full' },
         maxSteps: 8,

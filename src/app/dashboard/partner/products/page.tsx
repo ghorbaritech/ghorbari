@@ -163,7 +163,7 @@ export default function InventoryPage() {
                     is_quote_only: row.is_quote_only === 'true',
                     status: 'active',
                     images: row.image_url ? [row.image_url] : ['https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800'],
-                    category_id: categories.find(c => c.name === row.category)?.id || null
+                    category_id: allCategories.find((c: any) => c.name === row.category)?.id || null
                 }));
 
                 const { error } = await supabase.from('products').insert(productsToInsert);

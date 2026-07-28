@@ -416,7 +416,7 @@ export async function updatePartner(userId: string, data: any) {
         } else {
             console.log("[updatePartner] Profile update SUCCESSFUL");
             // Log update if significant fields changed (optional, but good for audit)
-            await logVerificationAction(userId, 'PROFILE_UPDATED', 'Admin updated profile details', user.id)
+            await logVerificationAction(userId, 'PROFILE_UPDATED', 'Admin updated profile details', user?.id || 'system')
         }
 
         // 2. Update respective tables

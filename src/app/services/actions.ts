@@ -190,3 +190,63 @@ export async function submitDesignBooking(data: { serviceType: string, details: 
 
     return { success: true, bookingId: booking.id }
 }
+
+export async function assignServiceProvider(requestId: string, providerId: string, adminNote?: string) {
+    const supabase = await createClient()
+
+    // 1. Fetch current requirements
+    const { data: currentReq, error: fetchError } = await supabase
+        .from('service_requests')
+        .select('requirements')
+        .eq('id', requestId)
+        .single()
+
+    if (fetchError) return { error: fetchError.message }
+
+    const requirements = {
+        ...(currentReq?.requirements || {}),
+        provider_id: providerId
+    }
+
+    // 2. Update service request
+    const { data: request, error } = await supabase
+        .from('service_requests')
+        .update({
+            requirements,
+            status: 'assigned',
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', requestId)
+        .select()
+        .single()
+
+    if (error) return { error: error.message }
+
+    // 3. Notify Service Provider
+    const { data: provider } = await supabase.from('service_providers').select('user_id').eq('id', providerId).single()
+
+    if (provider) {
+        await supabase.from('notifications').insert({
+            user_id: provider.user_id,
+            type: 'new_assignment',
+            title: 'New Service Assignment',
+            message: `You have been assigned to service request ${request.request_number}`,
+            related_type: 'service_request',
+            related_id: requestId
+        })
+    }
+
+    // 4. Notify Customer
+    if (request.customer_id) {
+        await supabase.from('notifications').insert({
+            user_id: request.customer_id,
+            type: 'provider_assigned',
+            title: 'Service Partner Assigned',
+            message: `A service provider has been assigned to your project ${request.request_number}`,
+            related_type: 'service_request',
+            related_id: requestId
+        })
+    }
+
+    return { success: true }
+}

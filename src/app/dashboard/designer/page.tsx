@@ -12,7 +12,9 @@ import {
     Upload,
     CheckCircle2,
     Clock,
-    ShieldAlert
+    ShieldAlert,
+    Star,
+    Bell
 } from 'lucide-react'
 
 export default function DesignerDashboard() {

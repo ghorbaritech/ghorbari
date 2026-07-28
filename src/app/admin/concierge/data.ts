@@ -30,6 +30,7 @@ export async function getConciergeData() {
 
     return {
         servicePackages: servicePackages || [],
+        providers: providers || [],
         categories: categories || []
     }
 }

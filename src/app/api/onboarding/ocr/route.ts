@@ -40,9 +40,9 @@ export async function POST(req: Request) {
                 {
                     role: 'user',
                     content: [
-                        { type: 'text', text: prompt },
-                        { type: 'file', data: frontBuffer, mimeType: frontImage.type },
-                        ...(backImage ? [{ type: 'file', data: await backImage.arrayBuffer(), mimeType: backImage.type }] : [])
+                        { type: 'text', text: prompt } as any,
+                        { type: 'file', data: frontBuffer, mimeType: frontImage.type } as any,
+                        ...(backImage ? [{ type: 'file', data: await backImage.arrayBuffer(), mimeType: backImage.type } as any] : [])
                     ],
                 },
             ],

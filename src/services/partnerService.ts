@@ -62,13 +62,24 @@ export async function getPartnerById(id: string) {
         ...(serviceProvider?.service_types || [])
     ]
 
+    // Aggregate Reviews Count
+    const targetIds = [seller?.id, designer?.id, serviceProvider?.id].filter(Boolean) as string[];
+    let reviewsCount = 0;
+    if (targetIds.length > 0) {
+        const { count } = await supabase
+            .from('reviews')
+            .select('*', { count: 'exact', head: true })
+            .in('target_id', targetIds);
+        if (count !== null) reviewsCount = count;
+    }
+
     return {
         id: profile.id,
         name: businessName,
         location: seller?.warehouse_address || designer?.business_address || serviceProvider?.location || "Bangladesh",
         roles,
         rating: Math.max(seller?.rating || 0, designer?.rating || 0, serviceProvider?.rating || 0) || 5.0, // Default/Max
-        reviews: 0, // TODO: Implement reviews aggregation
+        reviews: reviewsCount,
         bio: designer?.bio || serviceProvider?.bio || "Verified Dalankotha Partner",
         tags: Array.from(new Set(tags)).slice(0, 8), // Unique tags, max 8
         details: {

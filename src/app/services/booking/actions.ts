@@ -1,7 +1,7 @@
 "use server"
 
 import { createClient } from "@/utils/supabase/server";
-import { ServiceCartItem } from "@/context/ServiceCartContext";
+import { ServiceCartItem } from "@/store/unifiedCartStore";
 
 export async function placeServiceRequest(data: {
     items: ServiceCartItem[];

@@ -30,7 +30,7 @@ export function parseCSV(file: File): Promise<ProductUploadRow[]> {
 
                 if (values.length < headers.length) continue;
 
-                const row: Record<string, unknown> = {};
+                const row: any = {};
                 headers.forEach((header, index) => {
                     row[header] = values[index];
                 });

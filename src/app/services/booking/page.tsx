@@ -80,7 +80,7 @@ export default function BookingWizardPage() {
     const dt = designTranslations[lang] || designTranslations.en;
 
     const [step, setStep] = useState(0); // 0-indexed to match WizardStep
-    const [assignmentType, setAssignmentType] = useState<'Dalankotha_assign' | 'user_choose'>('Dalankotha_assign');
+    const [assignmentType, setAssignmentType] = useState<'dalankotha_assign' | 'user_choose'>('dalankotha_assign');
     const [selectedProvider, setSelectedProvider] = useState<any>(null);
     const [schedule, setSchedule] = useState({ date: '', slot: '' });
     const [providers, setProviders] = useState<any[]>([]);
@@ -378,8 +378,8 @@ export default function BookingWizardPage() {
                     {currentStepData.title.includes("Route") && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <Card
-                                className={`cursor-pointer transition-all rounded-2xl overflow-hidden border-2 ${assignmentType === 'Dalankotha_assign' ? 'border-primary-600 bg-white ring-4 ring-primary-50' : 'border-neutral-200 hover:border-primary-200'}`}
-                                onClick={() => setAssignmentType('Dalankotha_assign')}
+                                className={`cursor-pointer transition-all rounded-2xl overflow-hidden border-2 ${assignmentType === 'dalankotha_assign' ? 'border-primary-600 bg-white ring-4 ring-primary-50' : 'border-neutral-200 hover:border-primary-200'}`}
+                                onClick={() => setAssignmentType('dalankotha_assign')}
                             >
                                 <CardContent className="p-6 space-y-4 text-center">
                                     <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto">
@@ -442,7 +442,7 @@ export default function BookingWizardPage() {
                                     ))}
                                 </div>
                             )}
-                            <Button variant="ghost" onClick={() => { setAssignmentType('Dalankotha_assign'); setStep(0); }} className="text-xs text-primary-600 font-medium underline underline-offset-4 hover:no-underline">
+                             <Button variant="ghost" onClick={() => { setAssignmentType('dalankotha_assign'); setStep(0); }} className="text-xs text-primary-600 font-medium underline underline-offset-4 hover:no-underline">
                                 Switch to Dalankotha Assign instead
                             </Button>
                         </div>
@@ -558,7 +558,7 @@ export default function BookingWizardPage() {
                                     <div>
                                         <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Provider</p>
                                         <p className="text-sm font-semibold text-neutral-900">
-                                            {assignmentType === 'Dalankotha_assign' ? 'Dalankotha Assigned Expert' : (selectedProvider?.business_name || 'Not Selected')}
+                                            {assignmentType === 'dalankotha_assign' ? 'Dalankotha Assigned Expert' : (selectedProvider?.business_name || 'Not Selected')}
                                         </p>
                                     </div>
                                     <div>

@@ -26,6 +26,164 @@ const DEFAULT_MILESTONES = [
     "Soft Design Handover"
 ];
 
+function renderDetailCard(key: string, value: any) {
+    const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    
+    if (value === null || value === undefined || value === '') {
+        return (
+            <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
+                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
+                <p className="font-bold text-neutral-800 text-sm">-</p>
+            </div>
+        );
+    }
+
+    // Custom Formatter for Building Details
+    if (key === 'buildingDetails' && typeof value === 'object') {
+        const { landArea, landAreaUnit, floors, layouts } = value;
+        return (
+            <div key={key} className="bg-neutral-50 rounded-xl p-6 border border-neutral-100 col-span-1 md:col-span-2 space-y-4">
+                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block border-b border-neutral-200/60 pb-2">{formattedKey}</Label>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div>
+                        <span className="text-[10px] font-bold text-neutral-400 block uppercase">Total Floors</span>
+                        <span className="font-extrabold text-neutral-800 text-base">{floors || '-'}</span>
+                    </div>
+                    {landArea && (
+                        <div className="col-span-2">
+                            <span className="text-[10px] font-bold text-neutral-400 block uppercase">Land Area</span>
+                            <span className="font-extrabold text-neutral-800 text-base">{landArea} {landAreaUnit || ''}</span>
+                        </div>
+                    )}
+                </div>
+
+                {layouts && Array.isArray(layouts) && layouts.length > 0 && (
+                    <div className="space-y-3 pt-2">
+                        <span className="text-[10px] font-black text-neutral-500 block uppercase tracking-wider">Layout Configuration</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {layouts.map((layout: any, idx: number) => {
+                                const isGarage = layout.isGarage === 'yes' || layout.isGarage === true;
+                                return (
+                                    <div key={layout.id || idx} className="bg-white p-4 rounded-xl border border-neutral-200/60 space-y-2">
+                                        <div className="flex justify-between items-center border-b border-neutral-100 pb-1.5">
+                                            <span className="font-bold text-sm text-neutral-900">Layout {layout.id || idx + 1}</span>
+                                            <Badge variant="secondary" className="text-[9px] font-bold px-2 py-0.5 bg-neutral-100 text-neutral-800 border-none">
+                                                {layout.numberOfUnits || 1} Units
+                                            </Badge>
+                                        </div>
+                                        <div className="text-xs space-y-1 text-neutral-700">
+                                            <p className="flex justify-between">
+                                                <span className="text-neutral-400 font-medium">Garage:</span>
+                                                <span className="font-bold">{isGarage ? 'Yes' : 'No'}</span>
+                                            </p>
+                                            {layout.unitDetails && Array.isArray(layout.unitDetails) && layout.unitDetails.map((unit: any, uIdx: number) => (
+                                                <div key={uIdx} className="pt-1.5 mt-1.5 border-t border-neutral-100/60 space-y-1">
+                                                    <span className="text-[9px] font-bold text-neutral-400 block uppercase tracking-tight">Unit {unit.unitId || uIdx + 1} Rooms</span>
+                                                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
+                                                        {unit.bedrooms && <span>🛏️ {unit.bedrooms} Bed</span>}
+                                                        {unit.bathrooms && <span>🚿 {unit.bathrooms} Bath</span>}
+                                                        {unit.balcony && <span>🚪 {unit.balcony} Balcony</span>}
+                                                        {unit.kitchen && <span>🍳 {unit.kitchen} Kitchen</span>}
+                                                        {unit.diningRooms && <span>🍽️ {unit.diningRooms} Dining</span>}
+                                                        {unit.drawingRooms && <span>🛋️ {unit.drawingRooms} Drawing</span>}
+                                                    </div>
+                                                    {unit.additionalSpace && (
+                                                        <p className="text-[10px] text-neutral-500 italic mt-1 font-medium">
+                                                            + {unit.additionalSpace}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // Custom Formatter for Uploaded Documents
+    if (key === 'uploadedDocsUrls' && Array.isArray(value)) {
+        return (
+            <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
+                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-2">{formattedKey}</Label>
+                <div className="space-y-1.5 max-w-full">
+                    {value.map((doc: any, index: number) => (
+                        <a
+                            key={index}
+                            href={doc.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 text-xs font-bold text-primary-600 hover:text-primary-700 hover:underline truncate max-w-full"
+                        >
+                            📄 <span className="truncate">{doc.name || `Document ${index + 1}`}</span>
+                        </a>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    // Custom Formatter for Preferred Schedule
+    if (key === 'preferredSchedule' && typeof value === 'object') {
+        const formattedDate = value.date ? format(new Date(value.date), 'MMM d, yyyy') : '';
+        return (
+            <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
+                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
+                <p className="font-bold text-neutral-800 text-sm">
+                    {formattedDate ? `${formattedDate} at ${value.time || '-'}` : '-'}
+                </p>
+            </div>
+        );
+    }
+
+    // Custom Formatter for URLs
+    if (typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'))) {
+        return (
+            <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
+                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
+                <a
+                    href={value}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-primary-600 hover:text-primary-700 hover:underline break-all"
+                >
+                    Open Link ↗
+                </a>
+            </div>
+        );
+    }
+
+    if (Array.isArray(value)) {
+        return (
+            <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
+                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
+                <p className="font-bold text-neutral-800 text-sm break-words">{value.join(', ')}</p>
+            </div>
+        );
+    }
+
+    if (typeof value === 'boolean') {
+        return (
+            <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
+                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
+                <p className="font-bold text-neutral-800 text-sm">{value ? 'Yes' : 'No'}</p>
+            </div>
+        );
+    }
+
+    return (
+        <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
+            <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
+            <p className="font-bold text-neutral-800 text-sm break-words">{String(value)}</p>
+        </div>
+    );
+}
+
 export default function DesignOrderDetailPage() {
     const { id } = useParams();
     const router = useRouter();
@@ -47,9 +205,9 @@ export default function DesignOrderDetailPage() {
 
     async function fetchBooking() {
         try {
-            const { data: booking, error: bookingError } = await supabase
+            const { data: bookingData, error: bookingError } = await supabase
                 .from('design_bookings')
-                .select('*')
+                .select('*, sellers(business_name), designers(company_name)')
                 .eq('id', id)
                 .single();
 
@@ -58,20 +216,20 @@ export default function DesignOrderDetailPage() {
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('full_name, phone_number, email')
-                .eq('id', booking.user_id)
+                .eq('id', bookingData.user_id)
                 .single();
 
-            setBooking({ ...booking, profiles: profile });
+            setBooking({ ...bookingData, profiles: profile });
 
             // Initialize milestones if empty
-            if (!booking.milestones || booking.milestones.length === 0) {
+            if (!bookingData.milestones || bookingData.milestones.length === 0) {
                 setMilestones(DEFAULT_MILESTONES.map(name => ({
                     name,
                     status: 'pending',
                     due_date: ''
                 })));
             } else {
-                setMilestones(booking.milestones);
+                setMilestones(bookingData.milestones);
             }
 
         } catch (error) {
@@ -149,19 +307,40 @@ export default function DesignOrderDetailPage() {
         setMilestones(newMilestones);
     }
 
-    async function assignPartner(partnerId: string) {
-        // Assume verified seller for now
+    async function assignPartner(partnerId: string, role?: 'designer' | 'seller' | 'service_provider', partnerUserId?: string) {
+        let sellerId = role === 'seller' ? partnerId : null;
+        const designerId = role === 'designer' ? partnerId : null;
+
+        // If it's a designer, check if they also have a seller record for backwards compatibility
+        if (role === 'designer' && partnerUserId) {
+            const { data: seller } = await supabase
+                .from('sellers')
+                .select('id')
+                .eq('user_id', partnerUserId)
+                .single();
+            if (seller) {
+                sellerId = seller.id;
+            }
+        }
+
+        const updateData: any = {
+            assigned_seller_id: sellerId,
+            assigned_designer_id: designerId,
+            status: booking.status === 'verified' ? 'assigned' : booking.status
+        };
+
         const { error } = await supabase
             .from('design_bookings')
-            .update({
-                assigned_seller_id: partnerId,
-                status: booking.status === 'verified' ? 'assigned' : booking.status
-            })
+            .update(updateData)
             .eq('id', id);
 
         if (!error) {
-            setBooking({ ...booking, assigned_seller_id: partnerId, status: booking.status === 'verified' ? 'assigned' : booking.status });
+            setBooking({ ...booking, ...updateData });
             alert("Partner assigned successfully!");
+            fetchBooking();
+        } else {
+            console.error("Assign error:", error);
+            alert("Assignment failed: " + error.message);
         }
     }
 
@@ -276,32 +455,8 @@ export default function DesignOrderDetailPage() {
                                 <span className="w-1 h-4 bg-neutral-900 rounded-full"></span>
                                 Project Requirements
                             </h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                {Object.entries(details).map(([key, value]) => {
-                                    const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                                    let displayValue: any = value;
-                                    if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
-                                    if (Array.isArray(value)) displayValue = value.join(', ');
-                                    if (value && typeof value === 'object' && !Array.isArray(value)) {
-                                        displayValue = Object.entries(value)
-                                            .map(([subKey, subVal]) => {
-                                                const formattedSubKey = subKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                                                let displaySubVal: any = subVal;
-                                                if (typeof subVal === 'boolean') displaySubVal = subVal ? 'Yes' : 'No';
-                                                if (subVal && typeof subVal === 'object') displaySubVal = JSON.stringify(subVal);
-                                                return `${formattedSubKey}: ${displaySubVal || '-'}`;
-                                            })
-                                            .join(' | ');
-                                    }
-                                    if (!value) displayValue = '-';
-
-                                    return (
-                                        <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
-                                            <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
-                                            <p className="font-bold text-neutral-800 text-sm">{displayValue}</p>
-                                        </div>
-                                    );
-                                })}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {Object.entries(details).map(([key, value]) => renderDetailCard(key, value))}
                             </div>
                         </div>
                     </div>
@@ -309,24 +464,33 @@ export default function DesignOrderDetailPage() {
                     {/* Right Column: Customer & Milestones */}
                     <div className="space-y-8">
                         {/* Partner Assignment */}
-                        {(booking.status === 'verified' || booking.status === 'quotation' || booking.status === 'in_progress') && (
+                        {(booking.status === 'verified' || booking.status === 'quotation' || booking.status === 'in_progress' || booking.status === 'assigned') && (
                             <div className="bg-white rounded-3xl p-6 border border-neutral-200">
                                 <Label className="text-xs font-black text-neutral-400 uppercase tracking-widest block mb-4 flex items-center gap-2">
                                     <UserPlus className="w-4 h-4" /> Assigned Partner
                                 </Label>
 
-                                {booking.assigned_seller_id ? (
+                                {booking.assigned_seller_id || booking.assigned_designer_id ? (
                                     <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-100">
                                         <div className="flex justify-between items-center mb-1">
                                             <p className="font-bold text-sm text-neutral-900">Partner Assigned</p>
-                                            <Badge variant="outline" className="text-[10px] bg-white">ID: {booking.assigned_seller_id.slice(0, 6)}...</Badge>
+                                            <Badge variant="outline" className="text-[10px] bg-white">
+                                                ID: {(booking.assigned_seller_id || booking.assigned_designer_id).slice(0, 6)}...
+                                            </Badge>
                                         </div>
-                                        <p className="text-xs text-neutral-500 font-medium">This partner can now manage milestones.</p>
+                                        <p className="text-xs font-bold text-neutral-800 mt-2">
+                                            {booking.sellers?.business_name || booking.designers?.company_name || 'Loading partner details...'}
+                                        </p>
+                                        <p className="text-xs text-neutral-500 font-medium mt-1">This partner can now manage milestones.</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
                                         <p className="text-xs text-neutral-500 font-medium">Assign a verified partner to handle this project.</p>
-                                        <AssignPartnerDialog onAssign={assignPartner} />
+                                        <AssignPartnerDialog 
+                                            orderType="design" 
+                                            serviceType={booking.service_type} 
+                                            onAssign={assignPartner} 
+                                        />
                                     </div>
                                 )}
                             </div>

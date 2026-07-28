@@ -381,7 +381,13 @@ export default function PartnerOnboardingForm({
 
             <form onSubmit={(e) => { 
                 e.preventDefault(); 
-                if (step < 3) persistStep(step + 1); 
+                if (step < 3) {
+                    if (step === 1 && !isSeller && !isDesigner && !isServiceProvider) {
+                        toast.error("Please select at least one role/capability.");
+                        return;
+                    }
+                    persistStep(step + 1); 
+                }
                 else if (step === 3) handleSubmit(new FormData(e.currentTarget)); 
             }} className="space-y-8">
                 {/* STEP 1: BASIC INFO & ROLES */}
@@ -433,10 +439,36 @@ export default function PartnerOnboardingForm({
                                                 </div>
                                                 <div className="text-[9px] font-black uppercase text-blue-400/50 group-hover:text-blue-400">Start →</div>
                                             </div>
+                                         </div>
+                                     </div>
+                                    <div className="space-y-4 col-span-1 md:col-span-2 border-t border-neutral-800 pt-6 mt-2">
+                                        <Label className="text-[10px] uppercase font-black tracking-widest text-neutral-400 block mb-2">Partner Capabilities / Roles</Label>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${isSeller ? 'bg-blue-600/10 border-blue-500 text-white shadow-md' : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700'}`}>
+                                                <input type="checkbox" checked={isSeller} onChange={e => setIsSeller(e.target.checked)} className="rounded border-neutral-800 text-blue-600 focus:ring-blue-500 bg-neutral-950" />
+                                                <div>
+                                                    <span className="font-bold text-xs block text-white">Seller / Retailer</span>
+                                                    <span className="text-[9px] text-neutral-500 font-medium">Materials & Products</span>
+                                                </div>
+                                            </label>
+                                            <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${isDesigner ? 'bg-blue-600/10 border-blue-500 text-white shadow-md' : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700'}`}>
+                                                <input type="checkbox" checked={isDesigner} onChange={e => setIsDesigner(e.target.checked)} className="rounded border-neutral-800 text-blue-600 focus:ring-blue-500 bg-neutral-950" />
+                                                <div>
+                                                    <span className="font-bold text-xs block text-white">Designer / Architect</span>
+                                                    <span className="text-[9px] text-neutral-500 font-medium">Design & Planning</span>
+                                                </div>
+                                            </label>
+                                            <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${isServiceProvider ? 'bg-blue-600/10 border-blue-500 text-white shadow-md' : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700'}`}>
+                                                <input type="checkbox" checked={isServiceProvider} onChange={e => setIsServiceProvider(e.target.checked)} className="rounded border-neutral-800 text-blue-600 focus:ring-blue-500 bg-neutral-950" />
+                                                <div>
+                                                    <span className="font-bold text-xs block text-white">Service Provider</span>
+                                                    <span className="text-[9px] text-neutral-500 font-medium">General Services</span>
+                                                </div>
+                                            </label>
                                         </div>
                                     </div>
-                                </div>
-                            </CardContent>
+                                 </div>
+                             </CardContent>
                         </Card>
                     </div>
                 )}
@@ -620,7 +652,7 @@ export default function PartnerOnboardingForm({
 
                 {step < 4 && (
                     <div className="flex justify-between items-center pt-8 border-t border-neutral-900 px-4">
-                        <Button variant="ghost" type="button" onClick={() => step > 1 ? persistStep(step - 1) : onCancel()} className="h-12 px-8 rounded-xl font-black uppercase tracking-widest text-[10px] text-neutral-500 hover:text-white">
+                        <Button variant="ghost" type="button" onClick={() => step > 1 ? persistStep(step - 1) : onCancel?.()} className="h-12 px-8 rounded-xl font-black uppercase tracking-widest text-[10px] text-neutral-500 hover:text-white">
                             {step === 1 ? 'Cancel Onboarding' : 'Previous Step'}
                         </Button>
                         <Button type="submit" disabled={loading} size="lg" className="h-14 px-12 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-900/20 active:scale-95 transition-all">

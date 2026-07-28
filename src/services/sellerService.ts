@@ -4,7 +4,7 @@ export async function getSellerProfile(sellerId: string) {
     const supabase = await createClient()
 
     // 1. Resolve seller & base user — accept either seller.id OR profiles.id
-    let sellerData: Record<string, unknown> | null = null
+    let sellerData: any = null
 
     // First try finding directly by seller ID
     let { data: directSeller } = await supabase
@@ -26,7 +26,7 @@ export async function getSellerProfile(sellerId: string) {
     }
 
     // 2. Try fetching Designer Profile (if any) linked to this user
-    let designerData: Record<string, unknown> | null = null
+    let designerData: any = null
     let targetUserId = sellerData?.user_id || sellerId;
 
     // Path A: seller found → look up designer by seller's user_id
@@ -109,10 +109,10 @@ export async function getSellerProfile(sellerId: string) {
             .order('created_at', { ascending: false })
     ])
 
-    const products = productsRes.data || []
-    const reviews = reviewsRes.data || []
-    const orders = ordersRes.data || []
-    const designPackages = packagesRes.data || []
+    const products = (productsRes.data || []) as any[]
+    const reviews = (reviewsRes.data || []) as any[]
+    const orders = (ordersRes.data || []) as any[]
+    const designPackages = (packagesRes.data || []) as any[]
 
     // 4. Compute stats
     const totalOrders = (sellerData?.total_orders || orders.length) + (designerData?.completed_projects || 0)
