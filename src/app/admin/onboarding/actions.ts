@@ -307,7 +307,7 @@ export async function getPartners() {
     const { data: partnerProfiles, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .in('role', ['seller', 'designer', 'service_provider'])
+        .in('role', ['seller', 'designer'])
 
     if (profileError || !partnerProfiles) {
         console.error('Error fetching partner profiles:', profileError)

@@ -47,7 +47,7 @@ export default function UserManagementPage() {
     const [editingAccount, setEditingAccount] = useState<any | null>(null)
     const [isCreating, setIsCreating] = useState(false)
     const [createRole, setCreateRole] = useState<'customer' | 'partner'>('customer')
-    const [activeTab, setActiveTab] = useState<'customer' | 'retailer'>('customer')
+    const [activeTab, setActiveTab] = useState<'customer' | 'retailer' | 'admin'>('customer')
 
     const [adminId, setAdminId] = useState<string | null>(null)
     const [activeContractId, setActiveContractId] = useState<string | null>(null)
@@ -152,6 +152,16 @@ export default function UserManagementPage() {
         )
     }, [users, searchTerm])
 
+    const filteredAdmins = useMemo(() => {
+        const adminUsers = users.filter(u => u.role === 'admin')
+        if (!searchTerm) return adminUsers
+        const lowTerm = searchTerm.toLowerCase()
+        return adminUsers.filter(u =>
+        (u.full_name?.toLowerCase().includes(lowTerm) ||
+            u.email?.toLowerCase().includes(lowTerm))
+        )
+    }, [users, searchTerm])
+
     const filteredPartners = useMemo(() => {
         if (!searchTerm) return partners
         const lowTerm = searchTerm.toLowerCase()
@@ -168,7 +178,8 @@ export default function UserManagementPage() {
 
         // Switch tab first to prepare the UI container
         const isPartner = !!partnerData
-        setActiveTab(isPartner ? 'retailer' : 'customer')
+        const isAdmin = acc.role === 'admin' || acc.profile?.role === 'admin'
+        setActiveTab(isPartner ? 'retailer' : isAdmin ? 'admin' : 'customer')
         
         // Then set the account to trigger the form mount/load
         // Use a small timeout if needed to let the Tab transition start
@@ -251,6 +262,9 @@ export default function UserManagementPage() {
                         <TabsTrigger value="retailer" className="text-neutral-400 px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest data-[state=active]:text-white data-[state=active]:bg-neutral-800 data-[state=active]:shadow-sm transition-all">
                             Partners
                         </TabsTrigger>
+                        <TabsTrigger value="admin" className="text-neutral-400 px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest data-[state=active]:text-white data-[state=active]:bg-neutral-800 data-[state=active]:shadow-sm transition-all">
+                            Admins
+                        </TabsTrigger>
                     </TabsList>
 
                     {editingAccount && (
@@ -327,7 +341,7 @@ export default function UserManagementPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-800">
-                                 {(activeTab === 'customer' ? filteredUsers : filteredPartners).map((acc) => (
+                                 {(activeTab === 'customer' ? filteredUsers : activeTab === 'admin' ? filteredAdmins : filteredPartners).map((acc) => (
                                     <tr
                                         key={acc.id}
                                         onClick={() => handleSelectAccount(acc)}
@@ -359,6 +373,11 @@ export default function UserManagementPage() {
                                                     <>
                                                         <User className="w-3.5 h-3.5 text-blue-400" />
                                                         <span>Consumer</span>
+                                                    </>
+                                                ) : (acc.role || acc.profile?.role) === 'admin' ? (
+                                                    <>
+                                                        <Shield className="w-3.5 h-3.5 text-red-400" />
+                                                        <span>Admin</span>
                                                     </>
                                                 ) : (
                                                     <>
@@ -396,7 +415,7 @@ export default function UserManagementPage() {
                                 ))}
                             </tbody>
                         </table>
-                        {(activeTab === 'customer' ? filteredUsers : filteredPartners).length === 0 && (
+                        {(activeTab === 'customer' ? filteredUsers : activeTab === 'admin' ? filteredAdmins : filteredPartners).length === 0 && (
                             <div className="p-16 text-center text-neutral-500 flex flex-col items-center justify-center gap-4">
                                 <Search className="w-8 h-8 text-neutral-700" />
                                 <div>No users found matching your search.</div>
@@ -529,17 +548,17 @@ export default function UserManagementPage() {
                                             </div>
                                         )}
                                         <p className="text-neutral-400 font-medium mb-6">Update profile details and account settings for <span className="text-white font-bold italic">@{editingAccount.email.split('@')[0]}</span></p>
-                                        {activeTab === 'customer' ? (
-                                            <UserCreationForm
-                                                role="customer"
-                                                initialData={editingAccount}
-                                                onSubmit={(data) => {
-                                                    handleCreateUser(data, 'customer')
-                                                    handleCancelEdit()
-                                                }}
-                                                loading={loading}
-                                                onCancel={handleCancelEdit}
-                                            />
+                                         {activeTab === 'customer' || activeTab === 'admin' ? (
+                                             <UserCreationForm
+                                                 role={activeTab === 'customer' ? "customer" : "admin"}
+                                                 initialData={editingAccount}
+                                                 onSubmit={(data) => {
+                                                     handleCreateUser(data, activeTab === 'customer' ? 'customer' : 'admin' as any)
+                                                     handleCancelEdit()
+                                                 }}
+                                                 loading={loading}
+                                                 onCancel={handleCancelEdit}
+                                             />
                                         ) : (
                                             <PartnerOnboardingForm
                                                 userId={editingAccount.id}
