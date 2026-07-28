@@ -604,3 +604,65 @@ export async function rejectPartner(userId: string, adminId: string, reason: str
         return { error: err.message }
     }
 }
+
+export async function convertCustomerToPartner(userId: string) {
+    try {
+        const supabase = await createClient()
+
+        // 1. Fetch current profile
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single()
+
+        if (profileError || !profile) {
+            return { error: 'Profile not found' }
+        }
+
+        // 2. Update profiles table role
+        const { error: updateProfileError } = await supabase
+            .from('profiles')
+            .update({ role: 'seller', onboarding_step: 3 })
+            .eq('id', userId)
+
+        if (updateProfileError) {
+            return { error: updateProfileError.message }
+        }
+
+        // 3. Create a seller record if it doesn't exist
+        const { error: sellerError } = await supabase
+            .from('sellers')
+            .upsert({
+                user_id: userId,
+                business_name: profile.full_name || 'Partner Profile',
+                verification_status: 'verified'
+            })
+
+        if (sellerError) {
+            return { error: sellerError.message }
+        }
+
+        // 4. Update auth user metadata (needs service role client)
+        const adminClient = createAdminClient()
+        const { error: authError } = await adminClient.auth.admin.updateUserById(
+            userId,
+            {
+                user_metadata: {
+                    role: 'partner',
+                    full_name: profile.full_name,
+                    roles: { designer: false, seller: true, service_provider: false }
+                }
+            }
+        )
+
+        if (authError) {
+            console.error('Error updating auth metadata:', authError.message)
+        }
+
+        return { success: true }
+    } catch (err: any) {
+        console.error("convertCustomerToPartner failed:", err)
+        return { error: err.message }
+    }
+}

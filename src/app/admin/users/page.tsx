@@ -143,9 +143,10 @@ export default function UserManagementPage() {
     }, [editingAccount, refreshData])
 
     const filteredUsers = useMemo(() => {
-        if (!searchTerm) return users
+        const customerUsers = users.filter(u => u.role === 'customer' || !u.role)
+        if (!searchTerm) return customerUsers
         const lowTerm = searchTerm.toLowerCase()
-        return users.filter(u =>
+        return customerUsers.filter(u =>
         (u.full_name?.toLowerCase().includes(lowTerm) ||
             u.email?.toLowerCase().includes(lowTerm))
         )
@@ -354,8 +355,19 @@ export default function UserManagementPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700 text-xs font-semibold">
-                                                {activeTab === 'customer' ? <User className="w-3.5 h-3.5" /> : <Store className="w-3.5 h-3.5" />}
-                                                {activeTab === 'customer' ? 'Consumer' : 'Partner'}
+                                                {((acc.role || acc.profile?.role) === 'customer' || !(acc.role || acc.profile?.role)) ? (
+                                                    <>
+                                                        <User className="w-3.5 h-3.5 text-blue-400" />
+                                                        <span>Consumer</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Store className="w-3.5 h-3.5 text-purple-400" />
+                                                        <span className="capitalize">
+                                                            {((acc.role || acc.profile?.role) === 'service_provider') ? 'Service Provider' : (acc.role || acc.profile?.role)}
+                                                        </span>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -487,6 +499,35 @@ export default function UserManagementPage() {
                                 {/* Right Side: Profile Forms */}
                                 <div className="lg:col-span-8">
                                     <div>
+                                        {activeTab === 'customer' && (
+                                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-neutral-900/50 p-6 rounded-3xl border border-neutral-800 mb-6">
+                                                <div>
+                                                    <p className="text-sm font-bold text-white">Convert Account Type</p>
+                                                    <p className="text-[11px] text-neutral-500 font-medium mt-1">Upgrade this Consumer account to a business Partner account.</p>
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        if (confirm("Are you sure you want to convert this consumer account to a partner account? This will create a seller profile and update their permissions.")) {
+                                                            setLoading(true);
+                                                            const { convertCustomerToPartner } = await import('@/app/admin/onboarding/actions');
+                                                            const res = await convertCustomerToPartner(editingAccount.id);
+                                                            setLoading(false);
+                                                            if (res.success) {
+                                                                setSuccess("Account converted to partner successfully!");
+                                                                setEditingAccount(null);
+                                                                refreshData();
+                                                            } else {
+                                                                setError(res.error || "Failed to convert account");
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="h-10 px-4 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold uppercase tracking-widest text-[9px] shadow-lg shrink-0"
+                                                >
+                                                    Convert to Partner
+                                                </Button>
+                                            </div>
+                                        )}
                                         <p className="text-neutral-400 font-medium mb-6">Update profile details and account settings for <span className="text-white font-bold italic">@{editingAccount.email.split('@')[0]}</span></p>
                                         {activeTab === 'customer' ? (
                                             <UserCreationForm
