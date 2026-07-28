@@ -327,14 +327,11 @@ export async function getPartners() {
 
     // 3. Map profiles to the UI partner format
     return partnerProfiles.map(p => {
-        let businessName = p.full_name
-        if (p.role === 'seller' && sellersMap.has(p.id)) {
-            businessName = sellersMap.get(p.id)
-        } else if (p.role === 'designer' && designersMap.has(p.id)) {
-            businessName = designersMap.get(p.id)
-        } else if (p.role === 'service_provider' && providersMap.has(p.id)) {
-            businessName = providersMap.get(p.id)
-        }
+        const hasSeller = sellersMap.has(p.id)
+        const hasDesigner = designersMap.has(p.id)
+        const hasProvider = providersMap.has(p.id)
+
+        const businessName = sellersMap.get(p.id) || designersMap.get(p.id) || providersMap.get(p.id) || p.full_name
 
         return {
             id: p.id,
@@ -342,9 +339,9 @@ export async function getPartners() {
             businessName: businessName || p.full_name || 'Business Partner',
             role: p.role,
             roles: {
-                seller: p.role === 'seller',
-                designer: p.role === 'designer',
-                service_provider: p.role === 'service_provider'
+                seller: hasSeller,
+                designer: hasDesigner,
+                service_provider: hasProvider
             },
             profile: p
         }

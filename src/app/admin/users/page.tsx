@@ -368,26 +368,36 @@ export default function UserManagementPage() {
                                             {acc.profile?.phone && <div className="text-xs text-neutral-500">{acc.profile.phone}</div>}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700 text-xs font-semibold">
-                                                {((acc.role || acc.profile?.role) === 'customer' || !(acc.role || acc.profile?.role)) ? (
-                                                    <>
-                                                        <User className="w-3.5 h-3.5 text-blue-400" />
-                                                        <span>Consumer</span>
-                                                    </>
-                                                ) : (acc.role || acc.profile?.role) === 'admin' ? (
-                                                    <>
-                                                        <Shield className="w-3.5 h-3.5 text-red-400" />
-                                                        <span>Admin</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Store className="w-3.5 h-3.5 text-purple-400" />
-                                                        <span className="capitalize">
-                                                            {((acc.role || acc.profile?.role) === 'service_provider') ? 'Service Provider' : (acc.role || acc.profile?.role)}
-                                                        </span>
-                                                    </>
-                                                )}
-                                            </div>
+                                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700 text-xs font-semibold">
+                                                 {((acc.role || acc.profile?.role) === 'customer' || !(acc.role || acc.profile?.role)) ? (
+                                                     <>
+                                                         <User className="w-3.5 h-3.5 text-blue-400" />
+                                                         <span>Consumer</span>
+                                                     </>
+                                                 ) : (acc.role || acc.profile?.role) === 'admin' ? (
+                                                     <>
+                                                         <Shield className="w-3.5 h-3.5 text-red-400" />
+                                                         <span>Admin</span>
+                                                     </>
+                                                 ) : (
+                                                     <>
+                                                         <Store className="w-3.5 h-3.5 text-purple-400" />
+                                                         <span>
+                                                             {(() => {
+                                                                 const activeRoles: string[] = []
+                                                                 if (acc.roles?.seller) activeRoles.push("Seller")
+                                                                 if (acc.roles?.designer) activeRoles.push("Designer")
+                                                                 if (acc.roles?.service_provider) activeRoles.push("Service Provider")
+                                                                 if (activeRoles.length === 0) {
+                                                                     const singleRole = acc.role || acc.profile?.role || 'Partner'
+                                                                     activeRoles.push(singleRole === 'service_provider' ? 'Service Provider' : singleRole)
+                                                                 }
+                                                                 return activeRoles.map(r => r.charAt(0).toUpperCase() + r.slice(1)).join(", ")
+                                                             })()}
+                                                         </span>
+                                                     </>
+                                                 )}
+                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
