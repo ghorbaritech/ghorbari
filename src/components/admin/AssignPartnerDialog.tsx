@@ -52,15 +52,42 @@ export function AssignPartnerDialog({ orderType, serviceType, onAssign }: Assign
                     .ilike('company_name', `%${search}%`)
                 
                 if (!error && data) {
-                    // Filter in memory by specialization if serviceType is specified
-                    const filtered = serviceType
-                        ? data.filter(d => isMatch(d.specializations || [], serviceType))
-                        : data;
+                    // Fetch categories to resolve specialization UUIDs
+                    const { data: categories } = await supabase
+                        .from('product_categories')
+                        .select('id, name, slug')
+
+                    const getDesignerTags = (specializationIds: string[]) => {
+                        return (specializationIds || []).map(id => {
+                            const cat = categories?.find(c => c.id === id);
+                            return cat ? cat.name : '';
+                        }).filter(Boolean);
+                    };
+
+                    const getDesignerLabels = (specializationIds: string[]) => {
+                        return (specializationIds || []).map(id => {
+                            const cat = categories?.find(c => c.id === id);
+                            return cat ? cat.name : '';
+                        }).filter(Boolean).join(' • ');
+                    };
+
+                    let filtered = data;
+                    if (serviceType) {
+                        filtered = data.filter(d => {
+                            const tags = getDesignerTags(d.specializations || []);
+                            return isMatch(tags, serviceType);
+                        });
+                        // Fallback: if no designers match the specific serviceType, show all verified designers
+                        if (filtered.length === 0) {
+                            filtered = data;
+                        }
+                    }
+
                     setPartners(filtered.map(d => ({
                         id: d.id,
                         userId: d.user_id,
                         businessName: d.company_name,
-                        typeLabel: (d.specializations || []).join(' • ') || 'Designer',
+                        typeLabel: getDesignerLabels(d.specializations || []) || 'Designer',
                         role: 'designer'
                     })));
                 } else {
@@ -76,9 +103,14 @@ export function AssignPartnerDialog({ orderType, serviceType, onAssign }: Assign
                 
                 if (!error && data) {
                     // Filter in memory by service type if serviceType is specified
-                    const filtered = serviceType
-                        ? data.filter(sp => isMatch(sp.service_types || [], serviceType))
-                        : data;
+                    let filtered = data;
+                    if (serviceType) {
+                        filtered = data.filter(sp => isMatch(sp.service_types || [], serviceType));
+                        // Fallback if empty
+                        if (filtered.length === 0) {
+                            filtered = data;
+                        }
+                    }
                     setPartners(filtered.map(sp => ({
                         id: sp.id,
                         userId: sp.user_id,
@@ -98,9 +130,14 @@ export function AssignPartnerDialog({ orderType, serviceType, onAssign }: Assign
                     .ilike('business_name', `%${search}%`)
                 
                 if (!error && data) {
-                    const filtered = serviceType
-                        ? data.filter(s => isMatch(s.primary_categories || [], serviceType))
-                        : data;
+                    let filtered = data;
+                    if (serviceType) {
+                        filtered = data.filter(s => isMatch(s.primary_categories || [], serviceType));
+                        // Fallback if empty
+                        if (filtered.length === 0) {
+                            filtered = data;
+                        }
+                    }
                     setPartners(filtered.map(s => ({
                         id: s.id,
                         userId: s.user_id,

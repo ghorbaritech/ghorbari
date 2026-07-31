@@ -189,15 +189,20 @@ export async function getHomeContent() {
         console.log("FORCED HERO SYNC APPLIED:", JSON.stringify(contentMap['hero_section'].items.map((i:any) => i.title), null, 2));
 
         // FORCE CORRECT LAYOUT ORDER (Standardizing with live site)
-        const standardizedLayout = [
-            { id: '1', type: 'HeroSlider', data_key: 'hero_section', hidden: false, title: 'Main Hero Banner' },
-            { id: '2', type: 'IconSlider', data_key: 'featured_categories', hidden: false, title: 'Category Quick Menu' },
-            { id: '3', type: 'DesignServices', data_key: 'design_display_config', hidden: false, title: 'Design & Planning Services' },
-            { id: '4', type: 'PromoBanners', data_key: 'promo_banners', hidden: false, title: 'Promotional Banners' }
-        ];
-
         let currentLayout = contentMap['page_layout'] || [];
         if (!Array.isArray(currentLayout)) currentLayout = [];
+
+        const isHidden = (dataKey: string, defaultVal = false) => {
+            const match = currentLayout.find((x: any) => x.data_key === dataKey);
+            return match ? !!match.hidden : defaultVal;
+        };
+
+        const standardizedLayout = [
+            { id: '1', type: 'HeroSlider', data_key: 'hero_section', hidden: isHidden('hero_section'), title: 'Main Hero Banner' },
+            { id: '2', type: 'IconSlider', data_key: 'featured_categories', hidden: isHidden('featured_categories'), title: 'Category Quick Menu' },
+            { id: '3', type: 'DesignServices', data_key: 'design_display_config', hidden: isHidden('design_display_config'), title: 'Design & Planning Services' },
+            { id: '4', type: 'PromoBanners', data_key: 'promo_banners', hidden: isHidden('promo_banners'), title: 'Promotional Banners' }
+        ];
 
         // Combine standardized items with any existing extra sections from database
         const extraSections = currentLayout.filter((s: any) => 

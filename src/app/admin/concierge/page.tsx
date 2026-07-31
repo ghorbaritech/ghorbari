@@ -39,6 +39,8 @@ export default function ConciergeOrderPage() {
     const [products, setProducts] = useState<any[]>([])
     const [servicePackages, setServicePackages] = useState<any[]>([])
     const [providers, setProviders] = useState<any[]>([])
+    const [designers, setDesigners] = useState<any[]>([])
+    const [profiles, setProfiles] = useState<any[]>([])
     const [productsSearch, setProductsSearch] = useState('')
 
     // Carts
@@ -64,9 +66,18 @@ export default function ConciergeOrderPage() {
     }, [productsSearch])
 
     async function loadData() {
-        const { servicePackages, providers } = await getConciergeData() as any
+        const { servicePackages, providers, designers } = await getConciergeData() as any
         setServicePackages(servicePackages)
         setProviders(providers)
+        setDesigners(designers || [])
+
+        // Load profiles for customer selection dropdown
+        const supabase = createClient()
+        const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, full_name, email, role, phone_number, address')
+            .order('full_name')
+        setProfiles(profileData || [])
     }
 
     async function loadProducts() {
@@ -223,6 +234,7 @@ export default function ConciergeOrderPage() {
                 category: designForm.category,
                 location: customer.address || 'Not specified'
             },
+            assignedDesignerId: designForm.requirements.designer_id || null,
             // Design requests typically start as consultations without line items, or a fixed consultation fee
             lineItems: [{ title: 'Design Consultation Fee', price: 0, description: 'Initial consultation' }],
             totalAmount: 0
@@ -256,19 +268,45 @@ export default function ConciergeOrderPage() {
 
                 {/* Customer Search */}
                 <Card className="border-neutral-800 rounded-[2.5rem] p-8 shadow-2xl bg-neutral-900 space-y-6">
-                    <div className="flex flex-col md:flex-row items-center gap-4">
-                        <div className="relative flex-1 w-full">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
-                            <Input
-                                value={searchCustomer}
-                                onChange={(e) => setSearchCustomer(e.target.value)}
-                                placeholder="Search customer by email or phone..."
-                                className="h-14 pl-12 rounded-2xl border-neutral-800 bg-neutral-950 text-white focus:ring-indigo-500/50"
-                            />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Select Customer Dropdown */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-neutral-400 tracking-widest pl-1">Select Customer</label>
+                            <select
+                                value={customer?.id || ''}
+                                onChange={(e) => {
+                                    const selected = profiles.find(p => p.id === e.target.value)
+                                    setCustomer(selected || null)
+                                }}
+                                className="w-full h-14 pl-4 pr-10 rounded-2xl bg-neutral-950 border border-neutral-800 text-white text-sm font-bold focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer"
+                            >
+                                <option value="" className="bg-neutral-900">Choose Customer...</option>
+                                {profiles.map(p => (
+                                    <option key={p.id} value={p.id} className="bg-neutral-900 text-white">
+                                        {p.full_name} ({p.email || p.phone_number || 'No contact'})
+                                    </option>
+                                ))}
+                            </select>
                         </div>
-                        <Button onClick={handleSearchCustomer} className="h-14 w-full md:w-auto px-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs">
-                            Find Customer
-                        </Button>
+
+                        {/* Search Input for Lookup (Fallback) */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-neutral-400 tracking-widest pl-1">Or Search by Email/Phone/Name</label>
+                            <div className="flex items-center gap-3">
+                                <div className="relative flex-1 w-full">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
+                                    <Input
+                                        value={searchCustomer}
+                                        onChange={(e) => setSearchCustomer(e.target.value)}
+                                        placeholder="Type name, email or phone..."
+                                        className="h-14 pl-12 rounded-2xl border-neutral-800 bg-neutral-950 text-white focus:ring-indigo-500/50"
+                                    />
+                                </div>
+                                <Button onClick={handleSearchCustomer} className="h-14 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs">
+                                    Search
+                                </Button>
+                            </div>
+                        </div>
                     </div>
 
                     {customer && (
@@ -659,20 +697,21 @@ export default function ConciergeOrderPage() {
 
                                         {/* Admin Extras */}
                                         {designForm.category && (
-                                            <div className="pt-8 border-t border-neutral-800 space-y-6 mt-8">
+                                             <div className="pt-8 border-t border-neutral-800 space-y-6 mt-8">
                                                 <div className="space-y-2 relative">
-                                                    <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest pl-1">Assign Service Provider</label>
+                                                    <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest pl-1">Assign Designer</label>
                                                     <select
                                                         className="w-full h-14 pl-4 pr-10 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-sm font-bold text-purple-300 focus:ring-2 focus:ring-purple-500 appearance-none cursor-pointer"
-                                                        onChange={(e) => setDesignForm({ ...designForm, requirements: { ...designForm.requirements, provider_id: e.target.value } })}
+                                                        onChange={(e) => setDesignForm({ ...designForm, requirements: { ...designForm.requirements, designer_id: e.target.value } })}
                                                     >
-                                                        <option value="" className="bg-neutral-900">Select Provider...</option>
-                                                        {providers?.map((p: any) => (
-                                                            <option key={p.id} value={p.id} className="bg-neutral-900 text-white">{p.business_name} ({p.contact_person})</option>
+                                                        <option value="" className="bg-neutral-900">Select Designer...</option>
+                                                        {designers?.map((d: any) => (
+                                                            <option key={d.id} value={d.id} className="bg-neutral-900 text-white">{d.business_name} ({d.contact_person})</option>
                                                         ))}
                                                     </select>
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute right-4 top-[40px] w-4 h-4 text-purple-400 pointer-events-none"><path d="m6 9 6 6 6-6" /></svg>
                                                 </div>
+
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest pl-1">Quote Price (Tk)</label>
                                                     <Input

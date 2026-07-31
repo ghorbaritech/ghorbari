@@ -81,32 +81,19 @@ export function InfoCardSlider({ title, items = [] }: InfoCardSliderProps) {
                             <SwiperSlide key={item.id || index} className="h-auto">
                                 <Link
                                     href={item.link || '#'}
-                                    className="group flex flex-col justify-between h-full min-h-[500px] bg-[#111] rounded-[2rem] overflow-hidden border border-neutral-800 transition-all duration-300 hover:shadow-2xl hover:border-neutral-700"
+                                    className="group block relative w-full h-[500px] bg-[#111] rounded-[2rem] overflow-hidden border border-neutral-800 transition-all duration-300 hover:shadow-2xl hover:border-neutral-700"
                                 >
-                                    <div className="p-6 md:p-8 flex flex-col flex-1">
-                                        <h3 className="font-bold text-white text-3xl md:text-4xl leading-tight mb-4 group-hover:text-neutral-300 transition-colors">
-                                            {item.title}
-                                        </h3>
-                                        {item.description && (
-                                            <p className="text-sm md:text-base text-neutral-400 line-clamp-4 leading-relaxed font-medium">
-                                                {item.description}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="relative mt-auto pt-6 px-4 md:px-8 pb-0 flex justify-center items-end min-h-[220px]">
-                                        {item.image ? (
-                                            <img
-                                                src={item.image}
-                                                alt={item.title}
-                                                className="w-[90%] object-contain object-bottom group-hover:scale-105 transition-transform duration-700 max-h-[240px]"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-48 bg-neutral-800 rounded-t-2xl flex items-center justify-center text-neutral-500 font-bold uppercase tracking-widest text-[10px]">
-                                                No Image
-                                            </div>
-                                        )}
-                                    </div>
+                                    {item.image ? (
+                                        <img
+                                            src={item.image}
+                                            alt={item.title || 'Slide Image'}
+                                            className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-700"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-neutral-850 flex items-center justify-center text-neutral-500 font-bold uppercase tracking-widest text-xs">
+                                            No Image
+                                        </div>
+                                    )}
                                 </Link>
                             </SwiperSlide>
                         ))}

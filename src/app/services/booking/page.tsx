@@ -147,18 +147,47 @@ export default function BookingWizardPage() {
     // Steps: 0=Items, 1=Assignment, 2=Provider (optional), 3=Schedule, 4=Details (optional), 5=Review
     // For 0-indexed WizardStep, figure out dynamic steps:
     const steps = (() => {
+        const isBn = lang === 'bn';
         const s = [
-            { label: "Items", title: "Select Specific Services", description: "Choose the exact services you need" },
-            { label: "Assign", title: "Choose Provider Route", description: "How would you like to proceed with your service?" },
+            {
+                label: isBn ? "সেবা" : "Items",
+                title: isBn ? "নির্দিষ্ট সেবা বেছে নিন" : "Select Specific Services",
+                description: isBn ? "আপনার প্রয়োজনীয় সেবাগুলো বেছে নিন" : "Choose the exact services you need"
+            },
+            {
+                label: isBn ? "নিয়োগ" : "Assign",
+                title: isBn ? "সেবা প্রদানকারী রুট বেছে নিন" : "Choose Provider Route",
+                description: isBn ? "আপনার সেবা কীভাবে পেতে চান?" : "How would you like to proceed with your service?"
+            },
         ];
         if (assignmentType === 'user_choose') {
-            s.push({ label: "Select", title: "Select a Provider", description: "Choose from our verified experts" });
+            s.push({
+                label: isBn ? "বেছে নিন" : "Select",
+                title: isBn ? "সেবা প্রদানকারী বেছে নিন" : "Select a Provider",
+                description: isBn ? "আমাদের যাচাইকৃত বিশেষজ্ঞদের মধ্য থেকে বেছে নিন" : "Choose from our verified experts"
+            });
         }
-        s.push({ label: "Schedule", title: "Schedule a Consultation", description: "When should we contact you?" });
+        s.push({
+            label: isBn ? "সময়সূচী" : "Schedule",
+            title: isBn ? "পরামর্শের সময় নির্ধারণ করুন" : "Schedule a Consultation",
+            description: isBn ? "আমরা কখন আপনার সাথে যোগাযোগ করব?" : "When should we contact you?"
+        });
         if (journeyType !== 'general') {
-            s.push({ label: "Details", title: journeyType === 'interior' ? "Interior Details" : (journeyType === 'structural' ? "Structural Details" : "Project Details"), description: "Tell us more about your space" });
+            s.push({
+                label: isBn ? "বিবরণ" : "Details",
+                title: journeyType === 'interior'
+                    ? (isBn ? "অভ্যন্তরীণ বিবরণ" : "Interior Details")
+                    : (journeyType === 'structural'
+                        ? (isBn ? "কাঠামোগত বিবরণ" : "Structural Details")
+                        : (isBn ? "প্রকল্পের বিবরণ" : "Project Details")),
+                description: isBn ? "আপনার স্থান সম্পর্কে আরও জানান" : "Tell us more about your space"
+            });
         }
-        s.push({ label: "Review", title: "Review & Confirm", description: "Please review your details before submitting" });
+        s.push({
+            label: isBn ? "পর্যালোচনা" : "Review",
+            title: isBn ? "পর্যালোচনা ও নিশ্চিত করুন" : "Review & Confirm",
+            description: isBn ? "জমা দেওয়ার আগে আপনার তথ্য পর্যালোচনা করুন" : "Please review your details before submitting"
+        });
         return s;
     })();
 
@@ -166,6 +195,17 @@ export default function BookingWizardPage() {
     const currentStepData = steps[step] || steps[steps.length - 1];
 
     const isSuccess = step >= totalSteps;
+
+    // Stable step keys for conditional rendering (not title-based to support Bangla)
+    const stepKeys = (() => {
+        const k = ['items', 'assign'];
+        if (assignmentType === 'user_choose') k.push('provider');
+        k.push('schedule');
+        if (journeyType !== 'general') k.push('details');
+        k.push('review');
+        return k;
+    })();
+    const stepId = stepKeys[step] || 'review';
 
     useEffect(() => {
         if (items.length === 0 && !isSuccess) {
@@ -321,11 +361,11 @@ export default function BookingWizardPage() {
                     isFirstStep={step === 0}
                     isLastStep={step === totalSteps - 1}
                     canNext={!loading}
-                    nextLabel={step === totalSteps - 1 ? (loading ? "Submitting..." : "Complete Booking") : undefined}
+                    nextLabel={step === totalSteps - 1 ? (loading ? (lang === 'bn' ? "জমা দেওয়া হচ্ছে..." : "Submitting...") : (lang === 'bn' ? "বুকিং সম্পন্ন করুন" : "Complete Booking")) : undefined}
                     lang={lang}
                 >
                     {/* Step -1: Select Specific Services */}
-                    {currentStepData.title.includes("Specific Services") && (
+                    {stepId === 'items' && (
                         <div className="space-y-4">
                             {loadingItems ? (
                                 <div className="py-16 flex flex-col items-center gap-4">
@@ -375,7 +415,7 @@ export default function BookingWizardPage() {
                     )}
 
                     {/* Step 0: Assignment Type */}
-                    {currentStepData.title.includes("Route") && (
+                    {stepId === 'assign' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <Card
                                 className={`cursor-pointer transition-all rounded-2xl overflow-hidden border-2 ${assignmentType === 'dalankotha_assign' ? 'border-primary-600 bg-white ring-4 ring-primary-50' : 'border-neutral-200 hover:border-primary-200'}`}
@@ -410,7 +450,7 @@ export default function BookingWizardPage() {
                     )}
 
                     {/* Step: Provider Selection */}
-                    {currentStepData.title.includes("Provider") && (
+                    {stepId === 'provider' && (
                         <div className="space-y-4">
                             {loading ? (
                                 <div className="py-16 flex flex-col items-center gap-4">
@@ -449,12 +489,12 @@ export default function BookingWizardPage() {
                     )}
 
                     {/* Step: Schedule */}
-                    {currentStepData.title.includes("Schedule") && (
+                    {stepId === 'schedule' && (
                         <ServiceScheduler value={schedule} onChange={setSchedule} />
                     )}
 
                     {/* Step: Details */}
-                    {(currentStepData.title.includes("Interior") || currentStepData.title.includes("Structural") || currentStepData.title.includes("Project Details")) && (
+                    {stepId === 'details' && (
                         <div className="space-y-6">
                             {(journeyType === 'interior' || journeyType === 'both') && (
                                 <div className="space-y-4">
@@ -534,7 +574,7 @@ export default function BookingWizardPage() {
                     )}
 
                     {/* Step: Review */}
-                    {currentStepData.title.includes("Confirm") && (
+                    {stepId === 'review' && (
                         <div className="space-y-6">
                             <div className="bg-neutral-50 rounded-2xl border border-neutral-200 p-5 space-y-5">
                                 <div className="flex justify-between items-center">

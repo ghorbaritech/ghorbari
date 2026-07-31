@@ -25,6 +25,7 @@ export async function createServiceRequestAdmin(data: any) {
         .insert({
             request_number: requestNumber,
             customer_id: data.customerId,
+            assigned_designer_id: data.assignedDesignerId || null,
             service_type: data.serviceType,
             requirements: data.requirements, // JSONB
             status: 'confirmed', // Admin created, so it's confirmed

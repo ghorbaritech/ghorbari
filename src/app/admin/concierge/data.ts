@@ -17,20 +17,64 @@ export async function getConciergeData() {
         `)
         .eq('is_active', true)
 
-    const { data: providers } = await supabase
-        .from('profiles')
-        .select('id, business_name, contact_person, phone_number')
-        .eq('role', 'service_provider')
+    // Fetch service providers from service_providers joined with profiles
+    const { data: serviceProviders } = await supabase
+        .from('service_providers')
+        .select(`
+            id,
+            user_id,
+            business_name,
+            profiles:user_id (
+                full_name,
+                phone_number,
+                email
+            )
+        `)
+        .eq('is_active', true)
 
-    // For now, we might not have 'design' specific categories in product_categories
-    // So we'll fetch all and let the UI filter or just return hardcoded design types if table is empty
+    const formattedProviders = (serviceProviders || []).map(sp => ({
+        id: sp.id,
+        userId: sp.user_id,
+        business_name: sp.business_name,
+        contact_person: (sp.profiles as any)?.full_name || 'No Name',
+        phone_number: (sp.profiles as any)?.phone_number || '',
+        email: (sp.profiles as any)?.email || '',
+        role: 'service_provider'
+    }))
+
+    // Fetch designers from designers joined with profiles
+    const { data: designersData } = await supabase
+        .from('designers')
+        .select(`
+            id,
+            user_id,
+            company_name,
+            profiles:user_id (
+                full_name,
+                phone_number,
+                email
+            )
+        `)
+        .eq('is_active', true)
+
+    const formattedDesigners = (designersData || []).map(d => ({
+        id: d.id,
+        userId: d.user_id,
+        business_name: d.company_name,
+        contact_person: (d.profiles as any)?.full_name || 'No Name',
+        phone_number: (d.profiles as any)?.phone_number || '',
+        email: (d.profiles as any)?.email || '',
+        role: 'designer'
+    }))
+
     const { data: categories } = await supabase
         .from('product_categories')
         .select('*')
 
     return {
         servicePackages: servicePackages || [],
-        providers: providers || [],
+        providers: formattedProviders,
+        designers: formattedDesigners,
         categories: categories || []
     }
 }

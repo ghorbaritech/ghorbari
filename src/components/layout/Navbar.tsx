@@ -20,7 +20,7 @@ import { CalculatorDropdown } from "./CalculatorDropdown";
 export function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { language, setLanguage, t } = useLanguage();
-    const [logoUrl, setLogoUrl] = useState<string>("/logo-dalankotha-white-bg.png");
+    const [logoUrl, setLogoUrl] = useState<string>("/logo-dalankotha-dark.png");
     const [searchQuery, setSearchQuery] = useState("");
     const [user, setUser] = useState<any>(null);
     const [profile, setProfile] = useState<any>(null);
