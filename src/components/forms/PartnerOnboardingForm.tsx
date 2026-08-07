@@ -15,6 +15,7 @@ import { Shield, Loader2, UserPlus, FileCheck, Store, User, PencilRuler, Wrench,
 import PartnerLegalContractForm from '@/components/forms/PartnerLegalContractForm'
 import { createClient } from '@/utils/supabase/client'
 import { updateOnboardingStep } from '@/app/admin/onboarding/actions'
+import { CredentialsDialog } from '@/components/admin/CredentialsDialog'
 
 const PRODUCT_CATEGORIES = [
     'Cement & Concrete', 'Steel & Metal', 'Tiles & Flooring',
@@ -48,6 +49,12 @@ export default function PartnerOnboardingForm({
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
+    const [createdCredentials, setCreatedCredentials] = useState<{
+        email: string
+        fullName: string
+        password: string
+        id: string
+    } | null>(null)
 
     const [step, setStep] = useState(initialData?.profile?.onboarding_step || 1)
     
@@ -239,6 +246,14 @@ export default function PartnerOnboardingForm({
                 setError(result.error)
                 toast.error(result.error)
             } else {
+                if (!userId) {
+                    setCreatedCredentials({
+                        email: data.email,
+                        fullName: data.businessName || data.fullName,
+                        password: rawData.temporaryPassword as string || '',
+                        id: (result as any).userId || ''
+                    })
+                }
                 // Advance to Step 4 (Legal Contract) after saving business details
                 persistStep(4)
             }
@@ -668,6 +683,10 @@ export default function PartnerOnboardingForm({
                     </div>
                 )}
             </form>
+            <CredentialsDialog 
+                credentials={createdCredentials} 
+                onClose={() => setCreatedCredentials(null)} 
+            />
         </div>
     )
 }

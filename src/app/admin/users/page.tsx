@@ -31,6 +31,9 @@ import { getUsers, getPartners, updateUserProfile, getCategories, verifyPartner,
 import { getContractByPartnerId } from '@/app/admin/legal/actions'
 import ContractReviewDialog from '@/components/legal/ContractReviewDialog'
 import { createClient } from '@/utils/supabase/client'
+import { CredentialsDialog } from '@/components/admin/CredentialsDialog'
+import { toast } from 'sonner'
+import { Label } from '@/components/ui/label'
 
 export default function UserManagementPage() {
     const [loading, setLoading] = useState(false)
@@ -48,6 +51,30 @@ export default function UserManagementPage() {
     const [isCreating, setIsCreating] = useState(false)
     const [createRole, setCreateRole] = useState<'customer' | 'partner'>('customer')
     const [activeTab, setActiveTab] = useState<'customer' | 'retailer' | 'admin'>('customer')
+    
+    // Password reset and generated credentials states
+    const [resetPassword, setResetPassword] = useState('')
+    const [resetLoading, setResetLoading] = useState(false)
+    const [emailSending, setEmailSending] = useState(false)
+    const [createdCredentials, setCreatedCredentials] = useState<{
+        email: string
+        fullName: string
+        password: string
+        id: string
+    } | null>(null)
+
+    const generateRandomPassword = () => {
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*'
+        let pass = ''
+        for (let i = 0; i < 12; i++) {
+            pass += chars.charAt(Math.floor(Math.random() * chars.length))
+        }
+        setResetPassword(pass)
+    }
+
+    useEffect(() => {
+        setResetPassword('')
+    }, [editingAccount])
 
     const [adminId, setAdminId] = useState<string | null>(null)
     const [activeContractId, setActiveContractId] = useState<string | null>(null)
@@ -109,7 +136,7 @@ export default function UserManagementPage() {
         setLoading(false)
     }
 
-    const handleCreateUser = useCallback(async (arg: React.FormEvent<HTMLFormElement> | any, role: 'customer' | 'seller') => {
+    const handleCreateUser = useCallback(async (arg: React.FormEvent<HTMLFormElement> | any, role: 'customer' | 'seller' | 'admin') => {
         if (arg?.preventDefault) arg.preventDefault()
         setLoading(true)
         setSuccess(null)
@@ -128,11 +155,26 @@ export default function UserManagementPage() {
                 const res = await updateUserProfile(editingAccount.id, data)
                 if (res.error) throw new Error(res.error)
             } else if (!editingAccount) {
-                // Creation logic usually involves more steps, simulating for now
-                await new Promise(r => setTimeout(r, 1000))
+                const { createUser } = await import('@/app/admin/onboarding/actions')
+                const res = await createUser({
+                    email: data.email,
+                    fullName: data.fullName,
+                    phone: data.phone,
+                    address: data.address,
+                    temporaryPassword: data.temporaryPassword
+                }, role === 'customer' ? 'customer' : 'admin')
+
+                if (res.error) throw new Error(res.error)
+
+                setCreatedCredentials({
+                    email: data.email,
+                    fullName: data.fullName,
+                    password: data.temporaryPassword,
+                    id: res.userId!
+                })
             }
 
-            setSuccess(`${role === 'seller' ? 'Partner' : 'Consumer'} account ${editingAccount ? 'updated' : 'created'} successfully!`)
+            setSuccess(`${role === 'seller' ? 'Partner' : role === 'admin' ? 'Admin' : 'Consumer'} account ${editingAccount ? 'updated' : 'created'} successfully!`)
             setEditingAccount(null)
             refreshData()
         } catch (err: any) {
@@ -528,6 +570,116 @@ export default function UserManagementPage() {
                                 {/* Right Side: Profile Forms */}
                                 <div className="lg:col-span-8">
                                     <div>
+                                        {/* Password Reset Section */}
+                                        <div className="bg-neutral-900/50 p-6 rounded-3xl border border-neutral-800 mb-6 space-y-4">
+                                            <div>
+                                                <p className="text-sm font-bold text-white flex items-center gap-2">
+                                                    <Shield className="w-4 h-4 text-blue-500" />
+                                                    Password & Security Reset
+                                                </p>
+                                                <p className="text-[11px] text-neutral-500 font-medium mt-1">
+                                                    Force update login credentials for this account.
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <div className="flex gap-2 items-end">
+                                                    <div className="flex-1 space-y-2">
+                                                        <Label htmlFor="resetPassword" className="text-[10px] uppercase font-black tracking-widest text-neutral-500 ml-1">New password</Label>
+                                                        <Input
+                                                            id="resetPassword"
+                                                            type="text"
+                                                            placeholder="Enter new password or click generate"
+                                                            value={resetPassword}
+                                                            onChange={e => setResetPassword(e.target.value)}
+                                                            className="h-11 bg-neutral-950 border-neutral-800 rounded-xl text-white"
+                                                        />
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        onClick={generateRandomPassword}
+                                                        className="h-11 px-4 border border-neutral-800 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 rounded-xl text-[10px] font-black uppercase shrink-0"
+                                                    >
+                                                        Generate
+                                                    </Button>
+                                                </div>
+
+                                                {resetPassword && (
+                                                    <div className="flex flex-wrap gap-2 pt-2">
+                                                        <Button
+                                                            type="button"
+                                                            disabled={resetLoading}
+                                                            onClick={async () => {
+                                                                if (!resetPassword) return
+                                                                setResetLoading(true)
+                                                                try {
+                                                                    const { resetUserPassword } = await import('@/app/admin/onboarding/actions')
+                                                                    const res = await resetUserPassword(editingAccount.id, resetPassword)
+                                                                    if (res.error) {
+                                                                        toast.error(res.error)
+                                                                    } else {
+                                                                        toast.success('Password updated successfully!')
+                                                                    }
+                                                                } catch (err: any) {
+                                                                    toast.error(err.message || 'Failed to reset password')
+                                                                } finally {
+                                                                    setResetLoading(false)
+                                                                }
+                                                            }}
+                                                            className="h-10 px-5 bg-white text-black hover:bg-neutral-200 rounded-xl font-bold uppercase tracking-wider text-[9px]"
+                                                        >
+                                                            {resetLoading ? 'Saving...' : 'Save Password'}
+                                                        </Button>
+
+                                                        <Button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const text = `Email: ${editingAccount.email || editingAccount.profile?.email}\nPassword: ${resetPassword}`
+                                                                navigator.clipboard.writeText(text)
+                                                                toast.success('Password copied to clipboard!')
+                                                            }}
+                                                            className="h-10 px-5 bg-neutral-850 hover:bg-neutral-800 border border-neutral-800 text-white rounded-xl font-bold uppercase tracking-wider text-[9px]"
+                                                        >
+                                                            Copy Password
+                                                        </Button>
+
+                                                        <Button
+                                                            type="button"
+                                                            disabled={emailSending}
+                                                            onClick={async () => {
+                                                                if (!resetPassword) return
+                                                                setEmailSending(true)
+                                                                try {
+                                                                    const { sendCredentialsEmail } = await import('@/app/admin/onboarding/actions')
+                                                                    const emailAddr = editingAccount.email || editingAccount.profile?.email
+                                                                    const fullName = editingAccount.full_name || editingAccount.profile?.full_name || editingAccount.businessName
+                                                                    const res = await sendCredentialsEmail(
+                                                                        emailAddr,
+                                                                        fullName,
+                                                                        resetPassword
+                                                                    )
+                                                                    if (res.error) {
+                                                                        toast.error(res.error)
+                                                                    } else if (res.simulated) {
+                                                                        toast.warning('SMTP not configured (Simulated sending in server logs)')
+                                                                    } else {
+                                                                        toast.success('Credentials sent to ' + emailAddr)
+                                                                    }
+                                                                } catch (err: any) {
+                                                                    toast.error(err.message || 'Failed to send credentials')
+                                                                } finally {
+                                                                    setEmailSending(false)
+                                                                }
+                                                            }}
+                                                            className="h-10 px-5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold uppercase tracking-wider text-[9px]"
+                                                        >
+                                                            {emailSending ? 'Sending...' : 'Send to Email'}
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         {activeTab === 'customer' && (
                                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-neutral-900/50 p-6 rounded-3xl border border-neutral-800 mb-6">
                                                 <div>
@@ -584,6 +736,11 @@ export default function UserManagementPage() {
                     </div>
                 )}
             </Tabs>
+
+            <CredentialsDialog
+                credentials={createdCredentials}
+                onClose={() => setCreatedCredentials(null)}
+            />
 
             <ContractReviewDialog
                 contractId={activeContractId}

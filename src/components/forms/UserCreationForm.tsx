@@ -41,6 +41,15 @@ export default function UserCreationForm({
                 address: initialData.address || '',
                 temporaryPassword: ''
             })
+        } else {
+            const randomPass = Math.random().toString(36).slice(-8) + '!'
+            setFormData({
+                fullName: '',
+                email: '',
+                phone: '',
+                address: '',
+                temporaryPassword: randomPass
+            })
         }
     }, [initialData])
 

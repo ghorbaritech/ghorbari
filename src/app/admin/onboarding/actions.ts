@@ -668,3 +668,148 @@ export async function convertCustomerToPartner(userId: string) {
         return { error: err.message }
     }
 }
+
+export async function resetUserPassword(userId: string, newPassword: string) {
+    try {
+        const supabase = await createClient()
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+        if (userError || !user) {
+            throw new Error('Unauthorized: No user session')
+        }
+
+        // Verify Admin
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (profile?.role !== 'admin') {
+            throw new Error('Unauthorized: Not an admin')
+        }
+
+        const adminClient = createAdminClient()
+        const { error } = await adminClient.auth.admin.updateUserById(userId, {
+            password: newPassword
+        })
+
+        if (error) throw error
+
+        return { success: true }
+    } catch (err: any) {
+        console.error("resetUserPassword failed:", err)
+        return { error: err.message }
+    }
+}
+
+export async function sendCredentialsEmail(email: string, name: string, password: string) {
+    try {
+        const supabase = await createClient()
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+        if (userError || !user) {
+            throw new Error('Unauthorized: No user session')
+        }
+
+        // Verify Admin
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (profile?.role !== 'admin') {
+            throw new Error('Unauthorized: Not an admin')
+        }
+
+        const { sendEmail } = await import('@/utils/mail')
+        const html = `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 12px;">
+                <h2 style="color: #111;">Dalan Kotha Account Credentials</h2>
+                <p>Hello ${name || 'User'},</p>
+                <p>An administrator has generated login credentials for your account on the Dalan Kotha platform.</p>
+                <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #eaeaea;">
+                    <p style="margin: 0; font-size: 14px;"><strong>Email:</strong> ${email}</p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Password:</strong> ${password}</p>
+                </div>
+                <p>Please log in using these credentials and update your password immediately from your settings page.</p>
+                <p style="margin-top: 30px;"><a href="https://dalan-kotha.com/login" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Log In Now</a></p>
+                <hr style="border: 0; border-top: 1px solid #eaeaea; margin-top: 30px;" />
+                <p style="font-size: 12px; color: #666;">This is an automated operational email. If you did not request this account setup, please disregard this email.</p>
+            </div>
+        `
+
+        const res = await sendEmail({
+            to: email,
+            subject: 'Your Dalan Kotha Login Credentials',
+            html
+        })
+
+        if (res.error) throw new Error(res.error)
+        return { success: true, simulated: !!res.simulated }
+    } catch (err: any) {
+        console.error("sendCredentialsEmail failed:", err)
+        return { error: err.message }
+    }
+}
+
+export async function createUser(data: any, role: 'customer' | 'admin') {
+    try {
+        const supabase = await createClient()
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+        if (userError || !user) {
+            throw new Error('Unauthorized: No user session')
+        }
+
+        // Verify Admin
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (profile?.role !== 'admin') {
+            throw new Error('Unauthorized: Not an admin')
+        }
+
+        const adminClient = createAdminClient()
+
+        // 1. Create Auth User
+        const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
+            email: data.email,
+            password: data.temporaryPassword || Math.random().toString(36).slice(-8),
+            user_metadata: { role, full_name: data.fullName },
+            email_confirm: true
+        })
+
+        if (authError) throw authError
+
+        const userId = authUser.user.id
+
+        // 2. Create Profile Entry
+        const { error: profileError } = await adminClient
+            .from('profiles')
+            .upsert({
+                id: userId,
+                email: data.email,
+                role: role,
+                full_name: data.fullName,
+                phone_number: data.phone,
+                address: data.address,
+                updated_at: new Date().toISOString()
+            })
+
+        if (profileError) {
+            // Rollback auth user if profile creation fails
+            await adminClient.auth.admin.deleteUser(userId)
+            throw profileError
+        }
+
+        return { success: true, userId }
+    } catch (err: any) {
+        console.error("createUser failed:", err)
+        return { error: err.message }
+    }
+}
