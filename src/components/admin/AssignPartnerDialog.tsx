@@ -67,21 +67,11 @@ export function AssignPartnerDialog({ orderType, serviceType, onAssign }: Assign
                     const getDesignerLabels = (specializationIds: string[]) => {
                         return (specializationIds || []).map(id => {
                             const cat = categories?.find(c => c.id === id);
-                            return cat ? cat.name : '';
+                            return cat ? cat.name : id;
                         }).filter(Boolean).join(' • ');
                     };
 
                     let filtered = data;
-                    if (serviceType) {
-                        filtered = data.filter(d => {
-                            const tags = getDesignerTags(d.specializations || []);
-                            return isMatch(tags, serviceType);
-                        });
-                        // Fallback: if no designers match the specific serviceType, show all verified designers
-                        if (filtered.length === 0) {
-                            filtered = data;
-                        }
-                    }
 
                     setPartners(filtered.map(d => ({
                         id: d.id,
@@ -102,15 +92,7 @@ export function AssignPartnerDialog({ orderType, serviceType, onAssign }: Assign
                     .ilike('business_name', `%${search}%`)
                 
                 if (!error && data) {
-                    // Filter in memory by service type if serviceType is specified
                     let filtered = data;
-                    if (serviceType) {
-                        filtered = data.filter(sp => isMatch(sp.service_types || [], serviceType));
-                        // Fallback if empty
-                        if (filtered.length === 0) {
-                            filtered = data;
-                        }
-                    }
                     setPartners(filtered.map(sp => ({
                         id: sp.id,
                         userId: sp.user_id,
@@ -131,13 +113,6 @@ export function AssignPartnerDialog({ orderType, serviceType, onAssign }: Assign
                 
                 if (!error && data) {
                     let filtered = data;
-                    if (serviceType) {
-                        filtered = data.filter(s => isMatch(s.primary_categories || [], serviceType));
-                        // Fallback if empty
-                        if (filtered.length === 0) {
-                            filtered = data;
-                        }
-                    }
                     setPartners(filtered.map(s => ({
                         id: s.id,
                         userId: s.user_id,
