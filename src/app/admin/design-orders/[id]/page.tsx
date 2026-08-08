@@ -911,7 +911,7 @@ export default function DesignOrderDetailPage() {
                                                         type="date"
                                                         value={surveyDate}
                                                         onChange={(e) => setSurveyDate(e.target.value)}
-                                                        className="w-full bg-white border border-neutral-200 text-xs font-semibold rounded-lg h-9 px-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                        className="w-full bg-white border border-neutral-200 text-neutral-900 text-xs font-semibold rounded-lg h-9 px-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
                                                     />
                                                 </div>
                                                 <div>
@@ -921,7 +921,7 @@ export default function DesignOrderDetailPage() {
                                                         placeholder="e.g. 11:00 AM"
                                                         value={surveyTime}
                                                         onChange={(e) => setSurveyTime(e.target.value)}
-                                                        className="w-full bg-white border border-neutral-200 text-xs font-semibold rounded-lg h-9 px-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                        className="w-full bg-white border border-neutral-200 text-neutral-900 text-xs font-semibold rounded-lg h-9 px-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
                                                     />
                                                 </div>
                                             </div>

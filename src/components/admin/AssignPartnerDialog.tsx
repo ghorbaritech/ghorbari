@@ -44,11 +44,11 @@ export function AssignPartnerDialog({ orderType, serviceType, onAssign }: Assign
             };
 
             if (orderType === 'design') {
-                // Fetch verified designers
+                // Fetch verified or pending designers
                 const { data, error } = await supabase
                     .from('designers')
                     .select('*')
-                    .eq('verification_status', 'verified')
+                    .in('verification_status', ['verified', 'pending'])
                     .ilike('company_name', `%${search}%`)
                 
                 if (!error && data) {
@@ -94,11 +94,11 @@ export function AssignPartnerDialog({ orderType, serviceType, onAssign }: Assign
                     setPartners([]);
                 }
             } else if (orderType === 'service') {
-                // Fetch verified service providers
+                // Fetch verified or pending service providers
                 const { data, error } = await supabase
                     .from('service_providers')
                     .select('*')
-                    .eq('verification_status', 'verified')
+                    .in('verification_status', ['verified', 'pending'])
                     .ilike('business_name', `%${search}%`)
                 
                 if (!error && data) {
@@ -122,11 +122,11 @@ export function AssignPartnerDialog({ orderType, serviceType, onAssign }: Assign
                     setPartners([]);
                 }
             } else {
-                // Fetch verified sellers
+                // Fetch verified or pending sellers
                 const { data, error } = await supabase
                     .from('sellers')
                     .select('*')
-                    .eq('verification_status', 'verified')
+                    .in('verification_status', ['verified', 'pending'])
                     .ilike('business_name', `%${search}%`)
                 
                 if (!error && data) {
