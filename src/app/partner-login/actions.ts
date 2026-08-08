@@ -40,20 +40,33 @@ export async function partnerSignIn(formData: FormData) {
         // Verify role
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('role, onboarding_step, onboarding_status')
+            .select('role, onboarding_step')
             .eq('id', user.id)
             .single()
-
+ 
         if (profileError || !profile) {
             console.error('Profile Fetch Error:', profileError)
             await supabase.auth.signOut()
             return { error: 'Account profile not found. Please contact support.' }
         }
-
-        console.log('Partner Login Attempt:', { email, role: (profile as any).role, status: (profile as any).onboarding_status });
+ 
+        console.log('Partner Login Attempt:', { email, role: (profile as any).role });
         
-        // Finalize redirect path based on status
-        if (profile.onboarding_step >= 4) {
+        // Fetch designer/seller/provider status to bypass onboarding_step if they are already verified!
+        let isVerified = false;
+        if (profile.role === 'designer') {
+            const { data: d } = await supabase.from('designers').select('verification_status').eq('user_id', user.id).maybeSingle();
+            if (d?.verification_status === 'verified') isVerified = true;
+        } else if (profile.role === 'service_provider') {
+            const { data: sp } = await supabase.from('service_providers').select('verification_status').eq('user_id', user.id).maybeSingle();
+            if (sp?.verification_status === 'verified') isVerified = true;
+        } else if (profile.role === 'seller') {
+            const { data: s } = await supabase.from('sellers').select('verification_status').eq('user_id', user.id).maybeSingle();
+            if (s?.verification_status === 'verified') isVerified = true;
+        }
+
+        // Finalize redirect path based on status or verification
+        if (profile.onboarding_step >= 4 || isVerified) {
              if (profile.role === 'designer') {
                 redirectPath = '/dashboard/designer'
             } else if (profile.role === 'service_provider') {

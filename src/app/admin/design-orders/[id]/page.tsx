@@ -216,6 +216,170 @@ export default function DesignOrderDetailPage() {
         setLineItems(items);
     };
 
+    // Schedule states for survey invitation
+    const [selectedSurveyPartner, setSelectedSurveyPartner] = useState<any>(null);
+    const [surveyDate, setSurveyDate] = useState("");
+    const [surveyTime, setSurveyTime] = useState("");
+
+    const handleSelectSurveyPartner = (id: string, role: 'designer' | 'seller' | 'service_provider', userId: string) => {
+        resolveAndInvitePartner(id, role, userId);
+    };
+
+    async function resolveAndInvitePartner(partnerId: string, role: string, userId: string) {
+        let name = "Partner";
+        if (role === 'designer') {
+            const { data } = await supabase.from('designers').select('company_name').eq('id', partnerId).single();
+            if (data) name = data.company_name;
+        } else if (role === 'seller') {
+            const { data } = await supabase.from('sellers').select('business_name').eq('id', partnerId).single();
+            if (data) name = data.business_name;
+        } else if (role === 'service_provider') {
+            const { data } = await supabase.from('service_providers').select('business_name').eq('id', partnerId).single();
+            if (data) name = data.business_name;
+        }
+
+        setSelectedSurveyPartner({ id: partnerId, role, name, userId });
+    }
+
+    async function sendSurveyRequest() {
+        if (!selectedSurveyPartner || !surveyDate || !surveyTime) {
+            alert("Please select date and time for the survey.");
+            return;
+        }
+
+        const requestObj = {
+            partner_id: selectedSurveyPartner.id,
+            partner_user_id: selectedSurveyPartner.userId,
+            partner_name: selectedSurveyPartner.name,
+            role: selectedSurveyPartner.role,
+            schedule: { date: surveyDate, time: surveyTime },
+            status: 'pending',
+            quote: null
+        };
+
+        const currentRequests = booking.details?.survey_requests || [];
+        if (currentRequests.some((r: any) => r.partner_id === selectedSurveyPartner.id)) {
+            alert("This partner has already been invited.");
+            return;
+        }
+
+        const updatedRequests = [...currentRequests, requestObj];
+        const updatedDetails = {
+            ...(booking.details || {}),
+            survey_requests: updatedRequests
+        };
+
+        const { error } = await supabase
+            .from('design_bookings')
+            .update({ details: updatedDetails })
+            .eq('id', id);
+
+        if (!error) {
+            setBooking({ ...booking, details: updatedDetails });
+            alert("Survey request sent to partner!");
+            
+            await supabase.from('notifications').insert({
+                user_id: selectedSurveyPartner.userId,
+                type: 'survey_request',
+                title: 'New Survey Request',
+                message: `You have received a survey request for project #${booking.id.slice(0, 8)}. Scheduled at ${surveyDate} at ${surveyTime}.`,
+                related_type: 'design_bookings',
+                related_id: id
+            });
+
+            setSelectedSurveyPartner(null);
+            setSurveyDate("");
+            setSurveyTime("");
+        } else {
+            alert("Failed to send survey request: " + error.message);
+        }
+    }
+
+    async function removePartnerSurvey(partnerId: string) {
+        const currentRequests = booking.details?.survey_requests || [];
+        const updatedRequests = currentRequests.filter((r: any) => r.partner_id !== partnerId);
+        const updatedDetails = {
+            ...(booking.details || {}),
+            survey_requests: updatedRequests
+        };
+
+        const { error } = await supabase
+            .from('design_bookings')
+            .update({ details: updatedDetails })
+            .eq('id', id);
+
+        if (!error) {
+            setBooking({ ...booking, details: updatedDetails });
+            alert("Partner removed successfully.");
+        } else {
+            alert("Failed to remove partner: " + error.message);
+        }
+    }
+
+    async function publishComparisonQuotation() {
+        if (lineItems.length === 0 || !lineItems[0].description) {
+            alert("Please add at least one line item in the Detailed Proposal tab first.");
+            return;
+        }
+
+        const surveyRequests = booking.details?.survey_requests || [];
+        const quotedPartners = surveyRequests.filter((r: any) => r.quote && r.status === 'accepted');
+
+        if (quotedPartners.length === 0) {
+            alert("No partners have submitted a quote yet.");
+            return;
+        }
+
+        const comparisonLineItems = lineItems.map((item, index) => {
+            const partnerRates: Record<string, number> = {};
+            
+            for (const p of quotedPartners) {
+                const pItem = p.quote.line_items?.[index] || p.quote.line_items?.find((pi: any) => pi.description === item.description);
+                partnerRates[p.partner_id] = pItem ? Number(pItem.total || 0) : 0;
+            }
+
+            return {
+                description: item.description,
+                unit: item.unit,
+                quantity: Number(item.quantity || 0),
+                unitPrice: Number(item.unitPrice || 0),
+                partner_rates: partnerRates
+            };
+        });
+
+        const newOffer = {
+            role: 'admin',
+            type: 'comparison',
+            amount: lineItems.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0),
+            notes: quoteNote || "Here is the side-by-side comparison quotation from our partners.",
+            date: new Date().toISOString(),
+            line_items: comparisonLineItems,
+            partners: quotedPartners.map((p: any) => ({
+                partner_id: p.partner_id,
+                partner_name: p.partner_name,
+                role: p.role,
+                partner_user_id: p.partner_user_id
+            }))
+        };
+
+        const updatedHistory = [...(booking.quotation_history || []), newOffer];
+
+        const { error } = await supabase
+            .from('design_bookings')
+            .update({
+                quotation_history: updatedHistory,
+                status: 'quotation'
+            })
+            .eq('id', id);
+
+        if (!error) {
+            setBooking({ ...booking, quotation_history: updatedHistory, status: 'quotation' });
+            alert("Comparison quotation published to customer!");
+        } else {
+            alert("Failed to publish comparison quotation: " + error.message);
+        }
+    }
+
     // Milestone State
     const [milestones, setMilestones] = useState<any[]>([]);
 
@@ -372,6 +536,31 @@ export default function DesignOrderDetailPage() {
         } else {
             console.error("Assign error:", error);
             alert("Assignment failed: " + error.message);
+        }
+    }
+
+    async function unassignPartner() {
+        const { error } = await supabase
+            .from('design_bookings')
+            .update({
+                assigned_seller_id: null,
+                assigned_designer_id: null,
+                status: 'verified'
+            })
+            .eq('id', id);
+
+        if (!error) {
+            setBooking({
+                ...booking,
+                assigned_seller_id: null,
+                assigned_designer_id: null,
+                status: 'verified'
+            });
+            alert("Partner removed successfully. You can now request new surveys.");
+            fetchBooking();
+        } else {
+            console.error("Unassign error:", error);
+            alert("Removal failed: " + error.message);
         }
     }
 
@@ -580,7 +769,12 @@ export default function DesignOrderDetailPage() {
                                             />
                                         </div>
 
-                                        <div className="pt-2 flex justify-end">
+                                        <div className="pt-2 flex justify-end gap-3">
+                                            {proposalType === 'detailed' && (booking.details?.survey_requests?.some((r: any) => r.quote)) && (
+                                                <Button size="lg" onClick={publishComparisonQuotation} className="h-12 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black uppercase tracking-widest px-8">
+                                                    Publish Comparison
+                                                </Button>
+                                            )}
                                             <Button size="lg" onClick={sendQuote} className="h-12 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-black uppercase tracking-widest px-10">
                                                 Send Quote
                                             </Button>
@@ -610,36 +804,134 @@ export default function DesignOrderDetailPage() {
 
                     {/* Right Column: Customer & Milestones */}
                     <div className="space-y-8">
-                        {/* Partner Assignment */}
+                        {/* Survey & Partner Bidding Manager */}
                         {(booking.status === 'verified' || booking.status === 'quotation' || booking.status === 'in_progress' || booking.status === 'assigned') && (
-                            <div className="bg-white rounded-3xl p-6 border border-neutral-200">
-                                <Label className="text-xs font-black text-neutral-400 uppercase tracking-widest block mb-4 flex items-center gap-2">
-                                    <UserPlus className="w-4 h-4" /> Assigned Partner
+                            <div className="bg-white rounded-3xl p-6 border border-neutral-200 space-y-6">
+                                <Label className="text-xs font-black text-neutral-400 uppercase tracking-widest block mb-1 flex items-center gap-2">
+                                    <UserPlus className="w-4 h-4" /> Hired / Handoff Partner
                                 </Label>
 
                                 {booking.assigned_seller_id || booking.assigned_designer_id ? (
-                                    <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-100">
+                                    <div className="bg-neutral-900 text-white p-4 rounded-2xl border border-neutral-800">
                                         <div className="flex justify-between items-center mb-1">
-                                            <p className="font-bold text-sm text-neutral-900">Partner Assigned</p>
-                                            <Badge variant="outline" className="text-[10px] bg-white">
+                                            <p className="font-bold text-xs uppercase tracking-widest text-emerald-400">Hired Partner</p>
+                                            <Badge variant="secondary" className="text-[9px] bg-neutral-800 text-white border-none">
                                                 ID: {(booking.assigned_seller_id || booking.assigned_designer_id).slice(0, 6)}...
                                             </Badge>
                                         </div>
-                                        <p className="text-xs font-bold text-neutral-800 mt-2">
+                                        <p className="text-sm font-extrabold mt-1">
                                             {booking.sellers?.business_name || booking.designers?.company_name || 'Loading partner details...'}
                                         </p>
-                                        <p className="text-xs text-neutral-500 font-medium mt-1">This partner can now manage milestones.</p>
+                                        <p className="text-[10px] text-neutral-400 font-medium mt-1">This partner is officially hired to execute the project milestones.</p>
+                                        <Button
+                                            onClick={unassignPartner}
+                                            variant="ghost"
+                                            className="w-full mt-3 h-8 bg-red-950/40 hover:bg-red-900/40 text-red-400 hover:text-red-300 font-bold uppercase text-[10px] tracking-wider rounded-lg border border-red-900/30"
+                                        >
+                                            Remove Assigned Partner
+                                        </Button>
                                     </div>
                                 ) : (
+                                    <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 text-center">
+                                        <p className="text-xs text-neutral-500 font-medium">No partner has been officially hired yet. Partners will quote after survey, and customer will choose.</p>
+                                    </div>
+                                )}
+
+                                <Separator />
+
+                                <div>
+                                    <Label className="text-xs font-black text-neutral-400 uppercase tracking-widest block mb-3">Survey Requests to Partners</Label>
                                     <div className="space-y-3">
-                                        <p className="text-xs text-neutral-500 font-medium">Assign a verified partner to handle this project.</p>
+                                        {(booking.details?.survey_requests || []).map((request: any, idx: number) => (
+                                            <div key={idx} className="bg-neutral-50 p-3 rounded-xl border border-neutral-100 flex justify-between items-start gap-2 relative">
+                                                <div className="space-y-1">
+                                                    <p className="font-bold text-xs text-neutral-900">{request.partner_name}</p>
+                                                    <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">
+                                                        📅 {request.schedule?.date} @ {request.schedule?.time}
+                                                    </p>
+                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                        <Badge className={`text-[8px] font-black uppercase px-2 py-0.5 border-none ${
+                                                            request.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                                                            request.status === 'declined' ? 'bg-red-100 text-red-700' :
+                                                            'bg-amber-100 text-amber-700'
+                                                        }`}>
+                                                            {request.status}
+                                                        </Badge>
+                                                        {request.quote && (
+                                                            <Badge className="text-[8px] font-black uppercase px-2 py-0.5 bg-blue-100 text-blue-700 border-none">
+                                                                Quoted: ৳{request.quote.amount?.toLocaleString()}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removePartnerSurvey(request.partner_id)}
+                                                    className="text-neutral-400 hover:text-red-600 transition-colors p-1"
+                                                    title="Remove Request"
+                                                >
+                                                    <XCircle className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {(booking.details?.survey_requests || []).length === 0 && (
+                                            <p className="text-[10px] text-neutral-400 italic py-2">No partners have been invited for survey yet.</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <Separator />
+
+                                {/* Invite survey partners */}
+                                <div className="space-y-3 bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
+                                    <h4 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Add Partner to Survey</h4>
+                                    
+                                    {!selectedSurveyPartner ? (
                                         <AssignPartnerDialog 
                                             orderType="design" 
                                             serviceType={booking.service_type} 
-                                            onAssign={assignPartner} 
+                                            onAssign={handleSelectSurveyPartner} 
                                         />
-                                    </div>
-                                )}
+                                    ) : (
+                                        <div className="space-y-3">
+                                            <div className="bg-neutral-900 text-white p-3 rounded-xl border border-neutral-800 flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-bold text-xs">{selectedSurveyPartner.name}</p>
+                                                    <p className="text-[8px] text-neutral-400 uppercase tracking-wider">{selectedSurveyPartner.role}</p>
+                                                </div>
+                                                <Button size="sm" variant="ghost" onClick={() => setSelectedSurveyPartner(null)} className="h-6 text-[9px] hover:bg-neutral-800 text-red-400 hover:text-red-300">
+                                                    Cancel
+                                                </Button>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <Label className="text-[9px] font-bold text-neutral-400 uppercase block mb-1">Survey Date</Label>
+                                                    <input
+                                                        type="date"
+                                                        value={surveyDate}
+                                                        onChange={(e) => setSurveyDate(e.target.value)}
+                                                        className="w-full bg-white border border-neutral-200 text-xs font-semibold rounded-lg h-9 px-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Label className="text-[9px] font-bold text-neutral-400 uppercase block mb-1">Survey Time</Label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="e.g. 11:00 AM"
+                                                        value={surveyTime}
+                                                        onChange={(e) => setSurveyTime(e.target.value)}
+                                                        className="w-full bg-white border border-neutral-200 text-xs font-semibold rounded-lg h-9 px-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <Button onClick={sendSurveyRequest} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-widest h-10 rounded-xl">
+                                                Send Survey Request
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 

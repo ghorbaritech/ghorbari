@@ -105,6 +105,28 @@ export default function CustomerDesignOrderDetailPage() {
         }
     }
 
+    async function hirePartner(partnerId: string, role: string, agreedAmount: number) {
+        const isSeller = role === 'seller';
+        const updateData: any = {
+            assigned_seller_id: isSeller ? partnerId : null,
+            assigned_designer_id: !isSeller ? partnerId : null,
+            status: 'in_progress',
+            agreed_amount: agreedAmount
+        };
+
+        const { error } = await supabase
+            .from('design_bookings')
+            .update(updateData)
+            .eq('id', id);
+
+        if (!error) {
+            setBooking({ ...booking, ...updateData });
+            alert("Partner hired successfully! Project is now in progress.");
+        } else {
+            alert("Failed to hire partner: " + error.message);
+        }
+    }
+
     if (loading) return <div className="p-8">Loading...</div>;
     if (!booking) return <div className="p-8">Order not found.</div>;
 
@@ -258,41 +280,90 @@ export default function CustomerDesignOrderDetailPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* Line Items */}
-                                                <div className="overflow-x-auto">
-                                                    <table className="w-full text-left border-collapse mb-8 min-w-[500px]">
-                                                        <thead>
-                                                            <tr className="border-b border-neutral-300 bg-neutral-50 text-[10px] font-black text-neutral-500 uppercase tracking-wider">
-                                                                <th className="py-3 px-4">#</th>
-                                                                <th className="py-3 px-4">Item Description</th>
-                                                                <th className="py-3 px-4">Unit</th>
-                                                                <th className="py-3 px-4 text-right">Qty</th>
-                                                                <th className="py-3 px-4 text-right">Unit Price</th>
-                                                                <th className="py-3 px-4 text-right">Total Price</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {(lastOffer?.line_items || [
-                                                                {
-                                                                    description: lastOffer?.notes || "Design & Consultancy Services Quote",
-                                                                    unit: "Project",
-                                                                    quantity: 1,
-                                                                    unitPrice: lastOffer?.amount,
-                                                                    total: lastOffer?.amount
-                                                                }
-                                                            ]).map((item: any, idx: number) => (
-                                                                <tr key={idx} className="border-b border-neutral-100 text-xs font-semibold text-neutral-800">
-                                                                    <td className="py-4 px-4 text-neutral-400">{idx + 1}</td>
-                                                                    <td className="py-4 px-4 font-bold text-neutral-900">{item.description}</td>
-                                                                    <td className="py-4 px-4 text-neutral-500 uppercase tracking-wide">{item.unit || "-"}</td>
-                                                                    <td className="py-4 px-4 text-right font-medium">{item.quantity}</td>
-                                                                    <td className="py-4 px-4 text-right font-medium">৳{Number(item.unitPrice).toLocaleString()}</td>
-                                                                    <td className="py-4 px-4 text-right font-bold text-neutral-900">৳{Number(item.total).toLocaleString()}</td>
+                                                {/* Line Items / Comparison Grid */}
+                                                {lastOffer?.type === 'comparison' ? (
+                                                    <div className="overflow-x-auto mb-8">
+                                                        <table className="w-full text-left border-collapse min-w-[600px] border border-neutral-200">
+                                                            <thead>
+                                                                <tr className="border-b border-neutral-300 bg-neutral-50 text-[10px] font-black text-neutral-500 uppercase tracking-wider">
+                                                                    <th className="py-3 px-4 border-r border-neutral-200">SL</th>
+                                                                    <th className="py-3 px-4 border-r border-neutral-200">Description</th>
+                                                                    <th className="py-3 px-4 border-r border-neutral-200">Unit</th>
+                                                                    <th className="py-3 px-4 text-right border-r border-neutral-200">Qty</th>
+                                                                    <th className="py-3 px-4 text-right border-r border-neutral-200">Rate (tk)</th>
+                                                                    {lastOffer.partners?.map((p: any) => (
+                                                                        <th key={p.partner_id} className="py-3 px-4 text-right font-black text-neutral-800 bg-blue-50/50 uppercase border-r last:border-r-0 border-neutral-200">{p.partner_name}</th>
+                                                                    ))}
                                                                 </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                                            </thead>
+                                                            <tbody>
+                                                                {lastOffer.line_items?.map((item: any, idx: number) => (
+                                                                    <tr key={idx} className="border-b border-neutral-200 text-xs font-semibold text-neutral-800 hover:bg-neutral-50/30">
+                                                                        <td className="py-4 px-4 border-r border-neutral-200">{idx + 1}</td>
+                                                                        <td className="py-4 px-4 font-bold border-r border-neutral-200 max-w-sm text-neutral-900">{item.description}</td>
+                                                                        <td className="py-4 px-4 text-neutral-500 uppercase border-r border-neutral-200">{item.unit || "-"}</td>
+                                                                        <td className="py-4 px-4 text-right border-r border-neutral-200 font-medium">{item.quantity}</td>
+                                                                        <td className="py-4 px-4 text-right border-r border-neutral-200 font-medium">৳{Number(item.unitPrice || 0).toLocaleString()}</td>
+                                                                        {lastOffer.partners?.map((p: any) => {
+                                                                            const rate = item.partner_rates?.[p.partner_id] || 0;
+                                                                            return (
+                                                                                <td key={p.partner_id} className="py-4 px-4 text-right font-bold text-neutral-900 bg-blue-50/20 border-r last:border-r-0 border-neutral-200">
+                                                                                    {rate > 0 ? `৳${rate.toLocaleString()}` : "৳0"}
+                                                                                </td>
+                                                                            );
+                                                                        })}
+                                                                    </tr>
+                                                                ))}
+                                                                <tr className="bg-neutral-900 text-white font-black text-xs">
+                                                                    <td colSpan={5} className="py-4 px-4 text-right border-r border-neutral-800">Grand Total (Subtotal)</td>
+                                                                    {lastOffer.partners?.map((p: any) => {
+                                                                        const subtotal = lastOffer.line_items?.reduce((sum: number, item: any) => sum + (item.partner_rates?.[p.partner_id] || 0), 0) || 0;
+                                                                        return (
+                                                                            <td key={p.partner_id} className="py-4 px-4 text-right text-emerald-400 bg-neutral-950 font-black">
+                                                                                ৳{subtotal.toLocaleString()}
+                                                                            </td>
+                                                                        );
+                                                                    })}
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                ) : (
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-left border-collapse mb-8 min-w-[500px]">
+                                                            <thead>
+                                                                <tr className="border-b border-neutral-300 bg-neutral-50 text-[10px] font-black text-neutral-500 uppercase tracking-wider">
+                                                                    <th className="py-3 px-4">#</th>
+                                                                    <th className="py-3 px-4">Item Description</th>
+                                                                    <th className="py-3 px-4">Unit</th>
+                                                                    <th className="py-3 px-4 text-right">Qty</th>
+                                                                    <th className="py-3 px-4 text-right">Unit Price</th>
+                                                                    <th className="py-3 px-4 text-right">Total Price</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {(lastOffer?.line_items || [
+                                                                    {
+                                                                        description: lastOffer?.notes || "Design & Consultancy Services Quote",
+                                                                        unit: "Project",
+                                                                        quantity: 1,
+                                                                        unitPrice: lastOffer?.amount,
+                                                                        total: lastOffer?.amount
+                                                                    }
+                                                                ]).map((item: any, idx: number) => (
+                                                                    <tr key={idx} className="border-b border-neutral-100 text-xs font-semibold text-neutral-800">
+                                                                        <td className="py-4 px-4 text-neutral-400">{idx + 1}</td>
+                                                                        <td className="py-4 px-4 font-bold text-neutral-900">{item.description}</td>
+                                                                        <td className="py-4 px-4 text-neutral-500 uppercase tracking-wide">{item.unit || "-"}</td>
+                                                                        <td className="py-4 px-4 text-right font-medium">{item.quantity}</td>
+                                                                        <td className="py-4 px-4 text-right font-medium">৳{Number(item.unitPrice).toLocaleString()}</td>
+                                                                        <td className="py-4 px-4 text-right font-bold text-neutral-900">৳{Number(item.total).toLocaleString()}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                )}
 
                                                 <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                                                     <div className="max-w-md">
@@ -303,59 +374,89 @@ export default function CustomerDesignOrderDetailPage() {
                                                             </>
                                                         )}
                                                     </div>
-                                                    <div className="text-right min-w-[200px] bg-neutral-50 p-4 rounded-xl border border-neutral-100 self-stretch md:self-auto flex flex-col justify-center">
+                                    <div className="text-right min-w-[200px] bg-neutral-50 p-4 rounded-xl border border-neutral-100 self-stretch md:self-auto flex flex-col justify-center">
                                                         <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">TOTAL PROPOSAL AMOUNT</span>
                                                         <span className="text-2xl font-black text-neutral-900">৳{lastOffer?.amount.toLocaleString()}</span>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            {/* Action Panel for Customer */}
-                                            {lastOffer?.role === 'admin' ? (
-                                                <div className="bg-white p-6 rounded-3xl border border-neutral-200 space-y-6">
-                                                    <div className="flex flex-col sm:flex-row gap-4">
-                                                        <Button
-                                                            onClick={acceptOffer}
-                                                            className="flex-1 h-14 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-lg shadow-green-900/10 flex items-center justify-center gap-2"
-                                                        >
-                                                            <Check className="w-4 h-4" /> Accept Proposal & Start Project
-                                                        </Button>
-                                                    </div>
+                                                {/* Action Panel for Customer */}
+                                                {lastOffer?.role === 'admin' ? (
+                                                    lastOffer.type === 'comparison' ? (
+                                                        <div className="bg-white p-6 rounded-3xl border border-neutral-200 space-y-6">
+                                                            <h3 className="text-sm font-black text-neutral-900 uppercase tracking-widest block text-center">Compare and Choose Partner</h3>
+                                                            <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider text-center">Select your preferred partner to proceed with execution</p>
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                {lastOffer.partners?.map((p: any) => {
+                                                                    const subtotal = lastOffer.line_items?.reduce((sum: number, item: any) => sum + (item.partner_rates?.[p.partner_id] || 0), 0) || 0;
+                                                                    return (
+                                                                        <div key={p.partner_id} className="bg-neutral-50 p-6 rounded-2xl border border-neutral-200 hover:border-blue-500 transition-all flex flex-col justify-between space-y-4">
+                                                                            <div>
+                                                                                <p className="font-extrabold text-sm text-neutral-900">{p.partner_name}</p>
+                                                                                <p className="text-[10px] text-neutral-400 font-bold uppercase mt-1">Role: {p.role}</p>
+                                                                            </div>
+                                                                            <div className="pt-2 border-t border-neutral-200">
+                                                                                <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest block">Total Bid</span>
+                                                                                <span className="text-2xl font-black text-neutral-900">৳{subtotal.toLocaleString()}</span>
+                                                                            </div>
+                                                                            <Button
+                                                                                onClick={() => hirePartner(p.partner_id, p.role, subtotal)}
+                                                                                className="w-full h-11 bg-neutral-900 hover:bg-neutral-850 text-white text-xs font-black uppercase tracking-widest rounded-xl mt-3 flex items-center justify-center gap-1.5 shadow-sm"
+                                                                            >
+                                                                                <Check className="w-3.5 h-3.5 text-emerald-400" /> Hire {p.partner_name}
+                                                                            </Button>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="bg-white p-6 rounded-3xl border border-neutral-200 space-y-6">
+                                                            <div className="flex flex-col sm:flex-row gap-4">
+                                                                <Button
+                                                                    onClick={acceptOffer}
+                                                                    className="flex-1 h-14 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-lg shadow-green-900/10 flex items-center justify-center gap-2"
+                                                                >
+                                                                    <Check className="w-4 h-4" /> Accept Proposal & Start Project
+                                                                </Button>
+                                                            </div>
 
-                                                    <Separator />
+                                                            <Separator />
 
-                                                    <div className="space-y-4">
-                                                        <Label className="text-xs font-black text-neutral-400 uppercase tracking-widest block">Or send a counter offer</Label>
-                                                        <div className="flex gap-4">
-                                                            <div className="flex-1">
-                                                                <Input
-                                                                    type="number"
-                                                                    placeholder="Counter Offer Amount"
-                                                                    className="font-black text-lg h-12 rounded-xl bg-neutral-50"
-                                                                    value={offerAmount}
-                                                                    onChange={(e) => setOfferAmount(e.target.value)}
+                                                            <div className="space-y-4">
+                                                                <Label className="text-xs font-black text-neutral-400 uppercase tracking-widest block">Or send a counter offer</Label>
+                                                                <div className="flex gap-4">
+                                                                    <div className="flex-1">
+                                                                        <Input
+                                                                            type="number"
+                                                                            placeholder="Counter Offer Amount"
+                                                                            className="font-black text-lg h-12 rounded-xl bg-neutral-50"
+                                                                            value={offerAmount}
+                                                                            onChange={(e) => setOfferAmount(e.target.value)}
+                                                                        />
+                                                                    </div>
+                                                                    <Button
+                                                                        onClick={sendCounterOffer}
+                                                                        className="h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-black uppercase tracking-widest text-xs px-8 rounded-xl shrink-0"
+                                                                    >
+                                                                        Send Counter
+                                                                    </Button>
+                                                                </div>
+                                                                <Textarea
+                                                                    placeholder="Add your comments or request modifications..."
+                                                                    className="rounded-xl bg-neutral-50 resize-none min-h-[80px]"
+                                                                    value={offerNote}
+                                                                    onChange={(e) => setOfferNote(e.target.value)}
                                                                 />
                                                             </div>
-                                                            <Button
-                                                                onClick={sendCounterOffer}
-                                                                className="h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-black uppercase tracking-widest text-xs px-8 rounded-xl shrink-0"
-                                                            >
-                                                                Send Counter
-                                                            </Button>
                                                         </div>
-                                                        <Textarea
-                                                            placeholder="Add your comments or request modifications..."
-                                                            className="rounded-xl bg-neutral-50 resize-none min-h-[80px]"
-                                                            value={offerNote}
-                                                            onChange={(e) => setOfferNote(e.target.value)}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <Card className="p-6 border border-dashed border-neutral-200 bg-neutral-50/50 rounded-2xl text-center text-sm font-bold text-neutral-400">
-                                                    Waiting for admin response... (You counter-offered ৳{lastOffer?.amount.toLocaleString()})
-                                                </Card>
-                                            )}
+                                                    )
+                                                ) : (
+                                                    <Card className="p-6 border border-dashed border-neutral-200 bg-neutral-50/50 rounded-2xl text-center text-sm font-bold text-neutral-400">
+                                                        Waiting for admin response... (You counter-offered ৳{lastOffer?.amount.toLocaleString()})
+                                                    </Card>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
