@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import Link from 'next/link';
 
 export default function CustomerDesignOrderDetailPage() {
@@ -31,14 +32,26 @@ export default function CustomerDesignOrderDetailPage() {
 
     async function fetchBooking() {
         try {
-            const { data: booking, error } = await supabase
+            const { data: bookingData, error } = await supabase
                 .from('design_bookings')
                 .select('*')
                 .eq('id', id)
                 .single();
 
             if (error) throw error;
-            setBooking(booking);
+
+            // Fetch current user's profile
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name, email, phone_number')
+                    .eq('id', user.id)
+                    .single();
+                setBooking({ ...bookingData, profiles: profile });
+            } else {
+                setBooking(bookingData);
+            }
         } catch (error) {
             console.error(error);
         } finally {
@@ -191,6 +204,161 @@ export default function CustomerDesignOrderDetailPage() {
                                         </div>
                                     </div>
                                 </Card>
+                            )}
+
+                            {/* Negotiation & Quotation Section */}
+                            {(booking.status === 'quotation' || booking.status === 'verified') && (
+                                <div className="space-y-8">
+                                    {/* If there is no quotation history yet */}
+                                    {(!booking.quotation_history || booking.quotation_history.length === 0) && (
+                                        <Card className="p-8 border border-neutral-100 shadow-sm bg-white rounded-[32px] text-center">
+                                            <Clock className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+                                            <h3 className="text-xl font-black text-neutral-900 mb-2">Preparing Your Quotation</h3>
+                                            <p className="text-sm text-neutral-500 max-w-md mx-auto leading-relaxed font-bold">
+                                                Our team has verified your requirements and is currently drafting a design proposal. You will receive an invoice proposal here shortly.
+                                            </p>
+                                        </Card>
+                                    )}
+
+                                    {/* Display Embedded Invoice if latest quote has line items, or fallback quote amount */}
+                                    {booking.quotation_history?.length > 0 && (
+                                        <div className="space-y-8">
+                                            <div className="bg-white text-neutral-900 p-8 rounded-3xl shadow-lg border border-neutral-100">
+                                                {/* Invoice Header */}
+                                                <div className="flex justify-between items-start mb-8 pb-8 border-b border-neutral-200">
+                                                    <div>
+                                                        <div className="relative w-44 h-11 mb-3">
+                                                            <img
+                                                                src="/logo-dalankotha-dark.png"
+                                                                alt="Dalan Kotha Logo"
+                                                                className="object-contain object-left w-full h-full"
+                                                            />
+                                                        </div>
+                                                        <p className="text-xs text-neutral-500 font-bold uppercase tracking-wide">Premium Design & Engineering Solutions</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <h2 className="text-xl font-black uppercase tracking-wider text-neutral-800">DESIGN PROPOSAL</h2>
+                                                        <p className="text-xs text-neutral-400 font-bold uppercase mt-1">Ref: #DK-DSN-{booking.id.slice(0, 8)}</p>
+                                                        <p className="text-xs text-neutral-400 font-bold uppercase">Date: {lastOffer?.date ? new Date(lastOffer.date).toLocaleDateString() : new Date().toLocaleDateString()}</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Details */}
+                                                <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b border-neutral-200">
+                                                    <div>
+                                                        <h3 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2">QUOTED TO:</h3>
+                                                        <p className="font-extrabold text-sm text-neutral-800">{booking.profiles?.full_name || "Valued Client"}</p>
+                                                        {booking.profiles?.email && <p className="text-xs text-neutral-500 font-medium mt-0.5">{booking.profiles.email}</p>}
+                                                        {booking.profiles?.phone_number && <p className="text-xs text-neutral-500 font-medium mt-0.5">{booking.profiles.phone_number}</p>}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2">PREPARED BY:</h3>
+                                                        <p className="font-extrabold text-sm text-neutral-800">Dalan Kotha Limited</p>
+                                                        <p className="text-xs text-neutral-500 font-medium mt-0.5">Dhaka, Bangladesh</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Line Items */}
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full text-left border-collapse mb-8 min-w-[500px]">
+                                                        <thead>
+                                                            <tr className="border-b border-neutral-300 bg-neutral-50 text-[10px] font-black text-neutral-500 uppercase tracking-wider">
+                                                                <th className="py-3 px-4">#</th>
+                                                                <th className="py-3 px-4">Item Description</th>
+                                                                <th className="py-3 px-4">Unit</th>
+                                                                <th className="py-3 px-4 text-right">Qty</th>
+                                                                <th className="py-3 px-4 text-right">Unit Price</th>
+                                                                <th className="py-3 px-4 text-right">Total Price</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {(lastOffer?.line_items || [
+                                                                {
+                                                                    description: lastOffer?.notes || "Design & Consultancy Services Quote",
+                                                                    unit: "Project",
+                                                                    quantity: 1,
+                                                                    unitPrice: lastOffer?.amount,
+                                                                    total: lastOffer?.amount
+                                                                }
+                                                            ]).map((item: any, idx: number) => (
+                                                                <tr key={idx} className="border-b border-neutral-100 text-xs font-semibold text-neutral-800">
+                                                                    <td className="py-4 px-4 text-neutral-400">{idx + 1}</td>
+                                                                    <td className="py-4 px-4 font-bold text-neutral-900">{item.description}</td>
+                                                                    <td className="py-4 px-4 text-neutral-500 uppercase tracking-wide">{item.unit || "-"}</td>
+                                                                    <td className="py-4 px-4 text-right font-medium">{item.quantity}</td>
+                                                                    <td className="py-4 px-4 text-right font-medium">৳{Number(item.unitPrice).toLocaleString()}</td>
+                                                                    <td className="py-4 px-4 text-right font-bold text-neutral-900">৳{Number(item.total).toLocaleString()}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                                                    <div className="max-w-md">
+                                                        {lastOffer?.notes && (
+                                                            <>
+                                                                <h4 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1.5">Notes:</h4>
+                                                                <p className="text-xs text-neutral-500 leading-relaxed font-semibold">{lastOffer.notes}</p>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-right min-w-[200px] bg-neutral-50 p-4 rounded-xl border border-neutral-100 self-stretch md:self-auto flex flex-col justify-center">
+                                                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">TOTAL PROPOSAL AMOUNT</span>
+                                                        <span className="text-2xl font-black text-neutral-900">৳{lastOffer?.amount.toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Action Panel for Customer */}
+                                            {lastOffer?.role === 'admin' ? (
+                                                <div className="bg-white p-6 rounded-3xl border border-neutral-200 space-y-6">
+                                                    <div className="flex flex-col sm:flex-row gap-4">
+                                                        <Button
+                                                            onClick={acceptOffer}
+                                                            className="flex-1 h-14 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-lg shadow-green-900/10 flex items-center justify-center gap-2"
+                                                        >
+                                                            <Check className="w-4 h-4" /> Accept Proposal & Start Project
+                                                        </Button>
+                                                    </div>
+
+                                                    <Separator />
+
+                                                    <div className="space-y-4">
+                                                        <Label className="text-xs font-black text-neutral-400 uppercase tracking-widest block">Or send a counter offer</Label>
+                                                        <div className="flex gap-4">
+                                                            <div className="flex-1">
+                                                                <Input
+                                                                    type="number"
+                                                                    placeholder="Counter Offer Amount"
+                                                                    className="font-black text-lg h-12 rounded-xl bg-neutral-50"
+                                                                    value={offerAmount}
+                                                                    onChange={(e) => setOfferAmount(e.target.value)}
+                                                                />
+                                                            </div>
+                                                            <Button
+                                                                onClick={sendCounterOffer}
+                                                                className="h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-black uppercase tracking-widest text-xs px-8 rounded-xl shrink-0"
+                                                            >
+                                                                Send Counter
+                                                            </Button>
+                                                        </div>
+                                                        <Textarea
+                                                            placeholder="Add your comments or request modifications..."
+                                                            className="rounded-xl bg-neutral-50 resize-none min-h-[80px]"
+                                                            value={offerNote}
+                                                            onChange={(e) => setOfferNote(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <Card className="p-6 border border-dashed border-neutral-200 bg-neutral-50/50 rounded-2xl text-center text-sm font-bold text-neutral-400">
+                                                    Waiting for admin response... (You counter-offered ৳{lastOffer?.amount.toLocaleString()})
+                                                </Card>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
 

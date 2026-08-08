@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { AssignPartnerDialog } from "@/components/admin/AssignPartnerDialog";
+import { ProposalInvoice } from "@/components/admin/ProposalInvoice";
 
 const DEFAULT_MILESTONES = [
     "Requirement Analysis",
@@ -193,6 +194,27 @@ export default function DesignOrderDetailPage() {
     // Negotiation State
     const [quoteAmount, setQuoteAmount] = useState("");
     const [quoteNote, setQuoteNote] = useState("");
+    const [proposalType, setProposalType] = useState<'simple' | 'detailed'>('simple');
+    const [lineItems, setLineItems] = useState<any[]>([
+        { description: "", unit: "sft", quantity: 1, unitPrice: 0, total: 0 }
+    ]);
+    const [selectedInvoiceOffer, setSelectedInvoiceOffer] = useState<any>(null);
+    const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+
+    const addLineItem = () => {
+        setLineItems([...lineItems, { description: "", unit: "sft", quantity: 1, unitPrice: 0, total: 0 }]);
+    };
+
+    const removeLineItem = (index: number) => {
+        setLineItems(lineItems.filter((_, idx) => idx !== index));
+    };
+
+    const updateLineItem = (index: number, key: string, val: any) => {
+        const items = [...lineItems];
+        items[index][key] = val;
+        items[index].total = Number(items[index].quantity || 0) * Number(items[index].unitPrice || 0);
+        setLineItems(items);
+    };
 
     // Milestone State
     const [milestones, setMilestones] = useState<any[]>([]);
@@ -251,13 +273,21 @@ export default function DesignOrderDetailPage() {
     }
 
     async function sendQuote() {
-        if (!quoteAmount) return;
+        const finalAmount = proposalType === 'detailed'
+            ? lineItems.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0)
+            : Number(quoteAmount);
+
+        if (!finalAmount) {
+            alert("Please enter a valid quote amount.");
+            return;
+        }
 
         const newOffer = {
             role: 'admin',
-            amount: Number(quoteAmount),
+            amount: finalAmount,
             notes: quoteNote,
-            date: new Date().toISOString()
+            date: new Date().toISOString(),
+            ...(proposalType === 'detailed' && { line_items: lineItems })
         };
 
         const updatedHistory = [...(booking.quotation_history || []), newOffer];
@@ -274,6 +304,7 @@ export default function DesignOrderDetailPage() {
             setBooking({ ...booking, quotation_history: updatedHistory, status: 'quotation' });
             setQuoteAmount("");
             setQuoteNote("");
+            setLineItems([{ description: "", unit: "sft", quantity: 1, unitPrice: 0, total: 0 }]);
             alert("Quote sent successfully!");
         }
     }
@@ -407,6 +438,20 @@ export default function DesignOrderDetailPage() {
                                                         ৳{offer.amount.toLocaleString()}
                                                     </p>
                                                     {offer.notes && <p className="text-sm mt-2 opacity-90">{offer.notes}</p>}
+                                                    {offer.role === 'admin' && (
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => {
+                                                                setSelectedInvoiceOffer(offer);
+                                                                setIsInvoiceOpen(true);
+                                                            }}
+                                                            className="mt-3 h-8 text-[9px] font-black uppercase tracking-widest border-neutral-700 bg-neutral-800 text-white hover:bg-neutral-700 hover:text-white"
+                                                        >
+                                                            📄 View Proposal Invoice
+                                                        </Button>
+                                                    )}
                                                     <p className="text-[10px] mt-2 opacity-50 text-right">{format(new Date(offer.date), 'MMM d, h:mm a')}</p>
                                                 </div>
                                             </div>
@@ -416,28 +461,130 @@ export default function DesignOrderDetailPage() {
 
                                 {/* Action Area */}
                                 {(!lastOffer || lastOffer.role === 'customer' || booking.status === 'verified') && (
-                                    <div className="bg-white p-4 rounded-2xl border border-neutral-200">
-                                        <Label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3 block">Send {lastOffer ? 'Counter ' : ''}Quote</Label>
-                                        <div className="flex gap-4">
-                                            <div className="flex-1">
-                                                <Input
-                                                    type="number"
-                                                    placeholder="Amount"
-                                                    className="font-black text-lg h-12 rounded-xl"
-                                                    value={quoteAmount}
-                                                    onChange={(e) => setQuoteAmount(e.target.value)}
-                                                />
+                                    <div className="bg-white p-6 rounded-2xl border border-neutral-200 space-y-4">
+                                        <div className="flex gap-4 border-b border-neutral-100 pb-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setProposalType('simple')}
+                                                className={`text-xs font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${proposalType === 'simple' ? 'border-primary-600 text-neutral-800' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
+                                            >
+                                                Simple Quote
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setProposalType('detailed')}
+                                                className={`text-xs font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${proposalType === 'detailed' ? 'border-primary-600 text-neutral-800' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
+                                            >
+                                                Detailed Proposal
+                                            </button>
+                                        </div>
+
+                                        {proposalType === 'simple' ? (
+                                            <div className="space-y-3">
+                                                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Send Quote Amount</Label>
+                                                <div className="flex gap-3">
+                                                    <div className="flex-1">
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            className="font-black text-lg h-12 rounded-xl"
+                                                            value={quoteAmount}
+                                                            onChange={(e) => setQuoteAmount(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <Button size="lg" onClick={sendQuote} className="h-12 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-black uppercase tracking-widest px-8">
-                                                Send
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Proposal Line Items</div>
+                                                <div className="space-y-3">
+                                                    {lineItems.map((item, idx) => (
+                                                        <div key={idx} className="flex flex-col md:flex-row gap-3 items-start md:items-center bg-neutral-50 p-4 rounded-xl border border-neutral-100 relative">
+                                                            <div className="flex-1 w-full">
+                                                                <Label className="text-[9px] font-bold text-neutral-400 uppercase block mb-1">Description</Label>
+                                                                <Input
+                                                                    placeholder="Item description (e.g. Floor Plan)"
+                                                                    value={item.description}
+                                                                    onChange={(e) => updateLineItem(idx, 'description', e.target.value)}
+                                                                    className="h-10 bg-white border-neutral-200 text-xs font-semibold rounded-lg"
+                                                                />
+                                                            </div>
+                                                            <div className="w-full md:w-20">
+                                                                <Label className="text-[9px] font-bold text-neutral-400 uppercase block mb-1">Unit</Label>
+                                                                <Input
+                                                                    placeholder="Unit"
+                                                                    value={item.unit}
+                                                                    onChange={(e) => updateLineItem(idx, 'unit', e.target.value)}
+                                                                    className="h-10 bg-white border-neutral-200 text-xs font-semibold rounded-lg"
+                                                                />
+                                                            </div>
+                                                            <div className="w-full md:w-20">
+                                                                <Label className="text-[9px] font-bold text-neutral-400 uppercase block mb-1 text-right">Qty</Label>
+                                                                <Input
+                                                                    type="number"
+                                                                    placeholder="Qty"
+                                                                    value={item.quantity}
+                                                                    onChange={(e) => updateLineItem(idx, 'quantity', Number(e.target.value))}
+                                                                    className="h-10 bg-white border-neutral-200 text-xs font-semibold rounded-lg text-right"
+                                                                />
+                                                            </div>
+                                                            <div className="w-full md:w-24">
+                                                                <Label className="text-[9px] font-bold text-neutral-400 uppercase block mb-1 text-right">Unit Price</Label>
+                                                                <Input
+                                                                    type="number"
+                                                                    placeholder="Price"
+                                                                    value={item.unitPrice}
+                                                                    onChange={(e) => updateLineItem(idx, 'unitPrice', Number(e.target.value))}
+                                                                    className="h-10 bg-white border-neutral-200 text-xs font-semibold rounded-lg text-right"
+                                                                />
+                                                            </div>
+                                                            <div className="w-full md:w-28 text-right font-black text-xs text-neutral-800 pr-2 pt-5">
+                                                                ৳{(Number(item.quantity || 0) * Number(item.unitPrice || 0)).toLocaleString()}
+                                                            </div>
+                                                            {lineItems.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeLineItem(idx)}
+                                                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-colors shrink-0 mt-5"
+                                                                >
+                                                                    <XCircle className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="flex justify-between items-center bg-neutral-50/50 p-4 rounded-xl border border-dashed border-neutral-200">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={addLineItem}
+                                                        className="h-9 px-4 border-neutral-200 hover:bg-neutral-100 text-xs font-bold rounded-lg text-neutral-600"
+                                                    >
+                                                        + Add Line
+                                                    </Button>
+                                                    <div className="text-right">
+                                                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-0.5">Calculated Total</span>
+                                                        <span className="font-black text-lg text-neutral-900">৳{lineItems.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0).toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Deliverable Notes</Label>
+                                            <Textarea
+                                                placeholder="Add notes about deliverables..."
+                                                className="rounded-xl resize-none min-h-[100px]"
+                                                value={quoteNote}
+                                                onChange={(e) => setQuoteNote(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div className="pt-2 flex justify-end">
+                                            <Button size="lg" onClick={sendQuote} className="h-12 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-black uppercase tracking-widest px-10">
+                                                Send Quote
                                             </Button>
                                         </div>
-                                        <Textarea
-                                            placeholder="Add notes about deliverables..."
-                                            className="mt-3 rounded-xl resize-none"
-                                            value={quoteNote}
-                                            onChange={(e) => setQuoteNote(e.target.value)}
-                                        />
                                     </div>
                                 )}
 
@@ -568,6 +715,13 @@ export default function DesignOrderDetailPage() {
                     </div>
                 </div>
             </div>
+
+            <ProposalInvoice 
+                isOpen={isInvoiceOpen} 
+                onClose={() => setIsInvoiceOpen(false)} 
+                booking={booking} 
+                offer={selectedInvoiceOffer} 
+            />
         </>
     );
 }
