@@ -245,23 +245,15 @@ export async function createPartner(data: any) {
             console.log("createPartner: Inserting Seller data...");
             const { error } = await adminClient
                 .from('sellers')
-                .insert({
+                .upsert({
                     user_id: userId,
                     business_name: data.businessName,
-                    current_address: data.seller_data.warehouseAddress, // Note: Schema check needed? The action has 'warehouse_address' in createSeller but 'current_address' here? 
-                    // Wait, createSeller used 'warehouse_address'. createPartner uses 'primary_categories' etc. 
-                    // Let's check the 'sellers' schema. The action previously had:
-                    // primary_categories: data.seller_data.primaryCategories,
-                    // commission_rate: data.seller_data.commissionRate || 10,
-                    // business_type: data.seller_data.businessType,
-
-                    // REVERTING TO PREVIOUS FIELDS for consistency, but adding explicit type conversion
                     primary_categories: data.seller_data.primaryCategories,
                     commission_rate: Number(data.seller_data.commissionRate || 10),
                     business_type: data.seller_data.businessType,
                     verification_status: 'pending',
                     is_active: true
-                })
+                }, { onConflict: 'user_id' })
             if (error) {
                 console.error("createPartner: Seller insert failed", error);
                 errors.push(`Seller creation failed: ${error.message}`)
@@ -273,7 +265,7 @@ export async function createPartner(data: any) {
             console.log("createPartner: Inserting Designer data...");
             const { error } = await adminClient
                 .from('designers')
-                .insert({
+                .upsert({
                     user_id: userId,
                     company_name: data.businessName,
                     specializations: data.designer_data.specializations,
@@ -281,7 +273,7 @@ export async function createPartner(data: any) {
                     experience_years: Number(data.designer_data.experienceYears || 0),
                     verification_status: 'pending',
                     is_active: true
-                })
+                }, { onConflict: 'user_id' })
             if (error) {
                 console.error("createPartner: Designer insert failed", error);
                 errors.push(`Designer creation failed: ${error.message}`)
@@ -293,14 +285,14 @@ export async function createPartner(data: any) {
             console.log("createPartner: Inserting Service Provider data...");
             const { error } = await adminClient
                 .from('service_providers')
-                .insert({
+                .upsert({
                     user_id: userId,
                     business_name: data.businessName,
                     service_types: data.service_data.serviceTypes,
                     experience_years: Number(data.service_data.experienceYears || 0),
                     verification_status: 'pending',
                     is_active: true
-                })
+                }, { onConflict: 'user_id' })
             if (error) {
                 console.error("createPartner: Service Provider insert failed", error);
                 errors.push(`Service Provider creation failed: ${error.message}`)
@@ -471,7 +463,7 @@ export async function updatePartner(userId: string, data: any) {
                     commission_rate: Number(data.seller_data.commissionRate || 10),
                     business_type: data.seller_data.businessType,
                     updated_at: new Date().toISOString()
-                })
+                }, { onConflict: 'user_id' })
             if (error) errors.push(`Seller update failed: ${error.message}`)
         } else {
             // Role removed or not present: Delete entry if it exists
@@ -490,7 +482,7 @@ export async function updatePartner(userId: string, data: any) {
                     portfolio_url: data.designer_data.portfolioUrl,
                     experience_years: Number(data.designer_data.experienceYears || 0),
                     updated_at: new Date().toISOString()
-                })
+                }, { onConflict: 'user_id' })
             if (error) errors.push(`Designer update failed: ${error.message}`)
         } else {
             // Role removed or not present: Delete entry
@@ -508,7 +500,7 @@ export async function updatePartner(userId: string, data: any) {
                     service_types: data.service_data.serviceTypes,
                     experience_years: Number(data.service_data.experienceYears || 0),
                     updated_at: new Date().toISOString()
-                })
+                }, { onConflict: 'user_id' })
             if (error) errors.push(`Service Provider update failed: ${error.message}`)
         } else {
             // Role removed or not present: Delete entry

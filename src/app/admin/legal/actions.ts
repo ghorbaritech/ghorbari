@@ -76,7 +76,7 @@ export async function createContract(data: any) {
             business_name: data.businessName,
             verification_status: 'pending',
             updated_at: new Date().toISOString()
-        })
+        }, { onConflict: 'user_id' })
     }
 
     // DESIGNER (Design)
@@ -89,7 +89,7 @@ export async function createContract(data: any) {
             active_specializations: selectedDesign,
             verification_status: 'pending',
             updated_at: new Date().toISOString()
-        })
+        }, { onConflict: 'user_id' })
     }
 
     // SERVICE PROVIDER (Service)
@@ -102,7 +102,7 @@ export async function createContract(data: any) {
             active_service_types: selectedServices,
             verification_status: 'pending',
             updated_at: new Date().toISOString()
-        })
+        }, { onConflict: 'user_id' })
     }
 
     // 5. Update profile status to pending and ensure step is recorded
