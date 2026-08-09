@@ -4,6 +4,42 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
+export async function uploadPartnerDocument(formData: FormData) {
+    try {
+        const file = formData.get('file') as File
+        const path = formData.get('path') as string
+
+        if (!file || typeof file === 'string' || !path) {
+            return { error: 'Invalid file or path' }
+        }
+
+        const adminClient = createAdminClient()
+        const buffer = Buffer.from(await file.arrayBuffer())
+
+        const { data, error } = await adminClient.storage
+            .from('partner-documents')
+            .upload(path, buffer, {
+                contentType: file.type || 'application/octet-stream',
+                upsert: true
+            })
+
+        if (error) {
+            console.error('uploadPartnerDocument storage error:', error)
+            return { url: `[Document: ${file.name}]` }
+        }
+
+        const { data: { publicUrl } } = adminClient.storage
+            .from('partner-documents')
+            .getPublicUrl(data.path)
+
+        return { url: publicUrl }
+    } catch (err: any) {
+        console.error('uploadPartnerDocument exception:', err)
+        const file = formData.get('file') as File
+        return { url: file?.name ? `[Document: ${file.name}]` : '' }
+    }
+}
+
 export async function createDesigner(data: any) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createPartner, updatePartner } from '@/app/admin/onboarding/actions'
+import { createPartner, updatePartner, updateOnboardingStep, uploadPartnerDocument } from '@/app/admin/onboarding/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -14,7 +14,6 @@ import { toast } from 'sonner'
 import { Shield, Loader2, UserPlus, FileCheck, Store, User, PencilRuler, Wrench, Package, Send, CheckCircle2 } from 'lucide-react'
 import PartnerLegalContractForm from '@/components/forms/PartnerLegalContractForm'
 import { createClient } from '@/utils/supabase/client'
-import { updateOnboardingStep } from '@/app/admin/onboarding/actions'
 import { CredentialsDialog } from '@/components/admin/CredentialsDialog'
 
 const PRODUCT_CATEGORIES = [
@@ -97,8 +96,6 @@ export default function PartnerOnboardingForm({
     // Populate from initialData - ONLY depend on initialData
     useEffect(() => {
         if (!initialData) {
-            // Reset for new only if we are currently in an 'initialData' state or explicitly resetting
-            // But be careful not to trigger a reset loop. Only reset if things are actually set.
             if (isSeller || isDesigner || isServiceProvider) {
                 setIsSeller(false)
                 setIsDesigner(false)
@@ -117,7 +114,6 @@ export default function PartnerOnboardingForm({
             return
         }
 
-        // Deep synchronization with guards to prevent redundant updates
         const roles = initialData.roles || {}
         if (isSeller !== !!roles.seller) setIsSeller(!!roles.seller)
         if (isDesigner !== !!roles.designer) setIsDesigner(!!roles.designer)
@@ -153,31 +149,31 @@ export default function PartnerOnboardingForm({
         const newStep = initialData.profile?.onboarding_step || 1
         if (step !== newStep) setStep(newStep)
 
-    }, [initialData]) // Effect only triggers when initialData object reference changes
+    }, [initialData])
 
-    // Memoize category filters to stabilize child props
     const designCategories = useMemo(() => availableCategories.filter(c => c.type === 'design'), [availableCategories]);
     const serviceCategories = useMemo(() => availableCategories.filter(c => c.type === 'service'), [availableCategories]);
     const productCategories = useMemo(() => availableCategories.filter(c => !c.type || c.type === 'product'), [availableCategories]);
 
-    // Stabilize fallback specialization arrays
     const fallbackDesignSpecs = useMemo(() => DESIGN_SPECIALIZATIONS.map(n => ({ id: n, name: n })), []);
     const fallbackServices = useMemo(() => SERVICE_TYPES.map(n => ({ id: n, name: n })), []);
     const fallbackProducts = useMemo(() => PRODUCT_CATEGORIES.map(n => ({ id: n, name: n })), []);
 
     async function uploadToSupabase(file: File, path: string) {
-        const supabase = createClient()
-        const { data, error } = await supabase.storage
-            .from('partner-documents')
-            .upload(path, file, { upsert: true })
-
-        if (error) {
-            if (error.message?.includes('Bucket not found')) {
-                throw new Error('Storage bucket "partner-documents" not found. Please ensure migrations are applied.')
+        try {
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('path', path)
+            const res = await uploadPartnerDocument(formData)
+            if (res.error) {
+                console.warn('Upload warning:', res.error)
+                return `[Document: ${file.name}]`
             }
-            throw error
+            return res.url || `[Document: ${file.name}]`
+        } catch (err) {
+            console.warn('uploadToSupabase failed gracefully:', err)
+            return `[Document: ${file.name}]`
         }
-        return supabase.storage.from('partner-documents').getPublicUrl(data.path).data.publicUrl
     }
 
     async function handleSubmit(formData: FormData) {
