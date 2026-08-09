@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 export default function DesignerProjectsPage() {
     const [projects, setProjects] = useState<any[]>([]);
@@ -20,12 +21,53 @@ export default function DesignerProjectsPage() {
             const { data: designer } = await supabase.from('designers').select('id').eq('user_id', user.id).single();
 
             if (designer) {
-                const { data } = await supabase
+                // Fetch service requests
+                const { data: sRequests } = await supabase
                     .from('service_requests')
                     .select('*, customer:profiles(full_name)')
                     .eq('assigned_designer_id', designer.id)
                     .order('created_at', { ascending: false });
-                setProjects(data || []);
+
+                // Fetch design bookings
+                const { data: dBookings } = await supabase
+                    .from('design_bookings')
+                    .select('*, customer:profiles(full_name)')
+                    .order('created_at', { ascending: false });
+
+                const myDesignBookings = (dBookings || []).filter((b: any) => {
+                    const isAssigned = b.assigned_designer_id === designer.id || b.assigned_seller_id === designer.id;
+                    const hasSurveyInvite = b.details?.survey_requests?.some((r: any) => r.partner_id === designer.id);
+                    return isAssigned || hasSurveyInvite;
+                });
+
+                // Merge lists
+                const mergedProjects = [
+                    ...(sRequests || []).map(p => ({
+                        ...p,
+                        isDesignBooking: false,
+                        displayName: p.request_number || `SR-${p.id.slice(0, 6)}`,
+                        location: p.requirements?.location || '-',
+                        displayStatus: p.status,
+                        link: `/dashboard/designer/projects/${p.id}`,
+                        displayType: p.service_type?.replace(/_/g, ' ')
+                    })),
+                    ...myDesignBookings.map(b => {
+                        const surveyReq = b.details?.survey_requests?.find((r: any) => r.partner_id === designer.id);
+                        const isSurveyPending = surveyReq?.status === 'pending';
+                        
+                        return {
+                            ...b,
+                            isDesignBooking: true,
+                            displayName: `DB-${b.id.slice(0, 8)}`,
+                            location: b.details?.preferredSchedule?.location || b.details?.location || '-',
+                            displayStatus: isSurveyPending ? 'pending_survey' : b.status,
+                            link: `/dashboard/partner/design/${b.id}`,
+                            displayType: `${b.service_type} Design`
+                        };
+                    })
+                ];
+
+                setProjects(mergedProjects);
             }
             setLoading(false);
         }
@@ -62,13 +104,13 @@ export default function DesignerProjectsPage() {
                             </tr>
                         ) : projects.map((proj) => (
                             <tr key={proj.id} className="hover:bg-neutral-50 transition-colors">
-                                <td className="p-4 font-mono font-medium">{proj.request_number}</td>
-                                <td className="p-4 capitalize font-bold text-neutral-800">{proj.service_type?.replace(/_/g, ' ')}</td>
+                                <td className="p-4 font-mono font-medium">{proj.displayName || proj.request_number}</td>
+                                <td className="p-4 capitalize font-bold text-neutral-800">{proj.displayType || proj.service_type?.replace(/_/g, ' ')}</td>
                                 <td className="p-4">{proj.customer?.full_name || 'N/A'}</td>
-                                <td className="p-4">{proj.requirements?.location || '-'}</td>
+                                <td className="p-4">{proj.location || '-'}</td>
                                 <td className="p-4">
                                     <Badge variant="outline" className="capitalize">
-                                        {proj.status?.replace(/_/g, ' ')}
+                                        {(proj.displayStatus || proj.status)?.replace(/_/g, ' ')}
                                     </Badge>
                                 </td>
                                 <td className="p-4 text-neutral-500">{format(new Date(proj.created_at), 'MMM d, yyyy')}</td>
@@ -77,9 +119,17 @@ export default function DesignerProjectsPage() {
                                         <Button size="sm" variant="outline">
                                             <MessageSquare className="w-4 h-4" />
                                         </Button>
-                                        <Button size="sm">
-                                            <Eye className="w-4 h-4 mr-2" /> View
-                                        </Button>
+                                        {proj.link ? (
+                                            <Link href={proj.link}>
+                                                <Button size="sm">
+                                                    <Eye className="w-4 h-4 mr-2" /> View
+                                                </Button>
+                                            </Link>
+                                        ) : (
+                                            <Button size="sm">
+                                                <Eye className="w-4 h-4 mr-2" /> View
+                                            </Button>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
