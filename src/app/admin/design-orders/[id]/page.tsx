@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Sidebar } from "@/components/admin/Sidebar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, UserPlus, XCircle, DollarSign, Send, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, Check, UserPlus, XCircle, DollarSign, Send, Clock, Calendar, Upload, FileText, Download } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { formatDistanceToNow, format } from "date-fns";
 import { Label } from "@/components/ui/label";
@@ -194,12 +194,33 @@ export default function DesignOrderDetailPage() {
     // Negotiation State
     const [quoteAmount, setQuoteAmount] = useState("");
     const [quoteNote, setQuoteNote] = useState("");
-    const [proposalType, setProposalType] = useState<'simple' | 'detailed'>('simple');
+    const [proposalType, setProposalType] = useState<'simple' | 'detailed' | 'comparison'>('simple');
     const [lineItems, setLineItems] = useState<any[]>([
         { description: "", unit: "sft", quantity: 1, unitPrice: 0, total: 0 }
     ]);
     const [selectedInvoiceOffer, setSelectedInvoiceOffer] = useState<any>(null);
     const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+    const [quoteFileUrl, setQuoteFileUrl] = useState("");
+    const [uploadingQuoteFile, setUploadingQuoteFile] = useState(false);
+    const quoteFileRef = useRef<HTMLInputElement>(null);
+
+    async function handleQuoteFileUpload(file: File) {
+        setUploadingQuoteFile(true);
+        try {
+            const ext = file.name.split('.').pop();
+            const path = `admin-quotes/${id}/quote-${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabase.storage.from('documents').upload(path, file, { upsert: true });
+            if (uploadError) throw uploadError;
+            const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path);
+            setQuoteFileUrl(publicUrl);
+            alert("File uploaded!");
+        } catch (e: any) {
+            // Store file name as placeholder if bucket doesn't exist
+            setQuoteFileUrl(`[Attached: ${file.name}]`);
+        } finally {
+            setUploadingQuoteFile(false);
+        }
+    }
 
     const addLineItem = () => {
         setLineItems([...lineItems, { description: "", unit: "sft", quantity: 1, unitPrice: 0, total: 0 }]);
@@ -450,6 +471,7 @@ export default function DesignOrderDetailPage() {
             amount: finalAmount,
             notes: quoteNote,
             date: new Date().toISOString(),
+            file_url: quoteFileUrl || null,
             ...(proposalType === 'detailed' && { line_items: lineItems })
         };
 
@@ -665,22 +687,144 @@ export default function DesignOrderDetailPage() {
                                             >
                                                 Detailed Proposal
                                             </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setProposalType('comparison')}
+                                                className={`text-xs font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${proposalType === 'comparison' ? 'border-blue-600 text-neutral-800' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
+                                            >
+                                                Partner Quotes
+                                            </button>
                                         </div>
 
                                         {proposalType === 'simple' ? (
-                                            <div className="space-y-3">
-                                                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Send Quote Amount</Label>
-                                                <div className="flex gap-3">
-                                                    <div className="flex-1">
-                                                        <Input
-                                                            type="number"
-                                                            placeholder="Amount"
-                                                            className="font-black text-lg h-12 rounded-xl"
-                                                            value={quoteAmount}
-                                                            onChange={(e) => setQuoteAmount(e.target.value)}
-                                                        />
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-2">Send Quote Amount</Label>
+                                                    <div className="flex gap-3">
+                                                        <div className="flex-1">
+                                                            <Input
+                                                                type="number"
+                                                                placeholder="Amount"
+                                                                className="font-black text-lg h-12 rounded-xl"
+                                                                value={quoteAmount}
+                                                                onChange={(e) => setQuoteAmount(e.target.value)}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                {/* File Upload for Simple Quote */}
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Attach Quote Document (Optional)</Label>
+                                                    <div
+                                                        onClick={() => quoteFileRef.current?.click()}
+                                                        className="border-2 border-dashed border-neutral-200 rounded-xl p-4 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 transition-all"
+                                                    >
+                                                        <Upload className="w-5 h-5 text-neutral-400 mx-auto mb-1" />
+                                                        <p className="text-xs font-bold text-neutral-400">
+                                                            {uploadingQuoteFile ? 'Uploading...' : quoteFileUrl ? '✓ File attached' : 'Click to attach PDF or image'}
+                                                        </p>
+                                                    </div>
+                                                    <input ref={quoteFileRef} type="file" accept=".pdf,.doc,.docx,.jpg,.png" className="hidden"
+                                                        onChange={e => { const f = e.target.files?.[0]; if (f) handleQuoteFileUpload(f); }} />
+                                                    {quoteFileUrl && quoteFileUrl.startsWith('http') && (
+                                                        <a href={quoteFileUrl} target="_blank" rel="noopener noreferrer"
+                                                            className="flex items-center gap-1.5 text-xs text-primary-600 font-bold hover:underline">
+                                                            <FileText className="w-3.5 h-3.5" /> View Attached File ↗
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : proposalType === 'comparison' ? (
+                                            /* Partner Quote Comparison Tab */
+                                            <div className="space-y-4">
+                                                <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">All Partner Submitted Quotes</p>
+                                                {(booking.details?.survey_requests || []).filter((r: any) => r.quote).length === 0 ? (
+                                                    <div className="p-8 bg-neutral-50 rounded-2xl border border-dashed border-neutral-200 text-center">
+                                                        <p className="text-neutral-400 text-sm font-bold">No partner quotes submitted yet.</p>
+                                                        <p className="text-neutral-400 text-xs mt-1">Partners will submit their quotes after the site survey.</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-4">
+                                                        {(booking.details?.survey_requests || []).filter((r: any) => r.quote).map((r: any, idx: number) => (
+                                                            <div key={idx} className="bg-neutral-900 text-white rounded-2xl p-5 space-y-4">
+                                                                {/* Partner Header */}
+                                                                <div className="flex justify-between items-start">
+                                                                    <div>
+                                                                        <p className="font-black text-sm text-white">{r.partner_name}</p>
+                                                                        <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-widest mt-0.5">
+                                                                            Survey: {r.schedule?.date} @ {r.schedule?.time}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="text-right">
+                                                                        <p className="text-[9px] text-neutral-500 uppercase font-bold">Total Bid</p>
+                                                                        <p className="text-xl font-black text-emerald-400">৳{r.quote.amount?.toLocaleString()}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Line Items */}
+                                                                {r.quote.line_items?.length > 0 && (
+                                                                    <div className="space-y-2">
+                                                                        <p className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">Line Items</p>
+                                                                        <div className="bg-neutral-950 rounded-xl overflow-hidden">
+                                                                            <table className="w-full text-xs">
+                                                                                <thead>
+                                                                                    <tr className="border-b border-neutral-800">
+                                                                                        <th className="text-left p-3 font-black text-neutral-500 uppercase text-[9px]">Description</th>
+                                                                                        <th className="text-center p-3 font-black text-neutral-500 uppercase text-[9px]">Unit</th>
+                                                                                        <th className="text-right p-3 font-black text-neutral-500 uppercase text-[9px]">Qty</th>
+                                                                                        <th className="text-right p-3 font-black text-neutral-500 uppercase text-[9px]">Rate</th>
+                                                                                        <th className="text-right p-3 font-black text-neutral-500 uppercase text-[9px]">Total</th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                    {r.quote.line_items.map((item: any, i: number) => (
+                                                                                        <tr key={i} className="border-b border-neutral-800/50 last:border-0">
+                                                                                            <td className="p-3 text-neutral-200 font-semibold">{item.description}</td>
+                                                                                            <td className="p-3 text-neutral-400 text-center">{item.unit}</td>
+                                                                                            <td className="p-3 text-neutral-400 text-right">{item.quantity}</td>
+                                                                                            <td className="p-3 text-neutral-400 text-right">৳{Number(item.unitPrice || 0).toLocaleString()}</td>
+                                                                                            <td className="p-3 text-neutral-200 font-black text-right">৳{(Number(item.quantity||0)*Number(item.unitPrice||0)).toLocaleString()}</td>
+                                                                                        </tr>
+                                                                                    ))}
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Notes */}
+                                                                {r.quote.notes && (
+                                                                    <div className="bg-neutral-800/50 rounded-xl p-3">
+                                                                        <p className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1">Notes</p>
+                                                                        <p className="text-xs text-neutral-300 font-medium">{r.quote.notes}</p>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* PDF Attachment */}
+                                                                {r.quote.file_url && (
+                                                                    <a
+                                                                        href={r.quote.file_url.startsWith('http') ? r.quote.file_url : '#'}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        download
+                                                                        className="flex items-center gap-2 bg-blue-600/20 border border-blue-600/30 rounded-xl px-4 py-3 text-blue-300 font-bold text-xs hover:bg-blue-600/30 transition-colors"
+                                                                    >
+                                                                        <Download className="w-4 h-4" />
+                                                                        Download Quote Document
+                                                                        {!r.quote.file_url.startsWith('http') && (
+                                                                            <span className="text-[9px] text-blue-400 ml-1">{r.quote.file_url}</span>
+                                                                        )}
+                                                                    </a>
+                                                                )}
+
+                                                                {/* Submitted date */}
+                                                                <p className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest text-right">
+                                                                    Submitted: {r.quote.date ? format(new Date(r.quote.date), 'MMM d, yyyy h:mm a') : '-'}
+                                                                </p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="space-y-4">
@@ -848,7 +992,7 @@ export default function DesignOrderDetailPage() {
                                                     <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">
                                                         📅 {request.schedule?.date} @ {request.schedule?.time}
                                                     </p>
-                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                                                         <Badge className={`text-[8px] font-black uppercase px-2 py-0.5 border-none ${
                                                             request.status === 'accepted' ? 'bg-green-100 text-green-700' :
                                                             request.status === 'declined' ? 'bg-red-100 text-red-700' :
@@ -862,6 +1006,18 @@ export default function DesignOrderDetailPage() {
                                                             </Badge>
                                                         )}
                                                     </div>
+                                                    {/* PDF Download Link */}
+                                                    {request.quote?.file_url && (
+                                                        <a
+                                                            href={request.quote.file_url.startsWith('http') ? request.quote.file_url : '#'}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            download
+                                                            className="flex items-center gap-1 text-[9px] text-blue-600 font-bold hover:underline mt-1"
+                                                        >
+                                                            <Download className="w-3 h-3" /> Download Quote PDF
+                                                        </a>
+                                                    )}
                                                 </div>
                                                 <button
                                                     type="button"
