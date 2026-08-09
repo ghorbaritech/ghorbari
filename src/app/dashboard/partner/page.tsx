@@ -56,12 +56,17 @@ export default function SellerDashboard() {
                 const { data: ords } = await supabase.from('orders').select('*').eq('seller_id', sel.id)
                 setOrders(ords || [])
 
-                // Fetch Assigned Design Tasks
+                // Fetch Assigned Design Tasks & Survey Requests
                 const { data: tasks } = await supabase
                     .from('design_bookings')
                     .select('*')
-                    .eq('assigned_seller_id', sel.id)
-                setAssignedTasks(tasks || [])
+                
+                const myTasks = (tasks || []).filter((task: any) => {
+                    const isAssigned = task.assigned_seller_id === sel.id || task.assigned_designer_id === sel.id;
+                    const hasSurveyInvite = task.details?.survey_requests?.some((r: any) => r.partner_id === sel.id);
+                    return isAssigned || hasSurveyInvite;
+                });
+                setAssignedTasks(myTasks || [])
             }
         }
         fetchData()
@@ -324,25 +329,39 @@ export default function SellerDashboard() {
                                 </Card>
                             ) : (
                                 <div className="space-y-4">
-                                    {assignedTasks.map(task => (
-                                        <Card key={task.id} className="p-6 border-none bg-white rounded-3xl shadow-sm group hover:shadow-md transition-all cursor-pointer" onClick={() => window.location.href = `/dashboard/partner/design/${task.id}`}>
-                                            <div className="flex justify-between items-start mb-2">
-                                                <Badge className="bg-neutral-900 text-white text-[10px] font-bold uppercase tracking-widest">{task.service_type}</Badge>
-                                                <span className={`text-[10px] font-black uppercase tracking-widest ${task.status === 'completed' ? 'text-green-600' : 'text-amber-500'}`}>
-                                                    {task.status.replace('_', ' ')}
-                                                </span>
-                                            </div>
-                                            <h3 className="font-black text-neutral-900 uppercase italic text-lg mb-1">Project #{task.id.slice(0, 6)}</h3>
-                                            <p className="text-xs text-neutral-500 font-bold mb-4">Due: {task.milestones?.find((m: any) => m.status !== 'completed')?.due_date ? new Date(task.milestones.find((m: any) => m.status !== 'completed').due_date).toLocaleDateString() : 'TBD'}</p>
+                                    {assignedTasks.map(task => {
+                                        const surveyReq = task.details?.survey_requests?.find((r: any) => r.partner_id === seller?.id);
+                                        const isSurveyPending = surveyReq?.status === 'pending';
+                                        
+                                        return (
+                                            <Card key={task.id} className="p-6 border-none bg-white rounded-3xl shadow-sm group hover:shadow-md transition-all cursor-pointer" onClick={() => window.location.href = `/dashboard/partner/design/${task.id}`}>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <Badge className="bg-neutral-900 text-white text-[10px] font-bold uppercase tracking-widest">{task.service_type}</Badge>
+                                                        {isSurveyPending && (
+                                                            <Badge className="bg-amber-600 text-white text-[8px] font-black px-2 py-0.5 border-none uppercase">Survey Request</Badge>
+                                                        )}
+                                                    </div>
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${task.status === 'completed' ? 'text-green-600' : 'text-amber-500'}`}>
+                                                        {isSurveyPending ? 'PENDING SURVEY' : task.status.replace('_', ' ')}
+                                                    </span>
+                                                </div>
+                                                <h3 className="font-black text-neutral-900 uppercase italic text-lg mb-1">Project #{task.id.slice(0, 6)}</h3>
+                                                <p className="text-xs text-neutral-500 font-bold mb-4">
+                                                    {surveyReq ? `Survey Schedule: 📅 ${surveyReq.schedule?.date} @ ${surveyReq.schedule?.time}` : `Due: ${task.milestones?.find((m: any) => m.status !== 'completed')?.due_date ? new Date(task.milestones.find((m: any) => m.status !== 'completed').due_date).toLocaleDateString() : 'TBD'}`}
+                                                </p>
 
-                                            <div className="w-full bg-neutral-100 h-1.5 rounded-full overflow-hidden">
-                                                <div
-                                                    className="bg-primary-600 h-full rounded-full transition-all duration-500"
-                                                    style={{ width: `${(task.milestones?.filter((m: any) => m.status === 'completed').length / (task.milestones?.length || 1)) * 100}%` }}
-                                                />
-                                            </div>
-                                        </Card>
-                                    ))}
+                                                {!isSurveyPending && (
+                                                    <div className="w-full bg-neutral-100 h-1.5 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="bg-primary-600 h-full rounded-full transition-all duration-500"
+                                                            style={{ width: `${(task.milestones?.filter((m: any) => m.status === 'completed').length / (task.milestones?.length || 1)) * 100}%` }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </Card>
+                                        )
+                                    })}
                                 </div>
                             )}
                         </div>

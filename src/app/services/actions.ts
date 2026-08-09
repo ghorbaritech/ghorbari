@@ -49,11 +49,10 @@ export async function submitServiceRequest(data: any) {
     if (user) {
         await supabase.from('notifications').insert({
             user_id: user.id, // In a real app, this would be for admin users
-            type: 'service_request_submitted',
             title: 'New Service Request',
             message: `New request ${requestNumber} submitted.`,
-            related_type: 'service_request',
-            related_id: request.id
+            link: `/admin/service-requests/${request.id}`,
+            is_read: false
         })
     }
 
@@ -82,22 +81,20 @@ export async function assignDesigner(requestId: string, designerId: string, admi
     if (designer) {
         await supabase.from('notifications').insert({
             user_id: designer.user_id,
-            type: 'new_assignment',
             title: 'New Project Assignment',
             message: `You have been assigned to ${request.request_number}`,
-            related_type: 'service_request',
-            related_id: requestId
+            link: `/dashboard/designer`,
+            is_read: false
         })
     }
 
     // Notify Customer
     await supabase.from('notifications').insert({
         user_id: request.customer_id,
-        type: 'designer_assigned',
         title: 'Designer Assigned',
         message: `A designer has been assigned to your project ${request.request_number}`,
-        related_type: 'service_request',
-        related_id: requestId
+        link: `/dashboard/customer`,
+        is_read: false
     })
 
     return { success: true }
@@ -228,11 +225,10 @@ export async function assignServiceProvider(requestId: string, providerId: strin
     if (provider) {
         await supabase.from('notifications').insert({
             user_id: provider.user_id,
-            type: 'new_assignment',
             title: 'New Service Assignment',
             message: `You have been assigned to service request ${request.request_number}`,
-            related_type: 'service_request',
-            related_id: requestId
+            link: `/dashboard/service-provider`,
+            is_read: false
         })
     }
 
@@ -240,11 +236,10 @@ export async function assignServiceProvider(requestId: string, providerId: strin
     if (request.customer_id) {
         await supabase.from('notifications').insert({
             user_id: request.customer_id,
-            type: 'provider_assigned',
             title: 'Service Partner Assigned',
             message: `A service provider has been assigned to your project ${request.request_number}`,
-            related_type: 'service_request',
-            related_id: requestId
+            link: `/dashboard/customer`,
+            is_read: false
         })
     }
 

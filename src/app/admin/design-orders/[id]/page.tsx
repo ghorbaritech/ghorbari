@@ -280,11 +280,10 @@ export default function DesignOrderDetailPage() {
             
             await supabase.from('notifications').insert({
                 user_id: selectedSurveyPartner.userId,
-                type: 'survey_request',
                 title: 'New Survey Request',
                 message: `You have received a survey request for project #${booking.id.slice(0, 8)}. Scheduled at ${surveyDate} at ${surveyTime}.`,
-                related_type: 'design_bookings',
-                related_id: id
+                link: `/dashboard/partner/design/${id}`,
+                is_read: false
             });
 
             setSelectedSurveyPartner(null);

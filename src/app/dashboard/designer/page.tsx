@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
 import {
     Layout,
     Image as ImageIcon,
@@ -20,6 +22,7 @@ import {
 export default function DesignerDashboard() {
     const [designer, setDesigner] = useState<any>(null)
     const [projects, setProjects] = useState<any[]>([])
+    const [designBookings, setDesignBookings] = useState<any[]>([])
     const [notifications, setNotifications] = useState<any[]>([])
     const supabase = createClient()
 
@@ -37,9 +40,18 @@ export default function DesignerDashboard() {
             setDesigner(des)
 
             if (des) {
-                // Get assigned projects
+                // Get assigned projects (service requests)
                 const { data: projs } = await supabase.from('service_requests').select('*').eq('assigned_designer_id', des.id)
                 setProjects(projs || [])
+
+                // Get design bookings and filter in memory for survey requests / direct assignment
+                const { data: dbBookings } = await supabase.from('design_bookings').select('*')
+                const myDesignBookings = (dbBookings || []).filter((b: any) => {
+                    const isAssigned = b.assigned_designer_id === des.id || b.assigned_seller_id === des.id;
+                    const hasSurveyInvite = b.details?.survey_requests?.some((r: any) => r.partner_id === des.id);
+                    return isAssigned || hasSurveyInvite;
+                });
+                setDesignBookings(myDesignBookings)
 
                 // Get notifications
                 const { data: notifs } = await supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
@@ -111,30 +123,74 @@ export default function DesignerDashboard() {
                                 <Layout className="w-6 h-6 text-neutral-300" /> Current Assignments
                             </h2>
                             <div className="space-y-4">
-                                {projects.length === 0 ? (
+                                {projects.length === 0 && designBookings.length === 0 ? (
                                     <div className="py-20 text-center bg-neutral-50 rounded-[40px] border-2 border-dashed border-neutral-100">
                                         <p className="text-neutral-400 font-black uppercase text-xs tracking-widest">No active assignments yet. Admin will notify you when matched.</p>
                                     </div>
                                 ) : (
-                                    projects.map((proj) => (
-                                        <Card key={proj.id} className="p-8 border-2 border-neutral-50 rounded-[40px] hover:border-neutral-200 transition-all cursor-pointer group">
-                                            <div className="flex justify-between items-center">
-                                                <div className="space-y-1">
-                                                    <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">SR #{proj.request_number}</span>
-                                                    <h3 className="text-xl font-black text-neutral-900 group-hover:text-primary-600 transition-colors uppercase italic">{proj.service_type.replace('_', ' ')}</h3>
-                                                    <p className="text-neutral-500 font-bold text-sm">{proj.requirements.plotSize} SQFT • {proj.requirements.location} • {proj.requirements.floors} FLOORS</p>
+                                    <>
+                                        {/* Service Requests */}
+                                        {projects.map((proj) => (
+                                            <Card key={proj.id} className="p-8 border-2 border-neutral-50 rounded-[40px] hover:border-neutral-200 transition-all cursor-pointer group">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="space-y-1">
+                                                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">SR #{proj.request_number}</span>
+                                                        <h3 className="text-xl font-black text-neutral-900 group-hover:text-primary-600 transition-colors uppercase italic">{proj.service_type.replace('_', ' ')}</h3>
+                                                        <p className="text-neutral-500 font-bold text-sm">{proj.requirements.plotSize} SQFT • {proj.requirements.location} • {proj.requirements.floors} FLOORS</p>
+                                                    </div>
+                                                    <div className="flex gap-3">
+                                                        <Button variant="ghost" className="rounded-2xl h-12 w-12 p-0 border-2 border-neutral-100 hover:bg-neutral-50">
+                                                            <MessageSquare className="w-5 h-5 text-neutral-400" />
+                                                        </Button>
+                                                        <Button variant="outline" className="rounded-2xl h-12 px-6 border-2 font-black uppercase text-[10px] tracking-wider">
+                                                            View Requirements
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                                <div className="flex gap-3">
-                                                    <Button variant="ghost" className="rounded-2xl h-12 w-12 p-0 border-2 border-neutral-100 hover:bg-neutral-50">
-                                                        <MessageSquare className="w-5 h-5 text-neutral-400" />
-                                                    </Button>
-                                                    <Button variant="outline" className="rounded-2xl h-12 px-6 border-2 font-black uppercase text-[10px] tracking-wider">
-                                                        View Requirements
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </Card>
-                                    ))
+                                            </Card>
+                                        ))}
+
+                                        {/* Design Bookings & Survey Requests */}
+                                        {designBookings.map((booking) => {
+                                            const surveyReq = booking.details?.survey_requests?.find((r: any) => r.partner_id === designer?.id);
+                                            const isSurveyPending = surveyReq?.status === 'pending';
+                                            const isHired = booking.assigned_designer_id === designer?.id || booking.assigned_seller_id === designer?.id;
+                                            
+                                            return (
+                                                <Card key={booking.id} className="p-8 border-2 border-neutral-50 rounded-[40px] hover:border-neutral-200 transition-all cursor-pointer group">
+                                                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Design Booking #{booking.id.slice(0, 8)}</span>
+                                                                {isSurveyPending && (
+                                                                    <Badge className="bg-amber-600 text-white text-[8px] font-black px-2 py-0.5 border-none uppercase">Survey Request</Badge>
+                                                                )}
+                                                                {isHired && (
+                                                                    <Badge className="bg-emerald-600 text-white text-[8px] font-black px-2 py-0.5 border-none uppercase">Hired</Badge>
+                                                                )}
+                                                            </div>
+                                                            <h3 className="text-xl font-black text-neutral-900 group-hover:text-primary-600 transition-colors uppercase italic">{booking.service_type} Design Project</h3>
+                                                            <p className="text-neutral-500 font-bold text-sm">
+                                                                {booking.details?.propertyType || 'Standard'} • {booking.details?.roomSize || 'N/A'} SQFT
+                                                            </p>
+                                                            {surveyReq && (
+                                                                <p className="text-xs font-bold text-neutral-400 uppercase tracking-wide">
+                                                                    Survey Schedule: 📅 {surveyReq.schedule?.date} @ {surveyReq.schedule?.time}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex gap-3 self-end sm:self-auto">
+                                                            <Link href={`/dashboard/partner/design/${booking.id}`}>
+                                                                <Button variant="outline" className="rounded-2xl h-12 px-6 border-2 font-black uppercase text-[10px] tracking-wider">
+                                                                    {isSurveyPending ? 'View Survey Request' : 'Manage Project'}
+                                                                </Button>
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                </Card>
+                                            );
+                                        })}
+                                    </>
                                 )}
                             </div>
                         </section>
@@ -169,14 +225,23 @@ export default function DesignerDashboard() {
                                 <Bell className="w-4 h-4" /> Activity Feed
                             </h3>
                             <div className="space-y-4">
-                                {notifications.map((n) => (
-                                    <div key={n.id} className="p-4 bg-neutral-50 rounded-2xl relative overflow-hidden group">
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-neutral-200 group-hover:bg-primary-500 transition-colors" />
-                                        <p className="text-[10px] font-black text-neutral-400 uppercase mb-1">{new Date(n.created_at).toLocaleDateString()}</p>
-                                        <p className="font-bold text-neutral-900 text-sm mb-1">{n.title}</p>
-                                        <p className="text-xs text-neutral-500 leading-relaxed">{n.message}</p>
-                                    </div>
-                                ))}
+                                {notifications.map((n) => {
+                                    const isDesignBooking = n.related_type === 'design_bookings' || n.related_type === 'design_booking';
+                                    const linkPath = isDesignBooking 
+                                        ? `/dashboard/partner/design/${n.related_id}` 
+                                        : `/dashboard/designer`;
+                                        
+                                    return (
+                                        <Link href={linkPath} key={n.id} className="block">
+                                            <div className="p-4 bg-neutral-50 rounded-2xl relative overflow-hidden group hover:bg-neutral-100 transition-all cursor-pointer">
+                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-neutral-200 group-hover:bg-primary-500 transition-colors" />
+                                                <p className="text-[10px] font-black text-neutral-400 uppercase mb-1">{new Date(n.created_at).toLocaleDateString()}</p>
+                                                <p className="font-bold text-neutral-900 text-sm mb-1">{n.title}</p>
+                                                <p className="text-xs text-neutral-500 leading-relaxed">{n.message}</p>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         </section>
 

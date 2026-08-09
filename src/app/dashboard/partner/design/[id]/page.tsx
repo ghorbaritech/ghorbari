@@ -120,11 +120,10 @@ export default function PartnerTaskDetailPage() {
                 // Notify Customer
                 await supabase.from('notifications').insert({
                     user_id: booking.user_id,
-                    type: 'survey_accepted',
                     title: 'Partner Accepted Survey',
                     message: `${partnerInfo.name} has accepted the survey request scheduled for ${request.schedule?.date}.`,
-                    related_type: 'design_bookings',
-                    related_id: id
+                    link: `/dashboard/customer/design/${id}`,
+                    is_read: false
                 });
             }
         } else {
