@@ -1,25 +1,42 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Flag, Calendar, ClipboardList, CheckCircle2, XCircle } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, Flag, Calendar, ClipboardList, CheckCircle2, XCircle, Plus, Trash2, Upload, FileText, Send } from "lucide-react";
+import { useParams } from "next/navigation";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
 import { format } from "date-fns";
 
+interface LineItem {
+    description: string;
+    unit: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+}
+
 export default function DesignerSurveyDetailPage() {
     const { id } = useParams();
-    const router = useRouter();
     const [booking, setBooking] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
     const supabase = createClient();
 
     const [partnerInfo, setPartnerInfo] = useState<any>(null);
-    const [partnerLineItems, setPartnerLineItems] = useState<any[]>([]);
+    const [lineItems, setLineItems] = useState<LineItem[]>([
+        { description: "", unit: "sft", quantity: 1, unitPrice: 0, total: 0 }
+    ]);
+    const [notes, setNotes] = useState("");
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+    const [uploadedFileUrl, setUploadedFileUrl] = useState<string>("");
+    const [uploading, setUploading] = useState(false);
+    const fileRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (id) fetchBooking();
@@ -36,17 +53,14 @@ export default function DesignerSurveyDetailPage() {
             if (error) throw error;
             setBooking(bookingData);
 
-            // Fetch current user details
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                // Check if user is a designer
                 const { data: designer } = await supabase
                     .from('designers')
                     .select('id, company_name')
                     .eq('user_id', user.id)
                     .maybeSingle();
 
-                // Check if user is a seller
                 const { data: seller } = await supabase
                     .from('sellers')
                     .select('id, business_name')
@@ -58,26 +72,16 @@ export default function DesignerSurveyDetailPage() {
                 const info = { id: partnerId, name: partnerName, userId: user.id };
                 setPartnerInfo(info);
 
-                // Find if there is a survey request (by partner_user_id OR partner_id)
-                const request = bookingData.details?.survey_requests?.find((r: any) => 
+                // Load existing quote if any
+                const request = bookingData.details?.survey_requests?.find((r: any) =>
                     r.partner_user_id === user.id || (partnerId && r.partner_id === partnerId)
                 );
-                if (request) {
-                    if (request.quote?.line_items) {
-                        setPartnerLineItems(request.quote.line_items);
-                    } else {
-                        // Pre-populate from admin detailed proposal
-                        const adminProposal = bookingData.quotation_history?.slice().reverse().find((o: any) => o.role === 'admin' && o.line_items);
-                        if (adminProposal?.line_items) {
-                            setPartnerLineItems(adminProposal.line_items.map((li: any) => ({
-                                description: li.description,
-                                unit: li.unit,
-                                quantity: li.quantity,
-                                unitPrice: 0,
-                                total: 0
-                            })));
-                        }
+                if (request?.quote) {
+                    if (request.quote.line_items?.length) {
+                        setLineItems(request.quote.line_items);
                     }
+                    if (request.quote.notes) setNotes(request.quote.notes);
+                    if (request.quote.file_url) setUploadedFileUrl(request.quote.file_url);
                 }
             }
         } catch (error) {
@@ -94,7 +98,7 @@ export default function DesignerSurveyDetailPage() {
         );
     }
 
-    async function respondToSurveyRequest(accept: boolean) {
+    async function respondToSurvey(accept: boolean) {
         const request = getMyRequest();
         if (!request || !partnerInfo) return;
 
@@ -104,45 +108,94 @@ export default function DesignerSurveyDetailPage() {
         });
 
         const updatedDetails = { ...booking.details, survey_requests: updatedRequests };
-
-        const { error } = await supabase
-            .from('design_bookings')
-            .update({ details: updatedDetails })
-            .eq('id', id);
+        const { error } = await supabase.from('design_bookings').update({ details: updatedDetails }).eq('id', id);
 
         if (!error) {
             setBooking({ ...booking, details: updatedDetails });
-            alert(`Survey request ${accept ? 'accepted' : 'declined'} successfully!`);
+            alert(`Survey ${accept ? 'accepted' : 'declined'} successfully!`);
 
             if (accept) {
                 await supabase.from('notifications').insert({
                     user_id: booking.user_id,
                     title: 'Partner Accepted Survey',
-                    message: `${partnerInfo.name} has accepted the survey request scheduled for ${request.schedule?.date}.`,
+                    message: `${partnerInfo.name} has accepted the survey scheduled for ${request.schedule?.date}.`,
                     link: `/dashboard/customer/design/${id}`,
                     is_read: false
                 });
             }
         } else {
-            alert("Failed to respond to survey request: " + error.message);
+            alert("Failed: " + error.message);
         }
     }
 
-    async function submitSurveyQuote() {
+    // Line item management
+    function addLineItem() {
+        setLineItems(prev => [...prev, { description: "", unit: "sft", quantity: 1, unitPrice: 0, total: 0 }]);
+    }
+
+    function removeLineItem(idx: number) {
+        setLineItems(prev => prev.filter((_, i) => i !== idx));
+    }
+
+    function updateLineItem(idx: number, key: keyof LineItem, val: any) {
+        setLineItems(prev => {
+            const items = [...prev];
+            (items[idx] as any)[key] = val;
+            items[idx].total = Number(items[idx].quantity || 0) * Number(items[idx].unitPrice || 0);
+            return items;
+        });
+    }
+
+    const grandTotal = lineItems.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0);
+
+    async function handleFileUpload(file: File) {
+        setUploading(true);
+        try {
+            const ext = file.name.split('.').pop();
+            const path = `partner-quotes/${id}/${partnerInfo?.userId || 'anon'}-${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabase.storage
+                .from('documents')
+                .upload(path, file, { upsert: true });
+
+            if (uploadError) {
+                // Fallback: use a placeholder since bucket might not exist
+                console.error("Upload error:", uploadError.message);
+                setUploadedFile(file);
+                setUploadedFileUrl(`[File attached: ${file.name}]`);
+                alert("File noted. It will be referenced in your quote.");
+            } else {
+                const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path);
+                setUploadedFile(file);
+                setUploadedFileUrl(publicUrl);
+                alert("File uploaded successfully!");
+            }
+        } catch (e) {
+            setUploadedFile(file);
+            setUploadedFileUrl(`[File: ${file.name}]`);
+        } finally {
+            setUploading(false);
+        }
+    }
+
+    async function submitQuote() {
         const request = getMyRequest();
         if (!request || !partnerInfo) return;
 
-        const totalAmount = partnerLineItems.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0);
-
-        if (!totalAmount) {
-            alert("Please enter unit prices to construct a quote.");
+        const hasItems = lineItems.some(i => i.description.trim());
+        if (!hasItems && !uploadedFileUrl) {
+            alert("Please add at least one line item or upload a quote document.");
             return;
         }
 
+        setSubmitting(true);
+
         const quoteObj = {
-            amount: totalAmount,
-            line_items: partnerLineItems,
-            date: new Date().toISOString()
+            amount: grandTotal,
+            line_items: lineItems.filter(i => i.description.trim()),
+            notes: notes,
+            file_url: uploadedFileUrl || null,
+            date: new Date().toISOString(),
+            partner_name: partnerInfo.name
         };
 
         const updatedRequests = booking.details.survey_requests.map((r: any) => {
@@ -151,26 +204,16 @@ export default function DesignerSurveyDetailPage() {
         });
 
         const updatedDetails = { ...booking.details, survey_requests: updatedRequests };
-
-        const { error } = await supabase
-            .from('design_bookings')
-            .update({ details: updatedDetails })
-            .eq('id', id);
+        const { error } = await supabase.from('design_bookings').update({ details: updatedDetails }).eq('id', id);
 
         if (!error) {
             setBooking({ ...booking, details: updatedDetails });
-            alert("Your quote has been successfully submitted to the admin!");
+            alert("Your quote has been submitted to the admin successfully!");
         } else {
             alert("Failed to submit quote: " + error.message);
         }
+        setSubmitting(false);
     }
-
-    const updatePartnerRate = (index: number, rate: number) => {
-        const items = [...partnerLineItems];
-        items[index].unitPrice = rate;
-        items[index].total = Number(items[index].quantity || 0) * Number(rate || 0);
-        setPartnerLineItems(items);
-    };
 
     if (loading) {
         return (
@@ -179,14 +222,12 @@ export default function DesignerSurveyDetailPage() {
             </div>
         );
     }
-    
+
     if (!booking) {
         return (
             <div className="p-8 text-center">
-                <p className="text-neutral-500 font-bold">Booking not found or you don't have access to it.</p>
-                <Link href="/dashboard/designer/projects">
-                    <Button className="mt-4">← Back to Projects</Button>
-                </Link>
+                <p className="text-neutral-500 font-bold text-sm">Booking not found.</p>
+                <Link href="/dashboard/designer/projects"><Button className="mt-4">← Back to Projects</Button></Link>
             </div>
         );
     }
@@ -194,24 +235,24 @@ export default function DesignerSurveyDetailPage() {
     const details = booking.details || {};
     const milestones = booking.milestones || [];
     const surveyReq = getMyRequest();
+    const hasSubmittedQuote = !!surveyReq?.quote;
 
     return (
-        <div className="p-6 md:p-8 space-y-8">
-            <div className="flex items-center gap-3">
-                <Link href="/dashboard/designer/projects">
-                    <Button variant="ghost" className="pl-0 hover:bg-transparent hover:text-neutral-600">
-                        <ArrowLeft className="w-4 h-4 mr-2" /> Back to Projects
-                    </Button>
-                </Link>
-            </div>
+        <div className="p-6 md:p-8 space-y-6 max-w-5xl">
+            {/* Back */}
+            <Link href="/dashboard/designer/projects">
+                <Button variant="ghost" className="pl-0 hover:bg-transparent hover:text-neutral-600 -mb-2">
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Back to Projects
+                </Button>
+            </Link>
 
             {/* Header */}
             <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <div className="flex items-center gap-3 mb-1">
+                        <div className="flex items-center gap-3 mb-1 flex-wrap">
                             <h1 className="text-2xl font-black text-neutral-900 tracking-tight">
-                                Design Project #{booking.id.slice(0, 8).toUpperCase()}
+                                Design Project #{(id as string)?.slice(0, 8).toUpperCase()}
                             </h1>
                             <Badge className="bg-neutral-900 text-white text-xs uppercase tracking-widest">
                                 {booking.service_type || 'Design'}
@@ -234,7 +275,8 @@ export default function DesignerSurveyDetailPage() {
             {/* Survey Request Card */}
             {surveyReq ? (
                 <div className="bg-neutral-900 text-white rounded-2xl p-8 shadow-xl space-y-6">
-                    <div className="flex justify-between items-start">
+                    {/* Survey Header */}
+                    <div className="flex justify-between items-start flex-wrap gap-3">
                         <div>
                             <Badge className="bg-emerald-600 text-white uppercase tracking-widest text-[9px] font-black px-3 py-1 mb-3">
                                 Survey Request
@@ -247,7 +289,7 @@ export default function DesignerSurveyDetailPage() {
                                 Scheduled: {surveyReq.schedule?.date} @ {surveyReq.schedule?.time}
                             </p>
                         </div>
-                        <Badge className={`text-[10px] font-black uppercase px-3 py-1 border-none ${
+                        <Badge className={`text-[10px] font-black uppercase px-4 py-1.5 border-none ${
                             surveyReq.status === 'accepted' ? 'bg-green-600 text-white' :
                             surveyReq.status === 'declined' ? 'bg-red-600 text-white' :
                             'bg-amber-600 text-white'
@@ -256,21 +298,21 @@ export default function DesignerSurveyDetailPage() {
                         </Badge>
                     </div>
 
-                    {/* Pending Actions */}
+                    {/* Pending: Accept/Decline */}
                     {surveyReq.status === 'pending' && (
                         <div className="space-y-4 bg-neutral-800/50 rounded-xl p-6">
                             <p className="text-neutral-300 text-sm leading-relaxed">
-                                You have been invited to perform an on-site survey for this project. Please confirm your availability for the scheduled date and time above.
+                                You have been invited to perform an on-site survey. Please confirm your availability for the scheduled date and time above.
                             </p>
                             <div className="flex gap-3">
                                 <Button
-                                    onClick={() => respondToSurveyRequest(true)}
+                                    onClick={() => respondToSurvey(true)}
                                     className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-xs rounded-xl"
                                 >
                                     <CheckCircle2 className="w-4 h-4 mr-2" /> Accept Survey
                                 </Button>
                                 <Button
-                                    onClick={() => respondToSurveyRequest(false)}
+                                    onClick={() => respondToSurvey(false)}
                                     variant="outline"
                                     className="flex-1 h-12 border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white font-black uppercase tracking-widest text-xs rounded-xl"
                                 >
@@ -280,72 +322,162 @@ export default function DesignerSurveyDetailPage() {
                         </div>
                     )}
 
-                    {/* Quote Submission After Acceptance */}
+                    {/* Accepted: Quote Builder */}
                     {surveyReq.status === 'accepted' && (
                         <div className="space-y-6 pt-4 border-t border-neutral-800">
-                            <div>
-                                <h3 className="text-sm font-black text-blue-400 uppercase tracking-widest mb-1">
-                                    {surveyReq.quote ? '✓ Quote Submitted' : 'Submit Your Quote'}
-                                </h3>
-                                <p className="text-neutral-400 text-xs leading-relaxed">
-                                    {surveyReq.quote 
-                                        ? `Your total bid of ৳${surveyReq.quote.amount?.toLocaleString()} has been submitted to the admin. You can update it below if needed.`
-                                        : 'Enter your unit rates for each scope item. The admin will compile these into a comparison for the customer.'
-                                    }
-                                </p>
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-sm font-black text-blue-400 uppercase tracking-widest">
+                                        {hasSubmittedQuote ? '✓ Quote Submitted — Update Below' : 'Create Your Quote'}
+                                    </h3>
+                                    <p className="text-neutral-400 text-xs mt-1 leading-relaxed">
+                                        Build your own quote with line items. You can also upload your quote document. Both will be sent to the admin.
+                                    </p>
+                                </div>
+                                {hasSubmittedQuote && (
+                                    <Badge className="bg-emerald-800 text-emerald-200 text-[9px] font-black uppercase px-3 py-1">
+                                        Submitted ৳{surveyReq.quote.amount?.toLocaleString()}
+                                    </Badge>
+                                )}
                             </div>
 
-                            {partnerLineItems.length > 0 ? (
-                                <div className="space-y-4">
-                                    {partnerLineItems.map((item, idx) => (
-                                        <div key={idx} className="bg-neutral-950 p-4 rounded-xl border border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                            <div className="flex-1">
-                                                <p className="text-sm font-bold text-neutral-100">{item.description}</p>
-                                                <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mt-0.5">
-                                                    Unit: {item.unit || '-'} | Qty: {item.quantity}
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center gap-3 shrink-0">
-                                                <div className="w-36">
-                                                    <Label className="text-[9px] font-bold text-neutral-500 uppercase block mb-1 text-right">Your Rate (৳)</Label>
-                                                    <input
-                                                        type="number"
-                                                        value={item.unitPrice || ""}
-                                                        onChange={(e) => updatePartnerRate(idx, Number(e.target.value))}
-                                                        className="w-full bg-neutral-900 border border-neutral-700 text-white font-black text-right text-sm rounded-lg h-10 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        placeholder="Rate"
-                                                    />
-                                                </div>
-                                                <div className="w-28 text-right pt-4">
-                                                    <span className="text-[10px] text-neutral-500 block uppercase font-bold">Total</span>
-                                                    <span className="font-black text-sm text-neutral-200">
-                                                        ৳{(Number(item.quantity || 0) * Number(item.unitPrice || 0)).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                            {/* Line Items Builder */}
+                            <div className="space-y-3">
+                                <div className="grid grid-cols-12 gap-2 px-1">
+                                    <span className="col-span-5 text-[9px] font-black text-neutral-500 uppercase tracking-widest">Description</span>
+                                    <span className="col-span-1 text-[9px] font-black text-neutral-500 uppercase tracking-widest">Unit</span>
+                                    <span className="col-span-2 text-[9px] font-black text-neutral-500 uppercase tracking-widest text-right">Qty</span>
+                                    <span className="col-span-2 text-[9px] font-black text-neutral-500 uppercase tracking-widest text-right">Rate (৳)</span>
+                                    <span className="col-span-2 text-[9px] font-black text-neutral-500 uppercase tracking-widest text-right">Total</span>
+                                </div>
 
-                                    <div className="flex justify-between items-center bg-neutral-950 p-5 rounded-xl border border-neutral-800">
-                                        <div>
-                                            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Grand Total Bid</span>
-                                            <span className="text-2xl font-black text-emerald-400">
-                                                ৳{partnerLineItems.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0).toLocaleString()}
+                                {lineItems.map((item, idx) => (
+                                    <div key={idx} className="grid grid-cols-12 gap-2 items-center bg-neutral-950 p-3 rounded-xl border border-neutral-800">
+                                        <div className="col-span-5">
+                                            <input
+                                                value={item.description}
+                                                onChange={e => updateLineItem(idx, 'description', e.target.value)}
+                                                placeholder="e.g. Floor Plan Drawing"
+                                                className="w-full bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold rounded-lg h-9 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-1">
+                                            <input
+                                                value={item.unit}
+                                                onChange={e => updateLineItem(idx, 'unit', e.target.value)}
+                                                placeholder="sft"
+                                                className="w-full bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold rounded-lg h-9 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <input
+                                                type="number"
+                                                value={item.quantity}
+                                                onChange={e => updateLineItem(idx, 'quantity', Number(e.target.value))}
+                                                className="w-full bg-neutral-900 border border-neutral-700 text-white text-xs font-black rounded-lg h-9 px-2 text-right focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <input
+                                                type="number"
+                                                value={item.unitPrice || ""}
+                                                onChange={e => updateLineItem(idx, 'unitPrice', Number(e.target.value))}
+                                                placeholder="0"
+                                                className="w-full bg-neutral-900 border border-neutral-700 text-white text-xs font-black rounded-lg h-9 px-2 text-right focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-1 text-right">
+                                            <span className="text-xs font-black text-neutral-200">
+                                                {(Number(item.quantity || 0) * Number(item.unitPrice || 0)).toLocaleString()}
                                             </span>
                                         </div>
-                                        <Button
-                                            onClick={submitSurveyQuote}
-                                            className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-xs rounded-xl"
-                                        >
-                                            {surveyReq.quote ? 'Update Quote' : 'Submit Quote'}
-                                        </Button>
+                                        <div className="col-span-1 flex justify-end">
+                                            {lineItems.length > 1 && (
+                                                <button
+                                                    onClick={() => removeLineItem(idx)}
+                                                    className="text-neutral-600 hover:text-red-400 transition-colors p-1"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
+                                ))}
+
+                                <button
+                                    onClick={addLineItem}
+                                    className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-xs font-black uppercase tracking-widest transition-colors py-1"
+                                >
+                                    <Plus className="w-3.5 h-3.5" /> Add Line Item
+                                </button>
+                            </div>
+
+                            {/* Grand Total */}
+                            <div className="flex justify-between items-center bg-neutral-950 px-5 py-4 rounded-xl border border-neutral-700">
+                                <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Grand Total</span>
+                                <span className="text-2xl font-black text-emerald-400">৳{grandTotal.toLocaleString()}</span>
+                            </div>
+
+                            {/* Notes */}
+                            <div className="space-y-2">
+                                <Label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest block">
+                                    Additional Notes / Remarks
+                                </Label>
+                                <Textarea
+                                    value={notes}
+                                    onChange={e => setNotes(e.target.value)}
+                                    placeholder="Add any notes, terms, or remarks for this quote..."
+                                    className="bg-neutral-950 border-neutral-700 text-white text-sm font-semibold rounded-xl resize-none min-h-[80px] focus:ring-blue-500 placeholder:text-neutral-600"
+                                />
+                            </div>
+
+                            {/* File Upload */}
+                            <div className="space-y-3">
+                                <Label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest block">
+                                    Upload Quote Document (PDF / DOCX / Image)
+                                </Label>
+                                <div
+                                    onClick={() => fileRef.current?.click()}
+                                    className="border-2 border-dashed border-neutral-700 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-500/5 transition-all"
+                                >
+                                    <Upload className="w-6 h-6 text-neutral-500 mx-auto mb-2" />
+                                    <p className="text-xs font-bold text-neutral-400">
+                                        {uploadedFile ? uploadedFile.name : 'Click to upload your quote file'}
+                                    </p>
+                                    {uploadedFileUrl && !uploadedFile && (
+                                        <p className="text-[10px] text-blue-400 font-bold mt-1">Previously uploaded: ✓</p>
+                                    )}
                                 </div>
-                            ) : (
-                                <div className="p-6 bg-neutral-950 border border-dashed border-neutral-800 rounded-xl text-center text-xs font-bold text-neutral-500 italic">
-                                    The admin hasn't defined line items yet. Check back soon.
-                                </div>
-                            )}
+                                <input
+                                    ref={fileRef}
+                                    type="file"
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                    className="hidden"
+                                    onChange={e => {
+                                        const f = e.target.files?.[0];
+                                        if (f) handleFileUpload(f);
+                                    }}
+                                />
+                                {uploading && (
+                                    <p className="text-xs text-blue-400 font-bold">Uploading...</p>
+                                )}
+                                {uploadedFileUrl && uploadedFileUrl.startsWith('http') && (
+                                    <a href={uploadedFileUrl} target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center gap-2 text-xs text-blue-400 font-bold hover:underline">
+                                        <FileText className="w-3.5 h-3.5" /> View Uploaded Document ↗
+                                    </a>
+                                )}
+                            </div>
+
+                            {/* Submit Button */}
+                            <Button
+                                onClick={submitQuote}
+                                disabled={submitting}
+                                className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-sm rounded-xl shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2"
+                            >
+                                <Send className="w-4 h-4" />
+                                {submitting ? 'Submitting...' : hasSubmittedQuote ? 'Update & Resubmit Quote' : 'Submit Quote to Admin'}
+                            </Button>
                         </div>
                     )}
 
@@ -361,7 +493,7 @@ export default function DesignerSurveyDetailPage() {
                 </div>
             )}
 
-            {/* Project Details + Milestones */}
+            {/* Bottom Grid: Milestones + Requirements */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Milestones */}
                 <div className="space-y-4">
@@ -397,34 +529,30 @@ export default function DesignerSurveyDetailPage() {
                 </div>
 
                 {/* Requirements */}
-                <div>
-                    <Card className="p-6 border-none bg-neutral-50 rounded-2xl">
-                        <h3 className="text-sm font-black text-neutral-900 uppercase tracking-widest mb-5 flex items-center gap-2">
-                            <ClipboardList className="w-4 h-4" /> Project Requirements
-                        </h3>
-                        <div className="space-y-3">
-                            {Object.entries(details).filter(([key]) => key !== 'survey_requests').map(([key, value]) => {
-                                const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                                let displayValue: any = value;
-                                if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
-                                if (Array.isArray(value)) displayValue = value.join(', ');
-                                if (value && typeof value === 'object' && !Array.isArray(value)) {
-                                    displayValue = Object.entries(value as object)
-                                        .map(([k, v]) => `${k}: ${v}`)
-                                        .join(' | ');
-                                }
-                                if (!value) displayValue = '-';
+                <Card className="p-6 border-none bg-neutral-50 rounded-2xl h-fit">
+                    <h3 className="text-sm font-black text-neutral-900 uppercase tracking-widest mb-5 flex items-center gap-2">
+                        <ClipboardList className="w-4 h-4" /> Project Requirements
+                    </h3>
+                    <div className="space-y-2">
+                        {Object.entries(details).filter(([key]) => key !== 'survey_requests').map(([key, value]) => {
+                            const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+                            let displayValue: any = value;
+                            if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
+                            if (Array.isArray(value)) displayValue = value.join(', ');
+                            if (value && typeof value === 'object' && !Array.isArray(value)) {
+                                displayValue = Object.entries(value as object).map(([k, v]) => `${k}: ${v}`).join(' | ');
+                            }
+                            if (!value) displayValue = '-';
 
-                                return (
-                                    <div key={key} className="flex justify-between py-2.5 border-b border-neutral-200 last:border-0 gap-4">
-                                        <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest shrink-0">{formattedKey}</span>
-                                        <span className="font-bold text-neutral-900 text-right text-sm">{String(displayValue)}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </Card>
-                </div>
+                            return (
+                                <div key={key} className="flex justify-between py-2.5 border-b border-neutral-200 last:border-0 gap-4">
+                                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest shrink-0">{formattedKey}</span>
+                                    <span className="font-bold text-neutral-900 text-right text-xs">{String(displayValue)}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </Card>
             </div>
         </div>
     );

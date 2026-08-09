@@ -36,27 +36,32 @@ export default function DesignerDashboard() {
                 .from('designers')
                 .select('*, profile:profiles(onboarding_status)')
                 .eq('user_id', user.id)
-                .single()
+                .maybeSingle()
             setDesigner(des)
 
-            if (des) {
-                // Get assigned projects (service requests)
-                const { data: projs } = await supabase.from('service_requests').select('*').eq('assigned_designer_id', des.id)
+            const designerId = des?.id || null;
+
+            // Get assigned projects (service requests)
+            if (designerId) {
+                const { data: projs } = await supabase.from('service_requests').select('*').eq('assigned_designer_id', designerId)
                 setProjects(projs || [])
-
-                // Get design bookings and filter in memory for survey requests / direct assignment
-                const { data: dbBookings } = await supabase.from('design_bookings').select('*')
-                const myDesignBookings = (dbBookings || []).filter((b: any) => {
-                    const isAssigned = b.assigned_designer_id === des.id || b.assigned_seller_id === des.id;
-                    const hasSurveyInvite = b.details?.survey_requests?.some((r: any) => r.partner_id === des.id);
-                    return isAssigned || hasSurveyInvite;
-                });
-                setDesignBookings(myDesignBookings)
-
-                // Get notifications
-                const { data: notifs } = await supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-                setNotifications(notifs || [])
             }
+
+            // Get design bookings and filter in memory by user_id (most reliable) OR designer.id
+            const { data: dbBookings } = await supabase.from('design_bookings').select('*')
+            const myDesignBookings = (dbBookings || []).filter((b: any) => {
+                const isAssigned = designerId && (b.assigned_designer_id === designerId || b.assigned_seller_id === designerId);
+                const hasSurveyInvite = b.details?.survey_requests?.some((r: any) =>
+                    r.partner_user_id === user.id ||
+                    (designerId && r.partner_id === designerId)
+                );
+                return isAssigned || hasSurveyInvite;
+            });
+            setDesignBookings(myDesignBookings)
+
+            // Get notifications
+            const { data: notifs } = await supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+            setNotifications(notifs || [])
         }
         fetchData()
     }, [])
@@ -152,8 +157,12 @@ export default function DesignerDashboard() {
 
                                         {/* Design Bookings & Survey Requests */}
                                         {designBookings.map((booking) => {
-                                            const surveyReq = booking.details?.survey_requests?.find((r: any) => r.partner_id === designer?.id);
+                                            const surveyReq = booking.details?.survey_requests?.find((r: any) =>
+                                                r.partner_user_id === designer?.user_id ||
+                                                (designer?.id && r.partner_id === designer?.id)
+                                            );
                                             const isSurveyPending = surveyReq?.status === 'pending';
+                                            const isSurveyAccepted = surveyReq?.status === 'accepted';
                                             const isHired = booking.assigned_designer_id === designer?.id || booking.assigned_seller_id === designer?.id;
                                             
                                             return (
@@ -162,8 +171,12 @@ export default function DesignerDashboard() {
                                                         <div className="space-y-1">
                                                             <div className="flex items-center gap-2 flex-wrap">
                                                                 <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Design Booking #{booking.id.slice(0, 8)}</span>
-                                                                {isSurveyPending && (
-                                                                    <Badge className="bg-amber-600 text-white text-[8px] font-black px-2 py-0.5 border-none uppercase">Survey Request</Badge>
+                                                                {(isSurveyPending || isSurveyAccepted) && (
+                                                                    <Badge className={`text-[8px] font-black px-2 py-0.5 border-none uppercase ${
+                                                                        isSurveyAccepted ? 'bg-blue-600 text-white' : 'bg-amber-600 text-white'
+                                                                    }`}>
+                                                                        {isSurveyAccepted ? 'Survey Accepted' : 'Survey Pending'}
+                                                                    </Badge>
                                                                 )}
                                                                 {isHired && (
                                                                     <Badge className="bg-emerald-600 text-white text-[8px] font-black px-2 py-0.5 border-none uppercase">Hired</Badge>
@@ -180,9 +193,9 @@ export default function DesignerDashboard() {
                                                             )}
                                                         </div>
                                                         <div className="flex gap-3 self-end sm:self-auto">
-                                                            <Link href={`/dashboard/partner/design/${booking.id}`}>
+                                                            <Link href={`/dashboard/designer/survey/${booking.id}`}>
                                                                 <Button variant="outline" className="rounded-2xl h-12 px-6 border-2 font-black uppercase text-[10px] tracking-wider">
-                                                                    {isSurveyPending ? 'View Survey Request' : 'Manage Project'}
+                                                                    {isSurveyPending ? 'View Survey Request' : isSurveyAccepted ? 'Submit Quote' : 'Manage Project'}
                                                                 </Button>
                                                             </Link>
                                                         </div>
