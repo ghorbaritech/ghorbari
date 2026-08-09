@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, Clock, Calendar, DollarSign, Send, XCircle } from "lucide-react";
+import { 
+    ArrowLeft, Check, Clock, Calendar, DollarSign, Send, XCircle, 
+    CheckCircle2, FileText, Download, UserCheck, Sparkles, ShieldCheck, 
+    MapPin, Building, ChevronRight, FileSpreadsheet, AlertCircle 
+} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { formatDistanceToNow, format } from "date-fns";
 import { Label } from "@/components/ui/label";
@@ -127,379 +131,566 @@ export default function CustomerDesignOrderDetailPage() {
         }
     }
 
-    if (loading) return <div className="p-8">Loading...</div>;
-    if (!booking) return <div className="p-8">Order not found.</div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-8">
+                <div className="text-center space-y-4">
+                    <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p className="text-xs font-black uppercase tracking-widest text-neutral-400">Loading Order Details...</p>
+                </div>
+            </div>
+        );
+    }
 
-    const details = booking.details || {};
-    const milestones = booking.milestones || [];
+    if (!booking) return <div className="p-8 text-neutral-500 font-bold">Order not found.</div>;
+
+    // Filter out internal/complex objects from details so raw JSON is NEVER displayed
+    const rawDetails = booking.details || {};
+    const detailsKeysToExclude = ['survey_requests', 'quotation_history', 'milestones'];
+    const cleanDetails = Object.entries(rawDetails).filter(([k]) => !detailsKeysToExclude.includes(k));
+
+    const surveyRequests: any[] = rawDetails.survey_requests || [];
+    const milestones: any[] = booking.milestones || [];
     const lastOffer = booking.quotation_history?.length > 0 ? booking.quotation_history[booking.quotation_history.length - 1] : null;
 
+    // Extract partner-submitted quotes if available
+    const partnerQuotes = surveyRequests.filter((r: any) => r.quote);
+    const activeQuote = partnerQuotes.length > 0 ? partnerQuotes[0].quote : (lastOffer || null);
+
+    // Order Progress Stage Determination
+    const isPlaced = true;
+    const hasSurvey = surveyRequests.length > 0;
+    const isSurveyAccepted = surveyRequests.some((r: any) => r.status === 'accepted');
+    const isQuoted = !!activeQuote || ['quotation', 'in_progress', 'completed'].includes(booking.status);
+    const isAcceptedOrHired = !!booking.agreed_amount || ['in_progress', 'completed'].includes(booking.status);
+    const isCompleted = booking.status === 'completed';
+
     return (
-        <div className="min-h-screen bg-[#F8F9FA] p-6 md:p-12">
-            <div className="max-w-5xl mx-auto">
+        <div className="min-h-screen bg-[#F8F9FA] p-4 md:p-10 font-sans">
+            <div className="max-w-6xl mx-auto space-y-8">
+                {/* Back Button */}
                 <Link href="/dashboard/customer">
-                    <Button variant="ghost" className="mb-6 pl-0 hover:bg-transparent hover:text-primary-600">
+                    <Button variant="ghost" className="pl-0 hover:bg-transparent hover:text-primary-600 text-xs font-black uppercase tracking-widest text-neutral-500">
                         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
                     </Button>
                 </Link>
 
-                <div className="bg-white rounded-[40px] shadow-sm p-8 md:p-12">
-                    {/* Header */}
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
-                        <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <h1 className="text-3xl font-black text-neutral-900 tracking-tight">Design Order #{booking.id.slice(0, 8)}</h1>
-                                <Badge className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${booking.status === 'in_progress' ? 'bg-green-100 text-green-700 hover:bg-green-100' :
-                                    booking.status === 'completed' ? 'bg-blue-100 text-blue-700 hover:bg-blue-100' :
-                                        'bg-neutral-100 text-neutral-600 hover:bg-neutral-100'
-                                    }`}>
-                                    {booking.status.replace('_', ' ')}
+                {/* Hero Header Card */}
+                <div className="bg-white rounded-[32px] p-6 md:p-10 shadow-sm border border-neutral-100 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary-50/50 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+                    
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+                        <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <h1 className="text-2xl md:text-3xl font-black text-neutral-900 tracking-tight">
+                                    Design Order #{booking.id.slice(0, 8)}
+                                </h1>
+                                <Badge className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-none ${
+                                    booking.status === 'in_progress' ? 'bg-emerald-100 text-emerald-800' :
+                                    booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                                    booking.status === 'quotation' ? 'bg-amber-100 text-amber-800' :
+                                    'bg-neutral-100 text-neutral-700'
+                                }`}>
+                                    ● {booking.status?.replace('_', ' ')}
                                 </Badge>
                             </div>
-                            <p className="text-neutral-500 font-bold text-sm">
-                                {booking.service_type?.charAt(0).toUpperCase() + booking.service_type?.slice(1)} Design • Submitted {formatDistanceToNow(new Date(booking.created_at), { addSuffix: true })}
+                            <p className="text-xs font-bold text-neutral-500 flex items-center gap-2">
+                                <Building className="w-3.5 h-3.5 text-neutral-400" />
+                                {booking.service_type?.charAt(0).toUpperCase() + booking.service_type?.slice(1)} Design
+                                <span>•</span>
+                                <span>Placed {formatDistanceToNow(new Date(booking.created_at), { addSuffix: true })}</span>
                             </p>
                         </div>
+
+                        {booking.agreed_amount && (
+                            <div className="bg-neutral-900 text-white px-6 py-4 rounded-2xl border border-neutral-800 text-right">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-neutral-400">Total Agreed Price</p>
+                                <p className="text-2xl font-black text-emerald-400">৳{booking.agreed_amount.toLocaleString()}</p>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                        {/* Main Content */}
-                        <div className="lg:col-span-2 space-y-12">
+                    {/* Progress Bar Header */}
+                    <div className="mt-8 pt-8 border-t border-neutral-100 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-emerald-600">
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span className="text-[10px] font-black uppercase tracking-wider">Step 1</span>
+                            </div>
+                            <p className="text-xs font-bold text-neutral-900">Order Placed</p>
+                        </div>
+                        <div className="space-y-1">
+                            <div className={`flex items-center gap-2 ${isSurveyAccepted ? 'text-emerald-600' : 'text-neutral-400'}`}>
+                                {isSurveyAccepted ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                                <span className="text-[10px] font-black uppercase tracking-wider">Step 2</span>
+                            </div>
+                            <p className={`text-xs font-bold ${isSurveyAccepted ? 'text-neutral-900' : 'text-neutral-400'}`}>Site Survey</p>
+                        </div>
+                        <div className="space-y-1">
+                            <div className={`flex items-center gap-2 ${isQuoted ? 'text-emerald-600' : 'text-neutral-400'}`}>
+                                {isQuoted ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                                <span className="text-[10px] font-black uppercase tracking-wider">Step 3</span>
+                            </div>
+                            <p className={`text-xs font-bold ${isQuoted ? 'text-neutral-900' : 'text-neutral-400'}`}>Quotation</p>
+                        </div>
+                        <div className="space-y-1">
+                            <div className={`flex items-center gap-2 ${isAcceptedOrHired ? 'text-emerald-600' : 'text-neutral-400'}`}>
+                                {isAcceptedOrHired ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                                <span className="text-[10px] font-black uppercase tracking-wider">Step 4</span>
+                            </div>
+                            <p className={`text-xs font-bold ${isAcceptedOrHired ? 'text-neutral-900' : 'text-neutral-400'}`}>Execution</p>
+                        </div>
+                    </div>
+                </div>
 
-                            {/* Booking Received / Pending Section */}
-                            {!['quotation', 'verified', 'in_progress', 'completed'].includes(booking.status) && (
-                                <Card className="p-8 border border-neutral-100 shadow-sm bg-white rounded-[32px]">
-                                    <div className="flex items-center gap-4 mb-6">
-                                        <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
-                                            <Send className="w-6 h-6 text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-black text-neutral-900 tracking-tight">Booking Received</h3>
-                                            <p className="text-sm font-bold text-neutral-400">We're reviewing your project</p>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left 2 Columns: Lifecycle Timeline & Price Quotation */}
+                    <div className="lg:col-span-2 space-y-8">
+                        
+                        {/* 1. ORDER MILESTONE TIMELINE */}
+                        <Card className="p-6 md:p-8 rounded-[32px] border border-neutral-100 bg-white shadow-sm">
+                            <h2 className="text-sm font-black uppercase tracking-widest text-neutral-900 mb-6 flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 text-primary-600" /> Order Lifecycle & Timeline
+                            </h2>
+
+                            <div className="space-y-8 relative before:absolute before:left-3.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-neutral-100">
+                                
+                                {/* Timeline Item 1: Order Placed */}
+                                <div className="relative pl-10">
+                                    <div className="absolute left-0 top-0.5 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-black shadow-md shadow-emerald-500/20">
+                                        ✓
+                                    </div>
+                                    <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-extrabold text-sm text-neutral-900">Order Placed Successfully</p>
+                                                <p className="text-xs text-neutral-500 mt-0.5 font-medium">Initial design requirements received by Dalan Kotha team.</p>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                                                {format(new Date(booking.created_at), 'MMM d, yyyy')}
+                                            </span>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div className="space-y-6">
-                                        <p className="text-neutral-600 leading-relaxed">
-                                            Thank you for your interest in our <strong>{booking.service_type?.charAt(0).toUpperCase() + booking.service_type?.slice(1)} Design</strong> services.
-                                            Our team has received your details and is currently assessing your requirements.
-                                        </p>
+                                {/* Timeline Item 2: Site Survey */}
+                                <div className="relative pl-10">
+                                    <div className={`absolute left-0 top-0.5 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-md ${
+                                        isSurveyAccepted ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-amber-400 text-neutral-900 shadow-amber-400/20'
+                                    }`}>
+                                        {isSurveyAccepted ? '✓' : '2'}
+                                    </div>
+                                    <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-extrabold text-sm text-neutral-900">Site Survey & Partner Allocation</p>
+                                                <p className="text-xs text-neutral-500 mt-0.5 font-medium">
+                                                    {surveyRequests.length > 0 
+                                                        ? `${surveyRequests.length} partner(s) invited for on-site measurement`
+                                                        : 'Pending partner assignment by admin'}
+                                                </p>
+                                            </div>
+                                            <Badge className={`text-[9px] font-black uppercase border-none ${
+                                                isSurveyAccepted ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                            }`}>
+                                                {isSurveyAccepted ? 'Survey Accepted' : 'In Progress'}
+                                            </Badge>
+                                        </div>
 
-                                        <div className="bg-neutral-50 p-6 rounded-2xl border border-neutral-100">
-                                            <h4 className="text-xs font-bold text-neutral-900 uppercase tracking-widest mb-4">What happens next?</h4>
-                                            <div className="space-y-4">
-                                                <div className="flex gap-4">
-                                                    <div className="flex flex-col items-center">
-                                                        <div className="w-3 h-3 rounded-full bg-blue-600 ring-4 ring-blue-50"></div>
-                                                        <div className="w-0.5 h-full bg-blue-100 my-1"></div>
+                                        {/* Survey Requests List */}
+                                        {surveyRequests.length > 0 && (
+                                            <div className="space-y-2 pt-2 border-t border-neutral-200/60">
+                                                {surveyRequests.map((r: any, idx: number) => (
+                                                    <div key={idx} className="bg-white p-3 rounded-xl border border-neutral-100 flex justify-between items-center text-xs">
+                                                        <div className="space-y-0.5">
+                                                            <p className="font-bold text-neutral-800">{r.partner_name}</p>
+                                                            <p className="text-[10px] text-neutral-400 font-semibold">
+                                                                📅 Scheduled: {r.schedule?.date || '-'} @ {r.schedule?.time || '-'}
+                                                            </p>
+                                                        </div>
+                                                        <Badge className={`text-[8px] font-black uppercase border-none ${
+                                                            r.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-600'
+                                                        }`}>
+                                                            {r.status}
+                                                        </Badge>
                                                     </div>
-                                                    <div className="pb-4">
-                                                        <p className="text-sm font-bold text-neutral-900">Request Submitted</p>
-                                                        <p className="text-xs text-neutral-500 mt-1">We have received your project details (today).</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-4">
-                                                    <div className="flex flex-col items-center">
-                                                        <div className="w-3 h-3 rounded-full bg-neutral-200"></div>
-                                                        <div className="w-0.5 h-full bg-neutral-100 my-1"></div>
-                                                    </div>
-                                                    <div className="pb-4">
-                                                        <p className="text-sm font-bold text-neutral-400">Admin Review</p>
-                                                        <p className="text-xs text-neutral-400 mt-1">Our experts will analyze your requirements.</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-4">
-                                                    <div className="flex flex-col items-center">
-                                                        <div className="w-3 h-3 rounded-full bg-neutral-200"></div>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-neutral-400">Quotation</p>
-                                                        <p className="text-xs text-neutral-400 mt-1">You'll receive a custom quote shortly.</p>
-                                                    </div>
-                                                </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Timeline Item 3: Price Quotation */}
+                                <div className="relative pl-10">
+                                    <div className={`absolute left-0 top-0.5 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-md ${
+                                        isQuoted ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-neutral-200 text-neutral-500'
+                                    }`}>
+                                        {isQuoted ? '✓' : '3'}
+                                    </div>
+                                    <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 space-y-2">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-extrabold text-sm text-neutral-900">Price Quotation & Proposal</p>
+                                                <p className="text-xs text-neutral-500 mt-0.5 font-medium">
+                                                    {isQuoted ? 'Official price proposal generated' : 'Awaiting quote calculation post-survey'}
+                                                </p>
+                                            </div>
+                                            {isQuoted && (
+                                                <Badge className="bg-blue-100 text-blue-700 text-[9px] font-black uppercase border-none">
+                                                    Quoted
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Timeline Item 4: Accepted & Hired */}
+                                <div className="relative pl-10">
+                                    <div className={`absolute left-0 top-0.5 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-md ${
+                                        isAcceptedOrHired ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-neutral-200 text-neutral-500'
+                                    }`}>
+                                        {isAcceptedOrHired ? '✓' : '4'}
+                                    </div>
+                                    <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-extrabold text-sm text-neutral-900">Proposal Acceptance & Partner Hired</p>
+                                                <p className="text-xs text-neutral-500 mt-0.5 font-medium">
+                                                    {isAcceptedOrHired ? 'Agreement finalized & execution started' : 'Pending proposal review & acceptance'}
+                                                </p>
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center gap-2 text-xs text-neutral-400 font-medium bg-blue-50/50 p-3 rounded-lg text-blue-600 w-fit">
-                                            <Clock className="w-4 h-4" />
-                                            Typical response time: 24-48 hours
-                                        </div>
                                     </div>
-                                </Card>
-                            )}
+                                </div>
 
-                            {/* Negotiation & Quotation Section */}
-                            {(booking.status === 'quotation' || booking.status === 'verified') && (
-                                <div className="space-y-8">
-                                    {/* If there is no quotation history yet */}
-                                    {(!booking.quotation_history || booking.quotation_history.length === 0) && (
-                                        <Card className="p-8 border border-neutral-100 shadow-sm bg-white rounded-[32px] text-center">
-                                            <Clock className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-                                            <h3 className="text-xl font-black text-neutral-900 mb-2">Preparing Your Quotation</h3>
-                                            <p className="text-sm text-neutral-500 max-w-md mx-auto leading-relaxed font-bold">
-                                                Our team has verified your requirements and is currently drafting a design proposal. You will receive an invoice proposal here shortly.
-                                            </p>
-                                        </Card>
-                                    )}
+                            </div>
+                        </Card>
 
-                                    {/* Display Embedded Invoice if latest quote has line items, or fallback quote amount */}
-                                    {booking.quotation_history?.length > 0 && (
-                                        <div className="space-y-8">
-                                            <div className="bg-white text-neutral-900 p-8 rounded-3xl shadow-lg border border-neutral-100">
-                                                {/* Invoice Header */}
-                                                <div className="flex justify-between items-start mb-8 pb-8 border-b border-neutral-200">
-                                                    <div>
-                                                        <div className="relative w-44 h-11 mb-3">
-                                                            <img
-                                                                src="/logo-dalankotha-dark.png"
-                                                                alt="Dalan Kotha Logo"
-                                                                className="object-contain object-left w-full h-full"
-                                                            />
+                        {/* 2. DETAILED PRICE QUOTATION & INVOICE */}
+                        {(isQuoted || partnerQuotes.length > 0 || booking.quotation_history?.length > 0) && (
+                            <Card className="p-6 md:p-8 rounded-[32px] border border-neutral-100 bg-white shadow-sm space-y-6">
+                                <div className="flex justify-between items-center pb-6 border-b border-neutral-100">
+                                    <div>
+                                        <h2 className="text-sm font-black uppercase tracking-widest text-neutral-900 flex items-center gap-2">
+                                            <FileText className="w-4 h-4 text-primary-600" /> Official Price Quotation & Invoice
+                                        </h2>
+                                        <p className="text-xs text-neutral-400 font-bold mt-1">Line-item breakdown of your project scope</p>
+                                    </div>
+                                </div>
+
+                                {/* Partner Quotes Cards if multiple submitted */}
+                                {partnerQuotes.length > 0 && (
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Submitted Partner Proposals</p>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {partnerQuotes.map((req: any, idx: number) => {
+                                                const q = req.quote;
+                                                return (
+                                                    <div key={idx} className="bg-neutral-900 text-white p-6 rounded-2xl space-y-4 shadow-lg">
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <p className="font-black text-sm text-white">{req.partner_name}</p>
+                                                                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mt-0.5">
+                                                                    Survey Conducted: {req.schedule?.date} @ {req.schedule?.time}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <span className="text-[9px] font-black text-neutral-400 uppercase block">Total Bid</span>
+                                                                <span className="text-2xl font-black text-emerald-400">৳{q.amount?.toLocaleString()}</span>
+                                                            </div>
                                                         </div>
-                                                        <p className="text-xs text-neutral-500 font-bold uppercase tracking-wide">Premium Design & Engineering Solutions</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <h2 className="text-xl font-black uppercase tracking-wider text-neutral-800">DESIGN PROPOSAL</h2>
-                                                        <p className="text-xs text-neutral-400 font-bold uppercase mt-1">Ref: #DK-DSN-{booking.id.slice(0, 8)}</p>
-                                                        <p className="text-xs text-neutral-400 font-bold uppercase">Date: {lastOffer?.date ? new Date(lastOffer.date).toLocaleDateString() : new Date().toLocaleDateString()}</p>
-                                                    </div>
-                                                </div>
 
-                                                {/* Details */}
-                                                <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b border-neutral-200">
-                                                    <div>
-                                                        <h3 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2">QUOTED TO:</h3>
-                                                        <p className="font-extrabold text-sm text-neutral-800">{booking.profiles?.full_name || "Valued Client"}</p>
-                                                        {booking.profiles?.email && <p className="text-xs text-neutral-500 font-medium mt-0.5">{booking.profiles.email}</p>}
-                                                        {booking.profiles?.phone_number && <p className="text-xs text-neutral-500 font-medium mt-0.5">{booking.profiles.phone_number}</p>}
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2">PREPARED BY:</h3>
-                                                        <p className="font-extrabold text-sm text-neutral-800">Dalan Kotha Limited</p>
-                                                        <p className="text-xs text-neutral-500 font-medium mt-0.5">Dhaka, Bangladesh</p>
-                                                    </div>
-                                                </div>
+                                                        {/* Line Items Table */}
+                                                        {q.line_items?.length > 0 && (
+                                                            <div className="bg-neutral-950 rounded-xl overflow-hidden border border-neutral-800">
+                                                                <table className="w-full text-xs text-left">
+                                                                    <thead>
+                                                                        <tr className="border-b border-neutral-800 text-[9px] font-black text-neutral-500 uppercase">
+                                                                            <th className="p-3">Description</th>
+                                                                            <th className="p-3 text-center">Unit</th>
+                                                                            <th className="p-3 text-right">Qty</th>
+                                                                            <th className="p-3 text-right">Rate</th>
+                                                                            <th className="p-3 text-right">Total</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {q.line_items.map((item: any, i: number) => (
+                                                                            <tr key={i} className="border-b border-neutral-800/60 last:border-0 font-medium text-neutral-300">
+                                                                                <td className="p-3 font-semibold text-white">{item.description}</td>
+                                                                                <td className="p-3 text-center text-neutral-400">{item.unit || 'sft'}</td>
+                                                                                <td className="p-3 text-right text-neutral-400">{item.quantity}</td>
+                                                                                <td className="p-3 text-right text-neutral-400">৳{Number(item.unitPrice || 0).toLocaleString()}</td>
+                                                                                <td className="p-3 text-right font-black text-white">৳{(Number(item.quantity||0)*Number(item.unitPrice||0)).toLocaleString()}</td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        )}
 
-                                                {/* Line Items / Comparison Grid */}
-                                                {lastOffer?.type === 'comparison' ? (
-                                                    <div className="overflow-x-auto mb-8">
-                                                        <table className="w-full text-left border-collapse min-w-[600px] border border-neutral-200">
-                                                            <thead>
-                                                                <tr className="border-b border-neutral-300 bg-neutral-50 text-[10px] font-black text-neutral-500 uppercase tracking-wider">
-                                                                    <th className="py-3 px-4 border-r border-neutral-200">SL</th>
-                                                                    <th className="py-3 px-4 border-r border-neutral-200">Description</th>
-                                                                    <th className="py-3 px-4 border-r border-neutral-200">Unit</th>
-                                                                    <th className="py-3 px-4 text-right border-r border-neutral-200">Qty</th>
-                                                                    <th className="py-3 px-4 text-right border-r border-neutral-200">Rate (tk)</th>
-                                                                    {lastOffer.partners?.map((p: any) => (
-                                                                        <th key={p.partner_id} className="py-3 px-4 text-right font-black text-neutral-800 bg-blue-50/50 uppercase border-r last:border-r-0 border-neutral-200">{p.partner_name}</th>
-                                                                    ))}
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {lastOffer.line_items?.map((item: any, idx: number) => (
-                                                                    <tr key={idx} className="border-b border-neutral-200 text-xs font-semibold text-neutral-800 hover:bg-neutral-50/30">
-                                                                        <td className="py-4 px-4 border-r border-neutral-200">{idx + 1}</td>
-                                                                        <td className="py-4 px-4 font-bold border-r border-neutral-200 max-w-sm text-neutral-900">{item.description}</td>
-                                                                        <td className="py-4 px-4 text-neutral-500 uppercase border-r border-neutral-200">{item.unit || "-"}</td>
-                                                                        <td className="py-4 px-4 text-right border-r border-neutral-200 font-medium">{item.quantity}</td>
-                                                                        <td className="py-4 px-4 text-right border-r border-neutral-200 font-medium">৳{Number(item.unitPrice || 0).toLocaleString()}</td>
-                                                                        {lastOffer.partners?.map((p: any) => {
-                                                                            const rate = item.partner_rates?.[p.partner_id] || 0;
-                                                                            return (
-                                                                                <td key={p.partner_id} className="py-4 px-4 text-right font-bold text-neutral-900 bg-blue-50/20 border-r last:border-r-0 border-neutral-200">
-                                                                                    {rate > 0 ? `৳${rate.toLocaleString()}` : "৳0"}
-                                                                                </td>
-                                                                            );
-                                                                        })}
-                                                                    </tr>
-                                                                ))}
-                                                                <tr className="bg-neutral-900 text-white font-black text-xs">
-                                                                    <td colSpan={5} className="py-4 px-4 text-right border-r border-neutral-800">Grand Total (Subtotal)</td>
-                                                                    {lastOffer.partners?.map((p: any) => {
-                                                                        const subtotal = lastOffer.line_items?.reduce((sum: number, item: any) => sum + (item.partner_rates?.[p.partner_id] || 0), 0) || 0;
-                                                                        return (
-                                                                            <td key={p.partner_id} className="py-4 px-4 text-right text-emerald-400 bg-neutral-950 font-black">
-                                                                                ৳{subtotal.toLocaleString()}
-                                                                            </td>
-                                                                        );
-                                                                    })}
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                ) : (
-                                                    <div className="overflow-x-auto">
-                                                        <table className="w-full text-left border-collapse mb-8 min-w-[500px]">
-                                                            <thead>
-                                                                <tr className="border-b border-neutral-300 bg-neutral-50 text-[10px] font-black text-neutral-500 uppercase tracking-wider">
-                                                                    <th className="py-3 px-4">#</th>
-                                                                    <th className="py-3 px-4">Item Description</th>
-                                                                    <th className="py-3 px-4">Unit</th>
-                                                                    <th className="py-3 px-4 text-right">Qty</th>
-                                                                    <th className="py-3 px-4 text-right">Unit Price</th>
-                                                                    <th className="py-3 px-4 text-right">Total Price</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {(lastOffer?.line_items || [
-                                                                    {
-                                                                        description: lastOffer?.notes || "Design & Consultancy Services Quote",
-                                                                        unit: "Project",
-                                                                        quantity: 1,
-                                                                        unitPrice: lastOffer?.amount,
-                                                                        total: lastOffer?.amount
-                                                                    }
-                                                                ]).map((item: any, idx: number) => (
-                                                                    <tr key={idx} className="border-b border-neutral-100 text-xs font-semibold text-neutral-800">
-                                                                        <td className="py-4 px-4 text-neutral-400">{idx + 1}</td>
-                                                                        <td className="py-4 px-4 font-bold text-neutral-900">{item.description}</td>
-                                                                        <td className="py-4 px-4 text-neutral-500 uppercase tracking-wide">{item.unit || "-"}</td>
-                                                                        <td className="py-4 px-4 text-right font-medium">{item.quantity}</td>
-                                                                        <td className="py-4 px-4 text-right font-medium">৳{Number(item.unitPrice).toLocaleString()}</td>
-                                                                        <td className="py-4 px-4 text-right font-bold text-neutral-900">৳{Number(item.total).toLocaleString()}</td>
-                                                                    </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                )}
+                                                        {/* Notes */}
+                                                        {q.notes && (
+                                                            <div className="bg-neutral-800/40 p-3 rounded-xl text-xs text-neutral-300">
+                                                                <span className="text-[9px] font-black text-neutral-500 uppercase block mb-1">Scope / Remarks</span>
+                                                                {q.notes}
+                                                            </div>
+                                                        )}
 
-                                                <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-                                                    <div className="max-w-md">
-                                                        {lastOffer?.notes && (
-                                                            <>
-                                                                <h4 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1.5">Notes:</h4>
-                                                                <p className="text-xs text-neutral-500 leading-relaxed font-semibold">{lastOffer.notes}</p>
-                                                            </>
+                                                        {/* PDF Download Attachment */}
+                                                        {q.file_url && (
+                                                            <a
+                                                                href={q.file_url.startsWith('http') ? q.file_url : '#'}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                download
+                                                                className="flex items-center gap-2 bg-blue-600/20 border border-blue-600/30 rounded-xl px-4 py-3 text-blue-300 font-bold text-xs hover:bg-blue-600/30 transition-colors w-fit"
+                                                            >
+                                                                <Download className="w-4 h-4" />
+                                                                Download Detailed BOQ Document ({q.file_url.split('/').pop() || 'BOQ.pdf'})
+                                                            </a>
+                                                        )}
+
+                                                        {/* Hire Action if quotation pending */}
+                                                        {booking.status === 'quotation' && (
+                                                            <Button
+                                                                onClick={() => hirePartner(req.partner_id, req.role, q.amount)}
+                                                                className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-xs tracking-widest rounded-xl shadow-lg"
+                                                            >
+                                                                <Check className="w-4 h-4 mr-2" /> Accept & Hire {req.partner_name}
+                                                            </Button>
                                                         )}
                                                     </div>
-                                    <div className="text-right min-w-[200px] bg-neutral-50 p-4 rounded-xl border border-neutral-100 self-stretch md:self-auto flex flex-col justify-center">
-                                                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">TOTAL PROPOSAL AMOUNT</span>
-                                                        <span className="text-2xl font-black text-neutral-900">৳{lastOffer?.amount.toLocaleString()}</span>
-                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Admin General Invoice Proposal if no partner quote rendered */}
+                                {partnerQuotes.length === 0 && lastOffer && (
+                                    <div className="space-y-6">
+                                        <div className="bg-neutral-900 text-white p-6 rounded-2xl space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="font-black text-sm text-white">Dalan Kotha Official Proposal</p>
+                                                    <p className="text-[9px] text-neutral-400 font-bold uppercase mt-0.5">
+                                                        Submitted: {format(new Date(lastOffer.date || booking.created_at), 'MMM d, yyyy')}
+                                                    </p>
                                                 </div>
-
-                                                {/* Action Panel for Customer */}
-                                                {lastOffer?.role === 'admin' ? (
-                                                    lastOffer.type === 'comparison' ? (
-                                                        <div className="bg-white p-6 rounded-3xl border border-neutral-200 space-y-6">
-                                                            <h3 className="text-sm font-black text-neutral-900 uppercase tracking-widest block text-center">Compare and Choose Partner</h3>
-                                                            <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider text-center">Select your preferred partner to proceed with execution</p>
-                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                                {lastOffer.partners?.map((p: any) => {
-                                                                    const subtotal = lastOffer.line_items?.reduce((sum: number, item: any) => sum + (item.partner_rates?.[p.partner_id] || 0), 0) || 0;
-                                                                    return (
-                                                                        <div key={p.partner_id} className="bg-neutral-50 p-6 rounded-2xl border border-neutral-200 hover:border-blue-500 transition-all flex flex-col justify-between space-y-4">
-                                                                            <div>
-                                                                                <p className="font-extrabold text-sm text-neutral-900">{p.partner_name}</p>
-                                                                                <p className="text-[10px] text-neutral-400 font-bold uppercase mt-1">Role: {p.role}</p>
-                                                                            </div>
-                                                                            <div className="pt-2 border-t border-neutral-200">
-                                                                                <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest block">Total Bid</span>
-                                                                                <span className="text-2xl font-black text-neutral-900">৳{subtotal.toLocaleString()}</span>
-                                                                            </div>
-                                                                            <Button
-                                                                                onClick={() => hirePartner(p.partner_id, p.role, subtotal)}
-                                                                                className="w-full h-11 bg-neutral-900 hover:bg-neutral-850 text-white text-xs font-black uppercase tracking-widest rounded-xl mt-3 flex items-center justify-center gap-1.5 shadow-sm"
-                                                                            >
-                                                                                <Check className="w-3.5 h-3.5 text-emerald-400" /> Hire {p.partner_name}
-                                                                            </Button>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="bg-white p-6 rounded-3xl border border-neutral-200 space-y-6">
-                                                            <div className="flex flex-col sm:flex-row gap-4">
-                                                                <Button
-                                                                    onClick={acceptOffer}
-                                                                    className="flex-1 h-14 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-lg shadow-green-900/10 flex items-center justify-center gap-2"
-                                                                >
-                                                                    <Check className="w-4 h-4" /> Accept Proposal & Start Project
-                                                                </Button>
-                                                            </div>
-
-                                                            <Separator />
-
-                                                            <div className="space-y-4">
-                                                                <Label className="text-xs font-black text-neutral-400 uppercase tracking-widest block">Or send a counter offer</Label>
-                                                                <div className="flex gap-4">
-                                                                    <div className="flex-1">
-                                                                        <Input
-                                                                            type="number"
-                                                                            placeholder="Counter Offer Amount"
-                                                                            className="font-black text-lg h-12 rounded-xl bg-neutral-50"
-                                                                            value={offerAmount}
-                                                                            onChange={(e) => setOfferAmount(e.target.value)}
-                                                                        />
-                                                                    </div>
-                                                                    <Button
-                                                                        onClick={sendCounterOffer}
-                                                                        className="h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-black uppercase tracking-widest text-xs px-8 rounded-xl shrink-0"
-                                                                    >
-                                                                        Send Counter
-                                                                    </Button>
-                                                                </div>
-                                                                <Textarea
-                                                                    placeholder="Add your comments or request modifications..."
-                                                                    className="rounded-xl bg-neutral-50 resize-none min-h-[80px]"
-                                                                    value={offerNote}
-                                                                    onChange={(e) => setOfferNote(e.target.value)}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                ) : (
-                                                    <Card className="p-6 border border-dashed border-neutral-200 bg-neutral-50/50 rounded-2xl text-center text-sm font-bold text-neutral-400">
-                                                        Waiting for admin response... (You counter-offered ৳{lastOffer?.amount.toLocaleString()})
-                                                    </Card>
-                                                )}
+                                                <div className="text-right">
+                                                    <span className="text-[9px] font-black text-neutral-400 uppercase block">Total Proposal</span>
+                                                    <span className="text-2xl font-black text-emerald-400">৳{lastOffer.amount?.toLocaleString()}</span>
+                                                </div>
                                             </div>
+
+                                            {/* Line items if detailed proposal */}
+                                            {lastOffer.line_items?.length > 0 && (
+                                                <div className="bg-neutral-950 rounded-xl overflow-hidden border border-neutral-800">
+                                                    <table className="w-full text-xs text-left">
+                                                        <thead>
+                                                            <tr className="border-b border-neutral-800 text-[9px] font-black text-neutral-500 uppercase">
+                                                                <th className="p-3">Description</th>
+                                                                <th className="p-3 text-center">Unit</th>
+                                                                <th className="p-3 text-right">Qty</th>
+                                                                <th className="p-3 text-right">Rate</th>
+                                                                <th className="p-3 text-right">Total</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {lastOffer.line_items.map((item: any, i: number) => (
+                                                                <tr key={i} className="border-b border-neutral-800/60 last:border-0 font-medium text-neutral-300">
+                                                                    <td className="p-3 font-semibold text-white">{item.description}</td>
+                                                                    <td className="p-3 text-center text-neutral-400">{item.unit || 'sft'}</td>
+                                                                    <td className="p-3 text-right text-neutral-400">{item.quantity}</td>
+                                                                    <td className="p-3 text-right text-neutral-400">৳{Number(item.unitPrice || 0).toLocaleString()}</td>
+                                                                    <td className="p-3 text-right font-black text-white">৳{(Number(item.quantity||0)*Number(item.unitPrice||0)).toLocaleString()}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            )}
+
+                                            {lastOffer.notes && (
+                                                <div className="bg-neutral-800/40 p-3 rounded-xl text-xs text-neutral-300">
+                                                    {lastOffer.notes}
+                                                </div>
+                                            )}
+
+                                            {lastOffer.file_url && (
+                                                <a
+                                                    href={lastOffer.file_url.startsWith('http') ? lastOffer.file_url : '#'}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    download
+                                                    className="flex items-center gap-2 bg-blue-600/20 border border-blue-600/30 rounded-xl px-4 py-3 text-blue-300 font-bold text-xs hover:bg-blue-600/30 transition-colors w-fit"
+                                                >
+                                                    <Download className="w-4 h-4" /> Download Attached Proposal Document
+                                                </a>
+                                            )}
+                                        </div>
+
+                                        {/* Action buttons for Customer */}
+                                        {booking.status === 'quotation' && lastOffer.role === 'admin' && (
+                                            <div className="space-y-4 pt-2">
+                                                <Button
+                                                    onClick={acceptOffer}
+                                                    className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2"
+                                                >
+                                                    <Check className="w-4 h-4" /> Accept Proposal & Begin Project Execution
+                                                </Button>
+
+                                                <div className="space-y-3 p-4 bg-neutral-50 rounded-2xl border border-neutral-200">
+                                                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Send Counter Offer</Label>
+                                                    <div className="flex gap-3">
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Counter Offer Amount"
+                                                            className="font-black text-sm h-11 bg-white"
+                                                            value={offerAmount}
+                                                            onChange={(e) => setOfferAmount(e.target.value)}
+                                                        />
+                                                        <Button onClick={sendCounterOffer} className="h-11 bg-neutral-900 text-white font-black uppercase text-xs px-6 rounded-xl">
+                                                            Send Counter
+                                                        </Button>
+                                                    </div>
+                                                    <Textarea
+                                                        placeholder="Add comments or request scope adjustments..."
+                                                        className="rounded-xl bg-white text-xs"
+                                                        value={offerNote}
+                                                        onChange={(e) => setOfferNote(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </Card>
+                        )}
+
+                        {/* 3. CURRENT WORK STATUS & MILESTONE TRACKER */}
+                        {booking.status === 'in_progress' && (
+                            <Card className="p-6 md:p-8 rounded-[32px] border border-neutral-100 bg-white shadow-sm space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-sm font-black uppercase tracking-widest text-neutral-900 flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-emerald-600" /> Work Status & Project Milestones
+                                    </h2>
+                                    <Badge className="bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase border-none">
+                                        In Progress
+                                    </Badge>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {milestones.length === 0 ? (
+                                        <div className="p-6 bg-neutral-50 rounded-2xl border border-neutral-100 text-center space-y-1">
+                                            <p className="text-xs font-bold text-neutral-700">Project Started</p>
+                                            <p className="text-[10px] text-neutral-400 font-medium">Your assigned designer/partner is preparing your project milestones.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {milestones.map((m: any, idx: number) => (
+                                                <div key={idx} className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
+                                                            m.status === 'completed' ? 'bg-emerald-500 text-white' : 'bg-neutral-200 text-neutral-500'
+                                                        }`}>
+                                                            {m.status === 'completed' ? '✓' : idx + 1}
+                                                        </div>
+                                                        <div>
+                                                            <p className={`text-xs font-extrabold ${m.status === 'completed' ? 'line-through text-neutral-400' : 'text-neutral-900'}`}>
+                                                                {m.name}
+                                                            </p>
+                                                            {m.due_date && (
+                                                                <p className="text-[9px] text-neutral-400 font-bold uppercase">
+                                                                    Due: {m.due_date}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <Badge className={`text-[8px] font-black uppercase border-none ${
+                                                        m.status === 'completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                                    }`}>
+                                                        {m.status || 'Pending'}
+                                                    </Badge>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
-                            )}
-                        </div>
+                            </Card>
+                        )}
 
-                        {/* Right Column: Project Info */}
-                        <div className="space-y-8">
-                            <Card className="p-8 border-none bg-neutral-50 rounded-[32px]">
-                                <h3 className="text-sm font-black text-neutral-900 uppercase tracking-widest mb-6">Project Details</h3>
-                                <div className="space-y-4">
-                                    {Object.entries(details).map(([key, value]) => {
-                                        const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                                        let displayValue: any = value;
-                                        if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
-                                        if (Array.isArray(value)) displayValue = value.join(', ');
-                                        if (value && typeof value === 'object') {
-                                            const obj = value as any;
-                                            if (key === 'buildingDetails') {
-                                                displayValue = `Floors: ${obj.floors || '-'}, Land Area: ${obj.landArea || '-'} ${obj.landAreaUnit || ''}`;
-                                            } else {
-                                                displayValue = JSON.stringify(value);
-                                            }
-                                        }
-                                        if (!value) displayValue = '-';
+                    </div>
 
-                                        return (
-                                            <div key={key} className="flex flex-col py-3 border-b border-neutral-200 last:border-0 gap-1">
-                                                <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">{formattedKey}</span>
-                                                <span className="font-bold text-neutral-800 text-sm break-words">{String(displayValue)}</span>
-                                            </div>
-                                        );
-                                    })}
+                    {/* Right Column: Project Info & Requirements */}
+                    <div className="space-y-8">
+                        {/* Hired Partner Card if in progress */}
+                        {booking.agreed_amount && (
+                            <Card className="p-6 rounded-[28px] bg-neutral-900 text-white space-y-4 border border-neutral-800">
+                                <div className="flex items-center gap-2 text-emerald-400">
+                                    <ShieldCheck className="w-4 h-4" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Active Execution</span>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Agreed Contract Price</p>
+                                    <p className="text-3xl font-black text-white mt-1">৳{booking.agreed_amount.toLocaleString()}</p>
+                                </div>
+                                <div className="pt-3 border-t border-neutral-800 text-[10px] text-neutral-400 font-medium">
+                                    Your project is actively being processed by Dalan Kotha engineering partners.
                                 </div>
                             </Card>
+                        )}
 
-                            {booking.agreed_amount && (
-                                <Card className="p-8 border-none bg-neutral-900 text-white rounded-[32px]">
-                                    <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">Agreed Price</p>
-                                    <p className="text-4xl font-black">৳{booking.agreed_amount.toLocaleString()}</p>
-                                </Card>
-                            )}
-                        </div>
+                        {/* Filtered Clean Project Requirements */}
+                        <Card className="p-6 rounded-[28px] border border-neutral-100 bg-white shadow-sm space-y-6">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-neutral-900 flex items-center gap-2">
+                                <Building className="w-4 h-4 text-primary-600" /> Project Requirements
+                            </h3>
+
+                            <div className="space-y-4">
+                                {cleanDetails.map(([key, value]) => {
+                                    const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                                    let displayValue: any = value;
+
+                                    if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
+                                    else if (Array.isArray(value)) displayValue = value.join(', ');
+                                    else if (value && typeof value === 'object') {
+                                        const obj = value as any;
+                                        if (key === 'buildingDetails') {
+                                            displayValue = `Floors: ${obj.floors || '-'}, Area: ${obj.landArea || '-'} ${obj.landAreaUnit || ''}`;
+                                        } else {
+                                            displayValue = null; // Skip non-form objects
+                                        }
+                                    }
+
+                                    if (!displayValue || displayValue === 'null') return null;
+
+                                    return (
+                                        <div key={key} className="flex flex-col py-2.5 border-b border-neutral-100 last:border-0">
+                                            <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">{formattedKey}</span>
+                                            <span className="font-bold text-neutral-900 text-xs mt-0.5 break-words">{String(displayValue)}</span>
+                                        </div>
+                                    );
+                                })}
+
+                                {cleanDetails.length === 0 && (
+                                    <p className="text-xs text-neutral-400 font-medium italic">Standard interior design request.</p>
+                                )}
+                            </div>
+                        </Card>
+
+                        {/* Customer Support Card */}
+                        <Card className="p-6 rounded-[28px] bg-primary-50/40 border border-primary-100 space-y-3">
+                            <h4 className="text-xs font-black text-primary-900 uppercase tracking-wider">Need Assistance?</h4>
+                            <p className="text-xs text-neutral-600 leading-relaxed font-medium">
+                                Have questions about your quote or site survey schedule? Reach out directly to our engineering support desk.
+                            </p>
+                            <Link href="/dashboard/customer/messages">
+                                <Button className="w-full mt-2 h-10 bg-primary-600 hover:bg-primary-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl">
+                                    Message Support
+                                </Button>
+                            </Link>
+                        </Card>
                     </div>
                 </div>
             </div>
