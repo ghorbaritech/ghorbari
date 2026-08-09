@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Sidebar } from "@/components/admin/Sidebar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, UserPlus, XCircle, DollarSign, Send, Clock, Calendar, Upload, FileText, Download } from "lucide-react";
+import { ArrowLeft, Check, UserPlus, XCircle, DollarSign, Send, Clock, Calendar, Upload, FileText, Download, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { formatDistanceToNow, format } from "date-fns";
 import { Label } from "@/components/ui/label";
@@ -501,7 +501,10 @@ export default function DesignOrderDetailPage() {
             .eq('id', id);
 
         if (!error) {
-            alert("Milestones updated!");
+            setBooking((prev: any) => prev ? { ...prev, milestones: milestones } : null);
+            alert("Milestones saved successfully! Customer milestone roadmap updated.");
+        } else {
+            alert("Failed to save milestones: " + error.message);
         }
     }
 
@@ -520,6 +523,39 @@ export default function DesignOrderDetailPage() {
     async function updateMilestoneDate(index: number, date: string) {
         const newMilestones = [...milestones];
         newMilestones[index].due_date = date;
+        setMilestones(newMilestones);
+    }
+
+    const [newMilestoneTitle, setNewMilestoneTitle] = useState("");
+
+    function handleAddMilestone() {
+        if (!newMilestoneTitle.trim()) return;
+        const newMilestones = [
+            ...milestones,
+            { name: newMilestoneTitle.trim(), status: 'pending', due_date: '' }
+        ];
+        setMilestones(newMilestones);
+        setNewMilestoneTitle("");
+    }
+
+    function handleUpdateMilestoneName(index: number, name: string) {
+        const newMilestones = [...milestones];
+        newMilestones[index].name = name;
+        setMilestones(newMilestones);
+    }
+
+    function handleDeleteMilestone(index: number) {
+        const newMilestones = milestones.filter((_, i) => i !== index);
+        setMilestones(newMilestones);
+    }
+
+    function handleMoveMilestone(index: number, direction: 'up' | 'down') {
+        if ((direction === 'up' && index === 0) || (direction === 'down' && index === milestones.length - 1)) return;
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        const newMilestones = [...milestones];
+        const temp = newMilestones[index];
+        newMilestones[index] = newMilestones[targetIndex];
+        newMilestones[targetIndex] = temp;
         setMilestones(newMilestones);
     }
 
@@ -1106,59 +1142,118 @@ export default function DesignOrderDetailPage() {
                         </div>
 
                         {/* Milestone Manager */}
-                        {booking.status === 'in_progress' && (
-                            <div className="bg-white rounded-3xl p-6 border border-neutral-200 shadow-xl shadow-neutral-100">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-sm font-black text-neutral-900 uppercase tracking-widest flex items-center gap-2">
-                                        <Clock className="w-4 h-4 text-primary-600" />
-                                        Milestones
-                                    </h3>
-                                    <Button size="sm" variant="outline" onClick={saveMilestones} className="h-8 text-xs font-bold rounded-lg border-neutral-200">
-                                        Save Changes
+                        <div className="bg-white rounded-3xl p-6 border border-neutral-200 shadow-xl shadow-neutral-100 space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-sm font-black text-neutral-900 uppercase tracking-widest flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-primary-600" />
+                                    Project Milestones
+                                </h3>
+                                <Button size="sm" onClick={saveMilestones} className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider rounded-lg px-4 shadow-sm">
+                                    Save Changes
+                                </Button>
+                            </div>
+
+                            {/* Add New Milestone Form */}
+                            <div className="bg-neutral-50 p-3.5 rounded-2xl border border-neutral-200/80 space-y-2">
+                                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Add New Milestone</Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="text"
+                                        placeholder="e.g. 3D Architectural Render"
+                                        className="h-9 text-xs font-bold bg-white border-neutral-200 rounded-xl"
+                                        value={newMilestoneTitle}
+                                        onChange={(e) => setNewMilestoneTitle(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleAddMilestone();
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        type="button"
+                                        onClick={handleAddMilestone}
+                                        className="h-9 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-black uppercase tracking-wider rounded-xl shrink-0"
+                                    >
+                                        <Plus className="w-3.5 h-3.5 mr-1" /> Add
                                     </Button>
                                 </div>
+                            </div>
 
-                                <div className="space-y-4 relative before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-neutral-100">
-                                    {milestones.map((milestone, idx) => (
-                                        <div key={idx} className="relative pl-8 group">
-                                            <div className={`absolute left-0 top-1.5 w-5 h-5 rounded-full border-4 transition-colors ${milestone.status === 'completed' ? 'border-primary-600 bg-primary-600' : 'border-neutral-200 bg-white'}`}></div>
+                            {/* Milestones Timeline List */}
+                            <div className="space-y-3 relative before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-neutral-100">
+                                {milestones.map((milestone, idx) => (
+                                    <div key={idx} className="relative pl-8 group">
+                                        <div className={`absolute left-0 top-3 w-5 h-5 rounded-full border-4 transition-colors ${milestone.status === 'completed' ? 'border-primary-600 bg-primary-600' : 'border-neutral-200 bg-white'}`}></div>
 
-                                            <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-100 group-hover:border-primary-100 transition-colors">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className={`text-sm font-bold ${milestone.status === 'completed' ? 'text-primary-700 line-through opacity-70' : 'text-neutral-900'}`}>
-                                                        {milestone.name}
-                                                    </span>
-                                                    <Checkbox
-                                                        checked={milestone.status === 'completed'}
-                                                        onCheckedChange={() => toggleMilestone(idx)}
-                                                        className="rounded-full data-[state=checked]:bg-primary-600 data-[state=checked]:border-primary-600"
-                                                    />
+                                        <div className="bg-neutral-50 p-3.5 rounded-2xl border border-neutral-100 group-hover:border-neutral-300 transition-all space-y-2.5">
+                                            {/* Top Row: Re-order, Title Input, Checkbox & Delete */}
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex flex-col gap-0.5 opacity-40 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        type="button"
+                                                        disabled={idx === 0}
+                                                        onClick={() => handleMoveMilestone(idx, 'up')}
+                                                        className="text-neutral-400 hover:text-neutral-900 disabled:opacity-20 p-0.5"
+                                                        title="Move Up"
+                                                    >
+                                                        <ArrowUp className="w-3 h-3" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        disabled={idx === milestones.length - 1}
+                                                        onClick={() => handleMoveMilestone(idx, 'down')}
+                                                        className="text-neutral-400 hover:text-neutral-900 disabled:opacity-20 p-0.5"
+                                                        title="Move Down"
+                                                    >
+                                                        <ArrowDown className="w-3 h-3" />
+                                                    </button>
                                                 </div>
 
-                                                <div className="flex items-center gap-2">
-                                                    <Calendar className="w-3 h-3 text-neutral-400" />
-                                                    <input
-                                                        type="date"
-                                                        className="bg-transparent text-[10px] font-bold text-neutral-500 uppercase tracking-widest focus:outline-none"
-                                                        value={milestone.due_date || ''}
-                                                        onChange={(e) => updateMilestoneDate(idx, e.target.value)}
-                                                    />
-                                                </div>
+                                                <Input
+                                                    type="text"
+                                                    value={milestone.name}
+                                                    onChange={(e) => handleUpdateMilestoneName(idx, e.target.value)}
+                                                    className={`h-8 text-xs font-extrabold bg-transparent border-neutral-200 focus:bg-white px-2 rounded-lg ${milestone.status === 'completed' ? 'line-through text-neutral-400' : 'text-neutral-900'}`}
+                                                />
+
+                                                <Checkbox
+                                                    checked={milestone.status === 'completed'}
+                                                    onCheckedChange={() => toggleMilestone(idx)}
+                                                    className="rounded-full data-[state=checked]:bg-primary-600 data-[state=checked]:border-primary-600 shrink-0"
+                                                    title={milestone.status === 'completed' ? 'Mark Pending' : 'Mark Completed'}
+                                                />
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteMilestone(idx)}
+                                                    className="text-neutral-300 hover:text-red-600 p-1 transition-colors shrink-0"
+                                                    title="Delete Milestone"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+
+                                            {/* Bottom Row: Due Date Input */}
+                                            <div className="flex items-center gap-2 pt-1 border-t border-neutral-200/50">
+                                                <Calendar className="w-3 h-3 text-neutral-400" />
+                                                <span className="text-[9px] font-black text-neutral-400 uppercase">Target Date:</span>
+                                                <input
+                                                    type="date"
+                                                    className="bg-white border border-neutral-200 rounded-md px-2 py-0.5 text-[10px] font-bold text-neutral-700 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                    value={milestone.due_date || ''}
+                                                    onChange={(e) => updateMilestoneDate(idx, e.target.value)}
+                                                />
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                                    </div>
+                                ))}
 
-                        {booking.status === 'quotation' && (
-                            <div className="bg-amber-50 rounded-3xl p-6 border border-amber-100">
-                                <h4 className="text-amber-800 font-black text-sm uppercase tracking-widest mb-2">Quotation Sent</h4>
-                                <p className="text-amber-600 text-xs font-medium">
-                                    The roadmap will be editable once the customer accepts the offer and the project status moves to "In Progress".
-                                </p>
+                                {milestones.length === 0 && (
+                                    <p className="text-xs text-neutral-400 italic text-center py-4">No milestones defined yet. Use the form above to add custom milestones.</p>
+                                )}
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             </div>

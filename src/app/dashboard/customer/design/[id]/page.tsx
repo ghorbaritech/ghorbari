@@ -463,7 +463,7 @@ export default function CustomerDesignOrderDetailPage() {
                         </Card>
 
                         {/* 3. CURRENT WORK STATUS & MILESTONE TRACKER */}
-                        {booking.status === 'in_progress' && (
+                        {(milestones.length > 0 || booking.status === 'in_progress') && (
                             <Card className="p-6 md:p-8 rounded-[32px] border border-neutral-100 bg-white shadow-sm space-y-6">
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-sm font-black uppercase tracking-widest text-neutral-900 flex items-center gap-2">
