@@ -18,57 +18,90 @@ export default function DesignerProjectsPage() {
         async function fetchProjects() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
-            const { data: designer } = await supabase.from('designers').select('id').eq('user_id', user.id).single();
 
-            if (designer) {
-                // Fetch service requests
-                const { data: sRequests } = await supabase
-                    .from('service_requests')
-                    .select('*, customer:profiles(full_name)')
-                    .eq('assigned_designer_id', designer.id)
-                    .order('created_at', { ascending: false });
+            // Fetch service requests (for construction assignments)
+            // Also fetch by user_id in case there's no designer profile yet
+            let designerId: string | null = null;
+            const { data: designer } = await supabase.from('designers').select('id').eq('user_id', user.id).maybeSingle();
+            if (designer) designerId = designer.id;
 
-                // Fetch design bookings
-                const { data: dBookings } = await supabase
-                    .from('design_bookings')
-                    .select('*, customer:profiles(full_name)')
-                    .order('created_at', { ascending: false });
-
-                const myDesignBookings = (dBookings || []).filter((b: any) => {
-                    const isAssigned = b.assigned_designer_id === designer.id || b.assigned_seller_id === designer.id;
-                    const hasSurveyInvite = b.details?.survey_requests?.some((r: any) => r.partner_id === designer.id);
-                    return isAssigned || hasSurveyInvite;
-                });
-
-                // Merge lists
-                const mergedProjects = [
-                    ...(sRequests || []).map(p => ({
-                        ...p,
-                        isDesignBooking: false,
-                        displayName: p.request_number || `SR-${p.id.slice(0, 6)}`,
-                        location: p.requirements?.location || '-',
-                        displayStatus: p.status,
-                        link: `/dashboard/designer/projects/${p.id}`,
-                        displayType: p.service_type?.replace(/_/g, ' ')
-                    })),
-                    ...myDesignBookings.map(b => {
-                        const surveyReq = b.details?.survey_requests?.find((r: any) => r.partner_id === designer.id);
-                        const isSurveyPending = surveyReq?.status === 'pending';
-                        
-                        return {
-                            ...b,
-                            isDesignBooking: true,
-                            displayName: `DB-${b.id.slice(0, 8)}`,
-                            location: b.details?.preferredSchedule?.location || b.details?.location || '-',
-                            displayStatus: isSurveyPending ? 'pending_survey' : b.status,
-                            link: `/dashboard/partner/design/${b.id}`,
-                            displayType: `${b.service_type} Design`
-                        };
-                    })
-                ];
-
-                setProjects(mergedProjects);
+            // Fetch service requests
+            const sRequestsQuery = supabase
+                .from('service_requests')
+                .select('*, customer:profiles(full_name)')
+                .order('created_at', { ascending: false });
+            if (designerId) {
+                sRequestsQuery.eq('assigned_designer_id', designerId);
+            } else {
+                // No designer id, skip by using an impossible condition
+                sRequestsQuery.eq('id', '00000000-0000-0000-0000-000000000000');
             }
+            const { data: sRequests } = await sRequestsQuery;
+
+            // Fetch ALL design bookings and filter in-memory by user_id OR designer.id
+            const { data: dBookings } = await supabase
+                .from('design_bookings')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            const myDesignBookings = (dBookings || []).filter((b: any) => {
+                // Direct assignment match
+                const isDirectlyAssigned = (designerId && (b.assigned_designer_id === designerId || b.assigned_seller_id === designerId));
+                
+                // Survey request match - check by partner_user_id (most reliable) OR partner_id
+                const hasSurveyInvite = b.details?.survey_requests?.some((r: any) => 
+                    r.partner_user_id === user.id || 
+                    (designerId && r.partner_id === designerId)
+                );
+                
+                return isDirectlyAssigned || hasSurveyInvite;
+            });
+
+            // Fetch customer profiles for design bookings
+            const bookingUserIds = [...new Set(myDesignBookings.map((b: any) => b.user_id).filter(Boolean))];
+            let customerMap: Record<string, any> = {};
+            if (bookingUserIds.length > 0) {
+                const { data: customers } = await supabase
+                    .from('profiles')
+                    .select('id, full_name')
+                    .in('id', bookingUserIds);
+                (customers || []).forEach((c: any) => { customerMap[c.id] = c; });
+            }
+
+            // Merge lists
+            const mergedProjects = [
+                ...(sRequests || []).map(p => ({
+                    ...p,
+                    isDesignBooking: false,
+                    displayName: p.request_number || `SR-${p.id.slice(0, 6)}`,
+                    location: p.requirements?.location || '-',
+                    displayStatus: p.status,
+                    link: `/dashboard/designer/projects/${p.id}`,
+                    displayType: p.service_type?.replace(/_/g, ' '),
+                    customerName: p.customer?.full_name
+                })),
+                ...myDesignBookings.map(b => {
+                    const surveyReq = b.details?.survey_requests?.find((r: any) => 
+                        r.partner_user_id === user.id || (designerId && r.partner_id === designerId)
+                    );
+                    const surveyStatus = surveyReq?.status;
+                    
+                    return {
+                        ...b,
+                        isDesignBooking: true,
+                        displayName: `DB-${b.id.slice(0, 8).toUpperCase()}`,
+                        location: b.details?.location || b.details?.preferredSchedule?.location || '-',
+                        displayStatus: surveyStatus === 'pending' ? 'survey pending' : 
+                                       surveyStatus === 'accepted' ? 'survey accepted' : b.status,
+                        link: `/dashboard/designer/survey/${b.id}`,
+                        displayType: `${b.service_type || 'Interior'} Design`,
+                        customerName: customerMap[b.user_id]?.full_name || 'N/A',
+                        surveySchedule: surveyReq?.schedule
+                    };
+                })
+            ];
+
+            setProjects(mergedProjects);
             setLoading(false);
         }
         fetchProjects();
@@ -106,7 +139,7 @@ export default function DesignerProjectsPage() {
                             <tr key={proj.id} className="hover:bg-neutral-50 transition-colors">
                                 <td className="p-4 font-mono font-medium">{proj.displayName || proj.request_number}</td>
                                 <td className="p-4 capitalize font-bold text-neutral-800">{proj.displayType || proj.service_type?.replace(/_/g, ' ')}</td>
-                                <td className="p-4">{proj.customer?.full_name || 'N/A'}</td>
+                                <td className="p-4">{proj.customerName || proj.customer?.full_name || 'N/A'}</td>
                                 <td className="p-4">{proj.location || '-'}</td>
                                 <td className="p-4">
                                     <Badge variant="outline" className="capitalize">
