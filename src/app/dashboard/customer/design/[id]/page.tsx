@@ -188,37 +188,6 @@ export default function CustomerDesignOrderDetailPage() {
                         )}
                     </div>
 
-                    {/* Progress Bar Header */}
-                    <div className="mt-8 pt-8 border-t border-neutral-100 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-emerald-600">
-                                <CheckCircle2 className="w-4 h-4" />
-                                <span className="text-[10px] font-black uppercase tracking-wider">Step 1</span>
-                            </div>
-                            <p className="text-xs font-bold text-neutral-900">Order Placed</p>
-                        </div>
-                        <div className="space-y-1">
-                            <div className={`flex items-center gap-2 ${isSurveyAccepted ? 'text-emerald-600' : 'text-neutral-400'}`}>
-                                {isSurveyAccepted ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-                                <span className="text-[10px] font-black uppercase tracking-wider">Step 2</span>
-                            </div>
-                            <p className={`text-xs font-bold ${isSurveyAccepted ? 'text-neutral-900' : 'text-neutral-400'}`}>Site Survey</p>
-                        </div>
-                        <div className="space-y-1">
-                            <div className={`flex items-center gap-2 ${isQuoted ? 'text-emerald-600' : 'text-neutral-400'}`}>
-                                {isQuoted ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-                                <span className="text-[10px] font-black uppercase tracking-wider">Step 3</span>
-                            </div>
-                            <p className={`text-xs font-bold ${isQuoted ? 'text-neutral-900' : 'text-neutral-400'}`}>Official Quote</p>
-                        </div>
-                        <div className="space-y-1">
-                            <div className={`flex items-center gap-2 ${isAcceptedOrHired ? 'text-emerald-600' : 'text-neutral-400'}`}>
-                                {isAcceptedOrHired ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-                                <span className="text-[10px] font-black uppercase tracking-wider">Step 4</span>
-                            </div>
-                            <p className={`text-xs font-bold ${isAcceptedOrHired ? 'text-neutral-900' : 'text-neutral-400'}`}>Execution</p>
-                        </div>
-                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
