@@ -109,28 +109,6 @@ export default function CustomerDesignOrderDetailPage() {
         }
     }
 
-    async function hirePartner(partnerId: string, role: string, agreedAmount: number) {
-        const isSeller = role === 'seller';
-        const updateData: any = {
-            assigned_seller_id: isSeller ? partnerId : null,
-            assigned_designer_id: !isSeller ? partnerId : null,
-            status: 'in_progress',
-            agreed_amount: agreedAmount
-        };
-
-        const { error } = await supabase
-            .from('design_bookings')
-            .update(updateData)
-            .eq('id', id);
-
-        if (!error) {
-            setBooking({ ...booking, ...updateData });
-            alert("Partner hired successfully! Project is now in progress.");
-        } else {
-            alert("Failed to hire partner: " + error.message);
-        }
-    }
-
     if (loading) {
         return (
             <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-8">
@@ -151,19 +129,17 @@ export default function CustomerDesignOrderDetailPage() {
 
     const surveyRequests: any[] = rawDetails.survey_requests || [];
     const milestones: any[] = booking.milestones || [];
+    
+    // CUSTOMER ONLY SEES QUOTES SENT BY ADMIN (from quotation_history)
+    const adminOffers = (booking.quotation_history || []).filter((o: any) => o.role === 'admin' || o.role === 'customer');
+    const lastAdminOffer = (booking.quotation_history || []).filter((o: any) => o.role === 'admin').pop();
     const lastOffer = booking.quotation_history?.length > 0 ? booking.quotation_history[booking.quotation_history.length - 1] : null;
 
-    // Extract partner-submitted quotes if available
-    const partnerQuotes = surveyRequests.filter((r: any) => r.quote);
-    const activeQuote = partnerQuotes.length > 0 ? partnerQuotes[0].quote : (lastOffer || null);
-
     // Order Progress Stage Determination
-    const isPlaced = true;
     const hasSurvey = surveyRequests.length > 0;
     const isSurveyAccepted = surveyRequests.some((r: any) => r.status === 'accepted');
-    const isQuoted = !!activeQuote || ['quotation', 'in_progress', 'completed'].includes(booking.status);
+    const isQuoted = !!lastAdminOffer || ['quotation', 'in_progress', 'completed'].includes(booking.status);
     const isAcceptedOrHired = !!booking.agreed_amount || ['in_progress', 'completed'].includes(booking.status);
-    const isCompleted = booking.status === 'completed';
 
     return (
         <div className="min-h-screen bg-[#F8F9FA] p-4 md:p-10 font-sans">
@@ -231,7 +207,7 @@ export default function CustomerDesignOrderDetailPage() {
                                 {isQuoted ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
                                 <span className="text-[10px] font-black uppercase tracking-wider">Step 3</span>
                             </div>
-                            <p className={`text-xs font-bold ${isQuoted ? 'text-neutral-900' : 'text-neutral-400'}`}>Quotation</p>
+                            <p className={`text-xs font-bold ${isQuoted ? 'text-neutral-900' : 'text-neutral-400'}`}>Official Quote</p>
                         </div>
                         <div className="space-y-1">
                             <div className={`flex items-center gap-2 ${isAcceptedOrHired ? 'text-emerald-600' : 'text-neutral-400'}`}>
@@ -244,18 +220,18 @@ export default function CustomerDesignOrderDetailPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left 2 Columns: Lifecycle Timeline & Price Quotation */}
+                    {/* Left 2 Columns: Lifecycle Timeline & Official Price Quotation */}
                     <div className="lg:col-span-2 space-y-8">
                         
                         {/* 1. ORDER MILESTONE TIMELINE */}
                         <Card className="p-6 md:p-8 rounded-[32px] border border-neutral-100 bg-white shadow-sm">
                             <h2 className="text-sm font-black uppercase tracking-widest text-neutral-900 mb-6 flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-primary-600" /> Order Lifecycle & Timeline
+                                <Sparkles className="w-4 h-4 text-primary-600" /> Order Lifecycle & Progress
                             </h2>
 
                             <div className="space-y-8 relative before:absolute before:left-3.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-neutral-100">
                                 
-                                {/* Timeline Item 1: Order Placed */}
+                                {/* Milestone 1: Order Placed */}
                                 <div className="relative pl-10">
                                     <div className="absolute left-0 top-0.5 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-black shadow-md shadow-emerald-500/20">
                                         ✓
@@ -263,8 +239,8 @@ export default function CustomerDesignOrderDetailPage() {
                                     <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="font-extrabold text-sm text-neutral-900">Order Placed Successfully</p>
-                                                <p className="text-xs text-neutral-500 mt-0.5 font-medium">Initial design requirements received by Dalan Kotha team.</p>
+                                                <p className="font-extrabold text-sm text-neutral-900">Order Placed</p>
+                                                <p className="text-xs text-neutral-500 mt-0.5 font-medium">Design request submitted to Dalan Kotha Engineering team.</p>
                                             </div>
                                             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
                                                 {format(new Date(booking.created_at), 'MMM d, yyyy')}
@@ -273,54 +249,33 @@ export default function CustomerDesignOrderDetailPage() {
                                     </div>
                                 </div>
 
-                                {/* Timeline Item 2: Site Survey */}
+                                {/* Milestone 2: Site Survey */}
                                 <div className="relative pl-10">
                                     <div className={`absolute left-0 top-0.5 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-md ${
                                         isSurveyAccepted ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-amber-400 text-neutral-900 shadow-amber-400/20'
                                     }`}>
                                         {isSurveyAccepted ? '✓' : '2'}
                                     </div>
-                                    <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 space-y-3">
+                                    <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 space-y-2">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="font-extrabold text-sm text-neutral-900">Site Survey & Partner Allocation</p>
+                                                <p className="font-extrabold text-sm text-neutral-900">Site Survey & Measurements</p>
                                                 <p className="text-xs text-neutral-500 mt-0.5 font-medium">
-                                                    {surveyRequests.length > 0 
-                                                        ? `${surveyRequests.length} partner(s) invited for on-site measurement`
-                                                        : 'Pending partner assignment by admin'}
+                                                    {isSurveyAccepted 
+                                                        ? 'Site survey scheduled & completed by Dalan Kotha survey team.'
+                                                        : 'Survey request initiated with field engineers.'}
                                                 </p>
                                             </div>
                                             <Badge className={`text-[9px] font-black uppercase border-none ${
                                                 isSurveyAccepted ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                                             }`}>
-                                                {isSurveyAccepted ? 'Survey Accepted' : 'In Progress'}
+                                                {isSurveyAccepted ? 'Completed' : 'Scheduled'}
                                             </Badge>
                                         </div>
-
-                                        {/* Survey Requests List */}
-                                        {surveyRequests.length > 0 && (
-                                            <div className="space-y-2 pt-2 border-t border-neutral-200/60">
-                                                {surveyRequests.map((r: any, idx: number) => (
-                                                    <div key={idx} className="bg-white p-3 rounded-xl border border-neutral-100 flex justify-between items-center text-xs">
-                                                        <div className="space-y-0.5">
-                                                            <p className="font-bold text-neutral-800">{r.partner_name}</p>
-                                                            <p className="text-[10px] text-neutral-400 font-semibold">
-                                                                📅 Scheduled: {r.schedule?.date || '-'} @ {r.schedule?.time || '-'}
-                                                            </p>
-                                                        </div>
-                                                        <Badge className={`text-[8px] font-black uppercase border-none ${
-                                                            r.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-600'
-                                                        }`}>
-                                                            {r.status}
-                                                        </Badge>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 
-                                {/* Timeline Item 3: Price Quotation */}
+                                {/* Milestone 3: Official Quotation Received */}
                                 <div className="relative pl-10">
                                     <div className={`absolute left-0 top-0.5 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-md ${
                                         isQuoted ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-neutral-200 text-neutral-500'
@@ -330,9 +285,11 @@ export default function CustomerDesignOrderDetailPage() {
                                     <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 space-y-2">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="font-extrabold text-sm text-neutral-900">Price Quotation & Proposal</p>
+                                                <p className="font-extrabold text-sm text-neutral-900">Price Quotation Received</p>
                                                 <p className="text-xs text-neutral-500 mt-0.5 font-medium">
-                                                    {isQuoted ? 'Official price proposal generated' : 'Awaiting quote calculation post-survey'}
+                                                    {lastAdminOffer 
+                                                        ? `Official price quote of ৳${lastAdminOffer.amount?.toLocaleString()} provided by Dalan Kotha.`
+                                                        : 'Engineers are preparing your official price proposal.'}
                                                 </p>
                                             </div>
                                             {isQuoted && (
@@ -344,7 +301,7 @@ export default function CustomerDesignOrderDetailPage() {
                                     </div>
                                 </div>
 
-                                {/* Timeline Item 4: Accepted & Hired */}
+                                {/* Milestone 4: Proposal Accepted */}
                                 <div className="relative pl-10">
                                     <div className={`absolute left-0 top-0.5 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-md ${
                                         isAcceptedOrHired ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-neutral-200 text-neutral-500'
@@ -354,9 +311,9 @@ export default function CustomerDesignOrderDetailPage() {
                                     <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="font-extrabold text-sm text-neutral-900">Proposal Acceptance & Partner Hired</p>
+                                                <p className="font-extrabold text-sm text-neutral-900">Quotation Accepted & Project Active</p>
                                                 <p className="text-xs text-neutral-500 mt-0.5 font-medium">
-                                                    {isAcceptedOrHired ? 'Agreement finalized & execution started' : 'Pending proposal review & acceptance'}
+                                                    {isAcceptedOrHired ? 'Proposal accepted! Project execution in progress.' : 'Pending customer review and acceptance.'}
                                                 </p>
                                             </div>
                                         </div>
@@ -366,126 +323,38 @@ export default function CustomerDesignOrderDetailPage() {
                             </div>
                         </Card>
 
-                        {/* 2. DETAILED PRICE QUOTATION & INVOICE */}
-                        {(isQuoted || partnerQuotes.length > 0 || booking.quotation_history?.length > 0) && (
-                            <Card className="p-6 md:p-8 rounded-[32px] border border-neutral-100 bg-white shadow-sm space-y-6">
-                                <div className="flex justify-between items-center pb-6 border-b border-neutral-100">
-                                    <div>
-                                        <h2 className="text-sm font-black uppercase tracking-widest text-neutral-900 flex items-center gap-2">
-                                            <FileText className="w-4 h-4 text-primary-600" /> Official Price Quotation & Invoice
-                                        </h2>
-                                        <p className="text-xs text-neutral-400 font-bold mt-1">Line-item breakdown of your project scope</p>
-                                    </div>
+                        {/* 2. OFFICIAL ADMIN PRICE QUOTATION & INVOICE */}
+                        <Card className="p-6 md:p-8 rounded-[32px] border border-neutral-100 bg-white shadow-sm space-y-6">
+                            <div className="flex justify-between items-center pb-6 border-b border-neutral-100">
+                                <div>
+                                    <h2 className="text-sm font-black uppercase tracking-widest text-neutral-900 flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-primary-600" /> Official Price Quotation
+                                    </h2>
+                                    <p className="text-xs text-neutral-400 font-bold mt-1">Verified price proposal from Dalan Kotha Management</p>
                                 </div>
+                            </div>
 
-                                {/* Partner Quotes Cards if multiple submitted */}
-                                {partnerQuotes.length > 0 && (
-                                    <div className="space-y-4">
-                                        <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Submitted Partner Proposals</p>
-                                        <div className="grid grid-cols-1 gap-4">
-                                            {partnerQuotes.map((req: any, idx: number) => {
-                                                const q = req.quote;
-                                                return (
-                                                    <div key={idx} className="bg-neutral-900 text-white p-6 rounded-2xl space-y-4 shadow-lg">
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <p className="font-black text-sm text-white">{req.partner_name}</p>
-                                                                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mt-0.5">
-                                                                    Survey Conducted: {req.schedule?.date} @ {req.schedule?.time}
-                                                                </p>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <span className="text-[9px] font-black text-neutral-400 uppercase block">Total Bid</span>
-                                                                <span className="text-2xl font-black text-emerald-400">৳{q.amount?.toLocaleString()}</span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Line Items Table */}
-                                                        {q.line_items?.length > 0 && (
-                                                            <div className="bg-neutral-950 rounded-xl overflow-hidden border border-neutral-800">
-                                                                <table className="w-full text-xs text-left">
-                                                                    <thead>
-                                                                        <tr className="border-b border-neutral-800 text-[9px] font-black text-neutral-500 uppercase">
-                                                                            <th className="p-3">Description</th>
-                                                                            <th className="p-3 text-center">Unit</th>
-                                                                            <th className="p-3 text-right">Qty</th>
-                                                                            <th className="p-3 text-right">Rate</th>
-                                                                            <th className="p-3 text-right">Total</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {q.line_items.map((item: any, i: number) => (
-                                                                            <tr key={i} className="border-b border-neutral-800/60 last:border-0 font-medium text-neutral-300">
-                                                                                <td className="p-3 font-semibold text-white">{item.description}</td>
-                                                                                <td className="p-3 text-center text-neutral-400">{item.unit || 'sft'}</td>
-                                                                                <td className="p-3 text-right text-neutral-400">{item.quantity}</td>
-                                                                                <td className="p-3 text-right text-neutral-400">৳{Number(item.unitPrice || 0).toLocaleString()}</td>
-                                                                                <td className="p-3 text-right font-black text-white">৳{(Number(item.quantity||0)*Number(item.unitPrice||0)).toLocaleString()}</td>
-                                                                            </tr>
-                                                                        ))}
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Notes */}
-                                                        {q.notes && (
-                                                            <div className="bg-neutral-800/40 p-3 rounded-xl text-xs text-neutral-300">
-                                                                <span className="text-[9px] font-black text-neutral-500 uppercase block mb-1">Scope / Remarks</span>
-                                                                {q.notes}
-                                                            </div>
-                                                        )}
-
-                                                        {/* PDF Download Attachment */}
-                                                        {q.file_url && (
-                                                            <a
-                                                                href={q.file_url.startsWith('http') ? q.file_url : '#'}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                download
-                                                                className="flex items-center gap-2 bg-blue-600/20 border border-blue-600/30 rounded-xl px-4 py-3 text-blue-300 font-bold text-xs hover:bg-blue-600/30 transition-colors w-fit"
-                                                            >
-                                                                <Download className="w-4 h-4" />
-                                                                Download Detailed BOQ Document ({q.file_url.split('/').pop() || 'BOQ.pdf'})
-                                                            </a>
-                                                        )}
-
-                                                        {/* Hire Action if quotation pending */}
-                                                        {booking.status === 'quotation' && (
-                                                            <Button
-                                                                onClick={() => hirePartner(req.partner_id, req.role, q.amount)}
-                                                                className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-xs tracking-widest rounded-xl shadow-lg"
-                                                            >
-                                                                <Check className="w-4 h-4 mr-2" /> Accept & Hire {req.partner_name}
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Admin General Invoice Proposal if no partner quote rendered */}
-                                {partnerQuotes.length === 0 && lastOffer && (
-                                    <div className="space-y-6">
-                                        <div className="bg-neutral-900 text-white p-6 rounded-2xl space-y-4">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <p className="font-black text-sm text-white">Dalan Kotha Official Proposal</p>
-                                                    <p className="text-[9px] text-neutral-400 font-bold uppercase mt-0.5">
-                                                        Submitted: {format(new Date(lastOffer.date || booking.created_at), 'MMM d, yyyy')}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="text-[9px] font-black text-neutral-400 uppercase block">Total Proposal</span>
-                                                    <span className="text-2xl font-black text-emerald-400">৳{lastOffer.amount?.toLocaleString()}</span>
-                                                </div>
+                            {/* If Admin has sent an official quote (lastAdminOffer or lastOffer) */}
+                            {lastAdminOffer ? (
+                                <div className="space-y-6">
+                                    <div className="bg-neutral-900 text-white p-6 md:p-8 rounded-3xl space-y-6 shadow-xl border border-neutral-800">
+                                        {/* Invoice Header */}
+                                        <div className="flex justify-between items-start pb-6 border-b border-neutral-800">
+                                            <div>
+                                                <p className="text-xs font-black uppercase tracking-widest text-emerald-400">DALANKOTHA OFFICIAL QUOTE</p>
+                                                <p className="text-xs text-neutral-400 font-medium mt-1">Ref: #DK-DSN-{booking.id.slice(0, 8)}</p>
                                             </div>
+                                            <div className="text-right">
+                                                <p className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">TOTAL AMOUNT</p>
+                                                <p className="text-3xl font-black text-emerald-400 mt-0.5">৳{lastAdminOffer.amount?.toLocaleString()}</p>
+                                            </div>
+                                        </div>
 
-                                            {/* Line items if detailed proposal */}
-                                            {lastOffer.line_items?.length > 0 && (
-                                                <div className="bg-neutral-950 rounded-xl overflow-hidden border border-neutral-800">
+                                        {/* Line Items Table if Admin sent line items */}
+                                        {lastAdminOffer.line_items?.length > 0 && (
+                                            <div className="space-y-2">
+                                                <p className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">Scope Breakdown</p>
+                                                <div className="bg-neutral-950 rounded-2xl overflow-hidden border border-neutral-800">
                                                     <table className="w-full text-xs text-left">
                                                         <thead>
                                                             <tr className="border-b border-neutral-800 text-[9px] font-black text-neutral-500 uppercase">
@@ -497,7 +366,7 @@ export default function CustomerDesignOrderDetailPage() {
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {lastOffer.line_items.map((item: any, i: number) => (
+                                                            {lastAdminOffer.line_items.map((item: any, i: number) => (
                                                                 <tr key={i} className="border-b border-neutral-800/60 last:border-0 font-medium text-neutral-300">
                                                                     <td className="p-3 font-semibold text-white">{item.description}</td>
                                                                     <td className="p-3 text-center text-neutral-400">{item.unit || 'sft'}</td>
@@ -509,64 +378,87 @@ export default function CustomerDesignOrderDetailPage() {
                                                         </tbody>
                                                     </table>
                                                 </div>
-                                            )}
-
-                                            {lastOffer.notes && (
-                                                <div className="bg-neutral-800/40 p-3 rounded-xl text-xs text-neutral-300">
-                                                    {lastOffer.notes}
-                                                </div>
-                                            )}
-
-                                            {lastOffer.file_url && (
-                                                <a
-                                                    href={lastOffer.file_url.startsWith('http') ? lastOffer.file_url : '#'}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    download
-                                                    className="flex items-center gap-2 bg-blue-600/20 border border-blue-600/30 rounded-xl px-4 py-3 text-blue-300 font-bold text-xs hover:bg-blue-600/30 transition-colors w-fit"
-                                                >
-                                                    <Download className="w-4 h-4" /> Download Attached Proposal Document
-                                                </a>
-                                            )}
-                                        </div>
-
-                                        {/* Action buttons for Customer */}
-                                        {booking.status === 'quotation' && lastOffer.role === 'admin' && (
-                                            <div className="space-y-4 pt-2">
-                                                <Button
-                                                    onClick={acceptOffer}
-                                                    className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2"
-                                                >
-                                                    <Check className="w-4 h-4" /> Accept Proposal & Begin Project Execution
-                                                </Button>
-
-                                                <div className="space-y-3 p-4 bg-neutral-50 rounded-2xl border border-neutral-200">
-                                                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Send Counter Offer</Label>
-                                                    <div className="flex gap-3">
-                                                        <Input
-                                                            type="number"
-                                                            placeholder="Counter Offer Amount"
-                                                            className="font-black text-sm h-11 bg-white"
-                                                            value={offerAmount}
-                                                            onChange={(e) => setOfferAmount(e.target.value)}
-                                                        />
-                                                        <Button onClick={sendCounterOffer} className="h-11 bg-neutral-900 text-white font-black uppercase text-xs px-6 rounded-xl">
-                                                            Send Counter
-                                                        </Button>
-                                                    </div>
-                                                    <Textarea
-                                                        placeholder="Add comments or request scope adjustments..."
-                                                        className="rounded-xl bg-white text-xs"
-                                                        value={offerNote}
-                                                        onChange={(e) => setOfferNote(e.target.value)}
-                                                    />
-                                                </div>
                                             </div>
                                         )}
+
+                                        {/* Notes / Remarks */}
+                                        {lastAdminOffer.notes && (
+                                            <div className="bg-neutral-800/50 p-4 rounded-2xl text-xs text-neutral-300 leading-relaxed">
+                                                <span className="text-[9px] font-black text-neutral-500 uppercase block mb-1">Deliverable Notes & Terms</span>
+                                                {lastAdminOffer.notes}
+                                            </div>
+                                        )}
+
+                                        {/* Download PDF Attachment if available */}
+                                        {lastAdminOffer.file_url && (
+                                            <a
+                                                href={lastAdminOffer.file_url.startsWith('http') ? lastAdminOffer.file_url : '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                download
+                                                className="flex items-center gap-2 bg-blue-600/20 border border-blue-600/30 rounded-xl px-4 py-3 text-blue-300 font-bold text-xs hover:bg-blue-600/30 transition-colors w-fit"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                                Download Official Quote Document ({lastAdminOffer.file_url.split('/').pop() || 'Quotation.pdf'})
+                                            </a>
+                                        )}
+
+                                        <p className="text-[9px] text-neutral-500 font-bold text-right uppercase tracking-widest">
+                                            Issued: {lastAdminOffer.date ? format(new Date(lastAdminOffer.date), 'MMM d, yyyy h:mm a') : '-'}
+                                        </p>
                                     </div>
-                                )}
-                            </Card>
-                        )}
+
+                                    {/* Action Buttons for Customer if Quotation Pending */}
+                                    {booking.status === 'quotation' && (
+                                        <div className="space-y-6 pt-2">
+                                            <Button
+                                                onClick={acceptOffer}
+                                                className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2"
+                                            >
+                                                <Check className="w-4 h-4" /> Accept Proposal & Start Execution (৳{lastAdminOffer.amount?.toLocaleString()})
+                                            </Button>
+
+                                            <div className="space-y-3 p-5 bg-neutral-50 rounded-2xl border border-neutral-200">
+                                                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Send Counter Offer</Label>
+                                                <div className="flex gap-3">
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="Counter Offer Amount (৳)"
+                                                        className="font-black text-sm h-11 bg-white"
+                                                        value={offerAmount}
+                                                        onChange={(e) => setOfferAmount(e.target.value)}
+                                                    />
+                                                    <Button onClick={sendCounterOffer} className="h-11 bg-neutral-900 text-white font-black uppercase text-xs px-6 rounded-xl shrink-0">
+                                                        Send Counter
+                                                    </Button>
+                                                </div>
+                                                <Textarea
+                                                    placeholder="Add any remarks or scope changes..."
+                                                    className="rounded-xl bg-white text-xs"
+                                                    value={offerNote}
+                                                    onChange={(e) => setOfferNote(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {lastOffer?.role === 'customer' && (
+                                        <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 text-center text-xs font-bold text-amber-800">
+                                            Counter offer of ৳{lastOffer.amount?.toLocaleString()} submitted. Awaiting Dalan Kotha response.
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                /* Placeholder when admin hasn't sent the quote yet */
+                                <div className="p-10 bg-neutral-50 rounded-3xl border border-dashed border-neutral-200 text-center space-y-3">
+                                    <Clock className="w-10 h-10 text-amber-500 mx-auto" />
+                                    <h3 className="text-base font-black text-neutral-900">Preparing Your Price Quote</h3>
+                                    <p className="text-xs text-neutral-500 max-w-md mx-auto leading-relaxed font-medium">
+                                        Our engineering team has received your survey details and is calculating the official price proposal. You will receive your quote breakdown here shortly.
+                                    </p>
+                                </div>
+                            )}
+                        </Card>
 
                         {/* 3. CURRENT WORK STATUS & MILESTONE TRACKER */}
                         {booking.status === 'in_progress' && (
@@ -584,7 +476,7 @@ export default function CustomerDesignOrderDetailPage() {
                                     {milestones.length === 0 ? (
                                         <div className="p-6 bg-neutral-50 rounded-2xl border border-neutral-100 text-center space-y-1">
                                             <p className="text-xs font-bold text-neutral-700">Project Started</p>
-                                            <p className="text-[10px] text-neutral-400 font-medium">Your assigned designer/partner is preparing your project milestones.</p>
+                                            <p className="text-[10px] text-neutral-400 font-medium">Your design team is preparing your project milestone roadmap.</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
@@ -624,7 +516,7 @@ export default function CustomerDesignOrderDetailPage() {
 
                     {/* Right Column: Project Info & Requirements */}
                     <div className="space-y-8">
-                        {/* Hired Partner Card if in progress */}
+                        {/* Hired / Agreed Price Card */}
                         {booking.agreed_amount && (
                             <Card className="p-6 rounded-[28px] bg-neutral-900 text-white space-y-4 border border-neutral-800">
                                 <div className="flex items-center gap-2 text-emerald-400">
@@ -636,7 +528,7 @@ export default function CustomerDesignOrderDetailPage() {
                                     <p className="text-3xl font-black text-white mt-1">৳{booking.agreed_amount.toLocaleString()}</p>
                                 </div>
                                 <div className="pt-3 border-t border-neutral-800 text-[10px] text-neutral-400 font-medium">
-                                    Your project is actively being processed by Dalan Kotha engineering partners.
+                                    Your project is being executed by Dalan Kotha engineering team.
                                 </div>
                             </Card>
                         )}
@@ -683,7 +575,7 @@ export default function CustomerDesignOrderDetailPage() {
                         <Card className="p-6 rounded-[28px] bg-primary-50/40 border border-primary-100 space-y-3">
                             <h4 className="text-xs font-black text-primary-900 uppercase tracking-wider">Need Assistance?</h4>
                             <p className="text-xs text-neutral-600 leading-relaxed font-medium">
-                                Have questions about your quote or site survey schedule? Reach out directly to our engineering support desk.
+                                Have questions about your price quote or site survey schedule? Reach out directly to our engineering support desk.
                             </p>
                             <Link href="/dashboard/customer/messages">
                                 <Button className="w-full mt-2 h-10 bg-primary-600 hover:bg-primary-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl">
