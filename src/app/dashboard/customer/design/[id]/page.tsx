@@ -124,10 +124,15 @@ export default function CustomerDesignOrderDetailPage() {
 
     if (!booking) return <div className="p-8 text-neutral-500 font-bold">Order not found.</div>;
 
-    // Filter out internal/complex objects from details so raw JSON is NEVER displayed
+    // Filter out internal/complex objects and blank/dash values from details so raw JSON or empty fields are NEVER displayed
     const rawDetails = booking.details || {};
-    const detailsKeysToExclude = ['survey_requests', 'quotation_history', 'milestones'];
-    const cleanDetails = Object.entries(rawDetails).filter(([k]) => !detailsKeysToExclude.includes(k));
+    const detailsKeysToExclude = ['survey_requests', 'quotation_history', 'milestones', 'selected_designer_id', 'designerOption', 'assigned_seller_id', 'assigned_designer_id', 'selectedDesignerId'];
+    const cleanDetails = Object.entries(rawDetails).filter(([k, v]) => {
+        if (detailsKeysToExclude.includes(k)) return false;
+        if (v === null || v === undefined || v === '' || v === '-' || v === 'null') return false;
+        if (Array.isArray(v) && v.length === 0) return false;
+        return true;
+    });
 
     const surveyRequests: any[] = rawDetails.survey_requests || [];
     const milestones: any[] = booking.milestones || [];
@@ -521,12 +526,18 @@ export default function CustomerDesignOrderDetailPage() {
                                         const obj = value as any;
                                         if (key === 'buildingDetails') {
                                             displayValue = `Floors: ${obj.floors || '-'}, Area: ${obj.landArea || '-'} ${obj.landAreaUnit || ''}`;
+                                        } else if (key === 'preferredSchedule') {
+                                            const dateStr = obj.date ? format(new Date(obj.date), 'MMM d, yyyy') : '';
+                                            const timeStr = obj.time || '';
+                                            displayValue = dateStr ? `${dateStr} @ ${timeStr}` : timeStr;
                                         } else {
-                                            displayValue = null; // Skip non-form objects
+                                            const pairs = Object.entries(obj).filter(([_, v]) => v !== null && v !== undefined && v !== '' && v !== '-');
+                                            if (pairs.length === 0) return null;
+                                            displayValue = pairs.map(([k, v]) => `${k}: ${v}`).join(' | ');
                                         }
                                     }
 
-                                    if (!displayValue || displayValue === 'null') return null;
+                                    if (!displayValue || displayValue === '-' || displayValue === 'null') return null;
 
                                     return (
                                         <div key={key} className="flex flex-col py-2.5 border-b border-neutral-100 last:border-0">

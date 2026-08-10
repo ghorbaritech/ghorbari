@@ -30,29 +30,29 @@ const DEFAULT_MILESTONES = [
 ];
 
 function renderDetailCard(key: string, value: any) {
+    const systemKeys = ['survey_requests', 'quotation_history', 'milestones', 'selected_designer_id', 'designerOption', 'assigned_seller_id', 'assigned_designer_id'];
+    if (systemKeys.includes(key)) return null;
+
+    if (value === null || value === undefined || value === '' || value === '-' || value === 'null') return null;
+    if (Array.isArray(value) && value.length === 0) return null;
+
     const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
     
-    if (value === null || value === undefined || value === '') {
-        return (
-            <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
-                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
-                <p className="font-bold text-neutral-800 text-sm">-</p>
-            </div>
-        );
-    }
-
     // Custom Formatter for Building Details
     if (key === 'buildingDetails' && typeof value === 'object') {
         const { landArea, landAreaUnit, floors, layouts } = value;
+        if (!landArea && !floors && (!layouts || layouts.length === 0)) return null;
         return (
             <div key={key} className="bg-neutral-50 rounded-xl p-6 border border-neutral-100 col-span-1 md:col-span-2 space-y-4">
                 <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block border-b border-neutral-200/60 pb-2">{formattedKey}</Label>
                 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <div>
-                        <span className="text-[10px] font-bold text-neutral-400 block uppercase">Total Floors</span>
-                        <span className="font-extrabold text-neutral-800 text-base">{floors || '-'}</span>
-                    </div>
+                    {floors && (
+                        <div>
+                            <span className="text-[10px] font-bold text-neutral-400 block uppercase">Total Floors</span>
+                            <span className="font-extrabold text-neutral-800 text-base">{floors}</span>
+                        </div>
+                    )}
                     {landArea && (
                         <div className="col-span-2">
                             <span className="text-[10px] font-bold text-neutral-400 block uppercase">Land Area</span>
@@ -111,6 +111,7 @@ function renderDetailCard(key: string, value: any) {
 
     // Custom Formatter for Uploaded Documents
     if (key === 'uploadedDocsUrls' && Array.isArray(value)) {
+        if (value.length === 0) return null;
         return (
             <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
                 <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-2">{formattedKey}</Label>
@@ -134,11 +135,12 @@ function renderDetailCard(key: string, value: any) {
     // Custom Formatter for Preferred Schedule
     if (key === 'preferredSchedule' && typeof value === 'object') {
         const formattedDate = value.date ? format(new Date(value.date), 'MMM d, yyyy') : '';
+        if (!formattedDate && !value.time) return null;
         return (
             <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
                 <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
                 <p className="font-bold text-neutral-800 text-sm">
-                    {formattedDate ? `${formattedDate} at ${value.time || '-'}` : '-'}
+                    {formattedDate ? `${formattedDate} at ${value.time || '-'}` : (value.time || '-')}
                 </p>
             </div>
         );
@@ -162,6 +164,7 @@ function renderDetailCard(key: string, value: any) {
     }
 
     if (Array.isArray(value)) {
+        if (value.length === 0) return null;
         return (
             <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
                 <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
@@ -175,6 +178,18 @@ function renderDetailCard(key: string, value: any) {
             <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
                 <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
                 <p className="font-bold text-neutral-800 text-sm">{value ? 'Yes' : 'No'}</p>
+            </div>
+        );
+    }
+
+    if (typeof value === 'object') {
+        const pairs = Object.entries(value).filter(([_, v]) => v !== null && v !== undefined && v !== '' && v !== '-');
+        if (pairs.length === 0) return null;
+        const strVal = pairs.map(([k, v]) => `${k}: ${v}`).join(' | ');
+        return (
+            <div key={key} className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
+                <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">{formattedKey}</Label>
+                <p className="font-bold text-neutral-800 text-sm break-words">{strVal}</p>
             </div>
         );
     }

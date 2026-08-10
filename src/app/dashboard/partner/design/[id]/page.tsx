@@ -771,18 +771,38 @@ export default function PartnerTaskDetailPage() {
                         <ClipboardList className="w-4 h-4 text-primary-600" /> Project Requirements & Specs
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {Object.entries(details).filter(([key]) => key !== 'survey_requests').map(([key, value]) => {
+                        {Object.entries(details).map(([key, value]) => {
+                            const systemKeys = ['survey_requests', 'quotation_history', 'milestones', 'selected_designer_id', 'designerOption', 'assigned_seller_id', 'assigned_designer_id', 'selectedDesignerId'];
+                            if (systemKeys.includes(key)) return null;
+
+                            if (value === null || value === undefined || value === '' || value === '-' || value === 'null') return null;
+                            if (Array.isArray(value) && value.length === 0) return null;
+
                             const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
                             let displayValue: any = value;
+
                             if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
-                            if (Array.isArray(value)) displayValue = value.join(', ');
-                            if (value && typeof value === 'object' && !Array.isArray(value)) {
-                                displayValue = Object.entries(value as object).map(([k, v]) => `${k}: ${v}`).join(' | ');
+                            else if (Array.isArray(value)) displayValue = value.join(', ');
+                            else if (typeof value === 'object') {
+                                if (key === 'buildingDetails') {
+                                    const { landArea, landAreaUnit, floors } = value as any;
+                                    if (!landArea && !floors) return null;
+                                    displayValue = `Floors: ${floors || '-'}, Area: ${landArea || '-'} ${landAreaUnit || ''}`;
+                                } else if (key === 'preferredSchedule') {
+                                    const dateStr = (value as any).date ? format(new Date((value as any).date), 'MMM d, yyyy') : '';
+                                    const timeStr = (value as any).time || '';
+                                    displayValue = dateStr ? `${dateStr} @ ${timeStr}` : timeStr;
+                                } else {
+                                    const pairs = Object.entries(value as object).filter(([_, v]) => v !== null && v !== undefined && v !== '' && v !== '-');
+                                    if (pairs.length === 0) return null;
+                                    displayValue = pairs.map(([k, v]) => `${k}: ${v}`).join(' | ');
+                                }
                             }
-                            if (!value) displayValue = '-';
+
+                            if (!displayValue || displayValue === '-' || displayValue === 'null') return null;
 
                             return (
-                                <div key={key} className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 flex flex-col">
+                                <div key={key} className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 flex flex-col justify-center">
                                     <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">{formattedKey}</span>
                                     <span className="font-bold text-neutral-900 text-xs mt-1 break-words">{String(displayValue)}</span>
                                 </div>
