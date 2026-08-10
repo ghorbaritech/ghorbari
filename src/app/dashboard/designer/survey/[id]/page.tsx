@@ -1,15 +1,18 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Flag, Calendar, ClipboardList, CheckCircle2, XCircle, Plus, Trash2, Upload, FileText, Send } from "lucide-react";
+import { ArrowLeft, Flag, Calendar, ClipboardList, CheckCircle2, XCircle, Plus, Trash2, Upload, FileText, Send, Clock, ArrowUp, ArrowDown, Check, Edit3 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import Link from 'next/link';
 import { format } from "date-fns";
 
@@ -38,6 +41,13 @@ export default function DesignerSurveyDetailPage() {
     const [uploading, setUploading] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
 
+    // Milestone State
+    const [milestonesState, setMilestonesState] = useState<any[]>([]);
+    const [newMilestoneTitle, setNewMilestoneTitle] = useState("");
+
+    // Quote view state (read-only vs edit mode)
+    const [isEditingQuote, setIsEditingQuote] = useState(false);
+
     useEffect(() => {
         if (id) fetchBooking();
     }, [id]);
@@ -52,6 +62,9 @@ export default function DesignerSurveyDetailPage() {
 
             if (error) throw error;
             setBooking(bookingData);
+            if (bookingData.milestones) {
+                setMilestonesState(bookingData.milestones);
+            }
 
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
@@ -158,7 +171,6 @@ export default function DesignerSurveyDetailPage() {
                 .upload(path, file, { upsert: true });
 
             if (uploadError) {
-                // Fallback: use a placeholder since bucket might not exist
                 console.error("Upload error:", uploadError.message);
                 setUploadedFile(file);
                 setUploadedFileUrl(`[File attached: ${file.name}]`);
@@ -208,11 +220,98 @@ export default function DesignerSurveyDetailPage() {
 
         if (!error) {
             setBooking({ ...booking, details: updatedDetails });
+            setIsEditingQuote(false);
             alert("Your quote has been submitted to the admin successfully!");
         } else {
             alert("Failed to submit quote: " + error.message);
         }
         setSubmitting(false);
+    }
+
+    // Milestone Management Functions for Partner
+    function handleAddMilestone() {
+        if (!newMilestoneTitle.trim()) return;
+        const updated = [
+            ...milestonesState,
+            { name: newMilestoneTitle.trim(), status: 'pending', due_date: '' }
+        ];
+        setMilestonesState(updated);
+        setNewMilestoneTitle("");
+    }
+
+    function handleToggleMilestone(index: number) {
+        const updated = [...milestonesState];
+        updated[index].status = updated[index].status === 'completed' ? 'pending' : 'completed';
+        setMilestonesState(updated);
+    }
+
+    function handleUpdateMilestoneName(index: number, name: string) {
+        const updated = [...milestonesState];
+        updated[index].name = name;
+        setMilestonesState(updated);
+    }
+
+    function handleUpdateMilestoneDate(index: number, date: string) {
+        const updated = [...milestonesState];
+        updated[index].due_date = date;
+        setMilestonesState(updated);
+    }
+
+    function handleDeleteMilestone(index: number) {
+        const updated = milestonesState.filter((_, i) => i !== index);
+        setMilestonesState(updated);
+    }
+
+    function handleMoveMilestone(index: number, direction: 'up' | 'down') {
+        if ((direction === 'up' && index === 0) || (direction === 'down' && index === milestonesState.length - 1)) return;
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        const updated = [...milestonesState];
+        const temp = updated[index];
+        updated[index] = updated[targetIndex];
+        updated[targetIndex] = temp;
+        setMilestonesState(updated);
+    }
+
+    async function savePartnerMilestones() {
+        const { error } = await supabase
+            .from('design_bookings')
+            .update({ milestones: milestonesState })
+            .eq('id', id);
+
+        if (!error) {
+            setBooking({ ...booking, milestones: milestonesState });
+            alert("Milestones saved successfully! Customer and Admin have been notified.");
+
+            // 1. Notify Customer
+            if (booking.user_id) {
+                await supabase.from('notifications').insert({
+                    user_id: booking.user_id,
+                    title: 'Milestone Updated by Partner',
+                    message: `${partnerInfo?.name || 'Partner'} has updated the project milestones.`,
+                    link: `/dashboard/customer/design/${id}`,
+                    is_read: false
+                });
+            }
+
+            // 2. Notify Admin Users
+            const { data: adminProfiles } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('role', 'admin');
+
+            if (adminProfiles?.length) {
+                const adminNotifs = adminProfiles.map((adm: any) => ({
+                    user_id: adm.id,
+                    title: 'Partner Updated Milestones',
+                    message: `${partnerInfo?.name || 'Partner'} updated milestones for project #${(id as string).slice(0, 8)}.`,
+                    link: `/admin/design-orders/${id}`,
+                    is_read: false
+                }));
+                await supabase.from('notifications').insert(adminNotifs);
+            }
+        } else {
+            alert("Failed to save milestones: " + error.message);
+        }
     }
 
     if (loading) {
@@ -233,13 +332,12 @@ export default function DesignerSurveyDetailPage() {
     }
 
     const details = booking.details || {};
-    const milestones = booking.milestones || [];
     const surveyReq = getMyRequest();
     const hasSubmittedQuote = !!surveyReq?.quote;
 
     return (
-        <div className="p-6 md:p-8 space-y-6 max-w-5xl">
-            {/* Back */}
+        <div className="p-6 md:p-8 space-y-8 max-w-5xl">
+            {/* Back Button */}
             <Link href="/dashboard/designer/projects">
                 <Button variant="ghost" className="pl-0 hover:bg-transparent hover:text-neutral-600 -mb-2">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back to Projects
@@ -247,14 +345,14 @@ export default function DesignerSurveyDetailPage() {
             </Link>
 
             {/* Header */}
-            <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
+            <div className="bg-white rounded-3xl border border-neutral-200 shadow-sm p-6 md:p-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <div className="flex items-center gap-3 mb-1 flex-wrap">
-                            <h1 className="text-2xl font-black text-neutral-900 tracking-tight">
+                            <h1 className="text-2xl md:text-3xl font-black text-neutral-900 tracking-tight italic uppercase">
                                 Design Project #{(id as string)?.slice(0, 8).toUpperCase()}
                             </h1>
-                            <Badge className="bg-neutral-900 text-white text-xs uppercase tracking-widest">
+                            <Badge className="bg-neutral-900 text-white text-xs uppercase tracking-widest px-3 py-1">
                                 {booking.service_type || 'Design'}
                             </Badge>
                         </div>
@@ -262,9 +360,9 @@ export default function DesignerSurveyDetailPage() {
                             Submitted {booking.created_at ? format(new Date(booking.created_at), 'MMM d, yyyy') : '-'}
                         </p>
                     </div>
-                    <Badge className={`text-xs font-black uppercase px-4 py-1.5 ${
-                        booking.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                        booking.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    <Badge className={`text-xs font-black uppercase px-4 py-1.5 border-none ${
+                        booking.status === 'in_progress' ? 'bg-emerald-100 text-emerald-800' :
+                        booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
                         'bg-amber-100 text-amber-800'
                     }`}>
                         {booking.status?.replace(/_/g, ' ')}
@@ -272,72 +370,279 @@ export default function DesignerSurveyDetailPage() {
                 </div>
             </div>
 
-            {/* Survey Request Card */}
-            {surveyReq ? (
-                <div className="bg-neutral-900 text-white rounded-2xl p-8 shadow-xl space-y-6">
-                    {/* Survey Header */}
-                    <div className="flex justify-between items-start flex-wrap gap-3">
-                        <div>
-                            <Badge className="bg-emerald-600 text-white uppercase tracking-widest text-[9px] font-black px-3 py-1 mb-3">
-                                Survey Request
-                            </Badge>
-                            <h2 className="text-xl font-black italic uppercase text-white tracking-tight">
-                                Site Survey & Quoting
-                            </h2>
-                            <p className="text-xs text-neutral-400 font-bold mt-2 flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5" />
-                                Scheduled: {surveyReq.schedule?.date} @ {surveyReq.schedule?.time}
-                            </p>
-                        </div>
-                        <Badge className={`text-[10px] font-black uppercase px-4 py-1.5 border-none ${
-                            surveyReq.status === 'accepted' ? 'bg-green-600 text-white' :
-                            surveyReq.status === 'declined' ? 'bg-red-600 text-white' :
-                            'bg-amber-600 text-white'
-                        }`}>
-                            {surveyReq.status}
-                        </Badge>
+            {/* 1. TOP SECTION: PROJECT MILESTONES ROADMAP */}
+            <Card className="p-6 md:p-8 rounded-3xl border border-neutral-200 bg-white shadow-sm space-y-6">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h2 className="text-sm font-black uppercase tracking-widest text-neutral-900 flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-emerald-600" /> Project Milestones Roadmap
+                        </h2>
+                        <p className="text-xs text-neutral-400 font-bold mt-0.5">Manage execution stages & notify admin & customer</p>
                     </div>
+                    <Button onClick={savePartnerMilestones} className="h-9 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider rounded-xl px-5 shadow-sm">
+                        Save Milestones & Notify
+                    </Button>
+                </div>
 
-                    {/* Pending: Accept/Decline */}
-                    {surveyReq.status === 'pending' && (
-                        <div className="space-y-4 bg-neutral-800/50 rounded-xl p-6">
-                            <p className="text-neutral-300 text-sm leading-relaxed">
-                                You have been invited to perform an on-site survey. Please confirm your availability for the scheduled date and time above.
-                            </p>
-                            <div className="flex gap-3">
-                                <Button
-                                    onClick={() => respondToSurvey(true)}
-                                    className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-xs rounded-xl"
-                                >
-                                    <CheckCircle2 className="w-4 h-4 mr-2" /> Accept Survey
-                                </Button>
-                                <Button
-                                    onClick={() => respondToSurvey(false)}
-                                    variant="outline"
-                                    className="flex-1 h-12 border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white font-black uppercase tracking-widest text-xs rounded-xl"
-                                >
-                                    <XCircle className="w-4 h-4 mr-2" /> Decline
-                                </Button>
+                {/* Add Custom Milestone Input */}
+                <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/80 space-y-2">
+                    <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Add New Milestone</Label>
+                    <div className="flex gap-2">
+                        <Input
+                            type="text"
+                            placeholder="e.g. 3D Architectural Render, Soft Handover"
+                            className="h-10 text-xs font-bold bg-white border-neutral-200 rounded-xl"
+                            value={newMilestoneTitle}
+                            onChange={(e) => setNewMilestoneTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddMilestone();
+                                }
+                            }}
+                        />
+                        <Button
+                            type="button"
+                            onClick={handleAddMilestone}
+                            className="h-10 px-5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-black uppercase tracking-wider rounded-xl shrink-0"
+                        >
+                            <Plus className="w-4 h-4 mr-1" /> Add
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Milestone Timeline List */}
+                <div className="space-y-3 relative before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-neutral-100">
+                    {milestonesState.map((milestone: any, idx: number) => (
+                        <div key={idx} className="relative pl-8 group">
+                            <div className={`absolute left-0 top-3.5 w-5 h-5 rounded-full border-4 transition-colors ${milestone.status === 'completed' ? 'border-emerald-600 bg-emerald-600' : 'border-neutral-200 bg-white'}`}></div>
+
+                            <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 group-hover:border-neutral-300 transition-all space-y-2.5">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex flex-col gap-0.5 opacity-40 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            type="button"
+                                            disabled={idx === 0}
+                                            onClick={() => handleMoveMilestone(idx, 'up')}
+                                            className="text-neutral-400 hover:text-neutral-900 disabled:opacity-20 p-0.5"
+                                            title="Move Up"
+                                        >
+                                            <ArrowUp className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={idx === milestonesState.length - 1}
+                                            onClick={() => handleMoveMilestone(idx, 'down')}
+                                            className="text-neutral-400 hover:text-neutral-900 disabled:opacity-20 p-0.5"
+                                            title="Move Down"
+                                        >
+                                            <ArrowDown className="w-3 h-3" />
+                                        </button>
+                                    </div>
+
+                                    <Input
+                                        type="text"
+                                        value={milestone.name}
+                                        onChange={(e) => handleUpdateMilestoneName(idx, e.target.value)}
+                                        className={`h-9 text-xs font-extrabold bg-transparent border-neutral-200 focus:bg-white px-3 rounded-xl ${milestone.status === 'completed' ? 'line-through text-neutral-400' : 'text-neutral-900'}`}
+                                    />
+
+                                    <Checkbox
+                                        checked={milestone.status === 'completed'}
+                                        onCheckedChange={() => handleToggleMilestone(idx)}
+                                        className="rounded-full data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 shrink-0"
+                                        title={milestone.status === 'completed' ? 'Mark Pending' : 'Mark Completed'}
+                                    />
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDeleteMilestone(idx)}
+                                        className="text-neutral-300 hover:text-red-600 p-1 transition-colors shrink-0"
+                                        title="Delete Milestone"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center gap-2 pt-1 border-t border-neutral-200/50">
+                                    <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+                                    <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">Target Date:</span>
+                                    <input
+                                        type="date"
+                                        className="bg-white border border-neutral-200 rounded-lg px-2.5 py-1 text-[10px] font-bold text-neutral-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                        value={milestone.due_date || ''}
+                                        onChange={(e) => handleUpdateMilestoneDate(idx, e.target.value)}
+                                    />
+                                </div>
                             </div>
                         </div>
+                    ))}
+
+                    {milestonesState.length === 0 && (
+                        <p className="text-xs text-neutral-400 italic text-center py-4">No milestones defined yet. Add custom milestones above.</p>
+                    )}
+                </div>
+            </Card>
+
+            {/* 2. MIDDLE SECTION: SITE SURVEY & QUOTATION */}
+            {surveyReq ? (
+                <div className="space-y-6">
+                    {/* Survey Invitation Status Header */}
+                    <div className="bg-neutral-900 text-white rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+                        <div className="flex justify-between items-start flex-wrap gap-3">
+                            <div>
+                                <Badge className="bg-emerald-600 text-white uppercase tracking-widest text-[9px] font-black px-3 py-1 mb-2">
+                                    Survey Request
+                                </Badge>
+                                <h2 className="text-xl font-black italic uppercase text-white tracking-tight">
+                                    Site Survey & Quoting
+                                </h2>
+                                <p className="text-xs text-neutral-400 font-bold mt-2 flex items-center gap-1.5">
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    Scheduled: {surveyReq.schedule?.date} @ {surveyReq.schedule?.time}
+                                </p>
+                            </div>
+                            <Badge className={`text-[10px] font-black uppercase px-4 py-1.5 border-none ${
+                                surveyReq.status === 'accepted' ? 'bg-emerald-600 text-white' :
+                                surveyReq.status === 'declined' ? 'bg-red-600 text-white' :
+                                'bg-amber-600 text-white'
+                            }`}>
+                                {surveyReq.status}
+                            </Badge>
+                        </div>
+
+                        {/* Pending Accept/Decline */}
+                        {surveyReq.status === 'pending' && (
+                            <div className="space-y-4 bg-neutral-800/50 rounded-2xl p-6">
+                                <p className="text-neutral-300 text-sm leading-relaxed font-medium">
+                                    You have been invited to perform an on-site survey. Please confirm your availability for the scheduled date and time above.
+                                </p>
+                                <div className="flex gap-3">
+                                    <Button
+                                        onClick={() => respondToSurvey(true)}
+                                        className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs rounded-xl"
+                                    >
+                                        <CheckCircle2 className="w-4 h-4 mr-2" /> Accept Survey
+                                    </Button>
+                                    <Button
+                                        onClick={() => respondToSurvey(false)}
+                                        variant="outline"
+                                        className="flex-1 h-12 border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white font-black uppercase tracking-widest text-xs rounded-xl"
+                                    >
+                                        <XCircle className="w-4 h-4 mr-2" /> Decline
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* READ-ONLY SUBMITTED QUOTE VIEW (WHEN SUBMITTED AND NOT EDITING) */}
+                    {surveyReq.status === 'accepted' && hasSubmittedQuote && !isEditingQuote && (
+                        <Card className="bg-neutral-900 text-white rounded-3xl p-6 md:p-8 shadow-xl space-y-6 border border-neutral-800">
+                            <div className="flex justify-between items-start flex-wrap gap-4 pb-6 border-b border-neutral-800">
+                                <div>
+                                    <Badge className="bg-emerald-600 text-white uppercase tracking-widest text-[9px] font-black px-3 py-1 mb-2">
+                                        SUBMITTED QUOTE
+                                    </Badge>
+                                    <h3 className="text-xl font-black italic uppercase text-white tracking-tight">
+                                        Submitted Price Quotation
+                                    </h3>
+                                    <p className="text-xs text-neutral-400 font-bold mt-1">
+                                        Submitted on {surveyReq.quote.date ? format(new Date(surveyReq.quote.date), 'MMM d, yyyy @ h:mm a') : '-'}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest block">TOTAL SUBMITTED BID</span>
+                                    <span className="text-3xl font-black text-emerald-400 mt-0.5 block">৳{surveyReq.quote.amount?.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            {/* Clean Read-Only Line Items Table */}
+                            {surveyReq.quote.line_items?.length > 0 && (
+                                <div className="space-y-2">
+                                    <p className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">Submitted Line Items Breakdown</p>
+                                    <div className="bg-neutral-950 rounded-2xl overflow-hidden border border-neutral-800">
+                                        <table className="w-full text-xs text-left">
+                                            <thead>
+                                                <tr className="border-b border-neutral-800 text-[9px] font-black text-neutral-500 uppercase">
+                                                    <th className="p-3.5">Description</th>
+                                                    <th className="p-3.5 text-center">Unit</th>
+                                                    <th className="p-3.5 text-right">Qty</th>
+                                                    <th className="p-3.5 text-right">Rate</th>
+                                                    <th className="p-3.5 text-right">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {surveyReq.quote.line_items.map((item: any, i: number) => (
+                                                    <tr key={i} className="border-b border-neutral-800/60 last:border-0 font-medium text-neutral-300">
+                                                        <td className="p-3.5 font-semibold text-white">{item.description}</td>
+                                                        <td className="p-3.5 text-center text-neutral-400">{item.unit || 'sft'}</td>
+                                                        <td className="p-3.5 text-right text-neutral-400">{item.quantity}</td>
+                                                        <td className="p-3.5 text-right text-neutral-400">৳{Number(item.unitPrice || 0).toLocaleString()}</td>
+                                                        <td className="p-3.5 text-right font-black text-emerald-400">৳{(Number(item.quantity||0)*Number(item.unitPrice||0)).toLocaleString()}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Remarks */}
+                            {surveyReq.quote.notes && (
+                                <div className="bg-neutral-800/50 p-4 rounded-2xl text-xs text-neutral-300 leading-relaxed">
+                                    <span className="text-[9px] font-black text-neutral-500 uppercase block mb-1">Additional Notes / Remarks</span>
+                                    {surveyReq.quote.notes}
+                                </div>
+                            )}
+
+                            {/* Download PDF Document if attached */}
+                            {surveyReq.quote.file_url && (
+                                <a
+                                    href={surveyReq.quote.file_url.startsWith('http') ? surveyReq.quote.file_url : '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download
+                                    className="flex items-center gap-2 bg-blue-600/20 border border-blue-600/30 rounded-xl px-4 py-3 text-blue-300 font-bold text-xs hover:bg-blue-600/30 transition-colors w-fit"
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    Download Attached BOQ Document ({surveyReq.quote.file_url.split('/').pop() || 'BOQ.pdf'})
+                                </a>
+                            )}
+
+                            {/* Edit Quote Toggle Button */}
+                            <div className="pt-4 border-t border-neutral-800 flex justify-end">
+                                <Button
+                                    onClick={() => setIsEditingQuote(true)}
+                                    variant="outline"
+                                    className="border-neutral-700 bg-neutral-800 text-neutral-200 hover:bg-neutral-700 hover:text-white font-bold text-xs rounded-xl flex items-center gap-2"
+                                >
+                                    <Edit3 className="w-3.5 h-3.5" /> Edit / Revise Quote
+                                </Button>
+                            </div>
+                        </Card>
                     )}
 
-                    {/* Accepted: Quote Builder */}
-                    {surveyReq.status === 'accepted' && (
-                        <div className="space-y-6 pt-4 border-t border-neutral-800">
-                            <div className="flex justify-between items-center">
+                    {/* EDITABLE QUOTE FORM (WHEN NEW OR WHEN EDITING) */}
+                    {surveyReq.status === 'accepted' && (!hasSubmittedQuote || isEditingQuote) && (
+                        <Card className="bg-neutral-900 text-white rounded-3xl p-6 md:p-8 shadow-xl space-y-6 border border-neutral-800">
+                            <div className="flex justify-between items-center pb-4 border-b border-neutral-800">
                                 <div>
                                     <h3 className="text-sm font-black text-blue-400 uppercase tracking-widest">
-                                        {hasSubmittedQuote ? '✓ Quote Submitted — Update Below' : 'Create Your Quote'}
+                                        {hasSubmittedQuote ? 'Edit & Revise Quote' : 'Create Your Quote'}
                                     </h3>
-                                    <p className="text-neutral-400 text-xs mt-1 leading-relaxed">
-                                        Build your own quote with line items. You can also upload your quote document. Both will be sent to the admin.
+                                    <p className="text-neutral-400 text-xs mt-1">
+                                        Build line items and upload quote document for admin review.
                                     </p>
                                 </div>
                                 {hasSubmittedQuote && (
-                                    <Badge className="bg-emerald-800 text-emerald-200 text-[9px] font-black uppercase px-3 py-1">
-                                        Submitted ৳{surveyReq.quote.amount?.toLocaleString()}
-                                    </Badge>
+                                    <Button
+                                        onClick={() => setIsEditingQuote(false)}
+                                        variant="ghost"
+                                        className="text-neutral-400 hover:text-white text-xs font-bold"
+                                    >
+                                        Cancel Editing
+                                    </Button>
                                 )}
                             </div>
 
@@ -357,7 +662,7 @@ export default function DesignerSurveyDetailPage() {
                                             <input
                                                 value={item.description}
                                                 onChange={e => updateLineItem(idx, 'description', e.target.value)}
-                                                placeholder="e.g. Floor Plan Drawing"
+                                                placeholder="e.g. False Ceiling Work"
                                                 className="w-full bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold rounded-lg h-9 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                             />
                                         </div>
@@ -461,12 +766,6 @@ export default function DesignerSurveyDetailPage() {
                                 {uploading && (
                                     <p className="text-xs text-blue-400 font-bold">Uploading...</p>
                                 )}
-                                {uploadedFileUrl && uploadedFileUrl.startsWith('http') && (
-                                    <a href={uploadedFileUrl} target="_blank" rel="noopener noreferrer"
-                                        className="flex items-center gap-2 text-xs text-blue-400 font-bold hover:underline">
-                                        <FileText className="w-3.5 h-3.5" /> View Uploaded Document ↗
-                                    </a>
-                                )}
                             </div>
 
                             {/* Submit Button */}
@@ -478,13 +777,7 @@ export default function DesignerSurveyDetailPage() {
                                 <Send className="w-4 h-4" />
                                 {submitting ? 'Submitting...' : hasSubmittedQuote ? 'Update & Resubmit Quote' : 'Submit Quote to Admin'}
                             </Button>
-                        </div>
-                    )}
-
-                    {surveyReq.status === 'declined' && (
-                        <div className="p-4 bg-red-950/40 border border-red-900 rounded-xl text-sm text-red-400 font-bold text-center">
-                            You have declined this survey request.
-                        </div>
+                        </Card>
                     )}
                 </div>
             ) : (
@@ -493,67 +786,31 @@ export default function DesignerSurveyDetailPage() {
                 </div>
             )}
 
-            {/* Bottom Grid: Milestones + Requirements */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Milestones */}
-                <div className="space-y-4">
-                    <h2 className="text-lg font-black text-neutral-900 tracking-tight uppercase flex items-center gap-2">
-                        <Flag className="w-5 h-5 text-neutral-400" /> Milestone Tracker
-                    </h2>
-                    {milestones.length === 0 ? (
-                        <p className="text-neutral-400 italic text-sm">No milestones set by admin yet.</p>
-                    ) : (
-                        <div className="space-y-3">
-                            {milestones.map((milestone: any, idx: number) => {
-                                const isCompleted = milestone.status === 'completed';
-                                return (
-                                    <Card key={idx} className={`p-5 border-none bg-neutral-50 rounded-2xl ${isCompleted ? 'opacity-50' : ''}`}>
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <h3 className="font-black text-neutral-900">{milestone.name}</h3>
-                                                {milestone.due_date && (
-                                                    <p className="text-xs font-bold text-neutral-400 flex items-center gap-1 mt-1">
-                                                        <Calendar className="w-3 h-3" /> Due: {new Date(milestone.due_date).toLocaleDateString()}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <Badge className={isCompleted ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}>
-                                                {milestone.status}
-                                            </Badge>
-                                        </div>
-                                    </Card>
-                                );
-                            })}
-                        </div>
-                    )}
+            {/* 3. BOTTOM SECTION: PROJECT REQUIREMENTS */}
+            <Card className="p-6 md:p-8 border border-neutral-200 bg-white rounded-3xl space-y-4">
+                <h3 className="text-sm font-black text-neutral-900 uppercase tracking-widest flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4 text-primary-600" /> Project Requirements & Specs
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.entries(details).filter(([key]) => key !== 'survey_requests').map(([key, value]) => {
+                        const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+                        let displayValue: any = value;
+                        if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
+                        if (Array.isArray(value)) displayValue = value.join(', ');
+                        if (value && typeof value === 'object' && !Array.isArray(value)) {
+                            displayValue = Object.entries(value as object).map(([k, v]) => `${k}: ${v}`).join(' | ');
+                        }
+                        if (!value) displayValue = '-';
+
+                        return (
+                            <div key={key} className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 flex flex-col">
+                                <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">{formattedKey}</span>
+                                <span className="font-bold text-neutral-900 text-xs mt-1 break-words">{String(displayValue)}</span>
+                            </div>
+                        );
+                    })}
                 </div>
-
-                {/* Requirements */}
-                <Card className="p-6 border-none bg-neutral-50 rounded-2xl h-fit">
-                    <h3 className="text-sm font-black text-neutral-900 uppercase tracking-widest mb-5 flex items-center gap-2">
-                        <ClipboardList className="w-4 h-4" /> Project Requirements
-                    </h3>
-                    <div className="space-y-2">
-                        {Object.entries(details).filter(([key]) => key !== 'survey_requests').map(([key, value]) => {
-                            const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
-                            let displayValue: any = value;
-                            if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
-                            if (Array.isArray(value)) displayValue = value.join(', ');
-                            if (value && typeof value === 'object' && !Array.isArray(value)) {
-                                displayValue = Object.entries(value as object).map(([k, v]) => `${k}: ${v}`).join(' | ');
-                            }
-                            if (!value) displayValue = '-';
-
-                            return (
-                                <div key={key} className="flex justify-between py-2.5 border-b border-neutral-200 last:border-0 gap-4">
-                                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest shrink-0">{formattedKey}</span>
-                                    <span className="font-bold text-neutral-900 text-right text-xs">{String(displayValue)}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </Card>
-            </div>
+            </Card>
         </div>
     );
 }
