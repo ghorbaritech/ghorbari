@@ -75,7 +75,7 @@ export default function OrdersPage() {
                 number: d.id.slice(0, 8).toUpperCase(),
                 date: d.created_at,
                 status: d.status,
-                // amount: d.details?.budget, // Optional: if budget is available
+                amount: d.agreed_amount || ((d.quotation_history || []).filter((o: any) => o.role === 'admin').pop()?.amount),
                 title: `${d.service_type} Design`,
                 link: `/dashboard/customer/design/${d.id}`
             }))

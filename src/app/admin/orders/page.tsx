@@ -92,6 +92,9 @@ export default function AdminOrdersPage() {
 
                 normalizedDesignBookings = bookings.map((b: any) => {
                     const profile = profiles?.find((p: any) => p.id === b.user_id);
+                    const lastAdminOffer = (b.quotation_history || []).filter((o: any) => o.role === 'admin').pop();
+                    const acceptedOrQuotedAmount = b.agreed_amount || lastAdminOffer?.amount;
+
                     return {
                         id: b.id,
                         type: 'design',
@@ -101,7 +104,7 @@ export default function AdminOrdersPage() {
                         customer_email: profile?.email || 'N/A',
                         status: b.status,
                         created_at: b.created_at,
-                        total_amount: 'Pending',
+                        total_amount: acceptedOrQuotedAmount ? acceptedOrQuotedAmount : 'Pending',
                         service_type: b.service_type,
                         details: b.details
                     };
