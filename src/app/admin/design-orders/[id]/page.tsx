@@ -353,6 +353,35 @@ export default function DesignOrderDetailPage() {
         }
     }
 
+    const [showQuoteForm, setShowQuoteForm] = useState(false);
+
+    function importPartnerQuote(partnerReq: any) {
+        if (!partnerReq || !partnerReq.quote) return;
+        const pQuote = partnerReq.quote;
+        setProposalType('detailed');
+        if (pQuote.line_items && pQuote.line_items.length > 0) {
+            setLineItems(pQuote.line_items.map((li: any) => ({
+                description: li.description || "",
+                unit: li.unit || "sft",
+                quantity: Number(li.quantity || 1),
+                unitPrice: Number(li.unitPrice || 0),
+                total: Number(li.total || (Number(li.quantity || 1) * Number(li.unitPrice || 0)))
+            })));
+        } else {
+            setLineItems([{
+                description: `Work proposal from ${partnerReq.partner_name || 'Partner'}`,
+                unit: 'item',
+                quantity: 1,
+                unitPrice: Number(pQuote.amount || 0),
+                total: Number(pQuote.amount || 0)
+            }]);
+        }
+        if (pQuote.notes) setQuoteNote(pQuote.notes);
+        if (pQuote.file_url) setQuoteFileUrl(pQuote.file_url);
+        setShowQuoteForm(true);
+        alert(`Partner quote from ${partnerReq.partner_name} (৳${Number(pQuote.amount).toLocaleString()}) imported into Quote Builder below!`);
+    }
+
     async function publishComparisonQuotation() {
         if (lineItems.length === 0 || !lineItems[0].description) {
             alert("Please add at least one line item in the Detailed Proposal tab first.");
@@ -400,17 +429,28 @@ export default function DesignOrderDetailPage() {
         };
 
         const updatedHistory = [...(booking.quotation_history || []), newOffer];
+        const newStatus = ['in_progress', 'assigned', 'completed'].includes(booking.status) ? booking.status : 'quotation';
 
         const { error } = await supabase
             .from('design_bookings')
             .update({
                 quotation_history: updatedHistory,
-                status: 'quotation'
+                status: newStatus
             })
             .eq('id', id);
 
         if (!error) {
-            setBooking({ ...booking, quotation_history: updatedHistory, status: 'quotation' });
+            setBooking({ ...booking, quotation_history: updatedHistory, status: newStatus });
+            setShowQuoteForm(false);
+            if (booking.user_id) {
+                await supabase.from('notifications').insert({
+                    user_id: booking.user_id,
+                    title: 'Comparison Price Proposal Issued',
+                    message: `Dalan Kotha Admin has issued a comparison price quotation for your project. Please review and accept.`,
+                    link: `/dashboard/customer/design/${id}`,
+                    is_read: false
+                });
+            }
             alert("Comparison quotation published to customer!");
         } else {
             alert("Failed to publish comparison quotation: " + error.message);
@@ -493,21 +533,36 @@ export default function DesignOrderDetailPage() {
         };
 
         const updatedHistory = [...(booking.quotation_history || []), newOffer];
+        const newStatus = ['in_progress', 'assigned', 'completed'].includes(booking.status) ? booking.status : 'quotation';
 
         const { error } = await supabase
             .from('design_bookings')
             .update({
                 quotation_history: updatedHistory,
-                status: 'quotation'
+                status: newStatus
             })
             .eq('id', id);
 
         if (!error) {
-            setBooking({ ...booking, quotation_history: updatedHistory, status: 'quotation' });
+            setBooking({ ...booking, quotation_history: updatedHistory, status: newStatus });
             setQuoteAmount("");
             setQuoteNote("");
             setLineItems([{ description: "", unit: "sft", quantity: 1, unitPrice: 0, total: 0 }]);
-            alert("Quote sent successfully!");
+            setShowQuoteForm(false);
+
+            if (booking.user_id) {
+                await supabase.from('notifications').insert({
+                    user_id: booking.user_id,
+                    title: booking.status === 'in_progress' ? 'Revised Price Proposal Issued' : 'New Price Proposal Received',
+                    message: `Dalan Kotha Admin has issued a ${booking.status === 'in_progress' ? 'revised ' : ''}price quotation of ৳${finalAmount.toLocaleString()} for your project. Please review and accept.`,
+                    link: `/dashboard/customer/design/${id}`,
+                    is_read: false
+                });
+            }
+
+            alert("Price proposal sent to customer successfully!");
+        } else {
+            alert("Failed to send quotation: " + error.message);
         }
     }
 
@@ -684,69 +739,137 @@ export default function DesignOrderDetailPage() {
                     <div className="lg:col-span-2 space-y-8">
 
                         {/* Negotiation Panel */}
-                        {(booking.status === 'verified' || booking.status === 'quotation') && (
-                            <Card className="p-6 border-2 border-primary-50 bg-primary-50/20 rounded-3xl">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <DollarSign className="w-5 h-5 text-primary-600" />
-                                    <h3 className="text-lg font-black text-neutral-900 uppercase tracking-tight">Price Negotiation</h3>
+                        {(booking.status === 'verified' || booking.status === 'quotation' || booking.status === 'in_progress' || booking.status === 'assigned') && (
+                            <Card className="p-6 border-2 border-primary-50 bg-primary-50/20 rounded-3xl space-y-6">
+                                <div className="flex justify-between items-center flex-wrap gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <DollarSign className="w-5 h-5 text-primary-600" />
+                                        <h3 className="text-lg font-black text-neutral-900 uppercase tracking-tight">Price Negotiation & Quotation</h3>
+                                    </div>
+                                    {lastOffer?.role === 'admin' && (
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            onClick={() => setShowQuoteForm(!showQuoteForm)}
+                                            className="h-9 px-4 bg-primary-600 hover:bg-primary-700 text-white font-black text-xs uppercase tracking-wider rounded-xl"
+                                        >
+                                            {showQuoteForm ? 'Hide Form' : '+ Issue / Revise Quotation'}
+                                        </Button>
+                                    )}
                                 </div>
 
-                                {booking.quotation_history?.length > 0 && (
-                                    <div className="mb-6 space-y-4">
-                                        {booking.quotation_history.map((offer: any, idx: number) => (
-                                            <div key={idx} className={`flex ${offer.role === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`max-w-[80%] p-4 rounded-2xl ${offer.role === 'admin' ? 'bg-neutral-900 text-white rounded-tr-none' : 'bg-white border rounded-tl-none'}`}>
-                                                    <p className="text-xs font-bold uppercase tracking-widest mb-1 opacity-70">{offer.role === 'admin' ? 'You' : 'Customer'}</p>
-                                                    <p className="text-xl font-black flex items-center gap-1">
-                                                        ৳{offer.amount.toLocaleString()}
-                                                    </p>
-                                                    {offer.notes && <p className="text-sm mt-2 opacity-90">{offer.notes}</p>}
-                                                    {offer.role === 'admin' && (
-                                                        <Button
-                                                            type="button"
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => {
-                                                                setSelectedInvoiceOffer(offer);
-                                                                setIsInvoiceOpen(true);
-                                                            }}
-                                                            className="mt-3 h-8 text-[9px] font-black uppercase tracking-widest border-neutral-700 bg-neutral-800 text-white hover:bg-neutral-700 hover:text-white"
-                                                        >
-                                                            📄 View Proposal Invoice
-                                                        </Button>
-                                                    )}
-                                                    <p className="text-[10px] mt-2 opacity-50 text-right">{format(new Date(offer.date), 'MMM d, h:mm a')}</p>
-                                                </div>
+                                {/* Partner Quotation Review Alert */}
+                                {(() => {
+                                    const surveyRequestsWithQuote = (booking.details?.survey_requests || []).filter((r: any) => r.quote);
+                                    if (surveyRequestsWithQuote.length === 0) return null;
+
+                                    return (
+                                        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <Badge className="bg-amber-600 text-white font-black uppercase text-[9px] px-2.5 py-0.5">Partner Quote Submitted / Updated</Badge>
+                                                <span className="text-xs font-bold text-amber-900">Partner Submitted Proposals</span>
                                             </div>
-                                        ))}
+                                            <div className="space-y-2">
+                                                {surveyRequestsWithQuote.map((r: any, idx: number) => (
+                                                    <div key={idx} className="flex justify-between items-center bg-white p-3.5 rounded-xl border border-amber-100 flex-wrap gap-2">
+                                                        <div>
+                                                            <span className="font-extrabold text-xs text-neutral-900">{r.partner_name}</span>
+                                                            <span className="text-xs font-black text-emerald-600 ml-2">৳{r.quote.amount?.toLocaleString()}</span>
+                                                            <p className="text-[9px] text-neutral-400 font-semibold mt-0.5">Submitted: {r.quote.date ? format(new Date(r.quote.date), 'MMM d, yyyy h:mm a') : '-'}</p>
+                                                        </div>
+                                                        <Button
+                                                            size="sm"
+                                                            type="button"
+                                                            onClick={() => importPartnerQuote(r)}
+                                                            className="h-8 bg-neutral-900 hover:bg-neutral-800 text-white text-[10px] font-black uppercase tracking-wider rounded-lg"
+                                                        >
+                                                            Import & Create Customer Quote
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* Quotation History Log */}
+                                {booking.quotation_history?.length > 0 && (
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Proposal History</p>
+                                        <div className="space-y-3">
+                                            {booking.quotation_history.map((offer: any, idx: number) => (
+                                                <div key={idx} className={`flex ${offer.role === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`max-w-[80%] p-4 rounded-2xl ${offer.role === 'admin' ? 'bg-neutral-900 text-white rounded-tr-none' : 'bg-white border rounded-tl-none'}`}>
+                                                        <div className="flex justify-between items-center gap-4 mb-1">
+                                                            <p className="text-xs font-bold uppercase tracking-widest opacity-70">
+                                                                {offer.role === 'admin' ? 'Dalan Kotha Admin' : 'Customer'}
+                                                            </p>
+                                                            {offer.action === 'accepted' && (
+                                                                <Badge className="bg-emerald-600 text-white text-[8px] font-black uppercase border-none">Accepted</Badge>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xl font-black flex items-center gap-1">
+                                                            ৳{offer.amount?.toLocaleString()}
+                                                        </p>
+                                                        {offer.notes && <p className="text-sm mt-2 opacity-90">{offer.notes}</p>}
+                                                        {offer.role === 'admin' && (
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => {
+                                                                    setSelectedInvoiceOffer(offer);
+                                                                    setIsInvoiceOpen(true);
+                                                                }}
+                                                                className="mt-3 h-8 text-[9px] font-black uppercase tracking-widest border-neutral-700 bg-neutral-800 text-white hover:bg-neutral-700 hover:text-white"
+                                                            >
+                                                                📄 View Proposal Invoice
+                                                            </Button>
+                                                        )}
+                                                        <p className="text-[10px] mt-2 opacity-50 text-right">{offer.date ? format(new Date(offer.date), 'MMM d, h:mm a') : '-'}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 
-                                {/* Action Area */}
-                                {(!lastOffer || lastOffer.role === 'customer' || booking.status === 'verified') && (
+                                {/* Quote Builder Form */}
+                                {(!lastOffer || lastOffer.role === 'customer' || booking.status === 'verified' || showQuoteForm) && (
                                     <div className="bg-white p-6 rounded-2xl border border-neutral-200 space-y-4">
-                                        <div className="flex gap-4 border-b border-neutral-100 pb-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => setProposalType('simple')}
-                                                className={`text-xs font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${proposalType === 'simple' ? 'border-primary-600 text-neutral-800' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
-                                            >
-                                                Simple Quote
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setProposalType('detailed')}
-                                                className={`text-xs font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${proposalType === 'detailed' ? 'border-primary-600 text-neutral-800' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
-                                            >
-                                                Detailed Proposal
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setProposalType('comparison')}
-                                                className={`text-xs font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${proposalType === 'comparison' ? 'border-blue-600 text-neutral-800' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
-                                            >
-                                                Partner Quotes
-                                            </button>
+                                        <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
+                                            <div className="flex gap-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setProposalType('simple')}
+                                                    className={`text-xs font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${proposalType === 'simple' ? 'border-primary-600 text-neutral-800' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
+                                                >
+                                                    Simple Quote
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setProposalType('detailed')}
+                                                    className={`text-xs font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${proposalType === 'detailed' ? 'border-primary-600 text-neutral-800' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
+                                                >
+                                                    Detailed Proposal
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setProposalType('comparison')}
+                                                    className={`text-xs font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${proposalType === 'comparison' ? 'border-blue-600 text-neutral-800' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
+                                                >
+                                                    Partner Quotes
+                                                </button>
+                                            </div>
+                                            {lastOffer?.role === 'admin' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowQuoteForm(false)}
+                                                    className="text-neutral-400 hover:text-neutral-700 text-xs font-bold"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            )}
                                         </div>
 
                                         {proposalType === 'simple' ? (
@@ -765,7 +888,6 @@ export default function DesignOrderDetailPage() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                {/* File Upload for Simple Quote */}
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Attach Quote Document (Optional)</Label>
                                                     <div
@@ -788,7 +910,6 @@ export default function DesignOrderDetailPage() {
                                                 </div>
                                             </div>
                                         ) : proposalType === 'comparison' ? (
-                                            /* Partner Quote Comparison Tab */
                                             <div className="space-y-4">
                                                 <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">All Partner Submitted Quotes</p>
                                                 {(booking.details?.survey_requests || []).filter((r: any) => r.quote).length === 0 ? (
@@ -800,8 +921,7 @@ export default function DesignOrderDetailPage() {
                                                     <div className="space-y-4">
                                                         {(booking.details?.survey_requests || []).filter((r: any) => r.quote).map((r: any, idx: number) => (
                                                             <div key={idx} className="bg-neutral-900 text-white rounded-2xl p-5 space-y-4">
-                                                                {/* Partner Header */}
-                                                                <div className="flex justify-between items-start">
+                                                                <div className="flex justify-between items-start flex-wrap gap-2">
                                                                     <div>
                                                                         <p className="font-black text-sm text-white">{r.partner_name}</p>
                                                                         <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-widest mt-0.5">
@@ -814,7 +934,6 @@ export default function DesignOrderDetailPage() {
                                                                     </div>
                                                                 </div>
 
-                                                                {/* Line Items */}
                                                                 {r.quote.line_items?.length > 0 && (
                                                                     <div className="space-y-2">
                                                                         <p className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">Line Items</p>
@@ -845,7 +964,6 @@ export default function DesignOrderDetailPage() {
                                                                     </div>
                                                                 )}
 
-                                                                {/* Notes */}
                                                                 {r.quote.notes && (
                                                                     <div className="bg-neutral-800/50 rounded-xl p-3">
                                                                         <p className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1">Notes</p>
@@ -853,27 +971,28 @@ export default function DesignOrderDetailPage() {
                                                                     </div>
                                                                 )}
 
-                                                                {/* PDF Attachment */}
-                                                                {r.quote.file_url && (
-                                                                    <a
-                                                                        href={r.quote.file_url.startsWith('http') ? r.quote.file_url : '#'}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        download
-                                                                        className="flex items-center gap-2 bg-blue-600/20 border border-blue-600/30 rounded-xl px-4 py-3 text-blue-300 font-bold text-xs hover:bg-blue-600/30 transition-colors"
-                                                                    >
-                                                                        <Download className="w-4 h-4" />
-                                                                        Download Quote Document
-                                                                        {!r.quote.file_url.startsWith('http') && (
-                                                                            <span className="text-[9px] text-blue-400 ml-1">{r.quote.file_url}</span>
-                                                                        )}
-                                                                    </a>
-                                                                )}
+                                                                <div className="flex justify-between items-center pt-2 flex-wrap gap-2">
+                                                                    {r.quote.file_url ? (
+                                                                        <a
+                                                                            href={r.quote.file_url.startsWith('http') ? r.quote.file_url : '#'}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            download
+                                                                            className="flex items-center gap-2 bg-blue-600/20 border border-blue-600/30 rounded-xl px-4 py-2 text-blue-300 font-bold text-xs hover:bg-blue-600/30 transition-colors"
+                                                                        >
+                                                                            <Download className="w-4 h-4" /> Download BOQ
+                                                                        </a>
+                                                                    ) : <div></div>}
 
-                                                                {/* Submitted date */}
-                                                                <p className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest text-right">
-                                                                    Submitted: {r.quote.date ? format(new Date(r.quote.date), 'MMM d, yyyy h:mm a') : '-'}
-                                                                </p>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        type="button"
+                                                                        onClick={() => importPartnerQuote(r)}
+                                                                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl"
+                                                                    >
+                                                                        Import & Create Customer Quote
+                                                                    </Button>
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -975,12 +1094,6 @@ export default function DesignOrderDetailPage() {
                                                 Send Quote
                                             </Button>
                                         </div>
-                                    </div>
-                                )}
-
-                                {lastOffer?.role === 'admin' && (
-                                    <div className="text-center py-4 bg-white/50 rounded-2xl border border-dashed text-neutral-400 font-bold text-sm">
-                                        Waiting for customer response...
                                     </div>
                                 )}
                             </Card>

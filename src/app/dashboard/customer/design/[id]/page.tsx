@@ -94,20 +94,62 @@ export default function CustomerDesignOrderDetailPage() {
     }
 
     async function acceptOffer() {
-        const lastOffer = booking.quotation_history[booking.quotation_history.length - 1];
-        if (!lastOffer) return;
+        const lastAdminOffer = (booking.quotation_history || []).filter((o: any) => o.role === 'admin').pop();
+        if (!lastAdminOffer) return;
+
+        const acceptanceOffer = {
+            role: 'customer',
+            action: 'accepted',
+            amount: lastAdminOffer.amount,
+            date: new Date().toISOString()
+        };
+
+        const updatedHistory = [...(booking.quotation_history || []), acceptanceOffer];
 
         const { error } = await supabase
             .from('design_bookings')
             .update({
                 status: 'in_progress',
-                agreed_amount: lastOffer.amount
+                agreed_amount: lastAdminOffer.amount,
+                quotation_history: updatedHistory
             })
             .eq('id', id);
 
         if (!error) {
-            setBooking({ ...booking, status: 'in_progress', agreed_amount: lastOffer.amount });
-            alert("Offer accepted! Project is now in progress.");
+            setBooking({
+                ...booking,
+                status: 'in_progress',
+                agreed_amount: lastAdminOffer.amount,
+                quotation_history: updatedHistory
+            });
+            alert(`Price proposal of ৳${lastAdminOffer.amount.toLocaleString()} accepted! Contract amount updated.`);
+
+            // Send notification to Admin Users
+            const { data: adminProfiles } = await supabase.from('profiles').select('id').eq('role', 'admin');
+            if (adminProfiles?.length) {
+                const adminNotifs = adminProfiles.map((adm: any) => ({
+                    user_id: adm.id,
+                    title: 'Price Proposal Accepted by Customer',
+                    message: `Customer accepted the price quote of ৳${lastAdminOffer.amount.toLocaleString()} for project #${(id as string).slice(0, 8)}.`,
+                    link: `/admin/design-orders/${id}`,
+                    is_read: false
+                }));
+                await supabase.from('notifications').insert(adminNotifs);
+            }
+
+            // Send notification to assigned partner if present
+            const partnerUserId = booking.designers?.user_id || booking.sellers?.user_id;
+            if (partnerUserId) {
+                await supabase.from('notifications').insert({
+                    user_id: partnerUserId,
+                    title: 'Customer Accepted Project Proposal',
+                    message: `Customer accepted the project quotation of ৳${lastAdminOffer.amount.toLocaleString()}.`,
+                    link: `/dashboard/partner/design/${id}`,
+                    is_read: false
+                });
+            }
+        } else {
+            alert("Failed to accept offer: " + error.message);
         }
     }
 
@@ -141,6 +183,9 @@ export default function CustomerDesignOrderDetailPage() {
     const adminOffers = (booking.quotation_history || []).filter((o: any) => o.role === 'admin' || o.role === 'customer');
     const lastAdminOffer = (booking.quotation_history || []).filter((o: any) => o.role === 'admin').pop();
     const lastOffer = booking.quotation_history?.length > 0 ? booking.quotation_history[booking.quotation_history.length - 1] : null;
+
+    const isPendingCustomerApproval = lastOffer?.role === 'admin' && (booking.status === 'quotation' || lastOffer?.amount !== booking.agreed_amount);
+    const isRevision = booking.status === 'in_progress' || (booking.agreed_amount && lastOffer?.role === 'admin' && lastOffer?.amount !== booking.agreed_amount);
 
     // Order Progress Stage Determination
     const hasSurvey = surveyRequests.length > 0;
@@ -313,6 +358,18 @@ export default function CustomerDesignOrderDetailPage() {
                             {/* If Admin has sent an official quote (lastAdminOffer or lastOffer) */}
                             {lastAdminOffer ? (
                                 <div className="space-y-6">
+                                    {isPendingCustomerApproval && isRevision && (
+                                        <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-amber-900 flex items-start gap-3">
+                                            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                                            <div>
+                                                <h4 className="text-xs font-black uppercase tracking-wider text-amber-900">Revised Proposal Awaiting Your Approval</h4>
+                                                <p className="text-xs font-medium text-amber-700 mt-1">
+                                                    Dalan Kotha Management has issued an updated price quotation for your project. Please review the revised scope and price breakdown below and accept to update your contract.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="bg-neutral-900 text-white p-6 md:p-8 rounded-3xl space-y-6 shadow-xl border border-neutral-800">
                                         {/* Invoice Header */}
                                         <div className="flex justify-between items-start pb-6 border-b border-neutral-800">
@@ -385,13 +442,13 @@ export default function CustomerDesignOrderDetailPage() {
                                     </div>
 
                                     {/* Action Buttons for Customer if Quotation Pending */}
-                                    {booking.status === 'quotation' && (
+                                    {isPendingCustomerApproval && (
                                         <div className="space-y-6 pt-2">
                                             <Button
                                                 onClick={acceptOffer}
                                                 className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2"
                                             >
-                                                <Check className="w-4 h-4" /> Accept Proposal & Start Execution (৳{lastAdminOffer.amount?.toLocaleString()})
+                                                <Check className="w-4 h-4" /> {isRevision ? 'Accept Revised Proposal & Update Contract' : 'Accept Proposal & Start Execution'} (৳{lastAdminOffer.amount?.toLocaleString()})
                                             </Button>
 
                                             <div className="space-y-3 p-5 bg-neutral-50 rounded-2xl border border-neutral-200">

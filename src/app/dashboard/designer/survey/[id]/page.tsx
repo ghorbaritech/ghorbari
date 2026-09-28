@@ -222,6 +222,19 @@ export default function DesignerSurveyDetailPage() {
             setBooking({ ...booking, details: updatedDetails });
             setIsEditingQuote(false);
             alert("Your quote has been submitted to the admin successfully!");
+
+            // Notify Admin users of quote submission / revision
+            const { data: adminProfiles } = await supabase.from('profiles').select('id').eq('role', 'admin');
+            if (adminProfiles?.length) {
+                const adminNotifs = adminProfiles.map((adm: any) => ({
+                    user_id: adm.id,
+                    title: 'Partner Price Quote Updated',
+                    message: `${partnerInfo.name} submitted/updated a price quote (৳${grandTotal.toLocaleString()}) for order #${(id as string).slice(0, 8)}.`,
+                    link: `/admin/design-orders/${id}`,
+                    is_read: false
+                }));
+                await supabase.from('notifications').insert(adminNotifs);
+            }
         } else {
             alert("Failed to submit quote: " + error.message);
         }
