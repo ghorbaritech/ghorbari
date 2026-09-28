@@ -96,13 +96,13 @@ export default function CustomerDesignOrderDetailPage() {
     }
 
     async function acceptOffer() {
-        const lastAdminOffer = (booking.quotation_history || []).filter((o: any) => o.role === 'admin').pop();
-        if (!lastAdminOffer) return;
+        const targetOffer = activeOffer || lastAdminOffer;
+        if (!targetOffer) return;
 
         const acceptanceOffer = {
             role: 'customer',
             action: 'accepted',
-            amount: lastAdminOffer.amount,
+            amount: targetOffer.amount,
             date: new Date().toISOString()
         };
 
@@ -181,18 +181,34 @@ export default function CustomerDesignOrderDetailPage() {
     const surveyRequests: any[] = rawDetails.survey_requests || [];
     const milestones: any[] = booking.milestones || [];
     
-    // CUSTOMER ONLY SEES QUOTES SENT BY ADMIN (from quotation_history)
+    // CUSTOMER ONLY SEES QUOTES SENT BY ADMIN (from quotation_history or active agreed contract)
     const adminOffers = (booking.quotation_history || []).filter((o: any) => o.role === 'admin' || o.role === 'customer');
     const lastAdminOffer = (booking.quotation_history || []).filter((o: any) => o.role === 'admin').pop();
+    const acceptedPartnerQuote = surveyRequests.find((r: any) => r.quote && (r.status === 'accepted' || r.quote?.amount))?.quote;
+
+    const activeOffer = lastAdminOffer || (booking.agreed_amount ? {
+        role: 'admin',
+        amount: booking.agreed_amount,
+        notes: booking.details?.notes || "Official agreed design quotation and scope breakdown.",
+        date: booking.updated_at || booking.created_at,
+        line_items: booking.details?.line_items || acceptedPartnerQuote?.line_items || []
+    } : (acceptedPartnerQuote ? {
+        role: 'admin',
+        amount: acceptedPartnerQuote.amount,
+        notes: acceptedPartnerQuote.notes || "Official design price quotation.",
+        date: acceptedPartnerQuote.date,
+        line_items: acceptedPartnerQuote.line_items || []
+    } : null));
+
     const lastOffer = booking.quotation_history?.length > 0 ? booking.quotation_history[booking.quotation_history.length - 1] : null;
 
-    const isPendingCustomerApproval = lastOffer?.role === 'admin' && (booking.status === 'quotation' || lastOffer?.amount !== booking.agreed_amount);
+    const isPendingCustomerApproval = lastOffer?.role === 'admin' && (booking.status === 'quotation' || (booking.agreed_amount && lastOffer?.amount !== booking.agreed_amount));
     const isRevision = booking.status === 'in_progress' || (booking.agreed_amount && lastOffer?.role === 'admin' && lastOffer?.amount !== booking.agreed_amount);
 
     // Order Progress Stage Determination
     const hasSurvey = surveyRequests.length > 0;
     const isSurveyAccepted = surveyRequests.some((r: any) => r.status === 'accepted');
-    const isQuoted = !!lastAdminOffer || ['quotation', 'in_progress', 'completed'].includes(booking.status);
+    const isQuoted = !!activeOffer || ['quotation', 'in_progress', 'completed'].includes(booking.status);
     const isAcceptedOrHired = !!booking.agreed_amount || ['in_progress', 'completed'].includes(booking.status);
 
     return (
@@ -232,12 +248,23 @@ export default function CustomerDesignOrderDetailPage() {
                             </p>
                         </div>
 
-                        {booking.agreed_amount && (
-                            <div className="bg-neutral-900 text-white px-6 py-4 rounded-2xl border border-neutral-800 text-right">
-                                <p className="text-[9px] font-black uppercase tracking-widest text-neutral-400">Total Agreed Price</p>
-                                <p className="text-2xl font-black text-emerald-400">৳{booking.agreed_amount.toLocaleString()}</p>
-                            </div>
-                        )}
+                        <div className="flex flex-wrap items-center gap-3">
+                            {(booking.agreed_amount || activeOffer) && (
+                                <div className="bg-neutral-900 text-white px-6 py-4 rounded-2xl border border-neutral-800 text-right">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-neutral-400">Total Price</p>
+                                    <p className="text-2xl font-black text-emerald-400">৳{(booking.agreed_amount || activeOffer?.amount)?.toLocaleString()}</p>
+                                </div>
+                            )}
+                            {activeOffer && (
+                                <Button
+                                    type="button"
+                                    onClick={() => setIsInvoiceOpen(true)}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider h-14 px-6 rounded-2xl flex items-center gap-2 shadow-lg shrink-0"
+                                >
+                                    <FileText className="w-4 h-4" /> View Proposal Invoice
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
                 </div>
@@ -357,8 +384,8 @@ export default function CustomerDesignOrderDetailPage() {
                                 </div>
                             </div>
 
-                            {/* If Admin has sent an official quote (lastAdminOffer or lastOffer) */}
-                            {lastAdminOffer ? (
+                            {/* If Admin has sent an official quote or contract is active */}
+                            {activeOffer ? (
                                 <div className="space-y-6">
                                     {isPendingCustomerApproval && isRevision && (
                                         <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-amber-900 flex items-start gap-3">
@@ -381,12 +408,12 @@ export default function CustomerDesignOrderDetailPage() {
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">TOTAL AMOUNT</p>
-                                                <p className="text-3xl font-black text-emerald-400 mt-0.5">৳{lastAdminOffer.amount?.toLocaleString()}</p>
+                                                <p className="text-3xl font-black text-emerald-400 mt-0.5">৳{activeOffer.amount?.toLocaleString()}</p>
                                             </div>
                                         </div>
 
                                         {/* Line Items Table if Admin sent line items */}
-                                        {lastAdminOffer.line_items?.length > 0 && (
+                                        {activeOffer.line_items?.length > 0 && (
                                             <div className="space-y-2">
                                                 <p className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">Scope Breakdown</p>
                                                 <div className="bg-neutral-950 rounded-2xl overflow-hidden border border-neutral-800">
@@ -401,7 +428,7 @@ export default function CustomerDesignOrderDetailPage() {
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {lastAdminOffer.line_items.map((item: any, i: number) => (
+                                                            {activeOffer.line_items.map((item: any, i: number) => (
                                                                 <tr key={i} className="border-b border-neutral-800/60 last:border-0 font-medium text-neutral-300">
                                                                     <td className="p-3 font-semibold text-white">{item.description}</td>
                                                                     <td className="p-3 text-center text-neutral-400">{item.unit || 'sft'}</td>
@@ -417,10 +444,10 @@ export default function CustomerDesignOrderDetailPage() {
                                         )}
 
                                         {/* Notes / Remarks */}
-                                        {lastAdminOffer.notes && (
+                                        {activeOffer.notes && (
                                             <div className="bg-neutral-800/50 p-4 rounded-2xl text-xs text-neutral-300 leading-relaxed">
                                                 <span className="text-[9px] font-black text-neutral-500 uppercase block mb-1">Deliverable Notes & Terms</span>
-                                                {lastAdminOffer.notes}
+                                                {activeOffer.notes}
                                             </div>
                                         )}
 
@@ -434,9 +461,9 @@ export default function CustomerDesignOrderDetailPage() {
                                                 <Printer className="w-4 h-4" /> View & Print Proposal Invoice (PDF)
                                             </Button>
 
-                                            {lastAdminOffer.file_url && lastAdminOffer.file_url.startsWith('http') && (
+                                            {activeOffer.file_url && activeOffer.file_url.startsWith('http') && (
                                                 <a
-                                                    href={lastAdminOffer.file_url}
+                                                    href={activeOffer.file_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     download
@@ -448,7 +475,7 @@ export default function CustomerDesignOrderDetailPage() {
                                         </div>
 
                                         <p className="text-[9px] text-neutral-500 font-bold text-right uppercase tracking-widest">
-                                            Issued: {lastAdminOffer.date ? format(new Date(lastAdminOffer.date), 'MMM d, yyyy h:mm a') : '-'}
+                                            Issued: {activeOffer.date ? format(new Date(activeOffer.date), 'MMM d, yyyy h:mm a') : '-'}
                                         </p>
                                     </div>
 
