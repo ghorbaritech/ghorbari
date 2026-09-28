@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { 
     ArrowLeft, Check, Clock, Calendar, DollarSign, Send, XCircle, 
     CheckCircle2, FileText, Download, UserCheck, Sparkles, ShieldCheck, 
-    MapPin, Building, ChevronRight, FileSpreadsheet, AlertCircle 
+    MapPin, Building, ChevronRight, FileSpreadsheet, AlertCircle, Printer 
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { formatDistanceToNow, format } from "date-fns";
@@ -19,12 +19,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import Link from 'next/link';
+import { ProposalInvoice } from "@/components/admin/ProposalInvoice";
 
 export default function CustomerDesignOrderDetailPage() {
     const { id } = useParams();
     const router = useRouter();
     const [booking, setBooking] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
 
     // Negotiation State
     const [offerAmount, setOfferAmount] = useState("");
@@ -422,26 +424,28 @@ export default function CustomerDesignOrderDetailPage() {
                                             </div>
                                         )}
 
-                                        {/* Download PDF Attachment if available */}
-                                        {lastAdminOffer.file_url && (
-                                            lastAdminOffer.file_url.startsWith('http') ? (
+                                        {/* View & Print Proposal Invoice PDF Modal Trigger */}
+                                        <div className="flex flex-wrap items-center gap-3 pt-2">
+                                            <Button
+                                                type="button"
+                                                onClick={() => setIsInvoiceOpen(true)}
+                                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs px-6 py-3 rounded-xl shadow-lg transition-all"
+                                            >
+                                                <Printer className="w-4 h-4" /> View & Print Proposal Invoice (PDF)
+                                            </Button>
+
+                                            {lastAdminOffer.file_url && lastAdminOffer.file_url.startsWith('http') && (
                                                 <a
                                                     href={lastAdminOffer.file_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     download
-                                                    className="flex items-center gap-2 bg-blue-600/20 border border-blue-600/30 rounded-xl px-4 py-3 text-blue-300 font-bold text-xs hover:bg-blue-600/30 transition-colors w-fit"
+                                                    className="flex items-center gap-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold text-xs px-4 py-3 rounded-xl border border-neutral-700 transition-colors"
                                                 >
-                                                    <Download className="w-4 h-4" />
-                                                    Download Official Quote Document ({lastAdminOffer.file_url.split('/').pop() || 'Quotation.pdf'})
+                                                    <Download className="w-4 h-4 text-blue-400" /> Download Attachment
                                                 </a>
-                                            ) : (
-                                                <div className="flex items-center gap-2 bg-neutral-800/80 border border-neutral-700/50 rounded-xl px-4 py-3 text-neutral-300 font-bold text-xs w-fit">
-                                                    <FileText className="w-4 h-4 text-emerald-400" />
-                                                    Attached Document: {lastAdminOffer.file_url.replace(/^\[|\]$/g, '')}
-                                                </div>
-                                            )
-                                        )}
+                                            )}
+                                        </div>
 
                                         <p className="text-[9px] text-neutral-500 font-bold text-right uppercase tracking-widest">
                                             Issued: {lastAdminOffer.date ? format(new Date(lastAdminOffer.date), 'MMM d, yyyy h:mm a') : '-'}
@@ -479,21 +483,6 @@ export default function CustomerDesignOrderDetailPage() {
                                                     onChange={(e) => setOfferNote(e.target.value)}
                                                 />
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {/* Status Message Banners */}
-                                    {isPendingCustomerApproval && lastOffer?.role === 'admin' && (
-                                        <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-center text-xs font-bold text-blue-900 flex items-center justify-center gap-2">
-                                            <Clock className="w-4 h-4 text-blue-600 shrink-0" />
-                                            Dalan Kotha is awaiting your response.
-                                        </div>
-                                    )}
-
-                                    {!isPendingCustomerApproval && lastOffer?.role === 'customer' && lastOffer?.action !== 'accepted' && booking.status === 'quotation' && (
-                                        <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 text-center text-xs font-bold text-amber-900 flex items-center justify-center gap-2">
-                                            <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                                            Counter offer of ৳{lastOffer.amount?.toLocaleString()} submitted. Awaiting Dalan Kotha response.
                                         </div>
                                     )}
                                 </div>
@@ -641,6 +630,14 @@ export default function CustomerDesignOrderDetailPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Proposal Invoice Modal (View & Print PDF) */}
+            <ProposalInvoice 
+                isOpen={isInvoiceOpen} 
+                onClose={() => setIsInvoiceOpen(false)} 
+                booking={booking} 
+                offer={lastAdminOffer} 
+            />
         </div>
     );
 }
