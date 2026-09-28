@@ -974,7 +974,8 @@ export default function DesignOrderDetailPage() {
                                                                 <div className="flex justify-between items-center pt-2 flex-wrap gap-2">
                                                                     {r.quote.file_url ? (
                                                                         <a
-                                                                            href={r.quote.file_url.startsWith('http') ? r.quote.file_url : '#'}
+                                                                            href={r.quote.file_url.startsWith('http') ? r.quote.file_url : undefined}
+                                                                            onClick={(e) => { if (!r.quote.file_url?.startsWith('http')) e.preventDefault(); }}
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
                                                                             download
@@ -1175,7 +1176,8 @@ export default function DesignOrderDetailPage() {
                                                     {/* PDF Download Link */}
                                                     {request.quote?.file_url && (
                                                         <a
-                                                            href={request.quote.file_url.startsWith('http') ? request.quote.file_url : '#'}
+                                                            href={request.quote.file_url.startsWith('http') ? request.quote.file_url : undefined}
+                                                            onClick={(e) => { if (!request.quote.file_url?.startsWith('http')) e.preventDefault(); }}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             download

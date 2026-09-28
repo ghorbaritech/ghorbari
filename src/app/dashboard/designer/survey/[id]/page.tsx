@@ -612,7 +612,8 @@ export default function DesignerSurveyDetailPage() {
                             {/* Download PDF Document if attached */}
                             {surveyReq.quote.file_url && (
                                 <a
-                                    href={surveyReq.quote.file_url.startsWith('http') ? surveyReq.quote.file_url : '#'}
+                                    href={surveyReq.quote.file_url.startsWith('http') ? surveyReq.quote.file_url : undefined}
+                                    onClick={(e) => { if (!surveyReq.quote.file_url?.startsWith('http')) e.preventDefault(); }}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     download

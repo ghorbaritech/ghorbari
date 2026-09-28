@@ -69,16 +69,22 @@ export default function OrdersPage() {
                 link: `/dashboard/customer/orders/${o.id}`
             }))
 
-            const normalizedDesigns: CombinedOrder[] = (designBookings || []).map((d: any) => ({
-                id: d.id,
-                type: 'design',
-                number: d.id.slice(0, 8).toUpperCase(),
-                date: d.created_at,
-                status: d.status,
-                amount: d.agreed_amount || ((d.quotation_history || []).filter((o: any) => o.role === 'admin').pop()?.amount),
-                title: `${d.service_type} Design`,
-                link: `/dashboard/customer/design/${d.id}`
-            }))
+            const normalizedDesigns: CombinedOrder[] = (designBookings || []).map((d: any) => {
+                const lastAdminOffer = (d.quotation_history || []).filter((o: any) => o.role === 'admin').pop();
+                const rawAmt = d.agreed_amount || lastAdminOffer?.amount || d.details?.budget || d.details?.estimated_budget;
+                const numericAmount = rawAmt ? Number(rawAmt) : undefined;
+
+                return {
+                    id: d.id,
+                    type: 'design',
+                    number: d.id.slice(0, 8).toUpperCase(),
+                    date: d.created_at,
+                    status: d.status,
+                    amount: numericAmount && numericAmount > 0 ? numericAmount : undefined,
+                    title: `${d.service_type || 'Interior'} Design`,
+                    link: `/dashboard/customer/design/${d.id}`
+                };
+            })
 
             const normalizedServices: CombinedOrder[] = (serviceRequests || []).map((s: any) => ({
                 id: s.id,
